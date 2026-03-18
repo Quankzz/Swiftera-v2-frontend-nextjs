@@ -12,6 +12,11 @@ export interface CategoryTree extends Category {
   children: CategoryTree[];
 }
 
+interface ProductColor {
+  name: string;
+  hex: string;
+}
+
 export interface Product {
   productId: string;
   categoryId: string;
@@ -23,4 +28,5 @@ export interface Product {
   description: string;
   image: string;
   badge?: string;
+  colors?: ProductColor[];
 }

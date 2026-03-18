@@ -13,6 +13,12 @@ export const products: Product[] = [
     image:
       'https://cdn2.fptshop.com.vn/unsafe/750x0/filters:format(webp):quality(75)/2023_9_20_638307989548944936_iphone-15-promax-xanh-1.jpg',
     badge: '-8%',
+    colors: [
+      { name: 'Blue Titanium', hex: '#8DA6B3' },
+      { name: 'Black Titanium', hex: '#2E3440' },
+      { name: 'Natural Titanium', hex: '#B9B1A5' },
+      { name: 'White Titanium', hex: '#D9D6CF' },
+    ],
   },
   {
     productId: 'prod-switch-oled',
@@ -23,7 +29,7 @@ export const products: Product[] = [
     depositAmount: 69,
     description: '7" OLED, Joy-Con bundle, full game download included.',
     image:
-      'https://images.unsplash.com/photo-1615775937771-39e2f2664bca?auto=format&fit=crop&w=600&q=80',
+      'https://m.media-amazon.com/images/I/6181h344+6L._AC_UF1000,1000_QL80_.jpg',
     badge: 'Bundle',
   },
   {
