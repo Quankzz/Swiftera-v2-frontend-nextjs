@@ -9,39 +9,39 @@ import { CalendarRange, ShieldCheck, Smile, WalletCards } from 'lucide-react';
 
 const heroSlides = [
   {
-    title: 'Your game. Your world.',
-    subtitle: 'Your rules.',
+    title: 'Thiết bị của bạn.',
+    subtitle: 'Theo cách của bạn.',
     description:
-      'Play on your terms with a monthly rate that fits your budget. Rent the gear you need without a big upfront cost.',
+      'Sử dụng công nghệ theo nhu cầu với mức phí theo tháng phù hợp ngân sách, không cần trả trước quá lớn.',
     image:
       'https://images.unsplash.com/photo-1606813909355-245f1ac35b53?auto=format&fit=crop&w=1400&q=80',
-    accent: 'Grover inspired',
+    accent: 'Linh hoạt mỗi tháng',
   },
   {
-    title: 'Love tech.',
-    subtitle: 'Love Swiftera.',
+    title: 'Yêu công nghệ.',
+    subtitle: 'Chọn Swiftera.',
     description:
-      'Affordable, flexible, planet-friendly upgrades with next-day delivery and zero hassle returns.',
+      'Nâng cấp thiết bị dễ dàng, chi phí hợp lý, giao nhanh và đổi trả thuận tiện.',
     image:
       'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1400&q=80',
-    accent: 'Fast upgrades',
+    accent: 'Nâng cấp nhanh',
   },
   {
-    title: 'Rent premium.',
-    subtitle: 'Keep freedom.',
+    title: 'Thuê thiết bị cao cấp.',
+    subtitle: 'Giữ trọn tự do.',
     description:
-      'Choose the latest phones, consoles, laptops, and wearables with rental terms from 1 to 24+ months.',
+      'Chọn điện thoại, máy chơi game, laptop và wearables mới nhất với kỳ hạn thuê từ 1 đến 24+ tháng.',
     image:
       'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=1400&q=80',
-    accent: 'Flexible terms',
+    accent: 'Kỳ hạn linh hoạt',
   },
 ];
 
 const highlightStats = [
-  { icon: Smile, label: '500,000+ customers' },
-  { icon: WalletCards, label: 'Low monthly costs' },
-  { icon: CalendarRange, label: 'Rent from 1 to 24+ months' },
-  { icon: ShieldCheck, label: 'Care & protection available' },
+  { icon: Smile, label: '500.000+ khách hàng tin dùng' },
+  { icon: WalletCards, label: 'Chi phí theo tháng tiết kiệm' },
+  { icon: CalendarRange, label: 'Kỳ hạn thuê từ 1 đến 24+ tháng' },
+  { icon: ShieldCheck, label: 'Có gói bảo hành & bảo vệ' },
 ];
 
 export default function Home() {
@@ -68,19 +68,11 @@ export default function Home() {
             <div className='flex items-end justify-between'>
               <div>
                 <h2 className='text-3xl font-extrabold text-text-main'>
-                  Categories
+                  Danh mục
                 </h2>
                 <p className='text-text-sub'>
-                  Explore tech that fits every lifestyle.
+                  Khám phá thiết bị phù hợp với mọi nhu cầu sống.
                 </p>
-              </div>
-              <div className='hidden lg:block'>
-                <Button
-                  variant='ghost'
-                  className='rounded-full border border-border/60'
-                >
-                  Show all
-                </Button>
               </div>
             </div>
             <CategoryCarousel items={categories} />
@@ -90,14 +82,14 @@ export default function Home() {
             <div className='flex items-end justify-between'>
               <div>
                 <h2 className='text-3xl font-extrabold text-text-main'>
-                  Most popular
+                  Sản phẩm nổi bật
                 </h2>
                 <p className='text-text-sub'>
-                  Top picks from our renters this week.
+                  Những lựa chọn được thuê nhiều nhất tuần này.
                 </p>
               </div>
               <Button variant='link' className='text-rose-600'>
-                Show all
+                Xem tất cả
               </Button>
             </div>
 

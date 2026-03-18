@@ -8,8 +8,8 @@ interface ProductCardProps {
 
 const formatter = new Intl.NumberFormat('de-DE', {
   style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
+  currency: 'VND',
+  maximumFractionDigits: 0,
 });
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -86,10 +86,10 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className='mt-auto text-center'>
           <div className='flex items-baseline justify-center gap-2 text-theme-accent-start'>
             <span className='text-sm font-medium text-text-sub'>Từ</span>
-            <span className='text-2xl font-bold'>
+            <span className='text-xl font-bold'>
               {formatter.format(monthlyPrice)}
             </span>
-            <span className='text-sm font-medium text-text-sub'>/ Month</span>
+            {/* <span className='text-sm font-medium text-text-sub'>/ tháng</span> */}
             {oldMonthly && (
               <span className='text-sm text-text-sub line-through'>
                 {formatter.format(oldMonthly)}

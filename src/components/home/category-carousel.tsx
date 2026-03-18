@@ -31,7 +31,7 @@ export function CategoryCarousel({ items }: CategoryCarouselProps) {
         <Button
           size='icon'
           variant='outline'
-          className='rounded-full bg-white shadow'
+          className='rounded-full size-12 bg-white shadow'
           onClick={() => handleScroll('left')}
           aria-label='Previous categories'
         >
@@ -40,7 +40,7 @@ export function CategoryCarousel({ items }: CategoryCarouselProps) {
         <Button
           size='icon'
           variant='outline'
-          className='rounded-full bg-white shadow'
+          className='rounded-full size-12 bg-white shadow'
           onClick={() => handleScroll('right')}
           aria-label='Next categories'
         >
