@@ -1,4 +1,7 @@
 'use client';
+// NOTE: DirectionSidebar is a legacy overlay used on mobile maps outside the sidebar context.
+// Most direction logic has been consolidated into DirectionTab + MapSidebar.
+// This component is kept for backward compatibility.
 
 import type React from 'react';
 import { MapPin, Navigation } from 'lucide-react';
@@ -8,33 +11,26 @@ interface DirectionSidebarProps {
   onRouteSearch: () => void;
 }
 
-const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
-  onRouteSearch,
-}) => {
+const DirectionSidebar: React.FC<DirectionSidebarProps> = ({ onRouteSearch }) => {
   const {
-    startAddress,
-    setStartAddress,
-    endAddress,
-    setEndAddress,
-    currentLocationUsage,
-    setCurrentLocationUsage,
+    startAddress, setStartAddress,
+    endAddress, setEndAddress,
+    currentLocationUsage, setCurrentLocationUsage,
   } = useMapStore();
 
   return (
-    <div className="absolute top-2 left-2 z-10 md:w-80 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden">
+    <div className="absolute top-2 left-2 z-10 md:w-80 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200/70 dark:border-slate-700">
       {/* Header */}
-      <div className="bg-emerald-600 px-4 py-3">
-        <h2 className="text-white font-semibold text-sm md:text-base shrink-0 items-center gap-2">
-          <Navigation size={16} />
-          Tìm đường
-        </h2>
+      <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 flex items-center gap-2">
+        <Navigation size={15} className="text-white" />
+        <h2 className="text-white font-semibold text-sm">Tìm đường</h2>
       </div>
 
       {/* Inputs */}
       <div className="p-3 space-y-2">
-        {/* Start */}
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-gray-400 border-2 border-white shadow shrink" />
+        {/* Start input */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
           <div className="flex-1 relative">
             <input
               type="text"
@@ -42,31 +38,36 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
               value={startAddress}
               onChange={(e) => {
                 setStartAddress(e.target.value);
-                if (currentLocationUsage === 'start')
-                  setCurrentLocationUsage(null);
+                if (currentLocationUsage === 'start') setCurrentLocationUsage(null);
               }}
-              className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 pr-8"
+              className="
+                w-full border border-slate-200 dark:border-slate-600
+                dark:bg-slate-800 dark:text-white
+                rounded-xl px-3 py-2 text-sm
+                focus:outline-none focus:ring-2 focus:ring-emerald-400/60
+                pr-8 transition-all
+              "
             />
             <button
               title="Dùng vị trí hiện tại làm điểm xuất phát"
-              onClick={() => {
-                setCurrentLocationUsage('start');
-                // Trigger to parent via store flag
-                useMapStore.setState({ currentLocationUsage: 'start' });
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-emerald-500 hover:text-emerald-700"
+              onClick={() => useMapStore.setState({ currentLocationUsage: 'start' })}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-500 hover:text-emerald-700 transition-colors"
             >
               <MapPin size={14} />
             </button>
           </div>
         </div>
 
-        {/* Divider line */}
-        <div className="ml-1.5 border-l-2 border-dashed border-gray-300 h-2" />
+        {/* Connector */}
+        <div className="ml-1 flex flex-col gap-1 pl-0.5">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="w-0.5 h-0.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+          ))}
+        </div>
 
-        {/* End */}
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500 border-2 border-white shadow shrink-0" />
+        {/* End input */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
           <div className="flex-1 relative">
             <input
               type="text"
@@ -74,18 +75,20 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
               value={endAddress}
               onChange={(e) => {
                 setEndAddress(e.target.value);
-                if (currentLocationUsage === 'end')
-                  setCurrentLocationUsage(null);
+                if (currentLocationUsage === 'end') setCurrentLocationUsage(null);
               }}
-              className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 pr-8"
+              className="
+                w-full border border-slate-200 dark:border-slate-600
+                dark:bg-slate-800 dark:text-white
+                rounded-xl px-3 py-2 text-sm
+                focus:outline-none focus:ring-2 focus:ring-rose-400/60
+                pr-8 transition-all
+              "
             />
             <button
               title="Dùng vị trí hiện tại làm điểm đến"
-              onClick={() => {
-                setCurrentLocationUsage('end');
-                useMapStore.setState({ currentLocationUsage: 'end' });
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-700"
+              onClick={() => useMapStore.setState({ currentLocationUsage: 'end' })}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-rose-500 hover:text-rose-700 transition-colors"
             >
               <MapPin size={14} />
             </button>
@@ -95,7 +98,11 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
         {/* Search button */}
         <button
           onClick={onRouteSearch}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2 text-xs md:text-sm font-medium transition-colors mt-1"
+          className="
+            w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800
+            text-white rounded-xl py-2.5 text-sm font-semibold
+            transition-all duration-150 active:scale-[0.98] shadow-sm shadow-emerald-200/50
+          "
         >
           Chỉ đường
         </button>

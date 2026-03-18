@@ -63,8 +63,16 @@ interface MapState {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 
+  // Vehicle type
+  vehicleType: 'car' | 'bike';
+  setVehicleType: (type: 'car' | 'bike') => void;
+
   // Actions
   clearDirections: () => void;
+  /** Clear only route results (not addresses) — used for partial resets */
+  clearRouteResults: () => void;
+  isRouteLoading: boolean;
+  setIsRouteLoading: (loading: boolean) => void;
 }
 
 export const useMapStore = create<MapState>((set, get) => ({
@@ -128,6 +136,9 @@ export const useMapStore = create<MapState>((set, get) => ({
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),
 
+  vehicleType: 'car',
+  setVehicleType: (type) => set({ vehicleType: type }),
+
   clearDirections: () =>
     set({
       startAddress: '',
@@ -137,4 +148,14 @@ export const useMapStore = create<MapState>((set, get) => ({
       selectedRouteIndex: 0,
       isRouteInfoVisible: false,
     }),
+
+  clearRouteResults: () =>
+    set({
+      routeInfoList: [],
+      selectedRouteIndex: 0,
+      isRouteInfoVisible: false,
+    }),
+
+  isRouteLoading: false,
+  setIsRouteLoading: (loading) => set({ isRouteLoading: loading }),
 }));
