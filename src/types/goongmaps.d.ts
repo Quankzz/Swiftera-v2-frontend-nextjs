@@ -93,7 +93,17 @@ declare module '@goongmaps/goong-js' {
   export class Map {
     constructor(options: MapOptions);
     on(type: string, listener: (...args: unknown[]) => void): this;
+    on(
+      type: string,
+      layerId: string,
+      listener: (...args: unknown[]) => void,
+    ): this;
     off(type: string, listener: (...args: unknown[]) => void): this;
+    off(
+      type: string,
+      layerId: string,
+      listener: (...args: unknown[]) => void,
+    ): this;
     flyTo(options: FlyToOptions): this;
     fitBounds(bounds: LngLatBoundsLike, options?: FitBoundsOptions): this;
     addSource(id: string, source: AnySourceData): this;
@@ -108,6 +118,7 @@ declare module '@goongmaps/goong-js' {
     getCenter(): LngLat;
     getZoom(): number;
     resize(): this;
+    setPaintProperty(layerId: string, name: string, value: unknown): this;
   }
 
   export interface IControl {

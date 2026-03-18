@@ -24,7 +24,7 @@ type FieldType = 'start' | 'end';
 
 const MIN_QUERY_LEN = 2;
 const MAX_SUGGESTIONS = 5;
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 200;
 
 // ── Highlighted text helper ────────────────────────────────────────────────────
 const Highlighted: React.FC<{ text: string; query?: string }> = ({
@@ -435,7 +435,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
 
               {/* Connector dots between inputs */}
               {idx === 0 && (
-                <div className="absolute left-[38px] top-[58px] bottom-[58px] w-0.5 border-l-2 border-dashed border-slate-200 dark:border-slate-700" />
+                <div className="absolute left-9.5 top-14.5 bottom-14.5 w-0.5 border-l-2 border-dashed border-slate-200 dark:border-slate-700" />
               )}
             </React.Fragment>
           ))}

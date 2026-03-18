@@ -23,6 +23,8 @@ import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 // ─── constants ─────────────────────────────────────────────────────────────────
 const ROUTE_COLORS = ['#0EA5E9', '#6B7280', '#9CA3AF'] as const;
+const ROUTE_ACTIVE_COLOR = '#0EA5E9';
+const ROUTE_INACTIVE_COLOR = '#94A3B8';
 const NEARBY_RADIUS_KM = 10;
 const FIT_BOUNDS_PADDING = {
   top: 80,
@@ -94,6 +96,14 @@ const MapView: React.FC = () => {
   const routeSourceIdsRef = useRef<string[]>([]);
   /** Incremented on each new search; stale searches check this to self-cancel */
   const searchTokenRef = useRef(0);
+  /** Session-scoped geocode cache: address string → coordinates. Avoids re-fetching for unchanged fields. */
+  const geocodeCacheRef = useRef<Map<string, { lat: number; lng: number }>>(
+    new Map(),
+  );
+  /** Tracks click/hover handlers registered on route layers so they can be removed on redraw. */
+  const routeClickHandlersRef = useRef<
+    Array<{ layerId: string; type: string; handler: (e: unknown) => void }>
+  >([]);
 
   const {
     userLocation,
@@ -282,6 +292,10 @@ const MapView: React.FC = () => {
         routeSourceIdsRef.current.length > 0) &&
       map
     ) {
+      routeClickHandlersRef.current.forEach(({ layerId, type, handler }) => {
+        if (map.getLayer(layerId)) map.off(type, layerId, handler);
+      });
+      routeClickHandlersRef.current = [];
       routeLayerIdsRef.current.forEach((id) => {
         if (map.getLayer(id)) map.removeLayer(id);
       });
@@ -358,6 +372,11 @@ const MapView: React.FC = () => {
   const clearAllRoutes = useCallback(() => {
     const map = mapRef.current;
     if (map) {
+      // Remove click/hover handlers before removing layers
+      routeClickHandlersRef.current.forEach(({ layerId, type, handler }) => {
+        if (map.getLayer(layerId)) map.off(type, layerId, handler);
+      });
+      routeClickHandlersRef.current = [];
       // Layers MUST be removed before their sources
       routeLayerIdsRef.current.forEach((id) => {
         if (map.getLayer(id)) map.removeLayer(id);
@@ -379,6 +398,12 @@ const MapView: React.FC = () => {
     const map = mapRef.current;
     if (!map) return;
 
+    // Clean up existing click/hover handlers before removing layers
+    routeClickHandlersRef.current.forEach(({ layerId, type, handler }) => {
+      if (map.getLayer(layerId)) map.off(type, layerId, handler);
+    });
+    routeClickHandlersRef.current = [];
+
     // Remove existing layers then sources
     routeLayerIdsRef.current.forEach((id) => {
       if (map.getLayer(id)) map.removeLayer(id);
@@ -394,6 +419,8 @@ const MapView: React.FC = () => {
       if (idx === activeIdx) return;
       const sourceId = `route-source-${idx}`;
       const layerId = `route-layer-${idx}`;
+      const hitLayerId = `route-hit-${idx}`;
+
       map.addSource(sourceId, {
         type: 'geojson',
         data: {
@@ -402,19 +429,73 @@ const MapView: React.FC = () => {
           properties: {},
         },
       });
+
+      // Visible dim line
       map.addLayer({
         id: layerId,
         type: 'line',
         source: sourceId,
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': ROUTE_COLORS[idx] ?? '#9CA3AF',
+          'line-color': ROUTE_INACTIVE_COLOR, // always gray regardless of index
           'line-width': 4,
-          'line-opacity': 0.45,
+          'line-opacity': 0.5,
         },
       });
+
+      // Wide transparent hit-area layer — makes it easy to click narrow lines
+      map.addLayer({
+        id: hitLayerId,
+        type: 'line',
+        source: sourceId,
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: { 'line-width': 24, 'line-opacity': 0 },
+      });
+
+      // Click → switch active route (effect on selectedRouteIndex will redraw)
+      const clickHandler = () => {
+        useMapStore.getState().setSelectedRouteIndex(idx);
+      };
+      map.on('click', hitLayerId, clickHandler);
+      routeClickHandlersRef.current.push({
+        layerId: hitLayerId,
+        type: 'click',
+        handler: clickHandler,
+      });
+
+      // Hover → pointer cursor + highlight the inactive route
+      const enterHandler = () => {
+        map.getCanvas().style.cursor = 'pointer';
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, 'line-opacity', 0.85);
+          map.setPaintProperty(layerId, 'line-width', 6);
+          map.setPaintProperty(layerId, 'line-color', ROUTE_ACTIVE_COLOR); // preview blue
+        }
+      };
+      map.on('mouseenter', hitLayerId, enterHandler);
+      routeClickHandlersRef.current.push({
+        layerId: hitLayerId,
+        type: 'mouseenter',
+        handler: enterHandler,
+      });
+
+      const leaveHandler = () => {
+        map.getCanvas().style.cursor = '';
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, 'line-opacity', 0.5);
+          map.setPaintProperty(layerId, 'line-width', 4);
+          map.setPaintProperty(layerId, 'line-color', ROUTE_INACTIVE_COLOR);
+        }
+      };
+      map.on('mouseleave', hitLayerId, leaveHandler);
+      routeClickHandlersRef.current.push({
+        layerId: hitLayerId,
+        type: 'mouseleave',
+        handler: leaveHandler,
+      });
+
       routeSourceIdsRef.current.push(sourceId);
-      routeLayerIdsRef.current.push(layerId);
+      routeLayerIdsRef.current.push(layerId, hitLayerId);
     });
 
     // Draw active route on top
@@ -445,7 +526,7 @@ const MapView: React.FC = () => {
         source: sourceId,
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': ROUTE_COLORS[0],
+          'line-color': ROUTE_ACTIVE_COLOR,
           'line-width': 6,
           'line-opacity': 1,
         },
@@ -497,12 +578,20 @@ const MapView: React.FC = () => {
   // ── Geocoding helpers ──────────────────────────────────────────────────────
   const getCoordinates = useCallback(
     async (address: string): Promise<{ lat: number; lng: number } | null> => {
+      const key = address.trim().toLowerCase();
+      const cached = geocodeCacheRef.current.get(key);
+      if (cached) return cached;
       try {
         const res = await axios.get(
           `https://rsapi.goong.io/geocode?address=${encodeURIComponent(address)}&api_key=${apiKey}`,
         );
         const loc = res.data?.results?.[0]?.geometry?.location;
-        return loc ? { lat: loc.lat, lng: loc.lng } : null;
+        if (loc) {
+          const result = { lat: loc.lat, lng: loc.lng };
+          geocodeCacheRef.current.set(key, result);
+          return result;
+        }
+        return null;
       } catch {
         return null;
       }
@@ -566,6 +655,9 @@ const MapView: React.FC = () => {
           setUserLocation(loc);
           const address = await reverseGeocode(loc.lat, loc.lng);
           if (!address) return;
+          // Pre-populate geocode cache with exact GPS coordinates so the next route
+          // search gets an instant cache hit instead of re-calling the geocode API.
+          geocodeCacheRef.current.set(address.trim().toLowerCase(), loc);
           if (isStart) {
             setStartAddress(address);
             setCurrentLocationUsage('start');
