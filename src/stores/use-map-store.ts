@@ -63,10 +63,6 @@ interface MapState {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 
-  // Vehicle type
-  vehicleType: 'car' | 'bike';
-  setVehicleType: (type: 'car' | 'bike') => void;
-
   // Actions
   clearDirections: () => void;
   /** Clear only route results (not addresses) — used for partial resets */
@@ -135,9 +131,6 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),
-
-  vehicleType: 'car',
-  setVehicleType: (type) => set({ vehicleType: type }),
 
   clearDirections: () =>
     set({
