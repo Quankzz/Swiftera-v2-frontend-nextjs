@@ -2,6 +2,19 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+/* QR Scanner scan-line animation */
+@keyframes scan-line {
+  0% {
+    top: 4px;
+  }
+  50% {
+    top: calc(100% - 4px);
+  }
+  100% {
+    top: 4px;
+  }
+}
+
 /* Loading bar animation for route search */
 @keyframes loading-bar {
   0% {
