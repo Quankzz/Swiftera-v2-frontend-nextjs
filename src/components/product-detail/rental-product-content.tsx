@@ -23,7 +23,7 @@ export function RentalProductDescription({
     <div className={cn('relative font-sans', className)}>
       <div
         className={cn(
-          'prose prose-neutral max-w-none text-foreground transition-all duration-300 whitespace-pre-wrap dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground',
+          'prose prose-sm prose-neutral max-w-none text-foreground transition-all duration-300 whitespace-pre-wrap sm:prose-base dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground',
           !isExpanded && 'overflow-hidden'
         )}
         style={{
@@ -72,13 +72,18 @@ const defaultSpecifications: RentalSpecificationRow[] = [
 
 export function RentalSpecifications({ specifications = defaultSpecifications }: RentalSpecificationsProps) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5 font-sans ambient-glow">
-      <h2 className="mb-4 text-lg font-bold tracking-tight text-foreground">Thông tin chi tiết</h2>
+    <div className="rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5">
+      <h2 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">Thông tin chi tiết</h2>
       <div className="divide-y divide-border">
         {specifications.map((spec, index) => (
-          <div key={index} className="grid grid-cols-3 gap-4 py-3">
-            <dt className="col-span-1 text-sm text-muted-foreground">{spec.label}</dt>
-            <dd className="col-span-2 text-sm font-medium text-foreground">{spec.value}</dd>
+          <div
+            key={index}
+            className="grid grid-cols-1 gap-1 py-3 sm:grid-cols-3 sm:gap-4 sm:py-3.5"
+          >
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal">
+              {spec.label}
+            </dt>
+            <dd className="text-sm font-medium leading-snug text-foreground sm:col-span-2">{spec.value}</dd>
           </div>
         ))}
       </div>

@@ -33,7 +33,7 @@ function RentalDeliveryAddressDialog() {
           Nhập địa chỉ
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[min(90dvh,720px)] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold tracking-tight text-foreground">Địa chỉ giao hàng</DialogTitle>
         </DialogHeader>
@@ -121,25 +121,25 @@ function RentalDeliveryAddressDialog() {
 /** Thông tin giao hàng + nhập địa chỉ */
 export function RentalDeliverySection() {
   return (
-    <div className="bg-white p-5 rounded-xl">
-      <h2 className="text-lg font-semibold mb-4">Thông tin giao hàng</h2>
+    <div className="rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5">
+      <h2 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">Thông tin giao hàng</h2>
       <div className="space-y-3">
         <div className="flex items-start gap-3">
-          <MapPin className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-sm text-gray-700">
+          <MapPin className="mt-0.5 size-5 shrink-0 text-teal-600 dark:text-teal-400" />
+          <div className="min-w-0">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               Nhập địa chỉ để xem thời gian giao hàng và phí vận chuyển chính xác
             </p>
             <RentalDeliveryAddressDialog />
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <Truck className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-          <p className="text-sm text-gray-600">Giao tận nơi hoặc nhận tại cửa hàng</p>
+          <Truck className="mt-0.5 size-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
+          <p className="text-sm text-muted-foreground">Giao tận nơi hoặc nhận tại cửa hàng</p>
         </div>
         <div className="flex items-start gap-3">
-          <Clock className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
-          <p className="text-sm text-gray-600">Nhận hàng trong 2-4h (nội thành TP.HCM, Hà Nội)</p>
+          <Clock className="mt-0.5 size-5 shrink-0 text-teal-600 dark:text-teal-400" />
+          <p className="text-sm text-muted-foreground">Nhận hàng trong 2-4h (nội thành TP.HCM, Hà Nội)</p>
         </div>
       </div>
     </div>
@@ -182,8 +182,8 @@ const processSteps = [
 /** Quy trình thuê (cột phụ) */
 export function RentalProcessSection() {
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5 font-sans ambient-glow">
-      <h2 className="mb-1 text-lg font-bold tracking-tight text-foreground">Quy trình thuê</h2>
+    <div className="rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5">
+      <h2 className="mb-1 text-base font-bold tracking-tight text-foreground sm:text-lg">Quy trình thuê</h2>
       <p className="mb-4 text-xs text-muted-foreground">Các bước từ lúc đặt thuê đến khi nhận lại tiền cọc</p>
       <ol className="space-y-0">
         {processSteps.map((item, index) => (
@@ -237,23 +237,25 @@ export function RentalAddonServicesSection() {
   ];
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5 font-sans ambient-glow">
-      <h2 className="mb-4 text-lg font-bold tracking-tight text-foreground">Dịch vụ bổ sung</h2>
+    <div className="rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5">
+      <h2 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">Dịch vụ bổ sung</h2>
       <div className="space-y-3">
         {services.map((service, index) => (
           <div
             key={index}
-            className="flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:border-teal-500/40 dark:hover:border-teal-400/30"
+            className="flex flex-col gap-3 rounded-lg border border-border p-3 transition-colors hover:border-teal-500/40 sm:flex-row sm:items-center sm:justify-between dark:hover:border-teal-400/30"
           >
-            <div className="flex items-center gap-3">
-              <div className={`flex size-10 items-center justify-center rounded-lg ${service.iconBg}`}>{service.icon}</div>
-              <div>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${service.iconBg}`}>
+                {service.icon}
+              </div>
+              <div className="min-w-0">
                 <span className="block text-sm font-semibold text-foreground">{service.name}</span>
                 <span className="text-xs text-muted-foreground">{service.desc}</span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="mb-1 text-xs font-semibold text-muted-foreground">{service.price}</div>
+            <div className="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:justify-center sm:text-right">
+              <div className="text-xs font-semibold text-muted-foreground sm:mb-0 sm:text-right">{service.price}</div>
               <Button
                 variant="outline"
                 size="xs"

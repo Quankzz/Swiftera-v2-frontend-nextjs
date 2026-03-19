@@ -1,9 +1,16 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { ShoppingCart, Minus, Plus, Info } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ShoppingCart, Minus, Plus, Info, TicketPercent } from 'lucide-react';
 import { ShieldCheck, Truck, Clock, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 /* ---------- Types ---------- */
 
@@ -261,9 +268,11 @@ export function RentalProductSummary({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-muted/40 p-4 dark:bg-muted/20">
-        <div className="flex items-baseline gap-3 flex-wrap">
-          <span className="text-3xl font-bold text-teal-600 dark:text-teal-400">{currentPrice.toLocaleString()}₫</span>
+      <div className="rounded-xl border border-border/60 bg-muted/40 p-3 dark:bg-muted/20 sm:p-4">
+        <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+          <span className="text-2xl font-bold text-teal-600 sm:text-3xl dark:text-teal-400">
+            {currentPrice.toLocaleString()}₫
+          </span>
           {originalPrice && originalPrice > currentPrice && (
             <>
               <span className="text-lg text-muted-foreground line-through">{originalPrice.toLocaleString()}₫</span>
@@ -285,7 +294,7 @@ export function RentalProductSummary({
                 key={variant.id}
                 type="button"
                 onClick={() => onVariantChange(variant.id)}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all sm:px-4 sm:text-sm ${
                   selectedVariant === variant.id ? selectedRing : idleOption
                 }`}
               >
@@ -298,19 +307,19 @@ export function RentalProductSummary({
 
       <div>
         <h3 className="mb-2 text-sm font-bold text-foreground">Thời gian thuê</h3>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {durations.map((duration) => (
             <button
               key={duration.id}
               type="button"
               onClick={() => onDurationChange(duration.id)}
-              className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
+              className={`rounded-lg border px-2 py-2 text-xs transition-all sm:px-3 sm:py-2.5 sm:text-sm ${
                 selectedDuration === duration.id
                   ? `${selectedRing} font-semibold`
                   : idleOption
               }`}
             >
-              <div className="font-medium">{duration.label}</div>
+              <div className="font-medium leading-tight">{duration.label}</div>
               <div
                 className={`mt-0.5 text-xs ${
                   selectedDuration === duration.id
@@ -328,7 +337,58 @@ export function RentalProductSummary({
   );
 }
 
-/* ---------- Checkout ---------- */
+/* ---------- Checkout & voucher ---------- */
+
+type RentalVoucherKind = 'fixed' | 'percent';
+
+export interface RentalVoucher {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  kind: RentalVoucherKind;
+  /** VND nếu kind=fixed, % nếu kind=percent */
+  value: number;
+  /** Tổng tiền thuê tối thiểu để áp dụng (VND) */
+  minRental?: number;
+}
+
+export const defaultRentalVouchers: RentalVoucher[] = [
+  {
+    id: 'v1',
+    code: 'SWIFTERA50K',
+    title: 'Giảm 50.000₫ tiền thuê',
+    description: 'Áp dụng cho đơn thuê từ 200.000₫',
+    kind: 'fixed',
+    value: 50000,
+    minRental: 200000,
+  },
+  {
+    id: 'v2',
+    code: 'THUE10',
+    title: 'Giảm 10% tiền thuê',
+    description: 'Tối đa áp dụng trên tổng tiền thuê (không áp dụng tiền cọc)',
+    kind: 'percent',
+    value: 10,
+  },
+  {
+    id: 'v3',
+    code: 'WEEKEND',
+    title: 'Giảm 100.000₫ cuối tuần',
+    description: 'Ưu đãi cuối tuần — đơn từ 500.000₫',
+    kind: 'fixed',
+    value: 100000,
+    minRental: 500000,
+  },
+];
+
+function computeVoucherDiscount(totalRental: number, voucher: RentalVoucher): number {
+  if (voucher.minRental != null && totalRental < voucher.minRental) return 0;
+  if (voucher.kind === 'fixed') {
+    return Math.min(voucher.value, totalRental);
+  }
+  return Math.floor((totalRental * voucher.value) / 100);
+}
 
 interface RentalCheckoutCardProps {
   rentalPrice: number;
@@ -336,6 +396,7 @@ interface RentalCheckoutCardProps {
   selectedDuration: string;
   quantity: number;
   setQuantity: (qty: number) => void;
+  vouchers?: RentalVoucher[];
 }
 
 export function RentalCheckoutCard({
@@ -344,12 +405,34 @@ export function RentalCheckoutCard({
   selectedDuration,
   quantity,
   setQuantity,
+  vouchers = defaultRentalVouchers,
 }: RentalCheckoutCardProps) {
+  const [voucherOpen, setVoucherOpen] = useState(false);
+  const [appliedVoucher, setAppliedVoucher] = useState<RentalVoucher | null>(null);
+
   const totalRental = rentalPrice * quantity;
-  const totalPayment = totalRental + deposit;
+  const voucherDiscount = useMemo(
+    () => (appliedVoucher ? computeVoucherDiscount(totalRental, appliedVoucher) : 0),
+    [appliedVoucher, totalRental]
+  );
+  const totalPayment = totalRental - voucherDiscount + deposit;
+
+  const handleApplyVoucher = (v: RentalVoucher) => {
+    const d = computeVoucherDiscount(totalRental, v);
+    if (d <= 0) return;
+    setAppliedVoucher(v);
+    setVoucherOpen(false);
+  };
+
+  useEffect(() => {
+    if (!appliedVoucher) return;
+    if (computeVoucherDiscount(totalRental, appliedVoucher) <= 0) {
+      setAppliedVoucher(null);
+    }
+  }, [appliedVoucher, totalRental]);
 
   return (
-    <div className="space-y-5 rounded-xl border border-border bg-card p-5 font-sans shadow-sm ambient-glow">
+    <div className="space-y-4 rounded-xl border border-border bg-card p-4 font-sans shadow-sm ambient-glow sm:space-y-5 sm:p-5">
       <div>
         <span className="mb-2 block text-sm font-bold text-foreground">Số lượng</span>
         <div className="flex items-center gap-2">
@@ -368,21 +451,33 @@ export function RentalCheckoutCard({
         </div>
       </div>
 
-      <div className="space-y-3 rounded-xl bg-muted/50 p-4 dark:bg-muted/30">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Tiền thuê ({selectedDuration})</span>
-          <span className="font-semibold text-foreground">{totalRental.toLocaleString()}₫</span>
+      <div className="space-y-3 rounded-xl bg-muted/50 p-3 dark:bg-muted/30 sm:p-4">
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+          <span className="text-xs text-muted-foreground sm:text-sm">Tiền thuê ({selectedDuration})</span>
+          <span className="text-sm font-semibold text-foreground sm:text-base">{totalRental.toLocaleString()}₫</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="flex items-center gap-1 text-muted-foreground">
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">
             Tiền cọc
-            <Info className="size-3.5 text-muted-foreground" />
+            <Info className="size-3.5 shrink-0 text-muted-foreground" />
           </span>
-          <span className="font-semibold text-foreground">{deposit.toLocaleString()}₫</span>
+          <span className="text-sm font-semibold text-foreground sm:text-base">{deposit.toLocaleString()}₫</span>
         </div>
-        <div className="flex justify-between border-t border-border pt-3">
-          <span className="font-bold text-foreground">Tổng thanh toán</span>
-          <span className="text-xl font-bold text-teal-600 dark:text-teal-400">{totalPayment.toLocaleString()}₫</span>
+        {appliedVoucher && voucherDiscount > 0 && (
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+            <span className="text-xs text-teal-700 dark:text-teal-300 sm:text-sm">
+              Giảm voucher ({appliedVoucher.code})
+            </span>
+            <span className="text-sm font-semibold text-teal-600 dark:text-teal-400 sm:text-base">
+              −{voucherDiscount.toLocaleString()}₫
+            </span>
+          </div>
+        )}
+        <div className="flex flex-col gap-1 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-sm font-bold text-foreground">Tổng thanh toán</span>
+          <span className="text-lg font-bold text-teal-600 sm:text-xl dark:text-teal-400">
+            {totalPayment.toLocaleString()}₫
+          </span>
         </div>
       </div>
 
@@ -391,10 +486,86 @@ export function RentalCheckoutCard({
         bao gồm phí vận chuyển và 8% VAT.
       </div>
 
-      <Button className="kinetic-gradient h-12 w-full rounded-xl text-base font-bold text-white hover:opacity-90">
-        <ShoppingCart className="mr-2 size-5" />
-        Thêm vào giỏ
-      </Button>
+      <div className="flex gap-2">
+        <Button className="kinetic-gradient h-11 min-w-0 flex-1 rounded-xl text-sm font-bold text-white hover:opacity-90 sm:h-12 sm:text-base">
+          <ShoppingCart className="mr-2 size-5 shrink-0" />
+          Thêm vào giỏ
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setVoucherOpen(true)}
+          className="h-11 shrink-0 rounded-xl px-3 sm:h-12 sm:px-4"
+          aria-label="Chọn mã voucher"
+        >
+          <TicketPercent className="size-5 sm:mr-1.5" />
+          <span className="hidden sm:inline">Voucher</span>
+        </Button>
+      </div>
+
+      <Dialog open={voucherOpen} onOpenChange={setVoucherOpen}>
+        <DialogContent className="max-h-[min(90dvh,560px)] gap-0 overflow-hidden p-0 sm:max-w-md">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">
+            <DialogTitle className="text-lg font-bold text-foreground">Mã giảm giá</DialogTitle>
+            <DialogDescription className="text-left text-sm">
+              Chọn một voucher để giảm trừ trên tiền thuê (không áp dụng tiền cọc).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[min(60dvh,420px)] space-y-2 overflow-y-auto px-4 py-3 sm:px-5">
+            {vouchers.map((v) => {
+              const preview = computeVoucherDiscount(totalRental, v);
+              const disabled = preview <= 0;
+              return (
+                <div
+                  key={v.id}
+                  className="rounded-xl border border-border/80 bg-muted/30 p-3 dark:bg-muted/20"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs font-bold text-teal-600 dark:text-teal-400">{v.code}</p>
+                      <p className="mt-0.5 text-sm font-semibold text-foreground">{v.title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{v.description}</p>
+                      {v.minRental != null && (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          Đơn tối thiểu: {v.minRental.toLocaleString()}₫ tiền thuê
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {disabled
+                        ? 'Chưa đủ điều kiện'
+                        : `Giảm ~${preview.toLocaleString()}₫ cho đơn hiện tại`}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={disabled || appliedVoucher?.id === v.id}
+                      variant={appliedVoucher?.id === v.id ? 'secondary' : 'default'}
+                      onClick={() => handleApplyVoucher(v)}
+                    >
+                      {appliedVoucher?.id === v.id ? 'Đang dùng' : 'Áp dụng'}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {appliedVoucher && (
+            <div className="border-t border-border bg-muted/40 px-4 py-3 dark:bg-muted/20 sm:px-5">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-destructive hover:text-destructive"
+                onClick={() => setAppliedVoucher(null)}
+              >
+                Bỏ mã đang áp dụng
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

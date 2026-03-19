@@ -3,8 +3,10 @@ export {
   RentalProductGallery,
   RentalProductSummary,
   RentalCheckoutCard,
+  defaultRentalVouchers,
   type RentalDuration,
   type ProductVariant,
+  type RentalVoucher,
 } from './rental-product-hero';
 
 export {

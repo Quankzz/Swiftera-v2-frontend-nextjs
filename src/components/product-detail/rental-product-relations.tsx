@@ -91,9 +91,9 @@ function RentalReviewCard({
   shopResponse,
 }: RentalReviewCardProps) {
   return (
-    <div className="py-6 border-b">
-      <div className="flex gap-4">
-        <Avatar className="w-10 h-10">
+    <div className="border-b py-4 sm:py-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+        <Avatar className="size-10 shrink-0">
           <AvatarImage src={avatar} alt="" />
           <AvatarFallback>{author.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
@@ -102,7 +102,7 @@ function RentalReviewCard({
             <div>
               <h3 className="font-medium">{author}</h3>
               <div className="text-sm text-muted-foreground">Đã tham gia {joinedYears} năm</div>
-              <div className="mt-1 flex gap-4 text-sm text-muted-foreground">
+              <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-4 sm:text-sm">
                 <span>Đã viết {reviewsCount} đánh giá</span>
                 <span>Đã nhận {likesCount} lượt cảm ơn</span>
               </div>
@@ -110,15 +110,15 @@ function RentalReviewCard({
           </div>
 
           <div className="mt-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex">
+            <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+              <div className="flex shrink-0">
                 {[...Array(5)].map((_, i) => (
-                  <span key={i} className={`text-lg ${i < rating ? 'text-yellow-400' : 'text-muted-foreground/25'}`}>
+                  <span key={i} className={`text-base sm:text-lg ${i < rating ? 'text-yellow-400' : 'text-muted-foreground/25'}`}>
                     ★
                   </span>
                 ))}
               </div>
-              <span className="font-medium">{title}</span>
+              <span className="font-medium leading-snug">{title}</span>
             </div>
 
             {verifiedPurchase && (
@@ -131,37 +131,37 @@ function RentalReviewCard({
             <p className="mb-4 leading-relaxed text-foreground">{content}</p>
 
             {images.length > 0 && (
-              <div className="flex gap-2 mb-4">
+              <div className="mb-4 flex flex-wrap gap-2">
                 {images.map((image, index) => (
-                  <div key={index} className="relative w-[77px] h-[77px]">
-                    <img src={image.src} alt={image.alt} className="object-cover rounded-lg" />
+                  <div key={index} className="relative size-16 shrink-0 overflow-hidden rounded-lg sm:size-[77px]">
+                    <img src={image.src} alt={image.alt} className="size-full object-cover" />
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="mb-4 flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="mb-4 flex flex-col gap-0.5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4 sm:text-sm">
               <span>Đánh giá vào {timeAgo}</span>
-              <span>•</span>
+              <span className="hidden sm:inline">•</span>
               <span>Đã dùng {usedDays} ngày</span>
             </div>
 
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              <Button variant="ghost" size="sm" className="h-8 text-muted-foreground sm:h-9">
                 <ThumbsUp className="mr-2 size-4" />
                 Hữu ích ({helpfulCount})
               </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <Button variant="ghost" size="sm" className="h-8 text-muted-foreground sm:h-9">
                 <MessageCircle className="mr-2 size-4" />1
               </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <Button variant="ghost" size="sm" className="h-8 text-muted-foreground sm:h-9">
                 <Share2 className="mr-2 size-4" />
                 Chia sẻ
               </Button>
             </div>
 
             {shopResponse && (
-              <div className="mt-4 rounded-lg border border-border bg-muted/40 p-4 dark:bg-muted/20">
+              <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3 dark:bg-muted/20 sm:p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <Avatar className="size-6">
                     <AvatarFallback>S</AvatarFallback>
@@ -282,22 +282,25 @@ export function RentalReviewsSection({ rating, reviews }: RentalReviewsSectionPr
   const totalPages = Math.ceil(sampleReviews.length / reviewsPerPage);
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-6 font-sans ambient-glow">
-      <h2 className="mb-6 text-xl font-bold tracking-tight text-foreground">Khách hàng đánh giá</h2>
+    <div className="rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-6">
+      <h2 className="mb-4 text-lg font-bold tracking-tight text-foreground sm:mb-6 sm:text-xl">Khách hàng đánh giá</h2>
 
-      <div className="grid md:grid-cols-2 gap-8 mb-6">
+      <div className="mb-6 grid gap-6 md:grid-cols-2 md:gap-8">
         <div>
-          <h3 className="mb-4 text-lg font-bold tracking-tight text-foreground">Tổng quan</h3>
-          <div className="mb-4 flex items-baseline gap-2">
-            <span className="text-5xl font-bold tracking-tight text-foreground">{rating.toFixed(1)}</span>
+          <h3 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">Tổng quan</h3>
+          <div className="mb-3 flex flex-wrap items-baseline gap-2 sm:mb-4">
+            <span className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">{rating.toFixed(1)}</span>
             <ReviewRatingStars rating={rating} />
           </div>
           <p className="mb-4 text-muted-foreground">({reviews} đánh giá)</p>
 
           <div className="space-y-2">
             {ratingDistribution.map((row) => (
-              <div key={row.stars} className="flex items-center gap-2">
-                <ReviewRatingStars rating={row.stars} />
+              <div key={row.stars} className="flex items-center gap-1.5 sm:gap-2">
+                <div className="hidden shrink-0 sm:block sm:min-w-30">
+                  <ReviewRatingStars rating={row.stars} />
+                </div>
+                <span className="w-6 shrink-0 text-center text-xs text-muted-foreground sm:hidden">{row.stars}★</span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full bg-yellow-400 rounded-full"
@@ -311,13 +314,13 @@ export function RentalReviewsSection({ rating, reviews }: RentalReviewsSectionPr
         </div>
 
         <div>
-          <h3 className="mb-4 text-lg font-bold tracking-tight text-foreground">
+          <h3 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">
             Tất cả hình ảnh ({reviewImages.length})
           </h3>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {reviewImages.map((image, index) => (
-              <div key={index} className="relative w-[69px] h-[69px]">
-                <img src={image.src} alt={image.alt} className="object-cover rounded-lg w-full h-full" />
+              <div key={index} className="relative aspect-square overflow-hidden rounded-lg">
+                <img src={image.src} alt={image.alt} className="size-full object-cover" />
               </div>
             ))}
           </div>
@@ -325,14 +328,15 @@ export function RentalReviewsSection({ rating, reviews }: RentalReviewsSectionPr
       </div>
 
       <div className="mb-6">
-        <h3 className="mb-4 text-lg font-bold tracking-tight text-foreground">Lọc theo</h3>
-        <div className="flex flex-wrap gap-2">
+        <h3 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">Lọc theo</h3>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {filters.map((filter) => (
             <Button
               key={filter.id}
               variant={selectedFilter === filter.id ? 'default' : 'outline'}
               onClick={() => setSelectedFilter(filter.id)}
-              className="rounded-full"
+              size="sm"
+              className="h-8 rounded-full px-3 text-xs sm:h-9 sm:px-4 sm:text-sm"
             >
               {filter.label}
             </Button>
@@ -347,7 +351,7 @@ export function RentalReviewsSection({ rating, reviews }: RentalReviewsSectionPr
       </div>
 
       <Pagination className="mt-6">
-        <PaginationContent>
+        <PaginationContent className="flex flex-wrap justify-center gap-y-2">
           {currentPage > 1 && <PaginationPrevious onClick={() => setCurrentPage(currentPage - 1)} />}
           {Array.from({ length: totalPages }, (_, index) => (
             <PaginationItem key={index}>
@@ -451,7 +455,7 @@ export function RentalRelatedProducts() {
     const { onClick } = props;
     return (
       <div
-        className="absolute top-1/2 right-[-12px] z-10 flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card shadow-lg transition-colors hover:bg-muted/50"
+        className="absolute top-1/2 right-0 z-10 flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card shadow-md transition-colors hover:bg-muted/50 sm:right-[-12px] sm:size-10 sm:shadow-lg"
         onClick={onClick}
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="size-5 text-foreground">
@@ -465,7 +469,7 @@ export function RentalRelatedProducts() {
     const { onClick } = props;
     return (
       <div
-        className="absolute top-1/2 left-[-12px] z-10 flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card shadow-lg transition-colors hover:bg-muted/50"
+        className="absolute top-1/2 left-0 z-10 flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card shadow-md transition-colors hover:bg-muted/50 sm:left-[-12px] sm:size-10 sm:shadow-lg"
         onClick={onClick}
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="size-5 text-foreground">
@@ -485,15 +489,24 @@ export function RentalRelatedProducts() {
     prevArrow: <SamplePrevArrow />,
     responsive: [
       { breakpoint: 1024, settings: { slidesToShow: 3 } },
-      { breakpoint: 768, settings: { slidesToShow: 2 } },
+      { breakpoint: 768, settings: { slidesToShow: 2, slidesToScroll: 1 } },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          dots: true,
+          arrows: false,
+        },
+      },
     ],
   };
 
   return (
-    <div className="rounded-xl border border-border/60 bg-card p-5 font-sans ambient-glow">
-      <h2 className="mb-5 text-lg font-bold tracking-tight text-foreground">Sản phẩm liên quan</h2>
-      <div className="px-4">
-        <Slider {...settings}>
+    <div className="rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5">
+      <h2 className="mb-4 text-base font-bold tracking-tight text-foreground sm:mb-5 sm:text-lg">Sản phẩm liên quan</h2>
+      <div className="overflow-x-hidden px-1 sm:px-4">
+        <Slider {...settings} className="related-rental-slider">
           {relatedProducts.map((product) => (
             <div key={product.id} className="px-2">
               <Link href={`/product/${product.id}`} className="block group">
