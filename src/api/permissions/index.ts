@@ -1,9 +1,17 @@
-import { Permission, PaginatedResponse } from '@/types/dashboard';
+import {
+  CreatePermissionInput,
+  PaginatedResponse,
+  Permission,
+  PermissionListParams,
+  UpdatePermissionInput,
+} from '@/types/dashboard';
 import { fetchApi } from '../apiService';
 
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false'; // Default to true if not explicitly false
+type DataMode = 'mock' | 'api';
+const DATA_MODE = (process.env.NEXT_PUBLIC_DATA_MODE as DataMode) || 'mock';
+const USE_MOCK = DATA_MODE === 'mock';
 
-let MOCK_PERMISSIONS: Permission[] = [
+let mockPermissions: Permission[] = [
   {
     permissionId: 'p1',
     name: 'Xem người dùng',
@@ -44,31 +52,225 @@ let MOCK_PERMISSIONS: Permission[] = [
     name: 'Xuất báo cáo',
     apiPath: '/api/v1/reports',
     method: 'GET',
-    module: 'Khác',
+    module: 'Reports',
   },
 ];
 
-export const permissionsApi = {
-  getPermissions: async (): Promise<PaginatedResponse<Permission>> => {
-    if (USE_MOCK) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      return { data: [...MOCK_PERMISSIONS], total: MOCK_PERMISSIONS.length };
-    }
-    return await fetchApi<PaginatedResponse<Permission>>(
-      '/permissions?limit=1000',
-    );
-  },
-  updatePermissionModule: async (
+const mockModules: string[] = ['Users', 'Roles', 'Products', 'Reports'];
+
+const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export interface PermissionsRepository {
+  list(params?: PermissionListParams): Promise<PaginatedResponse<Permission>>;
+  get(permissionId: string): Promise<Permission>;
+  create(payload: CreatePermissionInput): Promise<Permission>;
+  update(
     permissionId: string,
-    moduleName: string,
-  ): Promise<boolean> => {
-    if (USE_MOCK) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      MOCK_PERMISSIONS = MOCK_PERMISSIONS.map((p) =>
-        p.permissionId === permissionId ? { ...p, module: moduleName } : p,
+    payload: UpdatePermissionInput,
+  ): Promise<Permission>;
+  remove(permissionId: string): Promise<{ success: boolean }>;
+  updateModule(permissionId: string, module: string): Promise<boolean>;
+  listModules(): Promise<string[]>;
+  createModule(name: string): Promise<string>;
+}
+
+const mockPermissionsRepository: PermissionsRepository = {
+  async list(params = {}) {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 1000;
+    const search = params.search?.toLowerCase().trim();
+    const moduleFilter = params.module?.toLowerCase().trim();
+    const methodFilter = params.method?.toUpperCase().trim();
+
+    let filtered = mockPermissions;
+    if (search) {
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(search) ||
+          p.apiPath.toLowerCase().includes(search) ||
+          p.module.toLowerCase().includes(search),
       );
-      return true;
+    }
+
+    if (moduleFilter) {
+      filtered = filtered.filter(
+        (p) => p.module.toLowerCase() === moduleFilter,
+      );
+    }
+
+    if (methodFilter) {
+      filtered = filtered.filter(
+        (p) => p.method.toUpperCase() === methodFilter,
+      );
+    }
+
+    await delay();
+    return {
+      data: filtered.slice((page - 1) * limit, page * limit),
+      total: filtered.length,
+    };
+  },
+
+  async get(permissionId) {
+    await delay();
+    const found = mockPermissions.find((p) => p.permissionId === permissionId);
+    if (!found) throw new Error('Không tìm thấy quyền');
+    return found;
+  },
+
+  async create(payload) {
+    await delay();
+    const newPermission: Permission = {
+      permissionId: crypto.randomUUID(),
+      name: payload.name,
+      apiPath: payload.apiPath,
+      method: payload.method,
+      module: payload.module,
+    };
+    mockPermissions = [newPermission, ...mockPermissions];
+    if (!mockModules.includes(payload.module)) {
+      mockModules.push(payload.module);
+    }
+    return newPermission;
+  },
+
+  async update(permissionId, payload) {
+    await delay();
+    const existing = mockPermissions.find(
+      (p) => p.permissionId === permissionId,
+    );
+    if (!existing) throw new Error('Không tìm thấy quyền');
+
+    const updated: Permission = {
+      ...existing,
+      ...payload,
+      name: payload.name ?? existing.name,
+      apiPath: payload.apiPath ?? existing.apiPath,
+      method: payload.method ?? existing.method,
+      module: payload.module ?? existing.module,
+    };
+    mockPermissions = mockPermissions.map((p) =>
+      p.permissionId === permissionId ? updated : p,
+    );
+    if (payload.module && !mockModules.includes(payload.module)) {
+      mockModules.push(payload.module);
+    }
+    return updated;
+  },
+
+  async remove(permissionId) {
+    await delay();
+    mockPermissions = mockPermissions.filter(
+      (p) => p.permissionId !== permissionId,
+    );
+    return { success: true };
+  },
+
+  async updateModule(permissionId, module) {
+    await delay(200);
+    mockPermissions = mockPermissions.map((p) =>
+      p.permissionId === permissionId ? { ...p, module } : p,
+    );
+    if (!mockModules.includes(module)) {
+      mockModules.push(module);
     }
     return true;
   },
+
+  async listModules() {
+    await delay(150);
+    const fromPermissions = Array.from(
+      new Set(mockPermissions.map((p) => p.module).filter(Boolean)),
+    );
+    return Array.from(new Set([...mockModules, ...fromPermissions]));
+  },
+
+  async createModule(name: string) {
+    await delay(150);
+    if (!mockModules.includes(name)) {
+      mockModules.push(name);
+    }
+    return name;
+  },
+};
+
+const apiPermissionsRepository: PermissionsRepository = {
+  async list(params = {}) {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 100;
+    const search = params.search
+      ? `&search=${encodeURIComponent(params.search)}`
+      : '';
+    const moduleFilter = params.module
+      ? `&module=${encodeURIComponent(params.module)}`
+      : '';
+    const methodFilter = params.method ? `&method=${params.method}` : '';
+
+    return fetchApi<PaginatedResponse<Permission>>(
+      `/permissions?page=${page}&limit=${limit}${search}${moduleFilter}${methodFilter}`,
+    );
+  },
+
+  async get(permissionId) {
+    return fetchApi<Permission>(`/permissions/${permissionId}`);
+  },
+
+  async create(payload) {
+    return fetchApi<Permission>(`/permissions`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async update(permissionId, payload) {
+    return fetchApi<Permission>(`/permissions/${permissionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async remove(permissionId) {
+    return fetchApi<{ success: boolean }>(`/permissions/${permissionId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async updateModule(permissionId, module) {
+    return fetchApi<boolean>(`/permissions/${permissionId}/module`, {
+      method: 'PATCH',
+      body: JSON.stringify({ module }),
+    });
+  },
+
+  async listModules() {
+    return fetchApi<string[]>(`/permissions/modules`);
+  },
+
+  async createModule(name) {
+    return fetchApi<string>(`/permissions/modules`, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+  },
+};
+
+export const permissionsRepository: PermissionsRepository = USE_MOCK
+  ? mockPermissionsRepository
+  : apiPermissionsRepository;
+
+export const permissionsApi = {
+  getPermissions: (params?: PermissionListParams) =>
+    permissionsRepository.list(params),
+  getPermissionById: (permissionId: string) =>
+    permissionsRepository.get(permissionId),
+  createPermission: (payload: CreatePermissionInput) =>
+    permissionsRepository.create(payload),
+  updatePermission: (permissionId: string, payload: UpdatePermissionInput) =>
+    permissionsRepository.update(permissionId, payload),
+  deletePermission: (permissionId: string) =>
+    permissionsRepository.remove(permissionId),
+  updatePermissionModule: (permissionId: string, module: string) =>
+    permissionsRepository.updateModule(permissionId, module),
+  getModules: () => permissionsRepository.listModules(),
+  createModule: (name: string) => permissionsRepository.createModule(name),
 };

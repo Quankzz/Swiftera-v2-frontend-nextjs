@@ -1,8 +1,20 @@
+'use client';
+
+import { useState } from 'react';
 import { UsersTable } from '@/components/dashboard/users/users-table';
+import {
+  UserDeleteDialog,
+  UserFormDialog,
+} from '@/components/dashboard/users/users-dialogs';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react'; // Let's assume lucide-react is installed since it's a NextJS common standard
+import { Plus } from 'lucide-react';
+import { User } from '@/types/dashboard';
 
 export default function UsersPage() {
+  const [dialogUser, setDialogUser] = useState<User | null>(null);
+  const [isFormOpen, setFormOpen] = useState(false);
+  const [isDeleteOpen, setDeleteOpen] = useState(false);
+
   return (
     <div className='flex flex-col gap-6 w-full p-6'>
       <div className='flex items-center justify-between'>
@@ -15,15 +27,43 @@ export default function UsersPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <Button className='bg-theme-primary-start hover:opacity-90 transition-opacity'>
+          <Button
+            size='lg'
+            className='bg-theme-primary-start hover:opacity-90 transition-opacity'
+            onClick={() => {
+              setDialogUser(null);
+              setFormOpen(true);
+            }}
+          >
             <Plus className='mr-2 h-4 w-4' /> Thêm người dùng
           </Button>
         </div>
       </div>
 
       <div className='w-full'>
-        <UsersTable />
+        <UsersTable
+          onEdit={(user: User) => {
+            setDialogUser(user);
+            setFormOpen(true);
+          }}
+          onDelete={(user: User) => {
+            setDialogUser(user);
+            setDeleteOpen(true);
+          }}
+        />
       </div>
+
+      <UserFormDialog
+        open={isFormOpen}
+        initialUser={dialogUser}
+        onClose={() => setFormOpen(false)}
+      />
+
+      <UserDeleteDialog
+        open={isDeleteOpen}
+        user={dialogUser}
+        onClose={() => setDeleteOpen(false)}
+      />
     </div>
   );
 }

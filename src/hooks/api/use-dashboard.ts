@@ -1,25 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { usersApi } from '@/api/users';
-import { rolesApi } from '@/api/roles';
-import { permissionsApi } from '@/api/permissions';
+import { useUsersQuery } from './use-users';
+import { useRolesQuery } from './use-roles';
+import { usePermissionsQuery } from './use-permissions';
 
-export function useUsers(page: number, limit: number) {
-  return useQuery({
-    queryKey: ['users', page, limit],
-    queryFn: () => usersApi.getUsers(page, limit),
-  });
-}
+export const useUsers = (page: number, limit: number) =>
+  useUsersQuery({ page, limit });
 
-export function useRoles(page: number, limit: number) {
-  return useQuery({
-    queryKey: ['roles', page, limit],
-    queryFn: () => rolesApi.getRoles(page, limit),
-  });
-}
+export const useRoles = (page: number, limit: number) =>
+  useRolesQuery({ page, limit });
 
-export function usePermissions() {
-  return useQuery({
-    queryKey: ['permissions'],
-    queryFn: () => permissionsApi.getPermissions(),
-  });
-}
+// Legacy alias for permissions hook
+export const usePermissions = () =>
+  usePermissionsQuery({ page: 1, limit: 1000 });

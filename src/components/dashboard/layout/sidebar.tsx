@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Users,
@@ -11,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
+import logo from '../../../../public/logo.png';
 
 const navItems = [
   {
@@ -67,9 +69,19 @@ export function DashboardSidebar() {
       `}
       >
         <div className='flex items-center h-16 px-6 border-b border-gray-200'>
-          <span className='text-xl font-bold text-theme-primary-start'>
+          {/* <span className='text-xl font-bold text-theme-primary-start'>
             Swiftera Panel
-          </span>
+          </span> */}
+
+          <Link href='/' className='flex items-center gap-2'>
+            <Image
+              src={logo}
+              alt='logo'
+              width={150}
+              height={40}
+              className='object-contain'
+            />
+          </Link>
         </div>
 
         <div className='p-4 flex-1 overflow-y-auto'>

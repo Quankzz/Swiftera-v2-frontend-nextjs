@@ -1,9 +1,18 @@
-import { User, PaginatedResponse } from '@/types/dashboard';
-import { fetchApi } from '../apiService'; // Tận dụng apiService có sẵn của Swiftera
+import {
+  CreateUserInput,
+  PaginatedResponse,
+  UpdateUserInput,
+  User,
+  UserListParams,
+} from '@/types/dashboard';
+import { fetchApi } from '../apiService';
 
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_API !== 'false'; // Default to true if not explicitly false
+type DataMode = 'mock' | 'api';
+const DATA_MODE = (process.env.NEXT_PUBLIC_DATA_MODE as DataMode) || 'mock';
+const USE_MOCK = DATA_MODE === 'mock';
 
-const MOCK_USERS: User[] = [
+// In-memory mock store
+let mockUsers: User[] = [
   {
     userId: 'u1',
     email: 'admin@swiftera.com',
@@ -20,20 +29,334 @@ const MOCK_USERS: User[] = [
     avatarUrl: null,
     isVerified: false,
   },
+  {
+    userId: 'u3',
+    email: 'nam.nguyen@example.com',
+    fullName: 'Nguyễn Văn Nam',
+    phoneNumber: '0901234567',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u4',
+    email: 'lan.tran@example.com',
+    fullName: 'Trần Thị Lan',
+    phoneNumber: '0912345678',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u5',
+    email: 'minh.le@example.com',
+    fullName: 'Lê Văn Minh',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u6',
+    email: 'huong.pham@example.com',
+    fullName: 'Phạm Thị Hương',
+    phoneNumber: '0923456789',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u7',
+    email: 'duc.hoang@example.com',
+    fullName: 'Hoàng Văn Đức',
+    phoneNumber: '0934567890',
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u8',
+    email: 'linh.vu@example.com',
+    fullName: 'Vũ Thị Linh',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u9',
+    email: 'thanh.do@example.com',
+    fullName: 'Đỗ Thanh Tùng',
+    phoneNumber: '0945678901',
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u10',
+    email: 'mai.bui@example.com',
+    fullName: 'Bùi Thị Mai',
+    phoneNumber: '0956789012',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u11',
+    email: 'khoa.ngo@example.com',
+    fullName: 'Ngô Minh Khoa',
+    phoneNumber: '0967890123',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u12',
+    email: 'thuy.dang@example.com',
+    fullName: 'Đặng Thị Thùy',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u13',
+    email: 'long.cao@example.com',
+    fullName: 'Cao Đình Long',
+    phoneNumber: '0978901234',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u14',
+    email: 'hoa.dinh@example.com',
+    fullName: 'Đinh Thị Hoa',
+    phoneNumber: '0989012345',
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u15',
+    email: 'son.truong@example.com',
+    fullName: 'Trương Văn Sơn',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u16',
+    email: 'yen.ly@example.com',
+    fullName: 'Lý Thị Yến',
+    phoneNumber: '0990123456',
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u17',
+    email: 'tuan.ha@example.com',
+    fullName: 'Hà Anh Tuấn',
+    phoneNumber: '0901357924',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u18',
+    email: 'nga.luong@example.com',
+    fullName: 'Lương Thị Nga',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u19',
+    email: 'phuc.to@example.com',
+    fullName: 'Tô Văn Phúc',
+    phoneNumber: '0912468135',
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u20',
+    email: 'tam.duong@example.com',
+    fullName: 'Dương Thị Tâm',
+    phoneNumber: '0923579246',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u21',
+    email: 'cuong.phan@example.com',
+    fullName: 'Phan Văn Cường',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u22',
+    email: 'nhung.vo@example.com',
+    fullName: 'Võ Thị Nhung',
+    phoneNumber: '0934681357',
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u23',
+    email: 'bien.mac@example.com',
+    fullName: 'Mạc Đình Biên',
+    phoneNumber: '0945792468',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u24',
+    email: 'thu.trinh@example.com',
+    fullName: 'Trịnh Thị Thu',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u25',
+    email: 'hung.dam@example.com',
+    fullName: 'Đàm Văn Hùng',
+    phoneNumber: '0956803579',
+    avatarUrl: null,
+    isVerified: true,
+  },
+  {
+    userId: 'u26',
+    email: 'mai.lam@example.com',
+    fullName: 'Lâm Thị Mai Anh',
+    phoneNumber: '0967914680',
+    avatarUrl: null,
+    isVerified: false,
+  },
+  {
+    userId: 'u27',
+    email: 'kien.tong@example.com',
+    fullName: 'Tống Thành Kiên',
+    phoneNumber: null,
+    avatarUrl: null,
+    isVerified: true,
+  },
 ];
 
-export const usersApi = {
-  getUsers: async (page = 1, limit = 10): Promise<PaginatedResponse<User>> => {
-    if (USE_MOCK) {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      return {
-        data: MOCK_USERS.slice((page - 1) * limit, page * limit),
-        total: MOCK_USERS.length,
-      };
+const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export interface UsersRepository {
+  list(params?: UserListParams): Promise<PaginatedResponse<User>>;
+  get(userId: string): Promise<User>;
+  create(payload: CreateUserInput): Promise<User>;
+  update(userId: string, payload: UpdateUserInput): Promise<User>;
+  remove(userId: string): Promise<{ success: boolean }>;
+}
+
+const mockUsersRepository: UsersRepository = {
+  async list(params = {}) {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 10;
+    const search = params.search?.toLowerCase().trim();
+
+    let filtered = mockUsers;
+    if (search) {
+      filtered = mockUsers.filter(
+        (u) =>
+          u.fullName.toLowerCase().includes(search) ||
+          u.email.toLowerCase().includes(search) ||
+          (u.phoneNumber || '').toLowerCase().includes(search),
+      );
     }
-    const res = await fetchApi<PaginatedResponse<User>>(
-      `/users?page=${page}&limit=${limit}`,
-    );
-    return res;
+
+    await delay();
+    return {
+      data: filtered.slice((page - 1) * limit, page * limit),
+      total: filtered.length,
+    };
   },
+
+  async get(userId) {
+    await delay();
+    const found = mockUsers.find((u) => u.userId === userId);
+    if (!found) {
+      throw new Error('Không tìm thấy người dùng');
+    }
+    return found;
+  },
+
+  async create(payload) {
+    await delay();
+    const newUser: User = {
+      userId: crypto.randomUUID(),
+      email: payload.email,
+      fullName: payload.fullName,
+      phoneNumber: payload.phoneNumber ?? null,
+      avatarUrl: payload.avatarUrl ?? null,
+      isVerified: payload.isVerified,
+    };
+    mockUsers = [newUser, ...mockUsers];
+    return newUser;
+  },
+
+  async update(userId, payload) {
+    await delay();
+    const existing = mockUsers.find((u) => u.userId === userId);
+    if (!existing) throw new Error('Không tìm thấy người dùng');
+
+    const updated: User = {
+      ...existing,
+      ...payload,
+      phoneNumber: payload.phoneNumber ?? existing.phoneNumber,
+      avatarUrl: payload.avatarUrl ?? existing.avatarUrl,
+      isVerified: payload.isVerified ?? existing.isVerified,
+    };
+    mockUsers = mockUsers.map((u) => (u.userId === userId ? updated : u));
+    return updated;
+  },
+
+  async remove(userId) {
+    await delay();
+    mockUsers = mockUsers.filter((u) => u.userId !== userId);
+    return { success: true };
+  },
+};
+
+const apiUsersRepository: UsersRepository = {
+  async list(params = {}) {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 10;
+    const search = params.search
+      ? `&search=${encodeURIComponent(params.search)}`
+      : '';
+    return fetchApi<PaginatedResponse<User>>(
+      `/users?page=${page}&limit=${limit}${search}`,
+    );
+  },
+
+  async get(userId) {
+    return fetchApi<User>(`/users/${userId}`);
+  },
+
+  async create(payload) {
+    return fetchApi<User>(`/users`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async update(userId, payload) {
+    return fetchApi<User>(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async remove(userId) {
+    return fetchApi<{ success: boolean }>(`/users/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+export const usersRepository: UsersRepository = USE_MOCK
+  ? mockUsersRepository
+  : apiUsersRepository;
+
+// Backward compatible API surface
+export const usersApi = {
+  getUsers: (page = 1, limit = 10) => usersRepository.list({ page, limit }),
+  getUserById: (userId: string) => usersRepository.get(userId),
+  createUser: (payload: CreateUserInput) => usersRepository.create(payload),
+  updateUser: (userId: string, payload: UpdateUserInput) =>
+    usersRepository.update(userId, payload),
+  deleteUser: (userId: string) => usersRepository.remove(userId),
 };
