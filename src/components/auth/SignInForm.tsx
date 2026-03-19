@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { SocialIcons } from './SocialIcons';
 
 const inputClassName =
-  'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] focus-visible:ring-1 focus-visible:ring-[#512da8]/30';
+  'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#512da8]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#8b77c9]/40';
 
 export function SignInForm() {
   const router = useRouter();
@@ -29,13 +29,13 @@ export function SignInForm() {
   return (
     <form
       onSubmit={handleLogin}
-      className="flex h-full flex-col items-center justify-center bg-white px-10"
+      className="flex h-full w-full flex-col items-center justify-center bg-white px-5 py-6 sm:px-10 sm:py-0 dark:bg-zinc-900"
     >
-      <h1 className="text-2xl font-bold text-zinc-900">Đăng nhập</h1>
-      <SocialIcons />
-      <span className="text-xs text-zinc-500">
+      <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">Đăng nhập</h1>
+      {/* <SocialIcons />
+      <span className="text-xs text-zinc-500 dark:text-zinc-400">
         hoặc sử dụng email và mật khẩu
-      </span>
+      </span> */}
       <Input
         type="email"
         placeholder="Email"
@@ -54,14 +54,14 @@ export function SignInForm() {
       />
       <a
         href="#"
-        className="my-3 text-[13px] text-zinc-600 no-underline hover:text-zinc-900"
+        className="my-3 text-[13px] text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
       >
         Quên mật khẩu?
       </a>
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       <Button
         type="submit"
-        className="mt-2.5 h-auto bg-[#512da8] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white hover:bg-[#5c6bc0]"
+        className="mt-2.5 h-auto w-full bg-[#512da8] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#5c6bc0]"
       >
         Đăng nhập
       </Button>

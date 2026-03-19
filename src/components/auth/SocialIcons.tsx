@@ -67,7 +67,7 @@ export function SocialIcons() {
           type="button"
           variant="outline"
           size="icon"
-          className="size-10 rounded-[20%] border-zinc-300 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+          className="size-10 rounded-[20%] border-zinc-300 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         >
           <Icon />
         </Button>
