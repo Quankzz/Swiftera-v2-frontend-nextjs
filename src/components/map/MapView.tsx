@@ -22,9 +22,9 @@ import HubModal from '@/components/map/HubModal';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 // ─── constants ─────────────────────────────────────────────────────────────────
-const ROUTE_COLORS = ['#0EA5E9', '#6B7280', '#9CA3AF'] as const;
+// const ROUTE_COLORS = ['#0EA5E9', '#6B7280', '#9CA3AF'] as const;
 const ROUTE_ACTIVE_COLOR = '#0EA5E9';
-const ROUTE_INACTIVE_COLOR = '#94A3B8';
+const ROUTE_INACTIVE_COLOR = '#0EA5E4';
 const NEARBY_RADIUS_KM = 10;
 const FIT_BOUNDS_PADDING = {
   top: 80,
@@ -723,7 +723,7 @@ const MapView: React.FC = () => {
       endMarkerRef.current = createEndMarker([endLoc.lng, endLoc.lat]);
 
       const res = await axios.get(
-        `https://rsapi.goong.io/Direction?origin=${startLoc.lat},${startLoc.lng}&destination=${endLoc.lat},${endLoc.lng}&vehicle=${useMapStore.getState().vehicleType ?? 'car'}&alternatives=true&api_key=${apiKey}`,
+        `https://rsapi.goong.io/Direction?origin=${startLoc.lat},${startLoc.lng}&destination=${endLoc.lat},${endLoc.lng}&vehicle=car&alternatives=true&api_key=${apiKey}`,
       );
       if (token !== searchTokenRef.current) return;
 
@@ -825,7 +825,7 @@ const MapView: React.FC = () => {
         endMarkerRef.current = createEndMarker([hub.longitude, hub.latitude]);
 
         const res = await axios.get(
-          `https://rsapi.goong.io/Direction?origin=${userLocation.lat},${userLocation.lng}&destination=${hub.latitude},${hub.longitude}&vehicle=${useMapStore.getState().vehicleType ?? 'car'}&alternatives=true&api_key=${apiKey}`,
+          `https://rsapi.goong.io/Direction?origin=${userLocation.lat},${userLocation.lng}&destination=${hub.latitude},${hub.longitude}&vehicle=car&alternatives=true&api_key=${apiKey}`,
         );
         const rawRoutes: GoongRoute[] = res.data.routes ?? [];
         if (!rawRoutes.length) {

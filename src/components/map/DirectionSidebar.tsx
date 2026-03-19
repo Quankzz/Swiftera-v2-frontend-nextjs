@@ -11,17 +11,22 @@ interface DirectionSidebarProps {
   onRouteSearch: () => void;
 }
 
-const DirectionSidebar: React.FC<DirectionSidebarProps> = ({ onRouteSearch }) => {
+const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
+  onRouteSearch,
+}) => {
   const {
-    startAddress, setStartAddress,
-    endAddress, setEndAddress,
-    currentLocationUsage, setCurrentLocationUsage,
+    startAddress,
+    setStartAddress,
+    endAddress,
+    setEndAddress,
+    currentLocationUsage,
+    setCurrentLocationUsage,
   } = useMapStore();
 
   return (
     <div className="absolute top-2 left-2 z-10 md:w-80 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200/70 dark:border-slate-700">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-500 px-4 py-3 flex items-center gap-2">
+      <div className="bg-linear-to-r from-emerald-600 to-emerald-500 px-4 py-3 flex items-center gap-2">
         <Navigation size={15} className="text-white" />
         <h2 className="text-white font-semibold text-sm">Tìm đường</h2>
       </div>
@@ -38,7 +43,8 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({ onRouteSearch }) =>
               value={startAddress}
               onChange={(e) => {
                 setStartAddress(e.target.value);
-                if (currentLocationUsage === 'start') setCurrentLocationUsage(null);
+                if (currentLocationUsage === 'start')
+                  setCurrentLocationUsage(null);
               }}
               className="
                 w-full border border-slate-200 dark:border-slate-600
@@ -50,7 +56,9 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({ onRouteSearch }) =>
             />
             <button
               title="Dùng vị trí hiện tại làm điểm xuất phát"
-              onClick={() => useMapStore.setState({ currentLocationUsage: 'start' })}
+              onClick={() =>
+                useMapStore.setState({ currentLocationUsage: 'start' })
+              }
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-emerald-500 hover:text-emerald-700 transition-colors"
             >
               <MapPin size={14} />
@@ -61,7 +69,10 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({ onRouteSearch }) =>
         {/* Connector */}
         <div className="ml-1 flex flex-col gap-1 pl-0.5">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="w-0.5 h-0.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+            <div
+              key={i}
+              className="w-0.5 h-0.5 rounded-full bg-slate-300 dark:bg-slate-600"
+            />
           ))}
         </div>
 
@@ -75,7 +86,8 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({ onRouteSearch }) =>
               value={endAddress}
               onChange={(e) => {
                 setEndAddress(e.target.value);
-                if (currentLocationUsage === 'end') setCurrentLocationUsage(null);
+                if (currentLocationUsage === 'end')
+                  setCurrentLocationUsage(null);
               }}
               className="
                 w-full border border-slate-200 dark:border-slate-600
@@ -87,7 +99,9 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({ onRouteSearch }) =>
             />
             <button
               title="Dùng vị trí hiện tại làm điểm đến"
-              onClick={() => useMapStore.setState({ currentLocationUsage: 'end' })}
+              onClick={() =>
+                useMapStore.setState({ currentLocationUsage: 'end' })
+              }
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-rose-500 hover:text-rose-700 transition-colors"
             >
               <MapPin size={14} />

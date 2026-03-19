@@ -185,7 +185,7 @@ declare module '@goongmaps/goong-js' {
     onRemove(map: Map): void;
   }
 
-  let accessToken: string;
+  // let accessToken: string;
 
   const _default: {
     Map: typeof Map;

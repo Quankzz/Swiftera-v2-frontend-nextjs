@@ -16,10 +16,7 @@ interface RouteInfoPanelProps {
   onClear: () => void;
 }
 
-const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({
-  onSelectRoute,
-  onClear,
-}) => {
+const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ onClear }) => {
   const {
     routeInfoList,
     selectedRouteIndex,
@@ -65,7 +62,7 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({
   if (routeInfoList.length === 0) return null;
 
   const selected = routeInfoList[selectedRouteIndex];
-  const hasAlternatives = routeInfoList.length > 1;
+  // const hasAlternatives = routeInfoList.length > 1;
 
   return (
     <div className="flex flex-col flex-1 min-h-0 border-t border-slate-100 dark:border-slate-800/80">
@@ -86,19 +83,16 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({
                     {selected.duration}
                   </span>
                 </div>
-                <span className="text-[15px] font-semibold text-slate-500 dark:text-slate-400">
-                  · {selected.distance}
-                </span>
               </div>
               {selected.summary && (
-                <p className="text-[13px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-2 bg-white/50 dark:bg-slate-900/50 w-fit px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                <p className=" text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-2 bg-white/50 dark:bg-slate-900/50 w-fit px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-700/50">
                   <Route
                     size={12}
                     strokeWidth={2.2}
                     className="shrink-0 text-slate-400"
                   />
-                  <span className="truncate font-medium">
-                    {selected.summary}
+                  <span className="text-xl font-semibold text-slate-500 dark:text-slate-400">
+                    {selected.distance}
                   </span>
                 </p>
               )}
@@ -144,7 +138,7 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({
       </div>
 
       {/* Route alternatives tabs */}
-      {hasAlternatives && (
+      {/* {hasAlternatives && (
         <div className="flex gap-2.5 px-5 pb-4 overflow-x-auto [scrollbar-width:none] shrink-0">
           {routeInfoList.map((route, idx) => {
             const isActive = idx === selectedRouteIndex;
@@ -167,7 +161,7 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({
             );
           })}
         </div>
-      )}
+      )} */}
 
       {/* Step-by-step directions */}
       {isRouteInfoVisible && (

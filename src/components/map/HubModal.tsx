@@ -56,7 +56,7 @@ const HubModal = ({
 
   const availableCount = selectedHub.available_products;
   const totalCount = selectedHub.total_products;
-  const availRatio = totalCount > 0 ? availableCount / totalCount : 0;
+  // const availRatio = totalCount > 0 ? availableCount / totalCount : 0;
 
   return (
     <AnimatePresence>
