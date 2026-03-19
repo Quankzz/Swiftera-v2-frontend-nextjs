@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Menu,
   X,
+  ShoppingBag,
 } from 'lucide-react';
 import { useState } from 'react';
 import logo from '../../../../public/logo.png';
@@ -24,6 +25,11 @@ const navItems = [
     title: 'Người dùng',
     href: '/dashboard/users',
     icon: Users,
+  },
+  {
+    title: 'Sản phẩm',
+    href: '/dashboard/products',
+    icon: ShoppingBag,
   },
   {
     title: 'Vai trò',

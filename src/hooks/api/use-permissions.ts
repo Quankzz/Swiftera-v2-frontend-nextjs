@@ -106,3 +106,26 @@ export function useCreateModuleMutation() {
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.modules }),
   });
 }
+
+export function useRenameModuleMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ oldName, newName }: { oldName: string; newName: string }) =>
+      permissionsRepository.renameModule(oldName, newName),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.modules });
+      qc.invalidateQueries({ queryKey: ['permissions'] });
+    },
+  });
+}
+
+export function useDeleteModuleMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => permissionsRepository.deleteModule(name),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.modules });
+      qc.invalidateQueries({ queryKey: ['permissions'] });
+    },
+  });
+}

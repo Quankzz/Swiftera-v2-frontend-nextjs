@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PermissionsBoard } from '@/components/dashboard/permissions/permissions-board';
 import {
   ModuleFormDialog,
+  ModuleDeleteDialog,
   PermissionDeleteDialog,
   PermissionFormDialog,
 } from '@/components/dashboard/permissions/permissions-dialogs';
@@ -15,6 +16,8 @@ export default function PermissionsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moduleOpen, setModuleOpen] = useState(false);
+  const [moduleDeleteOpen, setModuleDeleteOpen] = useState(false);
+  const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedPermission, setSelectedPermission] =
     useState<Permission | null>(null);
   const [presetModule, setPresetModule] = useState<string | undefined>(
@@ -66,7 +69,18 @@ export default function PermissionsPage() {
           onAddPermission={handleAddPermission}
           onEditPermission={handleEditPermission}
           onDeletePermission={handleDeletePermission}
-          onAddModule={() => setModuleOpen(true)}
+          onAddModule={() => {
+            setSelectedModule(null);
+            setModuleOpen(true);
+          }}
+          onEditModule={(name) => {
+            setSelectedModule(name);
+            setModuleOpen(true);
+          }}
+          onDeleteModule={(name) => {
+            setSelectedModule(name);
+            setModuleDeleteOpen(true);
+          }}
         />
       </div>
 
@@ -86,6 +100,13 @@ export default function PermissionsPage() {
       <ModuleFormDialog
         open={moduleOpen}
         onClose={() => setModuleOpen(false)}
+        initialModuleName={selectedModule}
+      />
+
+      <ModuleDeleteDialog
+        open={moduleDeleteOpen}
+        onClose={() => setModuleDeleteOpen(false)}
+        moduleName={selectedModule}
       />
     </div>
   );

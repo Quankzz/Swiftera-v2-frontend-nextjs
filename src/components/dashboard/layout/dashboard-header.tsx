@@ -21,6 +21,10 @@ const PAGE_TITLES: Record<string, { title: string; description: string }> = {
     title: 'Quản lý người dùng',
     description: 'Xem, thêm mới, sửa hoặc xóa người dùng',
   },
+  '/dashboard/products': {
+    title: 'Quản lý sản phẩm',
+    description: 'Xem, thêm mới, sửa hoặc xóa sản phẩm cho thuê',
+  },
   '/dashboard/roles': {
     title: 'Quản lý vai trò',
     description: 'Xem, thêm mới, sửa và phân quyền cho vai trò',

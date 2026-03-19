@@ -72,6 +72,8 @@ export interface PermissionsRepository {
   updateModule(permissionId: string, module: string): Promise<boolean>;
   listModules(): Promise<string[]>;
   createModule(name: string): Promise<string>;
+  renameModule(oldName: string, newName: string): Promise<string>;
+  deleteModule(name: string): Promise<{ success: boolean }>;
 }
 
 const mockPermissionsRepository: PermissionsRepository = {
@@ -192,6 +194,29 @@ const mockPermissionsRepository: PermissionsRepository = {
     }
     return name;
   },
+
+  async renameModule(oldName: string, newName: string) {
+    await delay(150);
+    const idx = mockModules.indexOf(oldName);
+    if (idx !== -1) mockModules[idx] = newName;
+    else if (!mockModules.includes(newName)) mockModules.push(newName);
+    // Update all permissions that belonged to oldName
+    mockPermissions = mockPermissions.map((p) =>
+      p.module === oldName ? { ...p, module: newName } : p,
+    );
+    return newName;
+  },
+
+  async deleteModule(name: string) {
+    await delay(150);
+    const idx = mockModules.indexOf(name);
+    if (idx !== -1) mockModules.splice(idx, 1);
+    // Move orphaned permissions to 'Chưa phân loại'
+    mockPermissions = mockPermissions.map((p) =>
+      p.module === name ? { ...p, module: 'Chưa phân loại' } : p,
+    );
+    return { success: true };
+  },
 };
 
 const apiPermissionsRepository: PermissionsRepository = {
@@ -252,6 +277,23 @@ const apiPermissionsRepository: PermissionsRepository = {
       body: JSON.stringify({ name }),
     });
   },
+
+  async renameModule(oldName, newName) {
+    return fetchApi<string>(
+      `/permissions/modules/${encodeURIComponent(oldName)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ name: newName }),
+      },
+    );
+  },
+
+  async deleteModule(name) {
+    return fetchApi<{ success: boolean }>(
+      `/permissions/modules/${encodeURIComponent(name)}`,
+      { method: 'DELETE' },
+    );
+  },
 };
 
 export const permissionsRepository: PermissionsRepository = USE_MOCK
@@ -273,4 +315,7 @@ export const permissionsApi = {
     permissionsRepository.updateModule(permissionId, module),
   getModules: () => permissionsRepository.listModules(),
   createModule: (name: string) => permissionsRepository.createModule(name),
+  renameModule: (oldName: string, newName: string) =>
+    permissionsRepository.renameModule(oldName, newName),
+  deleteModule: (name: string) => permissionsRepository.deleteModule(name),
 };

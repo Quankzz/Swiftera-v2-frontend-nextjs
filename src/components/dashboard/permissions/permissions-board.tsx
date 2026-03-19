@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CSS } from '@dnd-kit/utilities';
@@ -22,9 +22,11 @@ import {
 import {
   IconChevronDown,
   IconChevronRight,
+  IconDots,
   IconGripVertical,
   IconPlus,
 } from '@tabler/icons-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Permission } from '@/types/dashboard';
 import {
@@ -38,6 +40,8 @@ type PermissionTreeProps = {
   onEditPermission?: (permission: Permission) => void;
   onDeletePermission?: (permission: Permission) => void;
   onAddModule?: () => void;
+  onEditModule?: (moduleName: string) => void;
+  onDeleteModule?: (moduleName: string) => void;
 };
 
 const methodStyles: Record<string, string> = {
@@ -111,19 +115,19 @@ function PermissionRow({
       <div className='flex items-center gap-1'>
         <Button
           variant='ghost'
-          size='sm'
-          className='text-text-sub hover:text-theme-primary-start h-7 px-2'
+          size='icon'
+          className='h-7 w-7 text-text-sub hover:text-theme-primary-start'
           onClick={() => onEdit?.(permission)}
         >
-          Sửa
+          <Pencil size={14} />
         </Button>
         <Button
           variant='ghost'
-          size='sm'
-          className='text-red-500 hover:text-red-700 hover:bg-red-50 h-7 px-2'
+          size='icon'
+          className='h-7 w-7 text-theme-primary-start hover:bg-red-50'
           onClick={() => onDelete?.(permission)}
         >
-          Xóa
+          <Trash2 size={14} />
         </Button>
       </div>
     </div>
@@ -138,6 +142,8 @@ function ModuleNode({
   onAddPermission,
   onEditPermission,
   onDeletePermission,
+  onEditModule,
+  onDeleteModule,
 }: {
   moduleName: string;
   permissions: Permission[];
@@ -146,8 +152,23 @@ function ModuleNode({
   onAddPermission?: () => void;
   onEditPermission?: (permission: Permission) => void;
   onDeletePermission?: (permission: Permission) => void;
+  onEditModule?: (moduleName: string) => void;
+  onDeleteModule?: (moduleName: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: moduleName });
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   return (
     <div className='rounded-lg border border-gray-200 bg-gray-50'>
@@ -155,26 +176,71 @@ function ModuleNode({
         className='flex items-center justify-between px-3 py-2 cursor-pointer'
         onClick={onToggleCollapse}
       >
-        <div className='flex items-center gap-2'>
+        {/* Left: chevron + moduleName + badge + "..." menu */}
+        <div className='flex items-center gap-2 min-w-0'>
           {isCollapsed ? (
-            <IconChevronRight size={16} className='text-text-sub' />
+            <IconChevronRight size={16} className='text-text-sub shrink-0' />
           ) : (
-            <IconChevronDown size={16} className='text-text-sub' />
+            <IconChevronDown size={16} className='text-text-sub shrink-0' />
           )}
-          <div className='flex items-center gap-2'>
-            <span className='font-semibold text-text-main'>{moduleName}</span>
-            <Badge
-              variant='secondary'
-              className='bg-gray-200 text-text-sub hover:bg-gray-200'
+          <span className='font-semibold text-text-main truncate'>
+            {moduleName}
+          </span>
+          <Badge
+            variant='secondary'
+            className='bg-gray-200 text-text-sub hover:bg-gray-200 shrink-0'
+          >
+            {permissions.length} quyền
+          </Badge>
+
+          {/* "..." kebab menu */}
+          <div
+            ref={menuRef}
+            className='relative shrink-0'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-6 w-6 text-theme-primary-start bg-rose-50 hover:text-text-start/90 hover:bg-theme-primary-start/10 transition-opacity'
+              onClick={() => setMenuOpen((v) => !v)}
             >
-              {permissions.length} quyền
-            </Badge>
+              <IconDots size={14} />
+            </Button>
+
+            {menuOpen && (
+              <div className='absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-gray-100 bg-white shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1'>
+                <button
+                  className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 transition-colors'
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onEditModule?.(moduleName);
+                  }}
+                >
+                  <Pencil size={13} className='text-text-sub' />
+                  Đổi tên
+                </button>
+                <div className='h-px bg-gray-100 mx-2' />
+                <button
+                  className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 transition-colors'
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDeleteModule?.(moduleName);
+                  }}
+                >
+                  <Trash2 size={13} className='text-theme-primary-start' />
+                  Xóa module
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Right: "Thêm quyền" button */}
         <Button
           variant='ghost'
           size='sm'
-          className='text-theme-primary-start bg-rose-50 hover:text-theme-primary-end hover:bg-rose-100 h-7 px-2 rounded-sm'
+          className='text-theme-primary-start bg-rose-50 hover:text-theme-primary-end hover:bg-rose-100 h-7 px-2 rounded-sm shrink-0'
           onClick={(e) => {
             e.stopPropagation();
             onAddPermission?.();
@@ -223,6 +289,8 @@ export function PermissionsBoard({
   onEditPermission,
   onDeletePermission,
   onAddModule,
+  onEditModule,
+  onDeleteModule,
 }: PermissionTreeProps) {
   const params = { page: 1, limit: 1000 } as const;
   const { data, isLoading } = usePermissionsQuery(params);
@@ -358,6 +426,8 @@ export function PermissionsBoard({
               onAddPermission={() => onAddPermission?.(mod)}
               onEditPermission={onEditPermission}
               onDeletePermission={onDeletePermission}
+              onEditModule={onEditModule}
+              onDeleteModule={onDeleteModule}
             />
           ))}
 

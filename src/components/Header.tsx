@@ -2,15 +2,19 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   ChevronRight,
   Heart,
+  LayoutDashboard,
+  LogOut,
   Menu,
   Search,
   ShoppingCart,
   UserRound,
+  FileText,
+  Settings,
 } from 'lucide-react';
 import { topLevelCategories } from '@/data/categories';
 import { cn } from '@/lib/utils';
@@ -25,6 +29,8 @@ export function Header() {
   );
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(
     null,
   );
@@ -36,10 +42,25 @@ export function Header() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsSearchOpen(false);
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+        setIsUserMenuOpen(false);
+      }
+    };
+    const onClickOutside = (e: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    document.addEventListener('mousedown', onClickOutside);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onClickOutside);
+    };
   }, []);
 
   return (
@@ -64,14 +85,6 @@ export function Header() {
               <Button variant='ghost' size='icon' className='lg:hidden'>
                 <Menu className='size-5' />
               </Button>
-              {/* <Link href='/' className='flex items-center gap-2'>
-                <span className='flex size-9 items-center justify-center rounded-full bg-linear-to-r from-theme-primary-start to-theme-primary-end text-white shadow-md'>
-                  <span className='text-lg font-extrabold'>S</span>
-                </span>
-                <span className='text-2xl font-extrabold tracking-tight text-foreground'>
-                  Swiftera
-                </span>
-              </Link> */}
               <Link href='/' className='flex items-center gap-2'>
                 <Image
                   src={logo}
@@ -167,13 +180,100 @@ export function Header() {
               )}
             </div>
 
-            <div className='relative z-30 ml-auto flex items-center gap-2 lg:gap-3'>
+            <div
+              className={cn(
+                'relative ml-auto flex items-center gap-2 lg:gap-3',
+                isSearchOpen ? 'z-30' : 'z-50',
+              )}
+            >
               <Button variant='ghost' size='icon' aria-label='Wishlist'>
                 <Heart className='size-5 text-text-main' />
               </Button>
-              <Button variant='ghost' size='icon' aria-label='Account'>
-                <UserRound className='size-5 text-text-main' />
-              </Button>
+
+              {/* User dropdown */}
+              <div ref={userMenuRef} className='relative'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  aria-label='Tài khoản'
+                  onClick={() => setIsUserMenuOpen((v) => !v)}
+                  className={isUserMenuOpen ? 'bg-gray-100' : ''}
+                >
+                  <UserRound className='size-5 text-text-main' />
+                </Button>
+
+                {isUserMenuOpen && (
+                  <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 bg-white shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1'>
+                    {/* User info header */}
+                    <div className='px-4 py-3 border-b border-gray-100'>
+                      <p className='text-sm font-semibold text-text-main'>
+                        Khách hàng
+                      </p>
+                      <p className='text-xs text-text-sub truncate'>
+                        khach@swiftera.com
+                      </p>
+                    </div>
+
+                    <div className='py-1'>
+                      <Link
+                        href='/profile'
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                      >
+                        <UserRound
+                          size={15}
+                          className='text-text-sub shrink-0'
+                        />
+                        Thông tin cá nhân
+                      </Link>
+                      <Link
+                        href='/my-orders'
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                      >
+                        <FileText
+                          size={15}
+                          className='text-text-sub shrink-0'
+                        />
+                        Đơn thuê của tôi
+                      </Link>
+                      <Link
+                        href='/settings'
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                      >
+                        <Settings
+                          size={15}
+                          className='text-text-sub shrink-0'
+                        />
+                        Cài đặt tài khoản
+                      </Link>
+                      <Link
+                        href='/dashboard'
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                      >
+                        <LayoutDashboard
+                          size={15}
+                          className='text-text-sub shrink-0'
+                        />
+                        Trang quản trị
+                      </Link>
+                    </div>
+
+                    <div className='border-t border-gray-100 py-1'>
+                      <button
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className='flex w-full items-center gap-3 px-4 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 transition-colors'
+                      >
+                        <LogOut size={15} className='shrink-0' />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Button variant='ghost' size='icon' aria-label='Cart'>
                 <ShoppingCart className='size-5 text-text-main' />
               </Button>

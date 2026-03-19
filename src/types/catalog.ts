@@ -12,9 +12,18 @@ export interface CategoryTree extends Category {
   children: CategoryTree[];
 }
 
-interface ProductColor {
+export interface ProductImage {
+  productImageId?: string;
+  productId: string;
+  imageUrl: string;
+  sortOrder: number;
+  isPrimary: boolean;
+}
+
+export interface ProductColor {
+  colorId?: string;
   name: string;
-  hex: string;
+  value: string; // ví dụ: #111111
 }
 
 export interface Product {
@@ -24,9 +33,8 @@ export interface Product {
   dailyPrice: number;
   oldDailyPrice?: number;
   depositAmount?: number;
-  color?: string;
   description: string;
-  image: string;
-  badge?: string;
+  productImages: ProductImage[];
   colors?: ProductColor[];
+  minRentalDays: number;
 }

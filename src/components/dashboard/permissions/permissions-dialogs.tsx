@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import {
   useCreatePermissionMutation,
   useCreateModuleMutation,
+  useRenameModuleMutation,
+  useDeleteModuleMutation,
   useDeletePermissionMutation,
   useModulesQuery,
   usePermissionQuery,
@@ -134,7 +136,7 @@ export function PermissionFormDialog({
           )}
 
           <div className='space-y-2'>
-            <label className='text-text-main text-sm font-medium'>
+            <label className='block text-text-main text-sm font-medium mb-1'>
               Tên quyền *
             </label>
             <Input
@@ -148,7 +150,7 @@ export function PermissionFormDialog({
 
           <div className='grid grid-cols-3 gap-3'>
             <div className='space-y-2'>
-              <label className='text-text-main text-sm font-medium'>
+              <label className='block text-text-main text-sm font-medium mb-1'>
                 Phương thức
               </label>
               <select
@@ -167,7 +169,7 @@ export function PermissionFormDialog({
             </div>
 
             <div className='col-span-2 space-y-2'>
-              <label className='text-text-main text-sm font-medium'>
+              <label className='block text-text-main text-sm font-medium mb-1'>
                 API Path *
               </label>
               <Input
@@ -181,7 +183,9 @@ export function PermissionFormDialog({
           </div>
 
           <div className='space-y-2'>
-            <label className='text-text-main text-sm font-medium'>Module</label>
+            <label className='block text-text-main text-sm font-medium mb-1'>
+              Module
+            </label>
             <div className='flex gap-2'>
               <select
                 className='w-1/2 rounded-md border border-gray-200 px-3 py-2 text-sm'
@@ -292,28 +296,51 @@ export function PermissionDeleteDialog({
 interface ModuleFormDialogProps {
   open: boolean;
   onClose: () => void;
+  initialModuleName?: string | null;
 }
 
-export function ModuleFormDialog({ open, onClose }: ModuleFormDialogProps) {
+export function ModuleFormDialog({
+  open,
+  onClose,
+  initialModuleName,
+}: ModuleFormDialogProps) {
+  const isEdit = !!initialModuleName;
   const createModuleMutation = useCreateModuleMutation();
+  const renameModuleMutation = useRenameModuleMutation();
   const [moduleName, setModuleName] = useState('');
+
+  useEffect(() => {
+    if (open) startTransition(() => setModuleName(initialModuleName || ''));
+  }, [open, initialModuleName]);
 
   const handleSubmit = async () => {
     if (!moduleName.trim()) return;
-    await createModuleMutation.mutateAsync(moduleName.trim());
+    if (isEdit && initialModuleName) {
+      await renameModuleMutation.mutateAsync({
+        oldName: initialModuleName,
+        newName: moduleName.trim(),
+      });
+    } else {
+      await createModuleMutation.mutateAsync(moduleName.trim());
+    }
     onClose();
     setModuleName('');
   };
 
-  const isSubmitting = createModuleMutation.isPending;
+  const isSubmitting =
+    createModuleMutation.isPending || renameModuleMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle className='text-text-main'>Thêm Module</DialogTitle>
+          <DialogTitle className='text-text-main'>
+            {isEdit ? 'Sửa tên module' : 'Thêm Module'}
+          </DialogTitle>
           <DialogDescription>
-            Tạo module để nhóm các quyền liên quan.
+            {isEdit
+              ? 'Đổi tên module. Các quyền bên trong sẽ được cập nhật theo.'
+              : 'Tạo module để nhóm các quyền liên quan.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -342,7 +369,68 @@ export function ModuleFormDialog({ open, onClose }: ModuleFormDialogProps) {
             className='bg-theme-primary-start hover:opacity-90'
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Đang lưu...' : 'Tạo module'}
+            {isSubmitting
+              ? 'Đang lưu...'
+              : isEdit
+                ? 'Lưu thay đổi'
+                : 'Tạo module'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface ModuleDeleteDialogProps {
+  open: boolean;
+  onClose: () => void;
+  moduleName?: string | null;
+}
+
+export function ModuleDeleteDialog({
+  open,
+  onClose,
+  moduleName,
+}: ModuleDeleteDialogProps) {
+  const deleteModuleMutation = useDeleteModuleMutation();
+
+  const handleDelete = async () => {
+    if (!moduleName) return;
+    await deleteModuleMutation.mutateAsync(moduleName);
+    onClose();
+  };
+
+  const isSubmitting = deleteModuleMutation.isPending;
+
+  return (
+    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+      <DialogContent className='max-w-md'>
+        <DialogHeader>
+          <DialogTitle className='text-text-main'>Xóa module</DialogTitle>
+          <DialogDescription>
+            Bạn có chắc chắn muốn xóa module{' '}
+            <span className='font-semibold text-text-main'>{moduleName}</span>?{' '}
+            Các quyền bên trong sẽ được chuyển về{' '}
+            <span className='font-semibold'>Chưa phân loại</span>.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <Button
+            variant='ghost'
+            onClick={onClose}
+            className='text-text-sub'
+            disabled={isSubmitting}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant='destructive'
+            onClick={handleDelete}
+            disabled={isSubmitting}
+            className='bg-theme-primary-start hover:bg-theme-primary-end text-white'
+          >
+            {isSubmitting ? 'Đang xóa...' : 'Xóa module'}
           </Button>
         </DialogFooter>
       </DialogContent>
