@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -217,7 +217,7 @@ function OrderDetailModal({
               <div className="rounded-lg bg-muted/40 p-3 space-y-1.5 text-xs">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Phone className="size-3.5 shrink-0" />
-                  <span>{order.renter.phone}</span>
+                  <span>{order.renter.phone_number}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="size-3.5 shrink-0" />
@@ -354,7 +354,7 @@ function OrderDetailModal({
                 size="sm"
                 className="gap-1.5 bg-red-500 hover:bg-red-600 text-white border-0"
                 onClick={() => {
-                  onStatusChange(order.order_id, 'CANCELLED');
+                  onStatusChange(order.rental_order_id, 'CANCELLED');
                   onClose();
                 }}
               >
@@ -367,7 +367,7 @@ function OrderDetailModal({
                 size="sm"
                 className="gap-1.5 bg-teal-500 hover:bg-teal-600 text-white border-0"
                 onClick={() => {
-                  onStatusChange(order.order_id, 'ACTIVE');
+                  onStatusChange(order.rental_order_id, 'ACTIVE');
                   onClose();
                 }}
               >
@@ -380,7 +380,7 @@ function OrderDetailModal({
                 size="sm"
                 className="gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white border-0"
                 onClick={() => {
-                  onStatusChange(order.order_id, 'COMPLETED');
+                  onStatusChange(order.rental_order_id, 'COMPLETED');
                   onClose();
                 }}
               >
@@ -406,7 +406,7 @@ export default function OrdersPage() {
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     setOrders((prev) =>
       prev.map((o) =>
-        o.order_id === orderId ? { ...o, status: newStatus } : o,
+        o.rental_order_id === orderId ? { ...o, status: newStatus } : o,
       ),
     );
   };
@@ -421,7 +421,7 @@ export default function OrdersPage() {
         !q ||
         order.order_code?.toLowerCase().includes(q) ||
         order.renter?.full_name?.toLowerCase().includes(q) ||
-        order.renter?.phone?.includes(q) ||
+        order.renter?.phone_number?.includes(q) ||
         order.items?.some((i) => i.product_name?.toLowerCase().includes(q));
 
       return matchStatus && matchSearch;
@@ -538,7 +538,7 @@ export default function OrdersPage() {
                   const StatusIcon = cfg.icon;
                   return (
                     <tr
-                      key={order.order_id}
+                      key={order.rental_order_id}
                       className={cn(
                         'transition-colors hover:bg-muted/20',
                         order.status === 'OVERDUE' && 'bg-red-500/3',
@@ -573,7 +573,7 @@ export default function OrdersPage() {
                               {order.renter.full_name}
                             </p>
                             <p className="text-[10px] text-muted-foreground">
-                              {order.renter.phone}
+                              {order.renter.phone_number}
                             </p>
                           </div>
                         </div>

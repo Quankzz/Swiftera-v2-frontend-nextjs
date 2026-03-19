@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -22,7 +22,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MOCK_CONTRACTS } from '@/data/mockDashboard';
-import type { Contract, ContractStatus } from '@/types/dashboard.types';
+import type {
+  DashboardContract,
+  ContractStatus,
+} from '@/types/dashboard.types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -109,7 +112,7 @@ function ContractDetailModal({
   onClose,
   onStatusChange,
 }: {
-  contract: Contract;
+  contract: DashboardContract;
   onClose: () => void;
   onStatusChange: (contractId: string, newStatus: ContractStatus) => void;
 }) {
@@ -150,7 +153,7 @@ function ContractDetailModal({
                 {statusCfg.label}
               </span>
               <span className="text-xs text-muted-foreground">
-                Đơn: {contract.order_id}
+                Đơn: {contract.rental_order_id}
               </span>
             </div>
           </div>
@@ -174,7 +177,9 @@ function ContractDetailModal({
                   {contract.hub.name}
                 </p>
                 <p className="text-muted-foreground">{contract.hub.address}</p>
-                <p className="text-muted-foreground">{contract.hub.phone}</p>
+                <p className="text-muted-foreground">
+                  {contract.hub.phone_number}
+                </p>
                 <p className="text-muted-foreground">
                   MST: {contract.hub.tax_code}
                 </p>
@@ -191,7 +196,9 @@ function ContractDetailModal({
                 <p className="text-muted-foreground">
                   CCCD: {contract.renter.cccd_number}
                 </p>
-                <p className="text-muted-foreground">{contract.renter.phone}</p>
+                <p className="text-muted-foreground">
+                  {contract.renter.phone_number}
+                </p>
                 <p className="text-muted-foreground">
                   {contract.renter.address}
                 </p>
@@ -400,14 +407,14 @@ function ContractDetailModal({
 }
 
 export default function ContractsPage() {
-  const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
+  const [contracts, setContracts] =
+    useState<DashboardContract[]>(MOCK_CONTRACTS);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ContractStatus | 'ALL'>(
     'ALL',
   );
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(
-    null,
-  );
+  const [selectedContract, setSelectedContract] =
+    useState<DashboardContract | null>(null);
 
   const handleStatusChange = (
     contractId: string,
@@ -428,7 +435,7 @@ export default function ContractsPage() {
         !q ||
         c.contract_code.toLowerCase().includes(q) ||
         c.renter.full_name.toLowerCase().includes(q) ||
-        c.order_id.toLowerCase().includes(q);
+        c.rental_order_id.toLowerCase().includes(q);
       return matchStatus && matchSearch;
     });
   }, [search, statusFilter, contracts]);
@@ -546,7 +553,7 @@ export default function ContractsPage() {
                           {contract.contract_code}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Đơn: {contract.order_id}
+                          Đơn: {contract.rental_order_id}
                         </p>
                       </div>
                       <span

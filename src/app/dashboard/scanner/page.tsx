@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -67,7 +67,7 @@ export default function QRScannerPage() {
           setState('error');
           return;
         }
-        const order = MOCK_ORDERS.find((o) => o.order_id === payload.orderId);
+        const order = MOCK_ORDERS.find((o) => o.rental_order_id === payload.orderId);
         if (!order) {
           setError(
             `Không tìm thấy đơn hàng "${payload.orderCode}". Có thể đơn hàng đã bị xóa.`,
@@ -81,7 +81,7 @@ export default function QRScannerPage() {
       } catch {
         // Try matching by order code directly
         const order = MOCK_ORDERS.find(
-          (o) => o.order_code === data.trim() || o.order_id === data.trim(),
+          (o) => o.order_code === data.trim() || o.rental_order_id === data.trim(),
         );
         if (order) {
           stopCamera();
@@ -183,7 +183,7 @@ export default function QRScannerPage() {
     const order = MOCK_ORDERS.find(
       (o) =>
         o.order_code.toLowerCase() === trimmed.toLowerCase() ||
-        o.order_id.toLowerCase() === trimmed.toLowerCase(),
+        o.rental_order_id.toLowerCase() === trimmed.toLowerCase(),
     );
     if (!order) {
       setManualError('Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã.');
@@ -195,7 +195,7 @@ export default function QRScannerPage() {
 
   const handleProceedToContract = () => {
     if (foundOrder) {
-      router.push(`/dashboard/contracts/new?orderId=${foundOrder.order_id}`);
+      router.push(`/dashboard/contracts/new?orderId=${foundOrder.rental_order_id}`);
     }
   };
 
@@ -491,7 +491,7 @@ export default function QRScannerPage() {
                         {foundOrder.renter.full_name}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {foundOrder.renter.phone}
+                        {foundOrder.renter.phone_number}
                       </p>
                     </div>
                   </div>
@@ -560,7 +560,7 @@ export default function QRScannerPage() {
             <div className="space-y-2">
               {DEMO_ORDERS.map((order) => (
                 <button
-                  key={order.order_id}
+                  key={order.rental_order_id}
                   onClick={() => {
                     setFoundOrder(order);
                     setState('found');

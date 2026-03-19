@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -458,14 +458,14 @@ function ProductSection({
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Main contract form
+// Main DashboardContract form
 // ──────────────────────────────────────────────────────────────────────────────
 function ContractForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get('orderId');
 
-  const order = MOCK_ORDERS.find((o) => o.order_id === orderId);
+  const order = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
 
   const [itemPhotos, setItemPhotos] = useState<ItemPhotos>({});
   const [itemConditions, setItemConditions] = useState<ItemConditions>(
@@ -608,7 +608,7 @@ function ContractForm() {
           Quay lại
         </button>
 
-        {/* Contract header */}
+        {/* DashboardContract header */}
         <div className="rounded-xl border border-teal-500/20 bg-linear-to-r from-teal-500/5 to-transparent p-5">
           <div className="flex items-start justify-between">
             <div>
@@ -648,7 +648,7 @@ function ContractForm() {
           <div className="grid gap-4 p-5 sm:grid-cols-2">
             <InfoField label="Tên hub" value={MOCK_HUB_INFO.name} />
             <InfoField label="Địa chỉ" value={MOCK_HUB_INFO.address} />
-            <InfoField label="Điện thoại" value={MOCK_HUB_INFO.phone} />
+            <InfoField label="Điện thoại" value={MOCK_HUB_INFO.phone_number} />
             <InfoField label="Mã số thuế" value={MOCK_HUB_INFO.tax_code} />
             <InfoField label="Giờ hoạt động" value={MOCK_HUB_INFO.open_hours} />
             <InfoField
@@ -676,7 +676,7 @@ function ContractForm() {
           <div className="grid gap-4 p-5 sm:grid-cols-2">
             <InfoField label="Họ tên" value={order.renter.full_name} />
             <InfoField label="Email" value={order.renter.email} />
-            <InfoField label="Số điện thoại" value={order.renter.phone} />
+            <InfoField label="Số điện thoại" value={order.renter.phone_number} />
             <InfoField label="Số CCCD/CMND" value={order.renter.cccd_number} />
             <InfoField
               label="Địa chỉ"
@@ -729,7 +729,7 @@ function ContractForm() {
                 </p>
               </div>
             </div>
-            <InfoField label="SĐT nhân viên" value={MOCK_CURRENT_STAFF.phone} />
+            <InfoField label="SĐT nhân viên" value={MOCK_CURRENT_STAFF.phone_number} />
             <InfoField
               label="Ngày tạo hợp đồng"
               value={formatDate(new Date().toISOString())}

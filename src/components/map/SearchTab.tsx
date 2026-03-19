@@ -37,7 +37,9 @@ const SearchTab: React.FC<SearchTabProps> = ({
   // Derived: filter results from query or nearby toggle
   const results = useMemo(() => {
     if (showNearbyOnly) {
-      return MOCK_HUBS.filter((h) => nearbyHubs.some((n) => n.id === h.id));
+      return MOCK_HUBS.filter((h) =>
+        nearbyHubs.some((n) => n.hub_id === h.hub_id),
+      );
     }
     const q = searchQuery.trim().toLowerCase();
     if (!q) return MOCK_HUBS;
@@ -129,7 +131,10 @@ const SearchTab: React.FC<SearchTabProps> = ({
         {results.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
             <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center justify-center mb-4 shadow-sm">
-              <RadioTower size={24} className="text-slate-400 dark:text-slate-500 opacity-60" />
+              <RadioTower
+                size={24}
+                className="text-slate-400 dark:text-slate-500 opacity-60"
+              />
             </div>
             <p className="text-[15px] font-semibold text-slate-600 dark:text-slate-300">
               Không tìm thấy hub
@@ -140,8 +145,9 @@ const SearchTab: React.FC<SearchTabProps> = ({
           </div>
         ) : (
           results.map((hub) => {
-            const nearby = nearbyHubs.find((n) => n.id === hub.id);
-            const availabilityRatio = hub.availableProducts / hub.totalProducts;
+            const nearby = nearbyHubs.find((n) => n.hub_id === hub.hub_id);
+            const availabilityRatio =
+              hub.available_products / hub.total_products;
             const availColor =
               availabilityRatio > 0.5
                 ? 'bg-emerald-500'
@@ -151,7 +157,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
 
             return (
               <HubCard
-                key={hub.id}
+                key={hub.hub_id}
                 hub={hub}
                 nearby={nearby}
                 availColor={availColor}
@@ -199,7 +205,11 @@ const HubCard: React.FC<HubCardProps> = ({
     {/* Header */}
     <div className="flex items-start gap-3.5 mb-4">
       <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100/50 dark:border-emerald-800/30 flex items-center justify-center shrink-0">
-        <Package size={18} strokeWidth={2.2} className="text-emerald-600 dark:text-emerald-400" />
+        <Package
+          size={18}
+          strokeWidth={2.2}
+          className="text-emerald-600 dark:text-emerald-400"
+        />
       </div>
       <div className="flex-1 min-w-0 pt-0.5">
         <h3 className="font-bold text-[15px] text-slate-800 dark:text-slate-100 leading-tight truncate">
@@ -214,7 +224,7 @@ const HubCard: React.FC<HubCardProps> = ({
         <span
           className={`text-[11px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm ${availColor}`}
         >
-          {hub.availableProducts} còn
+          {hub.available_products} còn
         </span>
         {nearby && (
           <span className="text-[12px] text-sky-500 dark:text-sky-400 font-semibold tabular-nums mt-0.5">

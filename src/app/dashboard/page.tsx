@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import {
@@ -260,7 +260,7 @@ export default function DashboardPage() {
               const StatusIcon = cfg.icon;
               return (
                 <Link
-                  key={order.order_id}
+                  key={order.rental_order_id}
                   href={`/dashboard/orders`}
                   className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors"
                 >
@@ -315,7 +315,7 @@ export default function DashboardPage() {
                   </p>
                   {overdueOrders.map((o) => (
                     <p
-                      key={o.order_id}
+                      key={o.rental_order_id}
                       className="mt-1 text-xs text-muted-foreground"
                     >
                       {o.order_code} – {o.renter.full_name}

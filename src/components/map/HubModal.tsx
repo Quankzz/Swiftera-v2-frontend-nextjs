@@ -13,10 +13,10 @@ import {
   Navigation2,
 } from 'lucide-react';
 import { useMapStore } from '@/stores/use-map-store';
-import type { Hub, ProductItem } from '@/types/map.types';
+import type { Hub, MapProductItem } from '@/types/map.types';
 
 const STATUS_CONFIG: Record<
-  ProductItem['status'],
+  MapProductItem['status'],
   { label: string; className: string }
 > = {
   AVAILABLE: {
@@ -54,8 +54,8 @@ const HubModal = ({
 
   if (!selectedHub) return null;
 
-  const availableCount = selectedHub.availableProducts;
-  const totalCount = selectedHub.totalProducts;
+  const availableCount = selectedHub.available_products;
+  const totalCount = selectedHub.total_products;
   const availRatio = totalCount > 0 ? availableCount / totalCount : 0;
 
   return (
@@ -84,10 +84,10 @@ const HubModal = ({
             "
           >
             {/* Hero image */}
-            {selectedHub.imageUrl ? (
+            {selectedHub.image_url ? (
               <div className="relative h-44 sm:h-48 shrink-0">
                 <Image
-                  src={selectedHub.imageUrl}
+                  src={selectedHub.image_url}
                   alt={selectedHub.name}
                   fill
                   className="object-cover"
@@ -165,7 +165,7 @@ const HubModal = ({
 
             {/* Info strip */}
             <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-3">
-              {selectedHub.imageUrl && (
+              {selectedHub.image_url && (
                 <div className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <MapPin
                     size={14}
@@ -176,21 +176,21 @@ const HubModal = ({
               )}
 
               <div className="flex flex-wrap gap-x-5 gap-y-2">
-                {selectedHub.phoneNumber && (
+                {selectedHub.phone_number && (
                   <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
                     <Phone size={13} className="text-emerald-500 shrink-0" />
                     <a
-                      href={`tel:${selectedHub.phoneNumber}`}
+                      href={`tel:${selectedHub.phone_number}`}
                       className="hover:text-emerald-600 transition-colors"
                     >
-                      {selectedHub.phoneNumber}
+                      {selectedHub.phone_number}
                     </a>
                   </div>
                 )}
-                {selectedHub.openHours && (
+                {selectedHub.open_hours && (
                   <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
                     <Clock size={13} className="text-emerald-500 shrink-0" />
-                    <span>{selectedHub.openHours}</span>
+                    <span>{selectedHub.open_hours}</span>
                   </div>
                 )}
               </div>
@@ -222,7 +222,7 @@ const HubModal = ({
 
                   return (
                     <div
-                      key={product.id}
+                      key={product.product_item_id}
                       className="
                         flex gap-3 p-3.5 rounded-2xl
                         bg-slate-50 dark:bg-slate-800/60
@@ -234,7 +234,7 @@ const HubModal = ({
                       {/* Product image */}
                       <div className="relative w-18 h-18 rounded-xl overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-700">
                         <Image
-                          src={product.imageUrl}
+                          src={product.image_url ?? ''}
                           alt={product.name}
                           fill
                           className="object-cover"
@@ -261,7 +261,10 @@ const HubModal = ({
                         </p>
                         <div className="flex items-center justify-between mt-2.5">
                           <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
-                            {product.dailyPrice.toLocaleString('vi-VN')}đ
+                            {product.current_daily_price.toLocaleString(
+                              'vi-VN',
+                            )}
+                            đ
                             <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
                               /ngày
                             </span>

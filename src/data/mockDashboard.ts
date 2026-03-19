@@ -1,9 +1,9 @@
-import type {
+﻿import type {
   StaffMember,
   HubInfo,
   DashboardOrder,
   DashboardProduct,
-  Contract,
+  DashboardContract,
   DashboardStats,
   ActivityLog,
 } from '@/types/dashboard.types';
@@ -13,7 +13,7 @@ export const MOCK_CURRENT_STAFF: StaffMember = {
   staff_id: 'staff-001',
   full_name: 'Nguyễn Minh Khoa',
   email: 'khoa.nguyen@swiftera.vn',
-  phone: '0901 234 567',
+  phone_number: '0901 234 567',
   avatar_url: 'https://i.pravatar.cc/150?img=12',
   role: 'STAFF',
   hub_id: 'hub-001',
@@ -24,7 +24,7 @@ export const MOCK_HUB_INFO: HubInfo = {
   hub_id: 'hub-001',
   name: 'Swiftera Hub Quận 1',
   address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM',
-  phone: '028 1234 5678',
+  phone_number: '028 1234 5678',
   manager_name: 'Trần Văn Hải',
   open_hours: '07:00 – 21:00',
   tax_code: '0312345678',
@@ -34,14 +34,14 @@ export const MOCK_HUB_INFO: HubInfo = {
 // ─── Orders ───────────────────────────────────────────────────────────────────
 export const MOCK_ORDERS: DashboardOrder[] = [
   {
-    order_id: 'ord-001',
+    rental_order_id: 'ord-001',
     order_code: 'SW-20260318-001',
     hub_id: 'hub-001',
     renter: {
       user_id: 'usr-001',
       full_name: 'Lê Thị Bảo Châu',
       email: 'bauchau.le@gmail.com',
-      phone: '0912 345 678',
+      phone_number: '0912 345 678',
       cccd_number: '079203012345',
       address: '45 Lê Lợi, Quận 1, TP.HCM',
       avatar_url: 'https://i.pravatar.cc/150?img=5',
@@ -69,14 +69,14 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     notes: 'Khách yêu cầu giao trước 9h',
   },
   {
-    order_id: 'ord-002',
+    rental_order_id: 'ord-002',
     order_code: 'SW-20260318-002',
     hub_id: 'hub-001',
     renter: {
       user_id: 'usr-002',
       full_name: 'Phạm Quốc Bảo',
       email: 'quocbao.pham@gmail.com',
-      phone: '0987 654 321',
+      phone_number: '0987 654 321',
       cccd_number: '079303054321',
       address: '78 Nguyễn Trãi, Quận 5, TP.HCM',
       avatar_url: 'https://i.pravatar.cc/150?img=15',
@@ -115,14 +115,14 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     staff_checkin_id: 'staff-001',
   },
   {
-    order_id: 'ord-003',
+    rental_order_id: 'ord-003',
     order_code: 'SW-20260315-003',
     hub_id: 'hub-001',
     renter: {
       user_id: 'usr-003',
       full_name: 'Nguyễn Thùy Dung',
       email: 'thuydung@gmail.com',
-      phone: '0933 111 222',
+      phone_number: '0933 111 222',
       cccd_number: '079102099876',
       address: '20 Đinh Tiên Hoàng, Quận Bình Thạnh, TP.HCM',
       avatar_url: 'https://i.pravatar.cc/150?img=9',
@@ -150,14 +150,14 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     staff_checkin_id: 'staff-001',
   },
   {
-    order_id: 'ord-004',
+    rental_order_id: 'ord-004',
     order_code: 'SW-20260317-004',
     hub_id: 'hub-001',
     renter: {
       user_id: 'usr-004',
       full_name: 'Trần Minh Tuấn',
       email: 'minhtuan.tran@gmail.com',
-      phone: '0909 888 777',
+      phone_number: '0909 888 777',
       cccd_number: '079201077654',
       address: '5 Trần Hưng Đạo, Quận 1, TP.HCM',
       avatar_url: 'https://i.pravatar.cc/150?img=20',
@@ -184,14 +184,14 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     created_at: '2026-03-17T16:45:00',
   },
   {
-    order_id: 'ord-005',
+    rental_order_id: 'ord-005',
     order_code: 'SW-20260310-005',
     hub_id: 'hub-001',
     renter: {
       user_id: 'usr-005',
       full_name: 'Hoàng Anh Khoa',
       email: 'anhkhoa.hoang@gmail.com',
-      phone: '0944 333 555',
+      phone_number: '0944 333 555',
       cccd_number: '079104088123',
       address: '99 Cộng Hòa, Quận Tân Bình, TP.HCM',
     },
@@ -219,14 +219,14 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     staff_checkout_id: 'staff-001',
   },
   {
-    order_id: 'ord-006',
+    rental_order_id: 'ord-006',
     order_code: 'SW-20260318-006',
     hub_id: 'hub-001',
     renter: {
       user_id: 'usr-006',
       full_name: 'Vũ Thanh Hương',
       email: 'thanhuong.vu@gmail.com',
-      phone: '0963 777 111',
+      phone_number: '0963 777 111',
       cccd_number: '079205066321',
       address: '33 Lý Tự Trọng, Quận 1, TP.HCM',
       avatar_url: 'https://i.pravatar.cc/150?img=25',
@@ -393,11 +393,11 @@ export const MOCK_PRODUCTS: DashboardProduct[] = [
 ];
 
 // ─── Contracts ────────────────────────────────────────────────────────────────
-export const MOCK_CONTRACTS: Contract[] = [
+export const MOCK_CONTRACTS: DashboardContract[] = [
   {
     contract_id: 'con-001',
     contract_code: 'CTR-20260317-001',
-    order_id: 'ord-002',
+    rental_order_id: 'ord-002',
     renter: MOCK_ORDERS[1].renter,
     hub: MOCK_HUB_INFO,
     staff: MOCK_CURRENT_STAFF,
@@ -426,7 +426,7 @@ export const MOCK_CONTRACTS: Contract[] = [
   {
     contract_id: 'con-002',
     contract_code: 'CTR-20260310-002',
-    order_id: 'ord-005',
+    rental_order_id: 'ord-005',
     renter: MOCK_ORDERS[4].renter,
     hub: MOCK_HUB_INFO,
     staff: MOCK_CURRENT_STAFF,
@@ -465,7 +465,7 @@ export const MOCK_ACTIVITY: ActivityLog[] = [
     type: 'ORDER_CREATED',
     description: 'Đơn hàng SW-20260318-006 được tạo mới – Vũ Thanh Hương',
     timestamp: '2026-03-18T09:15:00',
-    order_id: 'ord-006',
+    rental_order_id: 'ord-006',
     staff_name: 'Hệ thống',
   },
   {
@@ -473,7 +473,7 @@ export const MOCK_ACTIVITY: ActivityLog[] = [
     type: 'ORDER_CREATED',
     description: 'Đơn hàng SW-20260318-001 được tạo mới – Lê Thị Bảo Châu',
     timestamp: '2026-03-18T08:30:00',
-    order_id: 'ord-001',
+    rental_order_id: 'ord-001',
     staff_name: 'Hệ thống',
   },
   {
@@ -481,7 +481,7 @@ export const MOCK_ACTIVITY: ActivityLog[] = [
     type: 'CONTRACT_SIGNED',
     description: 'Hợp đồng CTR-20260317-001 đã ký – Phạm Quốc Bảo',
     timestamp: '2026-03-17T14:10:00',
-    order_id: 'ord-002',
+    rental_order_id: 'ord-002',
     staff_name: 'Nguyễn Minh Khoa',
   },
   {
@@ -489,7 +489,7 @@ export const MOCK_ACTIVITY: ActivityLog[] = [
     type: 'ORDER_CHECKIN',
     description: 'Bàn giao sản phẩm đơn SW-20260317-002 – Phạm Quốc Bảo',
     timestamp: '2026-03-17T14:05:00',
-    order_id: 'ord-002',
+    rental_order_id: 'ord-002',
     staff_name: 'Nguyễn Minh Khoa',
   },
   {
@@ -497,18 +497,18 @@ export const MOCK_ACTIVITY: ActivityLog[] = [
     type: 'ORDER_CHECKOUT',
     description: 'Thu hồi sản phẩm đơn SW-20260310-005 – Hoàng Anh Khoa',
     timestamp: '2026-03-12T10:30:00',
-    order_id: 'ord-005',
+    rental_order_id: 'ord-005',
     staff_name: 'Nguyễn Minh Khoa',
   },
 ];
 
 // ─── QR Payload helper ────────────────────────────────────────────────────────
 export function getQRPayload(orderId: string) {
-  const order = MOCK_ORDERS.find((o) => o.order_id === orderId);
+  const order = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
   if (!order) return null;
   return JSON.stringify({
     type: 'SWIFTERA_ORDER',
-    orderId: order.order_id,
+    orderId: order.rental_order_id,
     orderCode: order.order_code,
     renterName: order.renter.full_name,
     timestamp: new Date().toISOString(),

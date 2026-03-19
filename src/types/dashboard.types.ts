@@ -18,7 +18,7 @@ export interface StaffMember {
   staff_id: string;
   full_name: string;
   email: string;
-  phone: string;
+  phone_number: string;
   avatar_url?: string;
   role: 'STAFF' | 'MANAGER';
   hub_id: string;
@@ -28,7 +28,7 @@ export interface HubInfo {
   hub_id: string;
   name: string;
   address: string;
-  phone: string;
+  phone_number: string;
   manager_name: string;
   open_hours: string;
   tax_code: string;
@@ -39,7 +39,7 @@ export interface RenterInfo {
   user_id: string;
   full_name: string;
   email: string;
-  phone: string;
+  phone_number: string;
   cccd_number: string;
   address: string;
   avatar_url?: string;
@@ -58,7 +58,7 @@ export interface OrderItem {
 }
 
 export interface DashboardOrder {
-  order_id: string;
+  rental_order_id: string;
   order_code: string;
   renter: RenterInfo;
   hub_id: string;
@@ -98,10 +98,10 @@ export interface ContractPhoto {
   taken_at: string;
 }
 
-export interface Contract {
+export interface DashboardContract {
   contract_id: string;
   contract_code: string;
-  order_id: string;
+  rental_order_id: string;
   renter: RenterInfo;
   hub: HubInfo;
   staff: StaffMember;
@@ -139,6 +139,6 @@ export interface ActivityLog {
     | 'PRODUCT_UPDATED';
   description: string;
   timestamp: string;
-  order_id?: string;
+  rental_order_id?: string;
   staff_name: string;
 }
