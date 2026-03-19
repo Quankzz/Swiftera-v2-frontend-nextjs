@@ -1,5 +1,5 @@
-import { AuthContainer } from '@/components/AuthContainer';
+import { AuthContainer } from '@/components/auth/AuthContainer';
 
 export default function RegisterPage() {
-  return <AuthContainer initialMode="signup" />;
+  return <AuthContainer initialMode='signup' />;
 }
