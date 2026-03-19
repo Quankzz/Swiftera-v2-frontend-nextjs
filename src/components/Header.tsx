@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { topLevelCategories } from '@/data/categories';
 import { cn } from '@/lib/utils';
+import logo from '../../public/logo.png';
 
 export function Header() {
   const HOVER_BRIDGE_HEIGHT = 10;
@@ -63,15 +64,25 @@ export function Header() {
               <Button variant='ghost' size='icon' className='lg:hidden'>
                 <Menu className='size-5' />
               </Button>
-              <Link href='/' className='flex items-center gap-2'>
+              {/* <Link href='/' className='flex items-center gap-2'>
                 <span className='flex size-9 items-center justify-center rounded-full bg-linear-to-r from-theme-primary-start to-theme-primary-end text-white shadow-md'>
                   <span className='text-lg font-extrabold'>S</span>
                 </span>
                 <span className='text-2xl font-extrabold tracking-tight text-foreground'>
                   Swiftera
                 </span>
+              </Link> */}
+              <Link href='/' className='flex items-center gap-2'>
+                <Image
+                  src={logo}
+                  alt='logo'
+                  width={150}
+                  height={40}
+                  className='object-contain'
+                />
               </Link>
             </div>
+            <div></div>
 
             <div className='relative hidden flex-1 lg:flex z-50'>
               <div

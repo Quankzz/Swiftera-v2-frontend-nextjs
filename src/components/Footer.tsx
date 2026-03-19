@@ -1,17 +1,23 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import logo from '../../public/logo.png';
 
 export function Footer() {
   return (
-    <footer className='border-t border-border/15 bg-background pt-20 pb-10 px-6'>
-      <div className='mx-auto max-w-7xl'>
+    <footer className='border-t-2 border-border/15 bg-background pt-10 pb-10 px-6 lg:px-18'>
+      <div className='mx-auto max-w-full'>
         <div className='mb-20 grid gap-12 md:grid-cols-12'>
           <div className='md:col-span-5'>
-            <span className='mb-6 block text-2xl font-extrabold tracking-tight text-text-main'>
-              Swiftera
-            </span>
+            <Image
+              src={logo}
+              alt='logo'
+              width={150}
+              height={40}
+              className='object-contain mb-6'
+            />
             <p className='max-w-sm leading-relaxed text-text-sub'>
               Nền tảng thuê thiết bị công nghệ linh hoạt, giúp bạn tiếp cận sản
               phẩm mới với chi phí hợp lý mà không cần sở hữu lâu dài.
