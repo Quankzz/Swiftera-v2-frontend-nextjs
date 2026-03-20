@@ -1,14 +1,17 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SpotlightCard } from '@/components/common/spotlight-card';
 import { ContractPdfStack } from '@/components/checkout/contract-pdf-stack';
+import { PdfViewerDialog } from '@/components/orders/pdf-viewer-dialog';
 import { useRentalOrderStore } from '@/stores/rental-order-store';
 import { lineDepositTotal, lineRentalAfterVoucher, rentalSubtotalLine } from '@/stores/rental-cart-store';
 import { computeVoucherDiscount } from '@/lib/rental-voucher';
+import type { ContractPdfInput } from '@/lib/generate-contract-pdf';
 
 function formatDate(iso: string) {
   try {
@@ -44,6 +47,31 @@ export default function OrderDetailPage() {
       </div>
     );
   }
+
+  const pdfInput = useMemo<ContractPdfInput>(
+    () => ({
+      orderCode: order.orderCode,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      createdAt: formatDate(order.createdAt),
+      paymentMethod: order.paymentMethod,
+      lines: order.lines.map((l) => ({
+        name: l.name,
+        variantLabel: l.variantLabel,
+        durationLabel: l.durationLabel,
+        quantity: l.quantity,
+        rentalAfterVoucher: lineRentalAfterVoucher(l),
+        depositTotal: lineDepositTotal(l),
+      })),
+      totals: {
+        rentalSubtotal: order.totals.rentalSubtotal,
+        totalVoucherDiscount: order.totals.voucherDiscount,
+        totalDeposit: order.totals.depositTotal,
+        grandTotal: order.totals.grandTotal,
+      },
+    }),
+    [order],
+  );
 
   return (
     <div className='min-h-screen bg-transparent px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
@@ -116,6 +144,10 @@ export default function OrderDetailPage() {
               Khách hàng: <span className='font-medium text-foreground'>{order.customerName}</span> —{' '}
               {order.customerPhone}
             </p>
+
+            <div className='mt-5 border-t border-border pt-5'>
+              <PdfViewerDialog input={pdfInput} />
+            </div>
           </SpotlightCard>
 
           <div>

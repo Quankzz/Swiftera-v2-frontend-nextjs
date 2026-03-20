@@ -111,18 +111,6 @@ export function ContractPdfStack({
         </div>
       </div>
 
-      <Button
-        type='button'
-        variant='outline'
-        className='mt-6 w-full gap-2 rounded-xl border-teal-500/40'
-        onClick={downloadMock}
-      >
-        <FileDown className='size-4' />
-        Tải bản hợp đồng (demo .txt)
-      </Button>
-      <p className='mt-2 text-center text-[11px] text-muted-foreground'>
-        PDF thật sẽ được tạo sau khi tích hợp backend &amp; ký số.
-      </p>
     </div>
   );
 }
