@@ -122,7 +122,7 @@ function RentalReviewCard({
             </div>
 
             {verifiedPurchase && (
-              <div className="flex items-center gap-1 text-green-600 text-sm mb-2">
+              <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm mb-2">
                 <Check className="w-4 h-4" />
                 Đã thuê
               </div>
