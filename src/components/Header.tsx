@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/theme-context';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Menu, ShoppingCart } from 'lucide-react';
+import { Sun, Moon, Menu, ShoppingCart, ClipboardList } from 'lucide-react';
 import { useRentalCartStore } from '@/stores/rental-cart-store';
 
 function ThemeToggle() {
@@ -94,6 +94,14 @@ export function Header() {
         </div>
 
         <div className='flex items-center gap-2'>
+          <Button
+            variant='ghost'
+            size='icon'
+            render={<Link href='/orders' />}
+            aria-label='Đơn hàng'
+          >
+            <ClipboardList className='size-5' />
+          </Button>
           <CartLink />
           <ThemeToggle />
           <Button

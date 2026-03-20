@@ -51,6 +51,7 @@ type RentalCartState = {
   addLine: (input: RentalCartLineInput) => void;
   removeLine: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
+  updateLineVoucher: (lineId: string, voucher: RentalVoucher | null) => void;
   clearCart: () => void;
   /** Tổng số lượng thiết bị (cộng quantity từng dòng) */
   getTotalQuantity: () => number;
@@ -131,6 +132,13 @@ export const useRentalCartStore = create<RentalCartState>()(
         }));
       },
 
+      updateLineVoucher: (lineId, voucher) =>
+        set((state) => ({
+          lines: state.lines.map((l) =>
+            l.lineId === lineId ? stripInvalidVoucher({ ...l, voucher }) : l
+          ),
+        })),
+
       clearCart: () => set({ lines: [] }),
 
       getTotalQuantity: () => get().lines.reduce((acc, l) => acc + l.quantity, 0),
@@ -145,7 +153,8 @@ export const useRentalCartStore = create<RentalCartState>()(
   )
 );
 
-function rentalSubtotalLine(line: RentalCartLine) {
+/** Tổng tiền thuê của một dòng (trước voucher) */
+export function rentalSubtotalLine(line: RentalCartLine) {
   return line.rentalPricePerUnit * line.quantity;
 }
 

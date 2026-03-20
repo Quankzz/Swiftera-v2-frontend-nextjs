@@ -6,16 +6,21 @@ import {
   RentalProductGallery,
   RentalProductSummary,
   RentalCheckoutCard,
-  RentalDeliverySection,
-  RentalProcessSection,
-  RentalAddonServicesSection,
-  RentalSpecifications,
-  RentalProductDescription,
-  RentalReviewsSection,
-  RentalRelatedProducts,
   type RentalDuration,
   type ProductVariant,
-} from '@/components/product-detail';
+} from '@/components/product-detail/rental-product-hero';
+import {
+  RentalDeliverySection,
+  RentalProcessSection,
+} from '@/components/product-detail/rental-product-sidebar';
+import {
+  RentalSpecifications,
+  RentalProductDescription,
+} from '@/components/product-detail/rental-product-content';
+import {
+  RentalReviewsSection,
+  RentalRelatedProducts,
+} from '@/components/product-detail/rental-product-relations';
 
 const rentalDurations: RentalDuration[] = [
   { id: '1d', label: '1 ngày', price: 300000, originalPrice: 350000 },
@@ -114,7 +119,7 @@ export default function ProductDetailPage() {
   const selectedVariantLabel = productVariants.find((v) => v.id === selectedVariant)?.label;
 
   return (
-    <div className="min-h-screen bg-muted/30 font-sans">
+    <div className="min-h-screen bg-transparent font-sans">
       <div className="mx-auto max-w-7xl px-3 pb-8 pt-20 sm:px-4 sm:pb-10 sm:pt-24 md:px-6 md:pt-28">
         <nav className="mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm">
           <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1">

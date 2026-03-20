@@ -28,10 +28,10 @@ function RentalDeliveryAddressDialog() {
 
   return (
     <Dialog>
-      <DialogTrigger>
-        <Button variant="outline" className="mt-2">
-          Nhập địa chỉ
-        </Button>
+      <DialogTrigger
+        className="mt-2 inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        Nhập địa chỉ
       </DialogTrigger>
       <DialogContent className="max-h-[min(90dvh,720px)] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
