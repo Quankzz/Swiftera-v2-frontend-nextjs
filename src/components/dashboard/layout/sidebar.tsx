@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   ShoppingBag,
+  Layers,
 } from 'lucide-react';
 import { useState } from 'react';
 import logo from '../../../../public/logo.png';
@@ -30,6 +31,11 @@ const navItems = [
     title: 'Sản phẩm',
     href: '/dashboard/products',
     icon: ShoppingBag,
+  },
+  {
+    title: 'Danh mục',
+    href: '/dashboard/categories',
+    icon: Layers,
   },
   {
     title: 'Vai trò',
