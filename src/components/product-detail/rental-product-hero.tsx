@@ -11,6 +11,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { computeVoucherDiscount, defaultRentalVouchers, type RentalVoucher } from '@/lib/rental-voucher';
+import { useRentalCartStore } from '@/stores/rental-cart-store';
 
 /* ---------- Types ---------- */
 
@@ -339,73 +341,40 @@ export function RentalProductSummary({
 
 /* ---------- Checkout & voucher ---------- */
 
-type RentalVoucherKind = 'fixed' | 'percent';
-
-export interface RentalVoucher {
-  id: string;
-  code: string;
-  title: string;
-  description: string;
-  kind: RentalVoucherKind;
-  /** VND nếu kind=fixed, % nếu kind=percent */
-  value: number;
-  /** Tổng tiền thuê tối thiểu để áp dụng (VND) */
-  minRental?: number;
-}
-
-export const defaultRentalVouchers: RentalVoucher[] = [
-  {
-    id: 'v1',
-    code: 'SWIFTERA50K',
-    title: 'Giảm 50.000₫ tiền thuê',
-    description: 'Áp dụng cho đơn thuê từ 200.000₫',
-    kind: 'fixed',
-    value: 50000,
-    minRental: 200000,
-  },
-  {
-    id: 'v2',
-    code: 'THUE10',
-    title: 'Giảm 10% tiền thuê',
-    description: 'Tối đa áp dụng trên tổng tiền thuê (không áp dụng tiền cọc)',
-    kind: 'percent',
-    value: 10,
-  },
-  {
-    id: 'v3',
-    code: 'WEEKEND',
-    title: 'Giảm 100.000₫ cuối tuần',
-    description: 'Ưu đãi cuối tuần — đơn từ 500.000₫',
-    kind: 'fixed',
-    value: 100000,
-    minRental: 500000,
-  },
-];
-
-function computeVoucherDiscount(totalRental: number, voucher: RentalVoucher): number {
-  if (voucher.minRental != null && totalRental < voucher.minRental) return 0;
-  if (voucher.kind === 'fixed') {
-    return Math.min(voucher.value, totalRental);
-  }
-  return Math.floor((totalRental * voucher.value) / 100);
-}
+export type { RentalVoucher } from '@/lib/rental-voucher';
+export { defaultRentalVouchers, computeVoucherDiscount } from '@/lib/rental-voucher';
 
 interface RentalCheckoutCardProps {
   rentalPrice: number;
   deposit: number;
   selectedDuration: string;
+  durationId: string;
   quantity: number;
   setQuantity: (qty: number) => void;
   vouchers?: RentalVoucher[];
+  /** Bắt buộc để thêm vào giỏ */
+  cartProduct?: {
+    productId: string;
+    name: string;
+    image: string;
+    sku: string;
+    variantId?: string;
+    variantLabel?: string;
+  };
+  /** Sau khi thêm giỏ thành công */
+  onAddedToCart?: () => void;
 }
 
 export function RentalCheckoutCard({
   rentalPrice,
   deposit,
   selectedDuration,
+  durationId,
   quantity,
   setQuantity,
   vouchers = defaultRentalVouchers,
+  cartProduct,
+  onAddedToCart,
 }: RentalCheckoutCardProps) {
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [appliedVoucher, setAppliedVoucher] = useState<RentalVoucher | null>(null);
@@ -431,26 +400,29 @@ export function RentalCheckoutCard({
     }
   }, [appliedVoucher, totalRental]);
 
+  const addLine = useRentalCartStore((s) => s.addLine);
+
+  const handleAddToCart = () => {
+    if (!cartProduct) return;
+    addLine({
+      productId: cartProduct.productId,
+      name: cartProduct.name,
+      image: cartProduct.image,
+      sku: cartProduct.sku,
+      variantId: cartProduct.variantId,
+      variantLabel: cartProduct.variantLabel,
+      durationId,
+      durationLabel: selectedDuration,
+      rentalPricePerUnit: rentalPrice,
+      quantity,
+      depositPerUnit: deposit,
+      voucher: appliedVoucher,
+    });
+    onAddedToCart?.();
+  };
+
   return (
     <div className="space-y-4 rounded-xl border border-border bg-card p-4 font-sans shadow-sm ambient-glow sm:space-y-5 sm:p-5">
-      <div>
-        <span className="mb-2 block text-sm font-bold text-foreground">Số lượng</span>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
-            <Minus className="h-4 w-4" />
-          </Button>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-            className="w-14 rounded-lg border border-input bg-background py-1.5 text-center text-sm text-foreground"
-          />
-          <Button variant="outline" size="sm" onClick={() => setQuantity(quantity + 1)}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
       <div className="space-y-3 rounded-xl bg-muted/50 p-3 dark:bg-muted/30 sm:p-4">
         <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
           <span className="text-xs text-muted-foreground sm:text-sm">Tiền thuê ({selectedDuration})</span>
@@ -486,8 +458,45 @@ export function RentalCheckoutCard({
         bao gồm phí vận chuyển và 8% VAT.
       </div>
 
-      <div className="flex gap-2">
-        <Button className="kinetic-gradient h-11 min-w-0 flex-1 rounded-xl text-sm font-bold text-white hover:opacity-90 sm:h-12 sm:text-base">
+      <div className="flex flex-wrap items-stretch gap-2 sm:items-center sm:gap-3">
+        <div
+          className="flex h-12 shrink-0 items-center gap-1 rounded-xl border border-input bg-background px-1.5 shadow-sm"
+          role="group"
+          aria-label="Số lượng"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            className="size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11"
+            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            aria-label="Giảm số lượng"
+          >
+            <Minus className="size-6" />
+          </Button>
+          <input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
+            className="h-full w-12 border-0 bg-transparent text-center text-lg font-bold tabular-nums text-foreground outline-none sm:w-14 sm:text-xl"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            className="size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11"
+            onClick={() => setQuantity(quantity + 1)}
+            aria-label="Tăng số lượng"
+          >
+            <Plus className="size-6" />
+          </Button>
+        </div>
+        <Button
+          type="button"
+          disabled={!cartProduct}
+          onClick={handleAddToCart}
+          className="kinetic-gradient h-12 min-h-12 min-w-0 flex-1 rounded-xl text-sm font-bold text-white hover:opacity-90 disabled:opacity-50 sm:text-base"
+          title={!cartProduct ? 'Thiếu thông tin sản phẩm để thêm giỏ' : undefined}
+        >
           <ShoppingCart className="mr-2 size-5 shrink-0" />
           Thêm vào giỏ
         </Button>
@@ -495,7 +504,7 @@ export function RentalCheckoutCard({
           type="button"
           variant="outline"
           onClick={() => setVoucherOpen(true)}
-          className="h-11 shrink-0 rounded-xl px-3 sm:h-12 sm:px-4"
+          className="h-12 min-h-12 shrink-0 rounded-xl px-3 sm:px-4"
           aria-label="Chọn mã voucher"
         >
           <TicketPercent className="size-5 sm:mr-1.5" />

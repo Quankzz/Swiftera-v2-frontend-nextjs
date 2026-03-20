@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import {
   RentalProductGallery,
   RentalProductSummary,
@@ -95,6 +96,9 @@ const mockProduct = {
 };
 
 export default function ProductDetailPage() {
+  const params = useParams();
+  const productId = typeof params?.id === 'string' ? params.id : 'demo';
+
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(productVariants[0].id);
   const [selectedDuration, setSelectedDuration] = useState(rentalDurations[0].id);
@@ -107,6 +111,7 @@ export default function ProductDetailPage() {
 
   const currentPrice = currentDuration.price;
   const originalPrice = currentDuration.originalPrice;
+  const selectedVariantLabel = productVariants.find((v) => v.id === selectedVariant)?.label;
 
   return (
     <div className="min-h-screen bg-muted/30 font-sans">
@@ -179,8 +184,17 @@ export default function ProductDetailPage() {
               rentalPrice={currentPrice}
               deposit={mockProduct.deposit}
               selectedDuration={currentDuration.label}
+              durationId={currentDuration.id}
               quantity={quantity}
               setQuantity={setQuantity}
+              cartProduct={{
+                productId,
+                name: mockProduct.name,
+                image: mockProduct.images[0] ?? '',
+                sku: mockProduct.sku,
+                variantId: selectedVariant,
+                variantLabel: selectedVariantLabel,
+              }}
             />
           </div>
         </div>

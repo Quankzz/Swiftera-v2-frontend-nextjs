@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/context/theme-context';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon, Menu } from 'lucide-react';
+import { Sun, Moon, Menu, ShoppingCart } from 'lucide-react';
+import { useRentalCartStore } from '@/stores/rental-cart-store';
 
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -29,6 +30,21 @@ function ThemeToggle() {
         <Sun className='size-4' />
       ) : (
         <Moon className='size-4' />
+      )}
+    </Button>
+  );
+}
+
+function CartLink() {
+  const qty = useRentalCartStore((s) => s.lines.reduce((acc, l) => acc + l.quantity, 0));
+
+  return (
+    <Button variant='ghost' size='icon' className='relative' render={<Link href='/cart' />} aria-label='Giỏ hàng'>
+      <ShoppingCart className='size-5' />
+      {qty > 0 && (
+        <span className='absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-teal-600 px-1 text-[10px] font-bold text-white dark:bg-teal-500'>
+          {qty > 99 ? '99+' : qty}
+        </span>
       )}
     </Button>
   );
@@ -78,6 +94,7 @@ export function Header() {
         </div>
 
         <div className='flex items-center gap-2'>
+          <CartLink />
           <ThemeToggle />
           <Button
             variant='secondary'
