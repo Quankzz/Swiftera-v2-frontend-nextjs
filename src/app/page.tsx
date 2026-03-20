@@ -12,10 +12,10 @@ const heroSlides = [
     title: 'Thiết bị của bạn.',
     subtitle: 'Theo cách của bạn.',
     description:
-      'Sử dụng công nghệ theo nhu cầu với mức phí theo tháng phù hợp ngân sách, không cần trả trước quá lớn.',
+      'Sử dụng công nghệ theo nhu cầu với mức phí theo ngày phù hợp ngân sách, không cần trả trước quá lớn.',
     image:
-      'https://images.unsplash.com/photo-1606813909355-245f1ac35b53?auto=format&fit=crop&w=1400&q=80',
-    accent: 'Linh hoạt mỗi tháng',
+      'https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?auto=format&fit=crop&w=1400&q=80',
+    accent: 'Linh hoạt mỗi ngày',
   },
   {
     title: 'Yêu công nghệ.',
@@ -30,7 +30,7 @@ const heroSlides = [
     title: 'Thuê thiết bị cao cấp.',
     subtitle: 'Giữ trọn tự do.',
     description:
-      'Chọn điện thoại, máy chơi game, laptop và wearables mới nhất với kỳ hạn thuê từ 1 đến 24+ tháng.',
+      'Chọn điện thoại, máy chơi game, laptop và wearables mới nhất với kỳ hạn thuê linh hoạt từ 1 đến 24+ tháng.',
     image:
       'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=1400&q=80',
     accent: 'Kỳ hạn linh hoạt',
@@ -39,10 +39,20 @@ const heroSlides = [
 
 const highlightStats = [
   { icon: Smile, label: '500.000+ khách hàng tin dùng' },
-  { icon: WalletCards, label: 'Chi phí theo tháng tiết kiệm' },
+  { icon: WalletCards, label: 'Chi phí theo ngày tiết kiệm' },
   { icon: CalendarRange, label: 'Kỳ hạn thuê từ 1 đến 24+ tháng' },
   { icon: ShieldCheck, label: 'Có gói bảo hành & bảo vệ' },
 ];
+
+// Sản phẩm nổi bật: giá cao nhất trước
+const featuredProducts = [...products].sort(
+  (a, b) => b.dailyPrice - a.dailyPrice,
+);
+
+// Có thể bạn thích: giá thấp nhất trước (entry-level)
+const budgetProducts = [...products].sort(
+  (a, b) => a.dailyPrice - b.dailyPrice,
+);
 
 export default function Home() {
   return (
@@ -51,7 +61,8 @@ export default function Home() {
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           <HeroBanner slides={heroSlides} />
 
-          <div className='mt-8 grid grid-cols-1 gap-4 rounded-2xl border border-border/40 bg-white/80 p-4 shadow-sm md:grid-cols-2 lg:grid-cols-4'>
+          {/* Highlight stats */}
+          <div className='mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-border/40 bg-white/80 p-4 shadow-sm md:grid-cols-2 lg:grid-cols-4'>
             {highlightStats.map((item) => (
               <div key={item.label} className='flex items-center gap-3'>
                 <span className='flex size-11 items-center justify-center rounded-full bg-rose-50 text-theme-primary-start'>
@@ -64,6 +75,7 @@ export default function Home() {
             ))}
           </div>
 
+          {/* Danh mục */}
           <section className='mt-14 space-y-6'>
             <div className='flex items-end justify-between'>
               <div>
@@ -78,6 +90,7 @@ export default function Home() {
             <CategoryCarousel items={categories} />
           </section>
 
+          {/* Sản phẩm nổi bật */}
           <section className='mt-16 space-y-6'>
             <div className='flex items-end justify-between'>
               <div>
@@ -92,9 +105,30 @@ export default function Home() {
                 Xem tất cả
               </Button>
             </div>
-
             <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-4'>
-              {products.map((product) => (
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.productId} product={product} />
+              ))}
+            </div>
+          </section>
+
+          {/* Có thể bạn thích */}
+          <section className='mt-16 space-y-6'>
+            <div className='flex items-end justify-between'>
+              <div>
+                <h2 className='text-3xl font-extrabold text-text-main'>
+                  Có thể bạn thích
+                </h2>
+                <p className='text-text-sub'>
+                  Lựa chọn phù hợp túi tiền, chất lượng vẫn đảm bảo.
+                </p>
+              </div>
+              <Button variant='link' className='text-rose-600'>
+                Xem tất cả
+              </Button>
+            </div>
+            <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-4'>
+              {budgetProducts.map((product) => (
                 <ProductCard key={product.productId} product={product} />
               ))}
             </div>

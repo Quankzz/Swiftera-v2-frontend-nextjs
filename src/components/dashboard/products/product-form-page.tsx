@@ -427,12 +427,48 @@ export function ProductFormPage({
                 required
                 error={showError('minRentalDays')}
               >
-                <TextInput
-                  type='number'
-                  value={form.minRentalDays}
-                  onChange={(v) => setField('minRentalDays', v)}
-                  placeholder='1'
-                />
+                <div className='flex h-11 overflow-hidden rounded-md border border-gray-200 bg-white focus-within:border-theme-primary-start focus-within:ring-2 focus-within:ring-theme-primary-start/20'>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      const cur = parseInt(form.minRentalDays) || 1;
+                      if (cur > 1) setField('minRentalDays', String(cur - 1));
+                    }}
+                    className='flex w-10 shrink-0 items-center justify-center border-r border-gray-200 text-lg font-medium text-text-sub transition hover:bg-gray-50 hover:text-text-main select-none'
+                  >
+                    −
+                  </button>
+                  <input
+                    type='number'
+                    min={1}
+                    value={form.minRentalDays}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, '');
+                      setField('minRentalDays', raw === '' ? '' : String(Math.max(1, parseInt(raw))));
+                    }}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    onKeyDown={(e) => {
+                      if (
+                        !/^[0-9]$/.test(e.key) &&
+                        !['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
+                    placeholder='1'
+                    className='min-w-0 flex-1 bg-transparent text-center text-sm text-text-main placeholder:text-text-sub focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                  />
+                  <button
+                    type='button'
+                    onClick={() => {
+                      const cur = parseInt(form.minRentalDays) || 0;
+                      setField('minRentalDays', String(cur + 1));
+                    }}
+                    className='flex w-10 shrink-0 items-center justify-center border-l border-gray-200 text-lg font-medium text-text-sub transition hover:bg-gray-50 hover:text-text-main select-none'
+                  >
+                    +
+                  </button>
+                </div>
               </Field>
             </div>
           </div>
@@ -513,16 +549,32 @@ export function ProductFormPage({
                     className='h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
                   />
                 </div>
+                {/* Styled color picker */}
                 <div className='flex flex-col gap-1.5'>
                   <label className='text-xs text-text-sub'>Chọn màu</label>
-                  <input
-                    type='color'
-                    value={customColor.value}
-                    onChange={(e) =>
-                      setCustomColor((p) => ({ ...p, value: e.target.value }))
-                    }
-                    className='h-10 w-16 cursor-pointer rounded-md border border-gray-200 bg-white p-1'
-                  />
+                  <label
+                    title='Bấm để chọn màu'
+                    className='relative flex h-10 w-28 cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-white px-2.5 transition hover:border-gray-300'
+                  >
+                    {/* Color swatch */}
+                    <span
+                      className='size-5 shrink-0 rounded-full border border-white shadow ring-1 ring-black/15'
+                      style={{ backgroundColor: customColor.value }}
+                    />
+                    {/* Hex label */}
+                    <span className='flex-1 text-center font-mono text-xs text-text-main uppercase'>
+                      {customColor.value.toUpperCase()}
+                    </span>
+                    {/* Hidden native input */}
+                    <input
+                      type='color'
+                      value={customColor.value}
+                      onChange={(e) =>
+                        setCustomColor((p) => ({ ...p, value: e.target.value }))
+                      }
+                      className='absolute inset-0 h-full w-full cursor-pointer opacity-0'
+                    />
+                  </label>
                 </div>
                 <button
                   type='button'

@@ -26,9 +26,12 @@ export function ProductCard({
 }: ProductCardProps) {
   const isPreview = variant === 'preview';
 
-  const primaryImage =
-    product.productImages.find((img) => img.isPrimary) ??
-    product.productImages[0];
+  const primaryImage = (() => {
+    const img =
+      product.productImages.find((img) => img.isPrimary) ??
+      product.productImages[0];
+    return img?.imageUrl ? img : null;
+  })();
 
   const salePercent =
     product.oldDailyPrice && product.oldDailyPrice > product.dailyPrice
@@ -130,7 +133,6 @@ export function ProductCard({
                 <span className='text-text-sub italic text-base'>—</span>
               )}
             </span>
-            <span className='text-sm font-medium text-text-sub'>/ ngày</span>
             {product.oldDailyPrice && (
               <span className='text-sm text-text-sub line-through'>
                 {formatter.format(product.oldDailyPrice)}

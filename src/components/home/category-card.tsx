@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/catalog';
@@ -8,11 +9,11 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, className }: CategoryCardProps) {
-  console.log('category', category);
   return (
-    <div
+    <Link
+      href={`/catalog?category=${category.categoryId}`}
       className={cn(
-        'group relative p-4 flex h-full flex-col overflow-hidden rounded-md border border-border/40 bg-gray-50 transition-transform duration-300',
+        'group relative flex h-full flex-col overflow-hidden rounded-md border border-border/40 bg-gray-50 p-4 transition-all duration-300 hover:border-theme-primary-start/30 hover:shadow-md',
         className,
       )}
     >
@@ -30,9 +31,9 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
         )}
       </div>
 
-      <div className='flex justify-center items-center px-2 py-2'>
+      <div className='flex items-center justify-center px-2 py-2'>
         <p className='font-semibold text-text-main'>{category.name}</p>
       </div>
-    </div>
+    </Link>
   );
 }

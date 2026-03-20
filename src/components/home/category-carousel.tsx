@@ -11,7 +11,6 @@ interface CategoryCarouselProps {
 }
 
 export function CategoryCarousel({ items }: CategoryCarouselProps) {
-  console.log('item', items);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = (direction: 'left' | 'right') => {
