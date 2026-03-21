@@ -37,7 +37,7 @@ const Highlighted: React.FC<{ text: string; query?: string }> = ({
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 font-semibold rounded-sm not-italic px-0">
+      <mark className="bg-success-muted text-success font-semibold rounded-sm not-italic px-0">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -64,20 +64,20 @@ const SuggestionItem: React.FC<{
     }}
     className="
       w-full flex items-center gap-3 px-4 py-2.5
-      hover:bg-slate-50 dark:hover:bg-slate-800/60
-      active:bg-emerald-50 dark:active:bg-emerald-950/30
+      hover:bg-accent/50
+      active:bg-success-muted
       text-left transition-colors duration-150 group
     "
   >
-    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700/70 flex items-center justify-center shrink-0 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/30 transition-colors">
+    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 group-hover:bg-success-muted transition-colors">
       {icon}
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-sm text-slate-700 dark:text-slate-200 truncate leading-snug">
+      <p className="text-sm text-foreground truncate leading-snug">
         <Highlighted text={primary} query={query} />
       </p>
       {secondary && (
-        <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+        <p className="text-xs text-muted-foreground truncate mt-0.5">
           {secondary}
         </p>
       )}
@@ -121,7 +121,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
   >({ start: null, end: null });
   const reqIds = useRef<Record<FieldType, number>>({ start: 0, end: 0 });
   const pendingSearchRef = useRef(false);
-  /** Always holds the latest onRouteSearch reference to avoid stale closure in the auto-search effect */
   const onRouteSearchRef = useRef(onRouteSearch);
   useEffect(() => {
     onRouteSearchRef.current = onRouteSearch;
@@ -135,7 +134,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     onSuggestionOpenChange?.(isSuggestionOpen);
   }, [isSuggestionOpen, onSuggestionOpenChange]);
 
-  // Auto-search when both fields filled after suggestion selection
   useEffect(() => {
     if (pendingSearchRef.current && startAddress.trim() && endAddress.trim()) {
       pendingSearchRef.current = false;
@@ -143,8 +141,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
       const t = setTimeout(() => onRouteSearchRef.current(), 60);
       return () => clearTimeout(t);
     }
-    // onRouteSearch intentionally excluded — we use onRouteSearchRef to always call
-    // the latest version without causing extra effect triggers
   }, [startAddress, endAddress]);
 
   const closeSuggestions = useCallback(() => {
@@ -154,7 +150,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     setLoadingField(null);
   }, []);
 
-  // Outside click & Escape key
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) closeSuggestions();
@@ -173,7 +168,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     };
   }, [closeSuggestions]);
 
-  // Cleanup timers on unmount
   useEffect(
     () => () => {
       if (timers.current.start) clearTimeout(timers.current.start);
@@ -182,7 +176,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     [],
   );
 
-  // ── Fetch suggestions ────────────────────────────────────────────────────
   const fetchSugs = useCallback(async (query: string, field: FieldType) => {
     const normalized = query.trim();
     const setter = field === 'start' ? setStartSugs : setEndSugs;
@@ -217,7 +210,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     }
   }, []);
 
-  // ── Input handlers ───────────────────────────────────────────────────────
   const handleInputChange = (field: FieldType, val: string) => {
     if (field === 'start') {
       setStartAddress(val);
@@ -290,7 +282,6 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     }
   };
 
-  // ── Suggestion list renderer ─────────────────────────────────────────────
   const renderSuggestions = (field: FieldType) => {
     if (activeField !== field) return null;
     const sugs = field === 'start' ? startSugs : endSugs;
@@ -300,25 +291,24 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
       !isLoading && sugs.length === 0 && query.trim().length >= MIN_QUERY_LEN;
 
     return (
-      <div className="border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-        {/* Current location — always shown first */}
+      <div className="border-t border-border bg-card">
         <SuggestionItem
-          icon={<LocateFixed size={14} className="text-sky-500" />}
+          icon={<LocateFixed size={14} className="text-info" />}
           primary="Vị trí của tôi"
           onClick={() => handleCurrentLocationSelect(field)}
         />
 
         {(isLoading || sugs.length > 0 || showEmpty) && (
-          <div className="h-px bg-slate-100 dark:bg-slate-800 mx-4" />
+          <div className="h-px bg-border mx-4" />
         )}
 
         {isLoading && (
           <div className="flex items-center gap-2.5 px-4 py-3">
             <Loader2
               size={13}
-              className="animate-spin shrink-0 text-emerald-500"
+              className="animate-spin shrink-0 text-success"
             />
-            <span className="text-sm text-slate-400 dark:text-slate-500">
+            <span className="text-sm text-muted-foreground">
               Đang tìm kiếm...
             </span>
           </div>
@@ -336,7 +326,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
             return (
               <SuggestionItem
                 key={s.place_id}
-                icon={<MapPin size={13} className="text-slate-400" />}
+                icon={<MapPin size={13} className="text-muted-foreground" />}
                 primary={primary}
                 secondary={secondary}
                 query={query.trim()}
@@ -346,7 +336,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
           })}
 
         {showEmpty && (
-          <div className="flex items-center gap-2 px-4 py-3 text-slate-400 dark:text-slate-500">
+          <div className="flex items-center gap-2 px-4 py-3 text-muted-foreground">
             <Search size={13} className="shrink-0" />
             <span className="text-sm">Không tìm thấy địa điểm phù hợp</span>
           </div>
@@ -355,47 +345,42 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     );
   };
 
-  // ── Input field config ───────────────────────────────────────────────────
   const fields: Array<{
     type: FieldType;
     ref: React.RefObject<HTMLInputElement | null>;
     value: string;
     placeholder: string;
     dotColor: string;
-    focusBorder: string;
   }> = [
     {
       type: 'start',
       ref: startInputRef,
       value: startAddress,
       placeholder: 'Điểm xuất phát',
-      dotColor: 'bg-emerald-500',
-      focusBorder: 'border-emerald-400 dark:border-emerald-500',
+      dotColor: 'bg-success',
     },
     {
       type: 'end',
       ref: endInputRef,
       value: endAddress,
       placeholder: 'Điểm đến',
-      dotColor: 'bg-rose-500',
-      focusBorder: 'border-rose-400 dark:border-rose-500',
+      dotColor: 'bg-destructive',
     },
   ];
 
   return (
     <div ref={containerRef} className="shrink-0">
-      <div className="px-5 pt-5 pb-4 flex gap-3 items-stretch relative bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800/60 z-10">
+      <div className="px-5 pt-5 pb-4 flex gap-3 items-stretch relative bg-card border-b border-border/50 z-10">
         <div className="flex flex-col flex-1 gap-2.5 min-w-0">
           {fields.map((field, idx) => (
             <React.Fragment key={field.type}>
-              {/* Input row */}
               <div
                 className={`
                   group flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all duration-300
                   ${
                     activeField === field.type
-                      ? `bg-white dark:bg-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.4)] border border-transparent ring-2 ring-emerald-500/20 dark:ring-emerald-400/20`
-                      : 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600'
+                      ? 'bg-card shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.4)] border border-transparent ring-2 ring-success/20'
+                      : 'bg-muted/40 border border-border/50 hover:border-border'
                   }
                 `}
               >
@@ -415,16 +400,16 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
                   placeholder={field.placeholder}
                   autoComplete="off"
                   spellCheck={false}
-                  className="flex-1 bg-transparent text-[14px] font-medium outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 min-w-0"
+                  className="flex-1 bg-transparent text-[14px] font-medium outline-none text-foreground placeholder-muted-foreground min-w-0"
                 />
                 {field.value && (
                   <button
                     onMouseDown={(e) => handleClearField(field.type, e)}
                     className={`
-                      shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-500 
-                      hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 
+                      shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-muted-foreground 
+                      hover:bg-accent hover:text-foreground 
                       transition-all active:scale-90 opacity-0 group-hover:opacity-100
-                      ${activeField === field.type ? 'opacity-100 bg-slate-100 dark:bg-slate-700' : ''}
+                      ${activeField === field.type ? 'opacity-100 bg-muted' : ''}
                     `}
                     aria-label="Xoá"
                   >
@@ -433,9 +418,8 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
                 )}
               </div>
 
-              {/* Connector dots between inputs */}
               {idx === 0 && (
-                <div className="absolute left-9.5 top-14.5 bottom-14.5 w-0.5 border-l-2 border-dashed border-slate-200 dark:border-slate-700" />
+                <div className="absolute left-9.5 top-14.5 bottom-14.5 w-0.5 border-l-2 border-dashed border-border" />
               )}
             </React.Fragment>
           ))}
@@ -448,12 +432,12 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
             title="Hoán đổi điểm đầu và điểm cuối"
             className="
               w-10 h-10 rounded-full flex items-center justify-center
-              bg-white dark:bg-slate-800 shadow-[0_4px_12px_rgb(0,0,0,0.06)] dark:shadow-[0_4px_12px_rgb(0,0,0,0.3)]
-              border border-slate-200 dark:border-slate-700
-              text-slate-500 dark:text-slate-400
-              hover:bg-emerald-50 dark:hover:bg-emerald-900/40
-              hover:border-emerald-200 dark:hover:border-emerald-800/60
-              hover:text-emerald-600 dark:hover:text-emerald-400
+              bg-card shadow-[0_4px_12px_rgb(0,0,0,0.06)] dark:shadow-[0_4px_12px_rgb(0,0,0,0.3)]
+              border border-border
+              text-muted-foreground
+              hover:bg-success-muted
+              hover:border-success-border
+              hover:text-success
               transition-all duration-300 hover:rotate-180 hover:scale-105 active:scale-90
             "
           >
@@ -466,14 +450,14 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
       {renderSuggestions('start')}
       {renderSuggestions('end')}
 
-      {/* Route-search loading bar — thin animated gradient line */}
+      {/* Route-search loading bar */}
       <div
         className={`h-0.5 overflow-hidden transition-opacity duration-300 ${
           isRouteLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div className="relative h-full bg-slate-100 dark:bg-slate-800">
-          <div className="absolute inset-y-0 w-1/3 bg-linear-to-r from-transparent via-emerald-500 to-transparent animate-[loading-bar_1.3s_ease-in-out_infinite]" />
+        <div className="relative h-full bg-muted">
+          <div className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-success to-transparent animate-[loading-bar_1.3s_ease-in-out_infinite]" />
         </div>
       </div>
     </div>

@@ -20,7 +20,6 @@ const PAGE_TITLES: Record<string, string> = {
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  // Fix hydration
   if (typeof window !== 'undefined' && !mounted) setMounted(true);
   return (
     <Button
@@ -79,8 +78,8 @@ export function DashboardHeader({ onMenuOpen }: DashboardHeaderProps) {
       <div className="flex items-center gap-2">
         {/* Overdue warning badge */}
         {MOCK_STATS.overdue_orders > 0 && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-md bg-red-500/10 border border-red-500/20 px-2.5 py-1 text-xs font-medium text-red-500">
-            <span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
+          <div className="hidden sm:flex items-center gap-1.5 rounded-lg bg-destructive/10 border border-destructive/20 px-2.5 py-1 text-xs font-semibold text-destructive">
+            <span className="size-1.5 rounded-full bg-destructive animate-pulse" />
             <span className="hidden md:inline">
               {MOCK_STATS.overdue_orders} đơn quá hạn
             </span>
@@ -94,7 +93,7 @@ export function DashboardHeader({ onMenuOpen }: DashboardHeaderProps) {
         <Button variant="ghost" size="icon-sm" className="relative">
           <Bell className="size-4" />
           {MOCK_STATS.pending_orders > 0 && (
-            <span className="absolute right-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-teal-500 text-[9px] font-bold text-white">
+            <span className="absolute right-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-theme-primary-start text-[9px] font-bold text-white">
               {MOCK_STATS.pending_orders}
             </span>
           )}
@@ -107,10 +106,10 @@ export function DashboardHeader({ onMenuOpen }: DashboardHeaderProps) {
             alt={MOCK_CURRENT_STAFF.full_name}
             width={28}
             height={28}
-            className="size-7 rounded-full object-cover ring-2 ring-teal-500/30"
+            className="size-7 rounded-full object-cover ring-2 ring-theme-primary-start/30"
           />
         ) : (
-          <div className="flex size-7 items-center justify-center rounded-full bg-teal-500/20 text-teal-400 text-xs font-bold">
+          <div className="flex size-7 items-center justify-center rounded-full bg-theme-primary-start/20 text-theme-primary-start text-xs font-bold">
             {MOCK_CURRENT_STAFF.full_name.charAt(0)}
           </div>
         )}

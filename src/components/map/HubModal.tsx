@@ -21,18 +21,15 @@ const STATUS_CONFIG: Record<
 > = {
   AVAILABLE: {
     label: 'Còn hàng',
-    className:
-      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400',
+    className: 'bg-success-muted text-success',
   },
   RENTED: {
     label: 'Đang thuê',
-    className:
-      'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+    className: 'bg-warning-muted text-warning',
   },
   MAINTENANCE: {
     label: 'Bảo trì',
-    className:
-      'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400',
+    className: 'bg-muted text-muted-foreground',
   },
 };
 
@@ -56,7 +53,6 @@ const HubModal = ({
 
   const availableCount = selectedHub.available_products;
   const totalCount = selectedHub.total_products;
-  // const availRatio = totalCount > 0 ? availableCount / totalCount : 0;
 
   return (
     <AnimatePresence>
@@ -78,7 +74,7 @@ const HubModal = ({
             className="
               relative w-full sm:max-w-2xl
               max-h-[92dvh] sm:max-h-[88vh]
-              bg-white dark:bg-slate-900
+              bg-card
               rounded-t-3xl sm:rounded-2xl
               shadow-2xl overflow-hidden flex flex-col
             "
@@ -112,8 +108,8 @@ const HubModal = ({
                     className="
                       shrink-0 flex items-center justify-center gap-1.5
                       px-3 py-2 rounded-xl
-                      bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700
-                      text-white font-semibold text-xs sm:text-sm
+                      bg-success hover:bg-success/80 active:bg-success/70
+                      text-success-foreground font-semibold text-xs sm:text-sm
                       shadow-lg shadow-black/20
                       transition-all duration-150 active:scale-95
                     "
@@ -124,8 +120,8 @@ const HubModal = ({
                 </div>
               </div>
             ) : (
-              <div className="px-5 pt-6 pb-4 pr-14 shrink-0 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 truncate flex-1">
+              <div className="px-5 pt-6 pb-4 pr-14 shrink-0 border-b border-border flex items-center justify-between gap-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate flex-1">
                   {selectedHub.name}
                 </h2>
                 <button
@@ -137,9 +133,9 @@ const HubModal = ({
                   className="
                     shrink-0 flex items-center justify-center gap-1.5
                     px-3 py-2 rounded-xl
-                    bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700
-                    text-white font-semibold text-xs sm:text-sm
-                    shadow-sm shadow-emerald-200/60 dark:shadow-emerald-900/40
+                    bg-success hover:bg-success/80 active:bg-success/70
+                    text-success-foreground font-semibold text-xs sm:text-sm
+                    shadow-sm
                     transition-all duration-150 active:scale-95
                   "
                 >
@@ -154,8 +150,8 @@ const HubModal = ({
               onClick={closeHubModal}
               className="
                 absolute top-4 right-4 p-2 rounded-full
-                bg-slate-100/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300
-                hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-150 backdrop-blur-md
+                bg-muted/80 text-muted-foreground
+                hover:bg-accent hover:text-foreground transition-all duration-150 backdrop-blur-md
                 active:scale-95 z-20 shadow-sm
               "
               aria-label="Đóng"
@@ -164,12 +160,12 @@ const HubModal = ({
             </button>
 
             {/* Info strip */}
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-3">
+            <div className="px-5 py-4 border-b border-border shrink-0 space-y-3">
               {selectedHub.image_url && (
-                <div className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <MapPin
                     size={14}
-                    className="text-emerald-500 mt-0.5 shrink-0"
+                    className="text-success mt-0.5 shrink-0"
                   />
                   <span className="leading-snug">{selectedHub.address}</span>
                 </div>
@@ -177,32 +173,32 @@ const HubModal = ({
 
               <div className="flex flex-wrap gap-x-5 gap-y-2">
                 {selectedHub.phone_number && (
-                  <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
-                    <Phone size={13} className="text-emerald-500 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Phone size={13} className="text-success shrink-0" />
                     <a
                       href={`tel:${selectedHub.phone_number}`}
-                      className="hover:text-emerald-600 transition-colors"
+                      className="hover:text-success transition-colors"
                     >
                       {selectedHub.phone_number}
                     </a>
                   </div>
                 )}
                 {selectedHub.open_hours && (
-                  <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
-                    <Clock size={13} className="text-emerald-500 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Clock size={13} className="text-success shrink-0" />
                     <span>{selectedHub.open_hours}</span>
                   </div>
                 )}
               </div>
 
               {/* Availability */}
-              <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
-                <Package size={13} className="text-emerald-500" />
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Package size={13} className="text-success" />
                 <span>
-                  <b className="text-emerald-600 dark:text-emerald-400 font-bold">
+                  <b className="text-success font-bold">
                     {availableCount}
                   </b>
-                  <span className="text-slate-400">
+                  <span className="text-muted-foreground">
                     {' '}
                     / {totalCount} sản phẩm
                   </span>
@@ -213,7 +209,7 @@ const HubModal = ({
             {/* Products list */}
             <div className="flex-1 overflow-y-auto [scrollbar-width:thin]">
               <div className="px-4 py-3 space-y-2.5">
-                <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
                   Danh sách sản phẩm
                 </p>
                 {selectedHub.products.map((product) => {
@@ -225,14 +221,14 @@ const HubModal = ({
                       key={product.product_item_id}
                       className="
                         flex gap-3 p-3.5 rounded-2xl
-                        bg-slate-50 dark:bg-slate-800/60
-                        border border-slate-100 dark:border-slate-700/60
-                        hover:border-emerald-200 dark:hover:border-emerald-800/60
+                        bg-muted/40
+                        border border-border/50
+                        hover:border-success/30
                         transition-all duration-150
                       "
                     >
                       {/* Product image */}
-                      <div className="relative w-18 h-18 rounded-xl overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-700">
+                      <div className="relative w-18 h-18 rounded-xl overflow-hidden shrink-0 bg-muted">
                         <Image
                           src={product.image_url ?? ''}
                           alt={product.name}
@@ -244,7 +240,7 @@ const HubModal = ({
                       {/* Product info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-0.5">
-                          <h4 className="font-semibold text-sm text-slate-800 dark:text-slate-100 leading-tight line-clamp-1">
+                          <h4 className="font-semibold text-sm text-foreground leading-tight line-clamp-1">
                             {product.name}
                           </h4>
                           <span
@@ -253,19 +249,19 @@ const HubModal = ({
                             {status.label}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           {product.category}
                         </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 leading-relaxed">
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
                           {product.description}
                         </p>
                         <div className="flex items-center justify-between mt-2.5">
-                          <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                          <span className="text-success font-bold text-sm">
                             {product.current_daily_price.toLocaleString(
                               'vi-VN',
                             )}
                             đ
-                            <span className="text-xs font-normal text-slate-400 dark:text-slate-500">
+                            <span className="text-xs font-normal text-muted-foreground">
                               /ngày
                             </span>
                           </span>
@@ -276,8 +272,8 @@ const HubModal = ({
                               transition-all duration-150 active:scale-95
                               ${
                                 isAvailable
-                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-200/50 dark:shadow-emerald-900/30'
-                                  : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                                  ? 'bg-success hover:bg-success/80 text-success-foreground shadow-sm'
+                                  : 'bg-muted text-muted-foreground cursor-not-allowed'
                               }
                             `}
                           >

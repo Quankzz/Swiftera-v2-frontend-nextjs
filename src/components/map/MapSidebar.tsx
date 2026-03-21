@@ -64,7 +64,6 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
   }, []);
 
   const snapToNearestPoint = useCallback((height: number, velocity = 0) => {
-    // Factor in velocity for momentum snapping (like iOS sheets)
     const projected = height - velocity * 0.08;
     const nearest = MOBILE_SHEET_SNAP_POINTS.reduce((prev, curr) =>
       Math.abs(curr - projected) < Math.abs(prev - projected) ? curr : prev,
@@ -127,7 +126,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
 
   // ── Tab header ────────────────────────────────────────────────────────────
   const tabBar = (
-    <div className="flex shrink-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/80 p-1.5 gap-1.5 relative z-10">
+    <div className="flex shrink-0 bg-background/60 backdrop-blur-xl border-b border-border/50 p-1.5 gap-1.5 relative z-10">
       {(['search', 'direction'] as const).map((tab) => {
         const isActive = activeTab === tab;
         const Icon = tab === 'search' ? Search : Navigation2;
@@ -141,13 +140,13 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
               tracking-wide transition-all duration-300 rounded-xl overflow-hidden
               ${
                 isActive
-                  ? 'text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-800 shadow-[0_2px_10px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgb(0,0,0,0.2)]'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/50 dark:hover:bg-slate-800/40'
+                  ? 'text-success bg-card shadow-[0_2px_10px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgb(0,0,0,0.2)]'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
               }
             `}
           >
             {isActive && (
-              <span className="absolute inset-0 bg-emerald-50/50 dark:bg-emerald-900/10" />
+              <span className="absolute inset-0 bg-success-muted" />
             )}
             <Icon size={14} strokeWidth={2.5} className="relative z-10" />
             <span className="relative z-10">{label}</span>
@@ -182,8 +181,6 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
           onGetCurrentLocation={onGetCurrentLocation}
           onSuggestionOpenChange={setIsSuggestionOpen}
         />
-        {/* Show RouteInfoPanel when suggestions are closed OR when loading
-            (skeleton should appear even if user just opened a suggestion list) */}
         {!isSuggestionOpen && (
           <RouteInfoPanel
             onSelectRoute={onSelectRoute}
@@ -201,8 +198,8 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         <div
           className={`
             fixed bottom-0 left-0 right-0 z-30 flex flex-col
-            bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl
-            rounded-t-[32px] border-t border-white/20 dark:border-white/5
+            bg-background/90 backdrop-blur-2xl
+            rounded-t-[32px] border-t border-border/20
             shadow-[0_-8px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_40px_rgba(0,0,0,0.6)]
             will-change-transform
             transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
@@ -220,12 +217,11 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             onDoubleClick={() => snapToNearestPoint(72)}
             className="flex items-center justify-between px-4 pt-3 pb-1.5 shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
           >
-            {/* Spacer */}
             <div className="w-8" />
-            <div className="w-9 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
+            <div className="w-9 h-1 bg-border rounded-full" />
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
+              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all active:scale-95"
               aria-label="Đóng"
             >
               <X size={14} strokeWidth={2.5} />
@@ -243,18 +239,18 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             className="
               fixed bottom-24 left-1/2 -translate-x-1/2 z-30
               flex items-center gap-2 pl-4 pr-5 py-3
-              bg-white dark:bg-slate-800
+              bg-card
               rounded-full shadow-2xl
-              border border-slate-200/80 dark:border-slate-700
-              text-slate-700 dark:text-slate-100 font-semibold text-sm
+              border border-border/50
+              text-foreground font-semibold text-sm
               hover:shadow-xl hover:scale-[1.02] active:scale-95
               transition-all duration-200
             "
             aria-label="Mở bảng điều khiển"
           >
-            <MapIcon size={15} className="text-emerald-500" />
+            <MapIcon size={15} className="text-success" />
             <span>Tra cứu · Tìm đường</span>
-            <ChevronUp size={13} className="text-slate-400" />
+            <ChevronUp size={13} className="text-muted-foreground" />
           </button>
         )}
       </>
@@ -273,9 +269,9 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         style={{ width: `${SIDEBAR_W}px` }}
       >
         {/* Panel body */}
-        <div className="flex flex-col h-full flex-1 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-[4px_0_32px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.5)] border-r border-slate-200/60 dark:border-slate-800/80">
+        <div className="flex flex-col h-full flex-1 bg-background/95 backdrop-blur-xl shadow-[4px_0_32px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.5)] border-r border-border/60">
           {/* Branding strip */}
-          <div className="flex items-center gap-3 px-5 py-4 shrink-0 bg-linear-to-r from-emerald-600 via-emerald-500 to-teal-500 shadow-sm relative overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-4 shrink-0 bg-gradient-to-r from-success via-success/90 to-success/70 shadow-sm relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
             <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md shadow-inner relative z-10 border border-white/20">
               <MapIcon size={18} className="text-white drop-shadow-sm" />
@@ -284,7 +280,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
               <p className="text-white font-extrabold text-[15px] leading-tight tracking-tight drop-shadow-sm">
                 Swiftera Hub Map
               </p>
-              <p className="text-emerald-50 text-[12px] mt-0.5 font-medium opacity-90">
+              <p className="text-white/80 text-[12px] mt-0.5 font-medium opacity-90">
                 Khám phá & Tìm đường thông minh
               </p>
             </div>
@@ -301,12 +297,12 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
           className="
             flex flex-col items-center justify-center self-center
             w-6 h-16
-            bg-white dark:bg-slate-900
+            bg-card
             shadow-[2px_0_12px_rgba(0,0,0,0.1)]
-            rounded-r-xl text-slate-400
-            hover:text-emerald-600 dark:hover:text-emerald-400
+            rounded-r-xl text-muted-foreground
+            hover:text-success
              transition-all duration-150
-            border border-l-0 border-slate-200 dark:border-slate-800 shrink-0
+            border border-l-0 border-border shrink-0
           "
         >
           <ChevronLeft size={13} strokeWidth={2.5} />
@@ -322,11 +318,11 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             fixed left-0 top-1/2 -translate-y-1/2 z-20
             flex flex-col items-center justify-center
             w-6 h-16
-            bg-emerald-500 dark:bg-slate-800
-            shadow-lg rounded-r-xl text-white
-            hover:w-8 hover:bg-emerald-600
+            bg-success dark:bg-card
+            shadow-lg rounded-r-xl text-white dark:text-success
+            hover:w-8 hover:bg-success/90
             transition-all duration-150
-            border border-l-0 border-emerald-400 dark:border-slate-700
+            border border-l-0 border-success/50 dark:border-border
           "
         >
           <ChevronRight size={13} strokeWidth={2.5} />

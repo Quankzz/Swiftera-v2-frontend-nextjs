@@ -1,114 +1,362 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import {
   ShoppingBag,
   Package,
-  QrCode,
   TrendingUp,
   AlertCircle,
   CheckCircle2,
   Clock,
   ArrowRight,
-  Boxes,
-  FileText,
+  Truck,
+  RotateCcw,
+  Coins,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  MOCK_STATS,
-  MOCK_ORDERS,
-  MOCK_ACTIVITY,
-  MOCK_CURRENT_STAFF,
-} from '@/data/mockDashboard';
-import type { OrderStatus } from '@/types/dashboard.types';
+import { MOCK_STATS, MOCK_ORDERS, MOCK_ACTIVITY } from '@/data/mockDashboard';
+import type { OrderStatus, ActivityLog } from '@/types/dashboard.types';
 
-const formatCurrency = (amount: number) =>
+const formatCurrency = (v: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-    amount,
+    v,
   );
 
-const formatTime = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+const formatRelativeTime = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Vừa xong';
+  if (mins < 60) return `${mins} phút trước`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} giờ trước`;
+  return `${Math.floor(hrs / 24)} ngày trước`;
 };
 
 const ORDER_STATUS_CONFIG: Record<
   OrderStatus,
-  { label: string; color: string; bg: string; icon: React.ElementType }
+  { label: string; color: string; bg: string; border: string; dot: string }
 > = {
   PENDING: {
     label: 'Chờ xử lý',
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
-    icon: Clock,
+    color: 'text-foreground',
+    bg: 'bg-secondary',
+    border: 'border-border',
+    dot: 'bg-muted-foreground',
+  },
+  CONFIRMED: {
+    label: 'Đã xác nhận',
+    color: 'text-theme-primary-start',
+    bg: 'bg-theme-primary-start/10',
+    border: 'border-theme-primary-start/25',
+    dot: 'bg-theme-primary-start',
+  },
+  DELIVERING: {
+    label: 'Đang giao',
+    color: 'text-info',
+    bg: 'bg-info-muted',
+    border: 'border-info-border',
+    dot: 'bg-info animate-pulse',
   },
   ACTIVE: {
     label: 'Đang thuê',
-    color: 'text-teal-500',
-    bg: 'bg-teal-500/10',
-    icon: CheckCircle2,
+    color: 'text-success',
+    bg: 'bg-success-muted',
+    border: 'border-success-border',
+    dot: 'bg-success',
+  },
+  RETURNING: {
+    label: 'Đang trả',
+    color: 'text-destructive',
+    bg: 'bg-destructive/10',
+    border: 'border-destructive/25',
+    dot: 'bg-destructive animate-pulse',
   },
   COMPLETED: {
     label: 'Hoàn thành',
-    color: 'text-slate-500',
-    bg: 'bg-slate-500/10',
-    icon: CheckCircle2,
+    color: 'text-muted-foreground',
+    bg: 'bg-muted',
+    border: 'border-border',
+    dot: 'bg-muted-foreground',
   },
   CANCELLED: {
     label: 'Đã hủy',
-    color: 'text-red-500',
-    bg: 'bg-red-500/10',
-    icon: AlertCircle,
+    color: 'text-destructive',
+    bg: 'bg-destructive/10',
+    border: 'border-destructive/20',
+    dot: 'bg-destructive',
   },
   OVERDUE: {
     label: 'Quá hạn',
-    color: 'text-red-500',
-    bg: 'bg-red-500/10',
-    icon: AlertCircle,
+    color: 'text-destructive',
+    bg: 'bg-destructive/10',
+    border: 'border-destructive/20',
+    dot: 'bg-destructive animate-pulse',
   },
 };
 
-interface StatCardProps {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  trend?: string;
-  colorClass: string;
-  bgClass: string;
-  href?: string;
+const ACTIVITY_TYPE_CONFIG: Record<
+  ActivityLog['type'],
+  { icon: React.ElementType; color: string }
+> = {
+  ORDER_CREATED: { icon: ShoppingBag, color: 'text-theme-primary-start' },
+  ORDER_CONFIRMED: { icon: CheckCircle2, color: 'text-theme-primary-start' },
+  ORDER_DELIVERING: { icon: Truck, color: 'text-info' },
+  ORDER_ACTIVE: { icon: Activity, color: 'text-success' },
+  ORDER_RETURNING: { icon: RotateCcw, color: 'text-destructive' },
+  ORDER_COMPLETED: { icon: CheckCircle2, color: 'text-muted-foreground' },
+  ORDER_OVERDUE: { icon: AlertCircle, color: 'text-destructive' },
+  PHOTO_UPLOADED: { icon: Package, color: 'text-theme-primary-start' },
+  LOCATION_UPDATED: { icon: TrendingUp, color: 'text-muted-foreground' },
+  DEPOSIT_REFUNDED: { icon: Coins, color: 'text-success' },
+  PENALTY_APPLIED: { icon: AlertCircle, color: 'text-destructive' },
+};
+
+export default function DashboardPage() {
+  const recentOrders = [...MOCK_ORDERS]
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )
+    .slice(0, 5);
+
+  const urgentOrders = MOCK_ORDERS.filter(
+    (o) => o.status === 'OVERDUE' || o.status === 'RETURNING',
+  );
+
+  return (
+    <div className="flex flex-col gap-8 p-5 md:p-8">
+      {/* ── Welcome ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">
+            Chào buổi sáng 👋
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {new Date().toLocaleDateString('vi-VN', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+        </div>
+        {urgentOrders.length > 0 && (
+          <Link
+            href="/dashboard/orders"
+            className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <AlertCircle className="size-4 shrink-0" />
+            <span>{urgentOrders.length} đơn cần chú ý ngay</span>
+            <ArrowRight className="size-4 ml-auto" />
+          </Link>
+        )}
+      </div>
+
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard
+          label="Đơn hôm nay"
+          value={MOCK_STATS.total_orders}
+          icon={ShoppingBag}
+          colorClass="text-theme-primary-start"
+          bgClass="bg-theme-primary-start/10"
+          href="/dashboard/orders"
+        />
+        <StatCard
+          label="Đang giao"
+          value={MOCK_STATS.delivering_orders}
+          icon={Truck}
+          colorClass="text-info"
+          bgClass="bg-info-muted"
+          href="/dashboard/orders"
+        />
+        <StatCard
+          label="Quá hạn"
+          value={MOCK_STATS.overdue_orders}
+          icon={AlertCircle}
+          colorClass="text-destructive"
+          bgClass="bg-destructive/10"
+          href="/dashboard/orders"
+          urgent={MOCK_STATS.overdue_orders > 0}
+        />
+        <StatCard
+          label="Sản phẩm sẵn"
+          value={`${MOCK_STATS.available_products}/${MOCK_STATS.total_products}`}
+          icon={Package}
+          colorClass="text-success"
+          bgClass="bg-success-muted"
+          href="/dashboard/products"
+        />
+      </div>
+
+      {/* ── Revenue strip ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-border/30 bg-card p-5 shadow-sm">
+          <p className="text-sm text-muted-foreground mb-1.5">
+            Doanh thu hôm nay
+          </p>
+          <p className="text-3xl font-bold text-foreground">
+            {formatCurrency(MOCK_STATS.total_revenue_today)}
+          </p>
+          <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1.5">
+            <TrendingUp className="size-4 text-success" />
+            <span className="text-success font-semibold">+12%</span>{' '}
+            so với hôm qua
+          </p>
+        </div>
+        <div className="rounded-2xl border border-border/30 bg-card p-5 shadow-sm">
+          <p className="text-sm text-muted-foreground mb-1.5">Cọc đang giữ</p>
+          <p className="text-3xl font-bold text-foreground">
+            {formatCurrency(MOCK_STATS.total_deposit_held)}
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            {MOCK_STATS.rented_products} sản phẩm đang cho thuê
+          </p>
+        </div>
+      </div>
+
+      {/* ── Two columns: Recent Orders + Activity ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Recent Orders */}
+        <div className="rounded-2xl border border-border/30 bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border/20">
+            <h3 className="text-base font-bold text-foreground">
+              Đơn hàng gần nhất
+            </h3>
+            <Link
+              href="/dashboard/orders"
+              className="flex items-center gap-1.5 text-sm font-medium text-theme-primary-start hover:underline"
+            >
+              Xem tất cả <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+          <div className="divide-y divide-border/20">
+            {recentOrders.map((order) => {
+              const cfg = ORDER_STATUS_CONFIG[order.status];
+              return (
+                <Link
+                  key={order.rental_order_id}
+                  href={`/dashboard/orders/${order.rental_order_id}`}
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-accent/50 transition-colors"
+                >
+                  <span
+                    className={cn('size-2.5 shrink-0 rounded-full', cfg.dot)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {order.order_code}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {order.renter.full_name} · {order.items.length} sản phẩm
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span
+                      className={cn(
+                        'text-xs font-semibold px-2 py-0.5 rounded-lg border',
+                        cfg.color,
+                        cfg.bg,
+                        cfg.border,
+                      )}
+                    >
+                      {cfg.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatRelativeTime(order.created_at)}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Activity log */}
+        <div className="rounded-2xl border border-border/30 bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border/20">
+            <h3 className="text-base font-bold text-foreground">
+              Hoạt động gần đây
+            </h3>
+            <Clock className="size-4 text-muted-foreground" />
+          </div>
+          <div className="divide-y divide-border/20">
+            {MOCK_ACTIVITY.slice(0, 6).map((act) => {
+              const cfg = ACTIVITY_TYPE_CONFIG[act.type] ?? {
+                icon: Activity,
+                color: 'text-muted-foreground',
+              };
+              const Icon = cfg.icon;
+              return (
+                <div key={act.id} className="flex items-start gap-3 px-5 py-3.5">
+                  <div
+                    className={cn(
+                      'mt-0.5 size-8 shrink-0 rounded-lg flex items-center justify-center bg-muted',
+                      cfg.color,
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground leading-snug">
+                      {act.message}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {act.staff_name} · {formatRelativeTime(act.created_at)}
+                    </p>
+                  </div>
+                  {act.order_id && (
+                    <Link
+                      href={`/dashboard/orders/${act.order_id}`}
+                      className="shrink-0 text-sm font-medium text-primary hover:underline"
+                    >
+                      Chi tiết
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({
   label,
   value,
   icon: Icon,
-  trend,
   colorClass,
   bgClass,
   href,
-}: StatCardProps) {
-  const card = (
+  urgent,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  colorClass: string;
+  bgClass: string;
+  href?: string;
+  urgent?: boolean;
+}) {
+  const inner = (
     <div
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-border/20 bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-border/40',
-        href && 'cursor-pointer',
+        'group relative overflow-hidden rounded-2xl border border-border/20 bg-card p-5 shadow-sm transition-all',
+        href && 'cursor-pointer hover:shadow-md hover:border-border/40',
+        urgent && 'border-destructive/30 ring-1 ring-destructive/20',
       )}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p
-            className={cn('mt-1 text-3xl font-bold tracking-tight', colorClass)}
-          >
-            {value}
-          </p>
-          {trend && (
-            <p className="mt-1 text-xs text-muted-foreground">{trend}</p>
-          )}
+          <p className="text-sm text-muted-foreground mb-1.5">{label}</p>
+          <p className="text-3xl font-bold text-foreground">{value}</p>
         </div>
         <div
           className={cn(
-            'flex size-10 items-center justify-center rounded-lg',
+            'flex size-10 shrink-0 items-center justify-center rounded-xl',
             bgClass,
           )}
         >
@@ -117,304 +365,6 @@ function StatCard({
       </div>
     </div>
   );
-
-  if (href) {
-    return <Link href={href}>{card}</Link>;
-  }
-  return card;
-}
-
-export default function DashboardPage() {
-  //   const pendingOrders = MOCK_ORDERS.filter((o) => o.status === 'PENDING');
-  const overdueOrders = MOCK_ORDERS.filter((o) => o.status === 'OVERDUE');
-  const recentOrders = [...MOCK_ORDERS]
-    .sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    )
-    .slice(0, 5);
-
-  return (
-    <div className="p-4 sm:p-6 pb-20 lg:pb-6 space-y-6">
-      {/* Welcome banner */}
-      <div className="rounded-xl border border-teal-500/20 bg-linear-to-r from-teal-500/10 via-teal-500/5 to-transparent p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-foreground">
-              Xin chào, {MOCK_CURRENT_STAFF.full_name.split(' ').pop()}! 👋
-            </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Hôm nay có{' '}
-              <span className="font-medium text-teal-500">
-                {MOCK_STATS.pending_orders} đơn hàng
-              </span>{' '}
-              đang chờ xử lý
-              {MOCK_STATS.overdue_orders > 0 && (
-                <span className="ml-1 text-red-500 font-medium">
-                  và {MOCK_STATS.overdue_orders} đơn quá hạn cần xử lý ngay.
-                </span>
-              )}
-            </p>
-          </div>
-          <Link
-            href="/dashboard/scanner"
-            className="hidden sm:flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-sm font-medium text-white shadow hover:bg-teal-600 transition-colors"
-          >
-            <QrCode className="size-4" />
-            Quét QR ngay
-          </Link>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label="Đơn hàng hôm nay"
-          value={MOCK_STATS.total_orders_today}
-          icon={ShoppingBag}
-          trend="Từ đầu ngày"
-          colorClass="text-teal-500"
-          bgClass="bg-teal-500/10"
-          href="/dashboard/orders"
-        />
-        <StatCard
-          label="Chờ xử lý"
-          value={MOCK_STATS.pending_orders}
-          icon={Clock}
-          trend="Cần xác nhận"
-          colorClass="text-amber-500"
-          bgClass="bg-amber-500/10"
-          href="/dashboard/orders"
-        />
-        <StatCard
-          label="Đang cho thuê"
-          value={MOCK_STATS.active_rentals}
-          icon={Boxes}
-          trend="Sản phẩm đang ra ngoài"
-          colorClass="text-blue-500"
-          bgClass="bg-blue-500/10"
-        />
-        <StatCard
-          label="Doanh thu hôm nay"
-          value={formatCurrency(MOCK_STATS.total_revenue_today)}
-          icon={TrendingUp}
-          trend="Tổng phí thuê & đặt cọc"
-          colorClass="text-emerald-500"
-          bgClass="bg-emerald-500/10"
-        />
-      </div>
-
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          label="Sản phẩm sẵn sàng"
-          value={MOCK_STATS.available_products}
-          icon={Package}
-          colorClass="text-indigo-500"
-          bgClass="bg-indigo-500/10"
-          href="/dashboard/products"
-        />
-        <StatCard
-          label="Tổng sản phẩm"
-          value={MOCK_STATS.total_products}
-          icon={Package}
-          colorClass="text-slate-500"
-          bgClass="bg-slate-500/10"
-          href="/dashboard/products"
-        />
-        <StatCard
-          label="Hợp đồng hôm nay"
-          value={MOCK_STATS.contracts_today}
-          icon={FileText}
-          colorClass="text-purple-500"
-          bgClass="bg-purple-500/10"
-          href="/dashboard/contracts"
-        />
-        <StatCard
-          label="Đơn quá hạn"
-          value={MOCK_STATS.overdue_orders}
-          icon={AlertCircle}
-          colorClass="text-red-500"
-          bgClass="bg-red-500/10"
-          href="/dashboard/orders"
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Orders */}
-        <div className="lg:col-span-2 rounded-xl border border-border/20 bg-card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border/15 px-5 py-3.5">
-            <h3 className="text-base font-semibold text-foreground">
-              Đơn hàng gần đây
-            </h3>
-            <Link
-              href="/dashboard/orders"
-              className="flex items-center gap-1 text-xs text-teal-500 hover:text-teal-400 transition-colors font-medium"
-            >
-              Xem tất cả <ArrowRight className="size-3" />
-            </Link>
-          </div>
-          <div className="divide-y divide-border/10">
-            {recentOrders.map((order) => {
-              const cfg = ORDER_STATUS_CONFIG[order.status];
-              const StatusIcon = cfg.icon;
-              return (
-                <Link
-                  key={order.rental_order_id}
-                  href={`/dashboard/orders`}
-                  className="flex items-center gap-4 px-5 py-3 hover:bg-muted/30 transition-colors"
-                >
-                  {/* Avatar */}
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
-                    {order.renter.full_name.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {order.renter.full_name}
-                      </p>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0',
-                          cfg.bg,
-                          cfg.color,
-                        )}
-                      >
-                        <StatusIcon className="size-2.5" />
-                        {cfg.label}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {order.order_code} · {order.items.length} sản phẩm
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-xs font-medium text-foreground">
-                      {formatCurrency(order.total_rental_fee)}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {formatTime(order.created_at)}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Activity + Quick Actions */}
-        <div className="space-y-4">
-          {/* Overdue Alert */}
-          {overdueOrders.length > 0 && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="size-4 text-red-500 mt-0.5 shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-red-500">
-                    Cảnh báo quá hạn
-                  </p>
-                  {overdueOrders.map((o) => (
-                    <p
-                      key={o.rental_order_id}
-                      className="mt-1 text-xs text-muted-foreground"
-                    >
-                      {o.order_code} – {o.renter.full_name}
-                    </p>
-                  ))}
-                  <Link
-                    href="/dashboard/orders"
-                    className="mt-2 inline-flex text-xs text-red-500 font-medium hover:underline"
-                  >
-                    Xử lý ngay →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Actions */}
-          <div className="rounded-xl border border-border/20 bg-card p-4">
-            <p className="mb-3 text-base font-semibold text-foreground">
-              Thao tác nhanh
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                {
-                  icon: QrCode,
-                  label: 'Quét QR',
-                  href: '/dashboard/scanner',
-                  color: 'text-teal-500 bg-teal-500/10',
-                },
-                {
-                  icon: ShoppingBag,
-                  label: 'Đơn hàng',
-                  href: '/dashboard/orders',
-                  color: 'text-amber-500 bg-amber-500/10',
-                },
-                {
-                  icon: Package,
-                  label: 'Sản phẩm',
-                  href: '/dashboard/products',
-                  color: 'text-blue-500 bg-blue-500/10',
-                },
-                {
-                  icon: FileText,
-                  label: 'Hợp đồng',
-                  href: '/dashboard/contracts',
-                  color: 'text-purple-500 bg-purple-500/10',
-                },
-              ].map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  className="flex flex-col items-center gap-2 rounded-lg border border-border/10 p-3 text-center hover:bg-muted/30 transition-colors"
-                >
-                  <div
-                    className={cn(
-                      'flex size-8 items-center justify-center rounded-lg',
-                      action.color.split(' ')[1],
-                    )}
-                  >
-                    <action.icon
-                      className={cn('size-4', action.color.split(' ')[0])}
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-foreground">
-                    {action.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Activity Feed */}
-          <div className="rounded-xl border border-border/20 bg-card overflow-hidden">
-            <div className="border-b border-border/15 px-4 py-3">
-              <h3 className="text-base font-semibold text-foreground">
-                Hoạt động gần đây
-              </h3>
-            </div>
-            <div className="divide-y divide-border/10">
-              {MOCK_ACTIVITY.slice(0, 4).map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start gap-3 px-4 py-3"
-                >
-                  <div className="mt-0.5 size-1.5 shrink-0 rounded-full bg-teal-500" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-foreground leading-snug">
-                      {activity.description}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      {formatTime(activity.timestamp)} · {activity.staff_name}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  if (href) return <Link href={href}>{inner}</Link>;
+  return inner;
 }

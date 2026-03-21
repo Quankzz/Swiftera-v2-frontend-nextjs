@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -79,7 +79,6 @@ export default function QRScannerPage() {
         setFoundOrder(order);
         setState('found');
       } catch {
-        // Try matching by order code directly
         const order = MOCK_ORDERS.find(
           (o) => o.order_code === data.trim() || o.rental_order_id === data.trim(),
         );
@@ -105,7 +104,7 @@ export default function QRScannerPage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: cameraFacingRef.current, // always reads latest value from ref
+          facingMode: cameraFacingRef.current,
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -154,7 +153,6 @@ export default function QRScannerPage() {
     }
   }, [processQRData]);
 
-  // Keep ref in sync so startCamera can call the latest version without stale closures
   useEffect(() => {
     scanFrameRef.current = scanFrame;
   }, [scanFrame]);
@@ -205,19 +203,18 @@ export default function QRScannerPage() {
       currency: 'VND',
     }).format(v);
 
-  // ── Demo QR codes for testing ──────────────────────────────────────────────
   const DEMO_ORDERS = MOCK_ORDERS.filter((o) => o.status === 'PENDING').slice(
     0,
     3,
   );
 
   return (
-    <div className="min-h-full p-6">
+    <div className="min-h-full p-5 md:p-8">
       <div className="mx-auto max-w-2xl">
         {/* Page intro */}
         {state === 'idle' && (
-          <div className="mb-6 rounded-xl border border-teal-500/20 bg-teal-500/5 p-4">
-            <p className="text-sm text-teal-700 dark:text-teal-300">
+          <div className="mb-6 rounded-2xl border border-scanner-accent/20 bg-scanner-accent-muted p-5">
+            <p className="text-sm font-medium text-foreground">
               Quét mã QR từ đơn hàng của khách để tiếp nhận và tạo hợp đồng bàn
               giao sản phẩm.
             </p>
@@ -225,7 +222,7 @@ export default function QRScannerPage() {
         )}
 
         {/* Scanner viewport */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/20 bg-black shadow-2xl">
+        <div className="relative overflow-hidden rounded-2xl border border-border/20 bg-scanner-bg shadow-2xl">
           {/* Camera feed */}
           <div className="relative aspect-4/3 overflow-hidden">
             <video
@@ -241,23 +238,23 @@ export default function QRScannerPage() {
 
             {/* Idle/Error/Found overlay */}
             {state !== 'scanning' && (
-              <div className="flex h-full min-h-75 flex-col items-center justify-center bg-[#0a0c10]">
+              <div className="flex h-full min-h-75 flex-col items-center justify-center bg-scanner-bg">
                 {state === 'idle' && (
-                  <div className="flex flex-col items-center gap-4 p-8 text-center">
-                    <div className="flex size-20 items-center justify-center rounded-2xl bg-teal-500/10 ring-2 ring-teal-500/20">
-                      <QrCode className="size-10 text-teal-400" />
+                  <div className="flex flex-col items-center gap-5 p-8 text-center">
+                    <div className="flex size-20 items-center justify-center rounded-2xl bg-scanner-accent-muted ring-2 ring-scanner-accent/20">
+                      <QrCode className="size-10 text-scanner-accent" />
                     </div>
                     <div>
-                      <p className="text-base font-semibold text-white">
+                      <p className="text-lg font-bold text-white">
                         Camera chưa khởi động
                       </p>
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p className="mt-1.5 text-sm text-white/50">
                         Nhấn bên dưới để bật camera và quét mã QR
                       </p>
                     </div>
                     <Button
                       onClick={startCamera}
-                      className="mt-2 gap-2 bg-teal-500 hover:bg-teal-600 text-white border-0"
+                      className="mt-2 gap-2 bg-scanner-accent hover:bg-scanner-accent/80 text-scanner-bg font-bold border-0"
                     >
                       <Camera className="size-4" />
                       Bật camera
@@ -266,13 +263,13 @@ export default function QRScannerPage() {
                 )}
 
                 {state === 'error' && (
-                  <div className="flex flex-col items-center gap-4 p-8 text-center">
-                    <div className="flex size-16 items-center justify-center rounded-full bg-red-500/10">
-                      <AlertCircle className="size-8 text-red-400" />
+                  <div className="flex flex-col items-center gap-5 p-8 text-center">
+                    <div className="flex size-16 items-center justify-center rounded-full bg-destructive/15">
+                      <AlertCircle className="size-8 text-destructive" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">Lỗi</p>
-                      <p className="mt-1 text-xs text-slate-400 max-w-xs">
+                      <p className="text-base font-bold text-white">Lỗi</p>
+                      <p className="mt-1.5 text-sm text-white/50 max-w-xs">
                         {error}
                       </p>
                     </div>
@@ -281,7 +278,7 @@ export default function QRScannerPage() {
                         variant="outline"
                         size="sm"
                         onClick={handleReset}
-                        className="gap-2 border-slate-700 text-slate-300 hover:bg-slate-800"
+                        className="gap-2 border-white/20 text-white/70 hover:bg-white/10 hover:text-white"
                       >
                         <RefreshCw className="size-3.5" />
                         Thử lại
@@ -289,7 +286,7 @@ export default function QRScannerPage() {
                       <Button
                         size="sm"
                         onClick={() => setState('manual')}
-                        className="gap-2 bg-teal-500 hover:bg-teal-600 text-white border-0"
+                        className="gap-2 bg-scanner-accent hover:bg-scanner-accent/80 text-scanner-bg font-bold border-0"
                       >
                         Nhập thủ công
                       </Button>
@@ -298,15 +295,15 @@ export default function QRScannerPage() {
                 )}
 
                 {state === 'found' && foundOrder && (
-                  <div className="flex w-full flex-col items-center gap-4 p-6 text-center">
-                    <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500/15 ring-2 ring-emerald-500/30">
-                      <CheckCircle2 className="size-7 text-emerald-400" />
+                  <div className="flex w-full flex-col items-center gap-5 p-6 text-center">
+                    <div className="flex size-14 items-center justify-center rounded-full bg-success/15 ring-2 ring-success/30">
+                      <CheckCircle2 className="size-7 text-success" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-emerald-400">
+                      <p className="text-base font-bold text-success">
                         Đã tìm thấy đơn hàng!
                       </p>
-                      <p className="mt-1 font-mono text-xs text-slate-400">
+                      <p className="mt-1 font-mono text-sm text-white/50">
                         {foundOrder.order_code}
                       </p>
                     </div>
@@ -321,20 +318,16 @@ export default function QRScannerPage() {
                 {/* Corner decorations */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="relative size-56">
-                    {/* TL */}
-                    <div className="absolute left-0 top-0 h-8 w-8 border-l-2 border-t-2 border-teal-400 rounded-tl-md" />
-                    {/* TR */}
-                    <div className="absolute right-0 top-0 h-8 w-8 border-r-2 border-t-2 border-teal-400 rounded-tr-md" />
-                    {/* BL */}
-                    <div className="absolute bottom-0 left-0 h-8 w-8 border-b-2 border-l-2 border-teal-400 rounded-bl-md" />
-                    {/* BR */}
-                    <div className="absolute bottom-0 right-0 h-8 w-8 border-b-2 border-r-2 border-teal-400 rounded-br-md" />
+                    <div className="absolute left-0 top-0 h-8 w-8 border-l-2 border-t-2 border-scanner-accent rounded-tl-md" />
+                    <div className="absolute right-0 top-0 h-8 w-8 border-r-2 border-t-2 border-scanner-accent rounded-tr-md" />
+                    <div className="absolute bottom-0 left-0 h-8 w-8 border-b-2 border-l-2 border-scanner-accent rounded-bl-md" />
+                    <div className="absolute bottom-0 right-0 h-8 w-8 border-b-2 border-r-2 border-scanner-accent rounded-br-md" />
                     {/* Scan line */}
-                    <div className="absolute inset-x-2 h-px bg-teal-400/80 shadow-[0_0_8px_2px_rgba(20,184,166,0.5)] animate-[scan-line_2s_ease-in-out_infinite]" />
+                    <div className="absolute inset-x-2 h-px bg-scanner-accent/80 shadow-[0_0_8px_2px_var(--scanner-accent-muted)] animate-[scan-line_2s_ease-in-out_infinite]" />
                   </div>
                 </div>
                 <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
-                  <p className="text-xs text-white/70">Đưa mã QR vào khung</p>
+                  <p className="text-sm text-white/70">Đưa mã QR vào khung</p>
                 </div>
                 {/* Stop button */}
                 <button
@@ -349,24 +342,24 @@ export default function QRScannerPage() {
 
           {/* Bottom bar */}
           {state === 'scanning' && (
-            <div className="flex items-center justify-between bg-[#0a0c10] px-4 py-3 border-t border-slate-800">
+            <div className="flex items-center justify-between bg-scanner-bg px-4 py-3 border-t border-white/10">
               <button
                 onClick={() => {
                   const newFacing =
                     cameraFacing === 'environment' ? 'user' : 'environment';
-                  cameraFacingRef.current = newFacing; // update ref immediately before setTimeout fires
+                  cameraFacingRef.current = newFacing;
                   setCameraFacing(newFacing);
                   stopCamera();
                   setTimeout(startCamera, 100);
                 }}
-                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-white/50 hover:bg-white/10 hover:text-white transition-colors"
               >
                 <RefreshCw className="size-3.5" />
                 Đổi camera
               </button>
               <button
                 onClick={() => setState('manual')}
-                className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                className="text-sm font-medium text-scanner-accent hover:text-scanner-accent/80 transition-colors"
               >
                 Nhập thủ công
               </button>
@@ -376,13 +369,13 @@ export default function QRScannerPage() {
 
         {/* Manual entry */}
         {state === 'manual' && (
-          <div className="mt-4 rounded-xl border border-border/20 bg-card p-5">
-            <p className="mb-3 text-sm font-semibold text-foreground">
+          <div className="mt-5 rounded-2xl border border-border/20 bg-card p-6">
+            <p className="mb-4 text-base font-bold text-foreground">
               Nhập mã đơn hàng thủ công
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                   placeholder="SW-20260318-001 hoặc ord-001"
                   value={manualCode}
@@ -391,26 +384,26 @@ export default function QRScannerPage() {
                     setManualError('');
                   }}
                   onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
-                  className="pl-9"
+                  className="pl-10 h-11"
                   aria-invalid={!!manualError}
                 />
               </div>
               <Button
                 onClick={handleManualSubmit}
-                className="gap-2 shrink-0 bg-teal-500 hover:bg-teal-600 text-white border-0"
+                className="gap-2 shrink-0 bg-scanner-accent hover:bg-scanner-accent/80 text-scanner-bg font-bold border-0"
               >
                 Tìm kiếm
               </Button>
             </div>
             {manualError && (
-              <p className="mt-2 flex items-center gap-1.5 text-xs text-red-500">
-                <AlertCircle className="size-3.5" />
+              <p className="mt-2 flex items-center gap-1.5 text-sm text-destructive">
+                <AlertCircle className="size-4" />
                 {manualError}
               </p>
             )}
             <button
               onClick={handleReset}
-              className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               ← Quay lại camera
             </button>
@@ -419,41 +412,41 @@ export default function QRScannerPage() {
 
         {/* Found order card */}
         {state === 'found' && foundOrder && (
-          <div className="mt-4 rounded-xl border border-emerald-500/20 bg-card overflow-hidden shadow-lg">
-            <div className="border-b border-border/15 bg-emerald-500/5 px-5 py-3.5">
+          <div className="mt-5 rounded-2xl border border-success-border bg-card overflow-hidden shadow-lg">
+            <div className="border-b border-border/15 bg-success-muted px-5 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-emerald-500" />
-                  <p className="text-sm font-semibold text-foreground">
+                  <CheckCircle2 className="size-5 text-success" />
+                  <p className="text-base font-bold text-foreground">
                     Đơn hàng đã xác nhận
                   </p>
                 </div>
                 <button
                   onClick={handleReset}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="text-sm text-muted-foreground hover:text-foreground"
                 >
                   Quét lại
                 </button>
               </div>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     Mã đơn hàng
                   </p>
-                  <p className="font-mono text-base font-bold text-foreground">
+                  <p className="font-mono text-lg font-bold text-foreground">
                     {foundOrder.order_code}
                   </p>
                 </div>
                 <span
                   className={cn(
-                    'rounded-full px-3 py-1 text-xs font-medium',
+                    'rounded-full px-3 py-1.5 text-sm font-semibold',
                     foundOrder.status === 'PENDING'
-                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                      ? 'bg-warning-muted text-warning'
                       : foundOrder.status === 'ACTIVE'
-                        ? 'bg-teal-500/10 text-teal-600 dark:text-teal-400'
+                        ? 'bg-success-muted text-success'
                         : 'bg-muted text-muted-foreground',
                   )}
                 >
@@ -467,13 +460,13 @@ export default function QRScannerPage() {
 
               {/* Renter */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-muted/40 p-3">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                <div className="rounded-xl bg-muted/40 p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
                     Khách thuê
                   </p>
                   <div className="flex items-center gap-2">
                     {foundOrder.renter.avatar_url ? (
-                      <div className="relative size-7 shrink-0 overflow-hidden rounded-full">
+                      <div className="relative size-8 shrink-0 overflow-hidden rounded-full">
                         <Image
                           fill
                           src={foundOrder.renter.avatar_url}
@@ -482,28 +475,28 @@ export default function QRScannerPage() {
                         />
                       </div>
                     ) : (
-                      <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-bold text-foreground">
+                      <div className="flex size-8 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">
                         {foundOrder.renter.full_name.charAt(0)}
                       </div>
                     )}
                     <div>
-                      <p className="text-xs font-semibold text-foreground">
+                      <p className="text-sm font-bold text-foreground">
                         {foundOrder.renter.full_name}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {foundOrder.renter.phone_number}
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="rounded-lg bg-muted/40 p-3">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                <div className="rounded-xl bg-muted/40 p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
                     Sản phẩm
                   </p>
-                  <p className="text-xs font-semibold text-foreground line-clamp-1">
+                  <p className="text-sm font-bold text-foreground line-clamp-1">
                     {foundOrder.items[0].product_name}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {foundOrder.items.length} sản phẩm ·{' '}
                     {formatCurrency(foundOrder.total_rental_fee)}
                   </p>
@@ -511,41 +504,41 @@ export default function QRScannerPage() {
               </div>
 
               {/* Dates */}
-              <div className="rounded-lg bg-muted/40 px-4 py-3 flex items-center justify-between text-xs">
+              <div className="rounded-xl bg-muted/40 px-4 py-3.5 flex items-center justify-between text-sm">
                 <div>
-                  <p className="text-muted-foreground">Từ ngày</p>
-                  <p className="font-semibold text-foreground">
+                  <p className="text-muted-foreground text-xs">Từ ngày</p>
+                  <p className="font-bold text-foreground">
                     {new Date(foundOrder.start_date).toLocaleDateString(
                       'vi-VN',
                     )}
                   </p>
                 </div>
-                <ArrowRight className="size-3.5 text-muted-foreground" />
+                <ArrowRight className="size-4 text-muted-foreground" />
                 <div className="text-right">
-                  <p className="text-muted-foreground">Đến ngày</p>
-                  <p className="font-semibold text-foreground">
+                  <p className="text-muted-foreground text-xs">Đến ngày</p>
+                  <p className="font-bold text-foreground">
                     {new Date(foundOrder.end_date).toLocaleDateString('vi-VN')}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 border-t border-border/15 bg-muted/20 px-5 py-3.5">
+            <div className="flex items-center gap-2 border-t border-border/15 bg-muted/20 px-5 py-4">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleReset}
-                className="flex-1"
+                className="flex-1 h-10"
               >
                 Quét lại
               </Button>
               <Button
                 size="sm"
                 onClick={handleProceedToContract}
-                className="flex-1 gap-2 bg-teal-500 hover:bg-teal-600 text-white border-0"
+                className="flex-1 gap-2 h-10 bg-scanner-accent hover:bg-scanner-accent/80 text-scanner-bg font-bold border-0"
               >
                 Tạo hợp đồng
-                <ArrowRight className="size-3.5" />
+                <ArrowRight className="size-4" />
               </Button>
             </div>
           </div>
@@ -554,7 +547,7 @@ export default function QRScannerPage() {
         {/* Demo QR codes section */}
         {(state === 'idle' || state === 'manual') && (
           <div className="mt-6">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
               Đơn hàng mẫu để test
             </p>
             <div className="space-y-2">
@@ -565,40 +558,31 @@ export default function QRScannerPage() {
                     setFoundOrder(order);
                     setState('found');
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl border border-border/20 bg-card px-4 py-3 text-left transition-all hover:border-teal-500/30 hover:bg-teal-500/5"
+                  className="flex w-full items-center gap-3 rounded-2xl border border-border/20 bg-card px-4 py-3.5 text-left transition-all hover:border-scanner-accent/30 hover:bg-scanner-accent-muted"
                 >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-teal-500/10">
-                    <QrCode className="size-4 text-teal-500" />
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-scanner-accent-muted">
+                    <QrCode className="size-4 text-scanner-accent" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground">
+                    <p className="text-sm font-bold text-foreground">
                       {order.order_code}
                     </p>
-                    <p className="text-[10px] text-muted-foreground truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {order.renter.full_name} · {order.items.length} sản phẩm
                     </p>
                   </div>
-                  <span className="text-[10px] rounded-full bg-amber-500/10 text-amber-500 px-2 py-0.5 font-medium shrink-0">
+                  <span className="text-xs rounded-full bg-warning-muted text-warning px-2.5 py-1 font-semibold shrink-0">
                     Chờ xử lý
                   </span>
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[10px] text-muted-foreground text-center">
+            <p className="mt-3 text-xs text-muted-foreground text-center">
               Bấm vào đơn hàng bên trên để mô phỏng quét QR thành công
             </p>
           </div>
         )}
       </div>
-
-      {/* Scan line animation */}
-      <style>{`
-        @keyframes scan-line {
-          0% { top: 8px; }
-          50% { top: calc(100% - 8px); }
-          100% { top: 8px; }
-        }
-      `}</style>
     </div>
   );
 }

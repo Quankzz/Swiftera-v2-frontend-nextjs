@@ -38,26 +38,26 @@ const STATUS_CONFIG: Record<
 > = {
   AVAILABLE: {
     label: 'Sẵn sàng',
-    color: 'text-emerald-600 dark:text-emerald-400',
-    bg: 'bg-emerald-50 dark:bg-emerald-500/10',
-    border: 'border-emerald-200 dark:border-emerald-500/20',
-    dot: 'bg-emerald-500',
+    color: 'text-success',
+    bg: 'bg-success-muted',
+    border: 'border-success-border',
+    dot: 'bg-success',
     icon: CheckCircle2,
   },
   RENTED: {
     label: 'Đang cho thuê',
-    color: 'text-blue-600 dark:text-blue-400',
-    bg: 'bg-blue-50 dark:bg-blue-500/10',
-    border: 'border-blue-200 dark:border-blue-500/20',
-    dot: 'bg-blue-500',
+    color: 'text-info',
+    bg: 'bg-info-muted',
+    border: 'border-info-border',
+    dot: 'bg-info',
     icon: Package,
   },
   MAINTENANCE: {
     label: 'Bảo trì',
-    color: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-50 dark:bg-amber-500/10',
-    border: 'border-amber-200 dark:border-amber-500/20',
-    dot: 'bg-amber-500',
+    color: 'text-warning',
+    bg: 'bg-warning-muted',
+    border: 'border-warning-border',
+    dot: 'bg-warning',
     icon: Wrench,
   },
 };
@@ -66,10 +66,10 @@ const CONDITION_CONFIG: Record<
   ProductCondition,
   { label: string; color: string }
 > = {
-  EXCELLENT: { label: 'Xuất sắc', color: 'text-emerald-500' },
-  GOOD: { label: 'Tốt', color: 'text-teal-500' },
-  FAIR: { label: 'Khá', color: 'text-amber-500' },
-  POOR: { label: 'Kém', color: 'text-red-500' },
+  EXCELLENT: { label: 'Xuất sắc', color: 'text-success' },
+  GOOD: { label: 'Tốt', color: 'text-info' },
+  FAIR: { label: 'Khá', color: 'text-warning' },
+  POOR: { label: 'Kém', color: 'text-destructive' },
 };
 
 const STATUS_FILTERS: Array<{ value: ProductStatus | 'ALL'; label: string }> = [
@@ -89,7 +89,7 @@ function ProductCard({ product }: { product: DashboardProduct }) {
   const conditionCfg = CONDITION_CONFIG[product.condition];
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border/20 bg-card transition-all hover:border-border/40 hover:shadow-md">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/20 bg-card transition-all hover:border-border/40 hover:shadow-md">
       <div className="relative aspect-4/3 overflow-hidden bg-muted/40">
         <Image
           src={product.image_url}
@@ -97,10 +97,10 @@ function ProductCard({ product }: { product: DashboardProduct }) {
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        <div className="absolute left-2 top-2">
+        <div className="absolute left-2.5 top-2.5">
           <span
             className={cn(
-              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm',
+              'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold backdrop-blur-sm',
               statusCfg.bg,
               statusCfg.color,
               statusCfg.border,
@@ -111,35 +111,35 @@ function ProductCard({ product }: { product: DashboardProduct }) {
           </span>
         </div>
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <div className="mb-1">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="flex flex-1 flex-col p-5">
+        <div className="mb-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {product.category}
           </span>
         </div>
-        <h3 className="mb-0.5 text-sm font-semibold text-foreground leading-tight line-clamp-2">
+        <h3 className="mb-1 text-base font-bold text-foreground leading-tight line-clamp-2">
           {product.product_name}
         </h3>
-        <p className="mb-3 font-mono text-[10px] text-muted-foreground">
+        <p className="mb-4 font-mono text-xs text-muted-foreground">
           SN: {product.serial_number}
         </p>
 
-        <div className="mt-auto space-y-2">
+        <div className="mt-auto space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Giá/ngày</span>
-            <span className="text-sm font-bold text-foreground">
+            <span className="text-sm text-muted-foreground">Giá/ngày</span>
+            <span className="text-base font-bold text-foreground">
               {formatCurrency(product.current_daily_price)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Đặt cọc</span>
-            <span className="text-xs font-medium text-foreground">
+            <span className="text-sm text-muted-foreground">Đặt cọc</span>
+            <span className="text-sm font-semibold text-foreground">
               {formatCurrency(product.deposit_amount)}
             </span>
           </div>
-          <div className="flex items-center justify-between border-t border-border/10 pt-2">
-            <span className="text-xs text-muted-foreground">Tình trạng</span>
-            <span className={cn('text-xs font-semibold', conditionCfg.color)}>
+          <div className="flex items-center justify-between border-t border-border/10 pt-2.5">
+            <span className="text-sm text-muted-foreground">Tình trạng</span>
+            <span className={cn('text-sm font-bold', conditionCfg.color)}>
               {conditionCfg.label}
             </span>
           </div>
@@ -155,9 +155,9 @@ function ProductRow({ product }: { product: DashboardProduct }) {
 
   return (
     <tr className="border-b border-border/10 transition-colors hover:bg-muted/20">
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="relative size-10 shrink-0 overflow-hidden rounded-lg">
+          <div className="relative size-11 shrink-0 overflow-hidden rounded-xl">
             <Image
               fill
               src={product.image_url}
@@ -166,24 +166,24 @@ function ProductRow({ product }: { product: DashboardProduct }) {
             />
           </div>
           <div>
-            <p className="text-xs font-semibold text-foreground">
+            <p className="text-sm font-bold text-foreground">
               {product.product_name}
             </p>
-            <p className="font-mono text-[10px] text-muted-foreground">
+            <p className="font-mono text-xs text-muted-foreground">
               SN: {product.serial_number}
             </p>
           </div>
         </div>
       </td>
-      <td className="hidden px-4 py-3 md:table-cell">
-        <span className="text-xs text-muted-foreground">
+      <td className="hidden px-4 py-3.5 md:table-cell">
+        <span className="text-sm text-muted-foreground">
           {product.category}
         </span>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3.5">
         <span
           className={cn(
-            'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium',
+            'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold',
             statusCfg.bg,
             statusCfg.color,
             statusCfg.border,
@@ -193,19 +193,19 @@ function ProductRow({ product }: { product: DashboardProduct }) {
           {statusCfg.label}
         </span>
       </td>
-      <td className="hidden px-4 py-3 sm:table-cell">
-        <span className={cn('text-xs font-medium', conditionCfg.color)}>
+      <td className="hidden px-4 py-3.5 sm:table-cell">
+        <span className={cn('text-sm font-semibold', conditionCfg.color)}>
           {conditionCfg.label}
         </span>
       </td>
-      <td className="hidden px-4 py-3 text-right lg:table-cell">
-        <p className="text-xs font-semibold text-foreground">
+      <td className="hidden px-4 py-3.5 text-right lg:table-cell">
+        <p className="text-sm font-bold text-foreground">
           {formatCurrency(product.current_daily_price)}
         </p>
-        <p className="text-[10px] text-muted-foreground">/ ngày</p>
+        <p className="text-xs text-muted-foreground">/ ngày</p>
       </td>
-      <td className="hidden px-4 py-3 text-right md:table-cell">
-        <p className="text-xs text-muted-foreground">
+      <td className="hidden px-4 py-3.5 text-right md:table-cell">
+        <p className="text-sm text-muted-foreground">
           {formatCurrency(product.deposit_amount)}
         </p>
       </td>
@@ -250,15 +250,15 @@ export default function ProductsPage() {
   return (
     <div className="flex h-full flex-col pb-16 lg:pb-0">
       {/* Toolbar */}
-      <div className="border-b border-border/15 bg-background/50 px-6 py-4 space-y-3">
+      <div className="border-b border-border/15 bg-background/50 px-5 py-5 md:px-8 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               placeholder="Tìm theo tên, serial number, danh mục..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-10 h-10"
             />
           </div>
 
@@ -289,18 +289,18 @@ export default function ProductsPage() {
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors whitespace-nowrap',
+                  'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors whitespace-nowrap',
                   statusFilter === f.value
-                    ? 'bg-teal-500/15 text-teal-600 dark:text-teal-400'
+                    ? 'bg-theme-primary-start/15 text-theme-primary-start'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
                 )}
               >
                 {f.label}
                 <span
                   className={cn(
-                    'rounded-full px-1.5 text-[10px] leading-4',
+                    'rounded-full px-1.5 text-xs leading-4 font-bold',
                     statusFilter === f.value
-                      ? 'bg-teal-500/20 text-teal-600 dark:text-teal-400'
+                      ? 'bg-theme-primary-start/20 text-theme-primary-start'
                       : 'bg-muted text-muted-foreground',
                   )}
                 >
@@ -312,7 +312,7 @@ export default function ProductsPage() {
             ))}
           </div>
 
-          <div className="h-4 w-px bg-border/30 shrink-0" />
+          <div className="h-5 w-px bg-border/30 shrink-0" />
 
           {/* Category filter */}
           <div className="flex items-center gap-1 overflow-x-auto">
@@ -321,9 +321,9 @@ export default function ProductsPage() {
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
                 className={cn(
-                  'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors whitespace-nowrap shrink-0',
+                  'rounded-lg px-3 py-2 text-sm font-semibold transition-colors whitespace-nowrap shrink-0',
                   categoryFilter === cat
-                    ? 'bg-slate-200 dark:bg-slate-700 text-foreground'
+                    ? 'bg-secondary text-foreground'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
                 )}
               >
@@ -335,39 +335,39 @@ export default function ProductsPage() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-5 md:p-8">
         {filtered.length === 0 ? (
-          <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
-            <Package className="size-8 opacity-40" />
-            <p className="text-sm">Không tìm thấy sản phẩm</p>
+          <div className="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Package className="size-10 opacity-40" />
+            <p className="text-base">Không tìm thấy sản phẩm</p>
           </div>
         ) : view === 'grid' ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((product) => (
               <ProductCard key={product.product_item_id} product={product} />
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-border/20 overflow-hidden">
+          <div className="rounded-2xl border border-border/20 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/15 bg-muted/40">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     Sản phẩm
                   </th>
-                  <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell">
+                  <th className="hidden px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-muted-foreground md:table-cell">
                     Danh mục
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     Trạng thái
                   </th>
-                  <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:table-cell">
+                  <th className="hidden px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-muted-foreground sm:table-cell">
                     Tình trạng
                   </th>
-                  <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:table-cell">
+                  <th className="hidden px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wide text-muted-foreground lg:table-cell">
                     Giá thuê
                   </th>
-                  <th className="hidden px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground md:table-cell">
+                  <th className="hidden px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wide text-muted-foreground md:table-cell">
                     Đặt cọc
                   </th>
                 </tr>
