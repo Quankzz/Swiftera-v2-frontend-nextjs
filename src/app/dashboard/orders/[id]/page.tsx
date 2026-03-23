@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, use } from 'react';
+import { useState, useCallback, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -187,8 +187,7 @@ function Section({
 }
 
 // ─── Camera-only capture ─────────────────────────────────────────────────────
-// capture="environment" forces camera on mobile.
-// No file/gallery uploads — only camera shutter.
+// WebRTC implementation — strict camera only, no gallery upload allowed
 function CameraCapture({
   photos,
   onAdd,
@@ -200,17 +199,69 @@ function CameraCapture({
   onRemove: (idx: number) => void;
   label: string;
 }) {
-  const [capturing, setCapturing] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [errorLine, setErrorLine] = useState('');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const handleCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setCapturing(true);
-    const blobUrl = URL.createObjectURL(file);
-    onAdd(blobUrl);
-    setCapturing(false);
-    if (inputRef.current) inputRef.current.value = '';
+  useEffect(() => {
+    if (isCameraOpen && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraOpen]);
+
+  const startCamera = async () => {
+    try {
+      setErrorLine('');
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+        });
+      } catch (e) {
+        // Fallback for devices without an environment camera (like most desktop webcams)
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      }
+      streamRef.current = stream;
+      setIsCameraOpen(true);
+    } catch (err) {
+      console.error('Camera error:', err);
+      setErrorLine('Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.');
+    }
+  };
+
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraOpen(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, [stopCamera]);
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(videoRef.current, 0, 0);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      onAdd(url);
+      stopCamera();
+    }, 'image/jpeg', 0.8);
   };
 
   return (
@@ -245,42 +296,57 @@ function CameraCapture({
         </div>
       )}
 
-      {/* Camera shutter button */}
-      <label
-        className={cn(
-          'flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed py-8 cursor-pointer transition-all select-none',
-          'border-border bg-muted/20 hover:bg-muted/50 hover:border-theme-primary-start/50',
-          capturing && 'opacity-50 pointer-events-none',
-        )}
-      >
-        {capturing ? (
-          <Loader2 className="size-8 text-muted-foreground animate-spin" />
-        ) : (
-          <>
-            <Camera className="size-8 text-theme-primary-start" />
-            <span className="text-base font-bold text-foreground">
-              {photos.length === 0 ? label : 'Chụp thêm góc độ'}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {photos.length > 0
-                ? `${photos.length} ảnh đã chụp`
-                : 'Chỉ sử dụng camera thiết bị — không cho phép chọn ảnh từ thư viện'}
-            </span>
-          </>
-        )}
-        {/* capture="environment" → mobile opens rear camera directly, bypassing gallery */}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          {...({
-            capture: 'environment',
-          } as React.InputHTMLAttributes<HTMLInputElement>)}
-          className="hidden"
-          onChange={handleCapture}
-          disabled={capturing}
-        />
-      </label>
+      {errorLine && <p className="text-sm font-semibold text-destructive">{errorLine}</p>}
+
+      {isCameraOpen ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/20 p-4">
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={stopCamera}
+            >
+              Đóng Camera
+            </Button>
+            <Button
+              type="button"
+              className="flex-1 gap-2 bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
+              onClick={capturePhoto}
+            >
+              <Camera className="size-4" /> Chụp ảnh
+            </Button>
+          </div>
+        </div>
+      ) : (
+        /* Camera shutter trigger start */
+        <button
+          type="button"
+          onClick={startCamera}
+          className={cn(
+            'flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed py-8 cursor-pointer transition-all select-none',
+            'border-border bg-muted/20 hover:bg-muted/50 hover:border-theme-primary-start/50'
+          )}
+        >
+          <Camera className="size-8 text-theme-primary-start" />
+          <span className="text-base font-bold text-foreground">
+            {photos.length === 0 ? label : 'Chụp thêm góc độ'}
+          </span>
+          <span className="text-sm text-muted-foreground px-4 text-center">
+            {photos.length > 0
+              ? `${photos.length} ảnh đã chụp`
+              : 'Yêu cầu sử dụng camera thiết bị để làm minh chứng — không cho phép tải ảnh'}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

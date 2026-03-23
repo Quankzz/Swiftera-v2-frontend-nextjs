@@ -919,25 +919,25 @@ const MapView: React.FC = () => {
               animate-in slide-in-from-right-4 fade-in duration-300
               ${
                 n.type === 'error'
-                  ? 'bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                  ? 'bg-card text-destructive border-destructive/20'
                   : n.type === 'success'
-                    ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                    : 'bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800'
+                    ? 'bg-card text-success border-success-border'
+                    : 'bg-card text-info border-info-border'
               }
             `}
           >
             {n.type === 'error' ? (
-              <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+              <AlertCircle size={16} className="text-destructive shrink-0 mt-0.5" />
             ) : (
               <CheckCircle2
                 size={16}
-                className="text-emerald-500 shrink-0 mt-0.5"
+                className="text-success shrink-0 mt-0.5"
               />
             )}
             <span className="flex-1 leading-snug">{n.message}</span>
             <button
               onClick={() => dismissNotification(n.id)}
-              className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X size={14} />
             </button>
