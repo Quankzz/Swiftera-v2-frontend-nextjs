@@ -93,7 +93,7 @@ export function QrScanner({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative w-full aspect-[4/3] sm:aspect-video rounded-2xl overflow-hidden bg-black">
+      <div className="relative w-full aspect-4/3 sm:aspect-video rounded-2xl overflow-hidden bg-black">
         <video
           ref={videoRef}
           autoPlay

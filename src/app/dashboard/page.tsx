@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -25,6 +25,7 @@ import {
   MOCK_HUB_INFO,
 } from '@/data/mockDashboard';
 import type { DashboardOrder } from '@/types/dashboard.types';
+import { fmtDateShort as fmtDate } from '@/lib/formatters';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getGreeting = () => {
@@ -33,9 +34,6 @@ const getGreeting = () => {
   if (h < 18) return 'Buổi chiều';
   return 'Buổi tối';
 };
-
-const fmtDate = (s: string) =>
-  new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 
 // ─── Weekly chart (7 days, deterministic) ─────────────────────────────────────
 const WEEK_DATA = Array.from({ length: 7 }, (_, i) => {
@@ -585,9 +583,10 @@ function StatusPill({
 
 // ─── Urgent Row ───────────────────────────────────────────────────────────────
 function UrgentRow({ order }: { order: DashboardOrder }) {
+  const [now] = useState(() => Date.now());
   const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PENDING'];
   const daysLeft = Math.ceil(
-    (new Date(order.end_date).getTime() - Date.now()) / 86_400_000,
+    (new Date(order.end_date).getTime() - now) / 86_400_000,
   );
 
   return (

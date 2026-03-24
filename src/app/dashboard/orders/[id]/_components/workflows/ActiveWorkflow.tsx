@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { AlertCircle, Package, Calendar, Phone, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ export function ActiveWorkflow({
   onRequestReturnEarly?: () => void;
   loading?: boolean;
 }) {
-  const now = new Date();
+  const [now] = useState(() => new Date());
   const endDate = new Date(order.end_date);
   const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / 86400000);
   const isOverdue = order.status === 'OVERDUE';
@@ -142,7 +142,8 @@ export function ActiveWorkflow({
             Khách yêu cầu trả sớm?
           </p>
           <p className="text-xs text-muted-foreground mb-4">
-            Tính năng mô phỏng: Bấm vào đây nếu khách hàng thông báo muốn chấm dứt hợp đồng sớm và yêu cầu bạn đến lấy thiết bị.
+            Tính năng mô phỏng: Bấm vào đây nếu khách hàng thông báo muốn chấm
+            dứt hợp đồng sớm và yêu cầu bạn đến lấy thiết bị.
           </p>
           <Button
             size="lg"

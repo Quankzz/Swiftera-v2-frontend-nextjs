@@ -1,107 +1,26 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Search,
   ArrowUpDown,
   Filter,
   ChevronDown,
   ShoppingBag,
-  Truck,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  RotateCcw,
-  XCircle,
   ArrowRight,
   User,
   Calendar,
   Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { STATUS_CFG } from '@/lib/order-status';
+import { fmt, fmtDateShort, fmtRelative } from '@/lib/formatters';
 import { MOCK_ORDERS, MOCK_CURRENT_STAFF } from '@/data/mockDashboard';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
-const STATUS_CONFIG: Record<
-  OrderStatus,
-  {
-    label: string;
-    color: string;
-    bg: string;
-    border: string;
-    dot: string;
-    icon: React.ElementType;
-  }
-> = {
-  PENDING: {
-    label: 'Chờ xử lý',
-    color: 'text-foreground',
-    bg: 'bg-secondary',
-    border: 'border-border',
-    dot: 'bg-muted-foreground',
-    icon: Clock,
-  },
-  CONFIRMED: {
-    label: 'Đã xác nhận',
-    color: 'text-theme-primary-start',
-    bg: 'bg-theme-primary-start/10',
-    border: 'border-theme-primary-start/25',
-    dot: 'bg-theme-primary-start',
-    icon: CheckCircle2,
-  },
-  DELIVERING: {
-    label: 'Đang giao',
-    color: 'text-info',
-    bg: 'bg-info-muted',
-    border: 'border-info-border',
-    dot: 'bg-info animate-pulse',
-    icon: Truck,
-  },
-  ACTIVE: {
-    label: 'Đang thuê',
-    color: 'text-success',
-    bg: 'bg-success-muted',
-    border: 'border-success-border',
-    dot: 'bg-success',
-    icon: ShoppingBag,
-  },
-  RETURNING: {
-    label: 'Đang trả',
-    color: 'text-destructive',
-    bg: 'bg-destructive/10',
-    border: 'border-destructive/25',
-    dot: 'bg-destructive animate-pulse',
-    icon: RotateCcw,
-  },
-  COMPLETED: {
-    label: 'Hoàn thành',
-    color: 'text-success',
-    bg: 'bg-success-muted',
-    border: 'border-success-border',
-    dot: 'bg-success',
-    icon: CheckCircle2,
-  },
-  CANCELLED: {
-    label: 'Đã hủy',
-    color: 'text-destructive',
-    bg: 'bg-destructive/10',
-    border: 'border-destructive/20',
-    dot: 'bg-destructive',
-    icon: XCircle,
-  },
-  OVERDUE: {
-    label: 'Quá hạn',
-    color: 'text-destructive',
-    bg: 'bg-destructive/10',
-    border: 'border-destructive/20',
-    dot: 'bg-destructive animate-pulse',
-    icon: AlertCircle,
-  },
-};
 
 const ALL_STATUSES: OrderStatus[] = [
   'PENDING',
@@ -124,51 +43,28 @@ const GROUP_STATUSES: Partial<Record<FilterKey, OrderStatus[]>> = {
 type SortKey = 'created_at' | 'start_date' | 'end_date' | 'total_rental_fee';
 type SortDir = 'asc' | 'desc';
 
-const fmt = (v: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-    v,
-  );
-
-const fmtDate = (s: string) =>
-  new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-
-const fmtRelative = (iso: string) => {
-  const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (m < 60) return `${m}ph`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-};
-
 export default function OrdersPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterKey>(() => {
+  const activeFilter = useMemo<FilterKey>(() => {
     const s = searchParams.get('status') as FilterKey | null;
     if (!s) return 'ALL';
     if (s === 'urgent' || s === 'in_progress' || s === 'done') return s;
     if (ALL_STATUSES.includes(s as OrderStatus)) return s as OrderStatus;
     return 'ALL';
-  });
+  }, [searchParams]);
+  const setFilter = useCallback(
+    (key: FilterKey) => {
+      const params = key === 'ALL' ? '' : `?status=${key}`;
+      router.replace(`/dashboard/orders${params}`, { scroll: false });
+    },
+    [router],
+  );
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showFilters, setShowFilters] = useState(false);
-
-  useEffect(() => {
-    const s = searchParams.get('status') as FilterKey | null;
-    if (s && s !== activeFilter) {
-      if (s === 'urgent' || s === 'in_progress' || s === 'done') {
-        setActiveFilter(s);
-      } else if (ALL_STATUSES.includes(s as OrderStatus)) {
-        setActiveFilter(s as OrderStatus);
-      } else {
-        setActiveFilter('ALL');
-      }
-    } else if (!s && activeFilter !== 'ALL') {
-      setActiveFilter('ALL');
-    }
-  }, [searchParams]);
 
   // Only show orders assigned to this staff member (stable ref since MOCK data is constant)
   const myOrders = useMemo(
@@ -287,9 +183,9 @@ export default function OrdersPage() {
             <button
               key={tab.key}
               onClick={() => {
-                if (tab.key === 'ALL') setActiveFilter('ALL');
-                else if (activeFilter === tab.key) setActiveFilter('ALL');
-                else setActiveFilter(tab.key);
+                if (tab.key === 'ALL') setFilter('ALL');
+                else if (activeFilter === tab.key) setFilter('ALL');
+                else setFilter(tab.key);
               }}
               className={cn(
                 'flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-3.5 py-2 text-sm font-semibold transition-all shrink-0',
@@ -371,7 +267,7 @@ export default function OrdersPage() {
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => setActiveFilter('ALL')}
+                  onClick={() => setFilter('ALL')}
                   className={cn(
                     'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
                     activeFilter === 'ALL'
@@ -385,7 +281,7 @@ export default function OrdersPage() {
                   <button
                     key={s}
                     onClick={() =>
-                      setActiveFilter(activeFilter === s ? 'ALL' : s)
+                      setFilter(activeFilter === s ? 'ALL' : s)
                     }
                     className={cn(
                       'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
@@ -394,7 +290,7 @@ export default function OrdersPage() {
                         : 'border-border/40 text-muted-foreground hover:bg-accent',
                     )}
                   >
-                    {STATUS_CONFIG[s].label}
+                    {STATUS_CFG[s].label}
                   </button>
                 ))}
               </div>
@@ -442,7 +338,7 @@ export default function OrdersPage() {
             className="mt-3 text-sm font-medium text-theme-primary-start hover:underline"
             onClick={() => {
               setSearch('');
-              setActiveFilter('ALL');
+              setFilter('ALL');
             }}
           >
             Xóa bộ lọc
@@ -460,7 +356,7 @@ export default function OrdersPage() {
 }
 
 function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
-  const cfg = STATUS_CONFIG[order.status];
+  const cfg = STATUS_CFG[order.status];
   const Icon = cfg.icon;
   const isUrgent = ['OVERDUE', 'RETURNING'].includes(order.status);
   const daysOverdue =
@@ -517,7 +413,7 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
         <div className="flex items-center gap-1.5 sm:w-40 text-sm text-muted-foreground">
           <Calendar className="size-3.5 shrink-0" />
           <span>
-            {fmtDate(order.start_date)} → {fmtDate(order.end_date)}
+              {fmtDateShort(order.start_date)} → {fmtDateShort(order.end_date)}
           </span>
         </div>
 
@@ -546,7 +442,7 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
           {cfg.label}
         </span>
         <span className="text-xs text-muted-foreground">
-          {fmtRelative(order.created_at)}
+          {fmtRelative(order.created_at, now)}
         </span>
         <ArrowRight className="size-4 text-muted-foreground/40 group-hover:text-primary transition-colors sm:ml-0 ml-auto" />
       </div>
