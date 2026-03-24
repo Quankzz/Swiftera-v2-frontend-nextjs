@@ -63,7 +63,7 @@ export function WorkflowStepper({ status }: { status: OrderStatus }) {
           const isLast = idx === WORKFLOW_STEPS.length - 1;
           return (
             <div key={step.key} className="flex items-start">
-              <div className="flex flex-col items-center gap-1.5 w-[76px]">
+              <div className="flex flex-col items-center gap-1.5 w-19">
                 <div
                   className={cn(
                     'flex size-9 items-center justify-center rounded-full border-2 transition-all',
@@ -104,7 +104,7 @@ export function WorkflowStepper({ status }: { status: OrderStatus }) {
               {!isLast && (
                 <div
                   className={cn(
-                    'h-0.5 w-5 mt-[18px] mx-0.5 rounded-full transition-all',
+                    'h-0.5 w-5 mt-4.5 mx-0.5 rounded-full transition-all',
                     idx < currentIdx ? 'bg-success' : 'bg-border',
                   )}
                 />

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Search,
   ArrowUpDown,
@@ -78,10 +79,10 @@ const STATUS_CONFIG: Record<
   },
   COMPLETED: {
     label: 'Hoàn thành',
-    color: 'text-muted-foreground',
-    bg: 'bg-muted',
-    border: 'border-border',
-    dot: 'bg-muted-foreground',
+    color: 'text-success',
+    bg: 'bg-success-muted',
+    border: 'border-success-border',
+    dot: 'bg-success',
     icon: CheckCircle2,
   },
   CANCELLED: {
@@ -112,6 +113,14 @@ const ALL_STATUSES: OrderStatus[] = [
   'COMPLETED',
   'CANCELLED',
 ];
+
+type FilterKey = 'ALL' | 'urgent' | 'in_progress' | 'done' | OrderStatus;
+const GROUP_STATUSES: Partial<Record<FilterKey, OrderStatus[]>> = {
+  urgent: ['PENDING', 'OVERDUE', 'RETURNING'],
+  in_progress: ['CONFIRMED', 'DELIVERING', 'ACTIVE'],
+  done: ['COMPLETED', 'CANCELLED'],
+};
+
 type SortKey = 'created_at' | 'start_date' | 'end_date' | 'total_rental_fee';
 type SortDir = 'asc' | 'desc';
 
@@ -132,17 +141,44 @@ const fmtRelative = (iso: string) => {
 };
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
+  const [now] = useState(() => Date.now());
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
+  const [activeFilter, setActiveFilter] = useState<FilterKey>(() => {
+    const s = searchParams.get('status') as FilterKey | null;
+    if (!s) return 'ALL';
+    if (s === 'urgent' || s === 'in_progress' || s === 'done') return s;
+    if (ALL_STATUSES.includes(s as OrderStatus)) return s as OrderStatus;
+    return 'ALL';
+  });
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Only show orders assigned to this staff member
-  const myOrders = MOCK_ORDERS.filter(
-    (o) =>
-      o.staff_checkin_id === MOCK_CURRENT_STAFF.staff_id ||
-      o.staff_checkout_id === MOCK_CURRENT_STAFF.staff_id,
+  useEffect(() => {
+    const s = searchParams.get('status') as FilterKey | null;
+    if (s && s !== activeFilter) {
+      if (s === 'urgent' || s === 'in_progress' || s === 'done') {
+        setActiveFilter(s);
+      } else if (ALL_STATUSES.includes(s as OrderStatus)) {
+        setActiveFilter(s as OrderStatus);
+      } else {
+        setActiveFilter('ALL');
+      }
+    } else if (!s && activeFilter !== 'ALL') {
+      setActiveFilter('ALL');
+    }
+  }, [searchParams]);
+
+  // Only show orders assigned to this staff member (stable ref since MOCK data is constant)
+  const myOrders = useMemo(
+    () =>
+      MOCK_ORDERS.filter(
+        (o) =>
+          o.staff_checkin_id === MOCK_CURRENT_STAFF.staff_id ||
+          o.staff_checkout_id === MOCK_CURRENT_STAFF.staff_id,
+      ),
+    [],
   );
 
   const filtered = useMemo(() => {
@@ -158,8 +194,14 @@ export default function OrdersPage() {
           o.items.some((i) => i.product_name.toLowerCase().includes(q)),
       );
     }
-    if (statusFilter !== 'ALL')
-      list = list.filter((o) => o.status === statusFilter);
+    if (activeFilter !== 'ALL') {
+      const groupStatuses = GROUP_STATUSES[activeFilter];
+      if (groupStatuses) {
+        list = list.filter((o) => groupStatuses.includes(o.status));
+      } else {
+        list = list.filter((o) => o.status === (activeFilter as OrderStatus));
+      }
+    }
     list.sort((a, b) => {
       const av =
         sortKey === 'total_rental_fee'
@@ -172,7 +214,7 @@ export default function OrdersPage() {
       return sortDir === 'desc' ? bv - av : av - bv;
     });
     return list;
-  }, [search, statusFilter, sortKey, sortDir]);
+  }, [search, activeFilter, sortKey, sortDir, myOrders]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
@@ -205,49 +247,49 @@ export default function OrdersPage() {
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {[
           {
-            key: 'ALL',
+            key: 'ALL' as FilterKey,
             label: 'Tất cả',
             count: myOrders.length,
             urgent: false,
           },
           {
-            key: 'urgent',
+            key: 'urgent' as FilterKey,
             label: 'Cần xử lý',
             count: urgentCount,
             urgent: true,
-            statuses: ['PENDING', 'OVERDUE', 'RETURNING'],
           },
           {
-            key: 'in_progress',
+            key: 'in_progress' as FilterKey,
             label: 'Đang diễn ra',
             count: myOrders.filter((o) =>
               ['CONFIRMED', 'DELIVERING', 'ACTIVE'].includes(o.status),
             ).length,
             urgent: false,
-            statuses: ['CONFIRMED', 'DELIVERING', 'ACTIVE'],
           },
           {
-            key: 'done',
+            key: 'done' as FilterKey,
             label: 'Kết thúc',
             count: myOrders.filter((o) =>
               ['COMPLETED', 'CANCELLED'].includes(o.status),
             ).length,
             urgent: false,
-            statuses: ['COMPLETED', 'CANCELLED'],
           },
         ].map((tab) => {
           const isActive =
             tab.key === 'ALL'
-              ? statusFilter === 'ALL'
-              : (tab.statuses?.includes(statusFilter as string) ?? false);
+              ? activeFilter === 'ALL'
+              : activeFilter === tab.key ||
+                (GROUP_STATUSES[tab.key]?.includes(
+                  activeFilter as OrderStatus,
+                ) ??
+                  false);
           return (
             <button
               key={tab.key}
               onClick={() => {
-                if (tab.key === 'ALL') setStatusFilter('ALL');
-                else if (isActive) setStatusFilter('ALL');
-                else
-                  setStatusFilter((tab.statuses?.[0] as OrderStatus) ?? 'ALL');
+                if (tab.key === 'ALL') setActiveFilter('ALL');
+                else if (activeFilter === tab.key) setActiveFilter('ALL');
+                else setActiveFilter(tab.key);
               }}
               className={cn(
                 'flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-3.5 py-2 text-sm font-semibold transition-all shrink-0',
@@ -264,7 +306,9 @@ export default function OrdersPage() {
                   'flex h-5 min-w-5 px-1 items-center justify-center rounded-full text-xs font-bold',
                   isActive
                     ? 'bg-white/20 text-inherit'
-                    : 'bg-muted text-muted-foreground',
+                    : tab.urgent && tab.count > 0
+                      ? 'bg-destructive text-white'
+                      : 'bg-muted text-muted-foreground',
                 )}
               >
                 {tab.count}
@@ -327,10 +371,10 @@ export default function OrdersPage() {
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => setStatusFilter('ALL')}
+                  onClick={() => setActiveFilter('ALL')}
                   className={cn(
                     'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
-                    statusFilter === 'ALL'
+                    activeFilter === 'ALL'
                       ? 'bg-theme-primary-start text-white border-theme-primary-start'
                       : 'border-border/40 text-muted-foreground hover:bg-accent',
                   )}
@@ -341,11 +385,11 @@ export default function OrdersPage() {
                   <button
                     key={s}
                     onClick={() =>
-                      setStatusFilter(statusFilter === s ? 'ALL' : s)
+                      setActiveFilter(activeFilter === s ? 'ALL' : s)
                     }
                     className={cn(
                       'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
-                      statusFilter === s
+                      activeFilter === s
                         ? 'bg-theme-primary-start text-white border-theme-primary-start'
                         : 'border-border/40 text-muted-foreground hover:bg-accent',
                     )}
@@ -398,7 +442,7 @@ export default function OrdersPage() {
             className="mt-3 text-sm font-medium text-theme-primary-start hover:underline"
             onClick={() => {
               setSearch('');
-              setStatusFilter('ALL');
+              setActiveFilter('ALL');
             }}
           >
             Xóa bộ lọc
@@ -407,7 +451,7 @@ export default function OrdersPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((order) => (
-            <OrderCard key={order.rental_order_id} order={order} />
+            <OrderCard key={order.rental_order_id} order={order} now={now} />
           ))}
         </div>
       )}
@@ -415,13 +459,13 @@ export default function OrdersPage() {
   );
 }
 
-function OrderCard({ order }: { order: DashboardOrder }) {
+function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
   const cfg = STATUS_CONFIG[order.status];
   const Icon = cfg.icon;
   const isUrgent = ['OVERDUE', 'RETURNING'].includes(order.status);
   const daysOverdue =
     order.status === 'OVERDUE'
-      ? Math.floor((Date.now() - new Date(order.end_date).getTime()) / 86400000)
+      ? Math.floor((now - new Date(order.end_date).getTime()) / 86400000)
       : 0;
 
   return (

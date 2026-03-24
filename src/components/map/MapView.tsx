@@ -23,7 +23,6 @@ import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 const ROUTE_ACTIVE_COLOR = '#0EA5E9';
 const ROUTE_INACTIVE_COLOR = '#0EA5E4';
-const NEARBY_RADIUS_KM = 10;
 const FIT_BOUNDS_PADDING = {
   top: 80,
   bottom: 80,
@@ -181,7 +180,7 @@ const MapView: React.FC = () => {
     map.on('load', () => {
       mapRef.current = map;
       setIsMapReady(true);
-      
+
       // Delay resize slightly to allow layout changes to settle
       setTimeout(() => map.resize(), 100);
 
@@ -799,8 +798,7 @@ const MapView: React.FC = () => {
         hub.latitude,
         hub.longitude,
       ),
-    }))
-      .sort((a, b) => a.distance - b.distance);
+    })).sort((a, b) => a.distance - b.distance);
   }, [userLocation]);
 
   useEffect(() => {

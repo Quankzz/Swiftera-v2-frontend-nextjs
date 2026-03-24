@@ -26,7 +26,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
   return (
     <div className="absolute top-2 left-2 z-10 md:w-80 w-64 bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
       {/* Header */}
-      <div className="bg-gradient-to-r from-theme-primary-start to-theme-primary-end px-4 py-3 flex items-center gap-2">
+      <div className="bg-linear-to-r from-theme-primary-start to-theme-primary-end px-4 py-3 flex items-center gap-2">
         <Navigation size={15} className="text-white" />
         <h2 className="text-white font-semibold text-sm">Tìm đường</h2>
       </div>
@@ -113,7 +113,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
         <button
           onClick={onRouteSearch}
           className="
-            w-full bg-gradient-to-r from-theme-primary-start to-theme-primary-end hover:brightness-110 active:scale-95
+            w-full bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-110 active:scale-95
             text-white rounded-xl py-2.5 text-sm font-semibold
             transition-all duration-150 shadow-sm shadow-theme-primary-start/20
           "

@@ -10,6 +10,11 @@ import {
   LifeBuoy,
   Zap,
   ChevronRight,
+  Clock,
+  Truck,
+  Package,
+  RotateCcw,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -25,6 +30,7 @@ import {
   SidebarMenuSubItem,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import {
   Collapsible,
@@ -37,36 +43,57 @@ import {
   MOCK_HUB_INFO,
   MOCK_ORDERS,
 } from '@/data/mockDashboard';
+import { cn } from '@/lib/utils';
 
-// ─── Order workflow sub-tabs (only what staff needs to act on) ───────────────
+// ─── Workflow sub-tabs ────────────────────────────────────────────────────────
 const ORDER_WORKFLOW_TABS = [
   {
     title: 'Chờ xác nhận',
     url: '/dashboard/orders?status=PENDING',
-    status: 'PENDING',
+    statuses: ['PENDING'] as const,
     dotClass: 'bg-amber-400',
     urgency: true,
+    icon: Clock,
   },
   {
     title: 'Đang giao hàng',
     url: '/dashboard/orders?status=DELIVERING',
-    status: 'DELIVERING',
-    dotClass: 'bg-sky-400',
+    statuses: ['DELIVERING'] as const,
+    dotClass: 'bg-info animate-pulse',
     urgency: false,
+    icon: Truck,
   },
   {
     title: 'Đang thuê',
     url: '/dashboard/orders?status=ACTIVE',
-    status: 'ACTIVE',
-    dotClass: 'bg-emerald-500',
+    statuses: ['ACTIVE'] as const,
+    dotClass: 'bg-success',
     urgency: false,
+    icon: Package,
   },
   {
     title: 'Cần thu hồi',
     url: '/dashboard/orders?status=RETURNING',
-    status: ['RETURNING', 'OVERDUE'],
-    dotClass: 'bg-destructive',
+    statuses: ['RETURNING'] as const,
+    dotClass: 'bg-destructive animate-pulse',
     urgency: true,
+    icon: RotateCcw,
+  },
+  {
+    title: 'Đã quá hạn',
+    url: '/dashboard/orders?status=OVERDUE',
+    statuses: ['OVERDUE'] as const,
+    dotClass: 'bg-destructive animate-pulse',
+    urgency: true,
+    icon: RotateCcw,
+  },
+  {
+    title: 'Đã hoàn thành',
+    url: '/dashboard/orders?status=COMPLETED',
+    statuses: ['COMPLETED'] as const,
+    dotClass: 'bg-success',
+    urgency: false,
+    icon: CheckCircle2,
   },
 ] as const;
 
@@ -82,7 +109,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     pathname === '/dashboard/orders' ||
     pathname.startsWith('/dashboard/orders/');
 
-  // Pre-compute per-status count from mock data
   const orderCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
     MOCK_ORDERS.forEach((o) => {
@@ -91,20 +117,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return counts;
   }, []);
 
+  const urgentTotal =
+    (orderCounts['RETURNING'] ?? 0) +
+    (orderCounts['OVERDUE'] ?? 0) +
+    (orderCounts['PENDING'] ?? 0);
+
+  const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
+
   return (
     <Sidebar variant="inset" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="pb-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br from-theme-primary-start to-theme-primary-end text-white shadow-md ambient-glow">
+              <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-linear-to-br from-theme-primary-start to-theme-primary-end text-white shadow-md">
                 <Zap className="size-4" />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold text-sidebar-foreground">
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate text-sm font-bold text-sidebar-foreground tracking-tight">
                   Swiftera
                 </span>
-                <span className="truncate text-xs text-sidebar-foreground/60">
+                <span className="truncate text-[11px] text-sidebar-foreground/55 font-medium">
                   {MOCK_HUB_INFO.name}
                 </span>
               </div>
@@ -114,8 +147,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* ── Main Navigation ──────────────────────────────────────── */}
         <SidebarGroup>
-          <SidebarGroupLabel>Nhân viên portal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4">
+            Nhân viên portal
+          </SidebarGroupLabel>
           <SidebarMenu>
             {/* Tổng quan */}
             <SidebarMenuItem>
@@ -123,13 +159,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 render={<Link href="/dashboard" />}
                 isActive={pathname === '/dashboard'}
                 tooltip="Tổng quan"
+                className="gap-3"
               >
-                <LayoutDashboard />
+                <LayoutDashboard className="size-4" />
                 <span>Tổng quan</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {/* Đơn hàng — collapsible with workflow tabs */}
+            {/* Đơn hàng — collapsible */}
             <Collapsible
               defaultOpen={isOrdersActive}
               render={<SidebarMenuItem />}
@@ -138,40 +175,56 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 render={<Link href="/dashboard/orders" />}
                 isActive={isOrdersActive}
                 tooltip="Đơn hàng"
+                className="gap-3"
               >
-                <ShoppingBag />
+                <ShoppingBag className="size-4" />
                 <span>Đơn hàng</span>
+                {urgentTotal > 0 && (
+                  <span className=" flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums">
+                    {urgentTotal}
+                  </span>
+                )}
               </SidebarMenuButton>
               <SidebarMenuAction
                 render={<CollapsibleTrigger />}
-                className="aria-expanded:rotate-90 transition-transform duration-200"
+                className={cn(
+                  'aria-expanded:rotate-90 transition-transform duration-200',
+                  urgentTotal > 0 ? 'right-8' : '',
+                )}
               >
                 <ChevronRight className="size-3.5" />
                 <span className="sr-only">Mở rộng</span>
               </SidebarMenuAction>
               <CollapsibleContent>
-                <SidebarMenuSub>
+                <SidebarMenuSub className="ml-4 mt-0.5">
                   {ORDER_WORKFLOW_TABS.map((tab) => {
-                    const count = Array.isArray(tab.status)
-                      ? tab.status.reduce(
-                          (s, st) => s + (orderCounts[st] ?? 0),
-                          0,
-                        )
-                      : (orderCounts[tab.status as string] ?? 0);
+                    const count = tab.statuses.reduce(
+                      (s, st) => s + (orderCounts[st] ?? 0),
+                      0,
+                    );
                     return (
                       <SidebarMenuSubItem key={tab.title}>
-                        <SidebarMenuSubButton render={<Link href={tab.url} />}>
+                        <SidebarMenuSubButton
+                          render={<Link href={tab.url} />}
+                          className="py-2 gap-2.5"
+                        >
                           <span
-                            className={`size-2 shrink-0 rounded-full ${tab.dotClass}`}
+                            className={cn(
+                              'size-1.5 shrink-0 rounded-full',
+                              tab.dotClass,
+                            )}
                           />
-                          <span className="flex-1 truncate">{tab.title}</span>
+                          <span className="flex-1 truncate text-[12.5px]">
+                            {tab.title}
+                          </span>
                           {count > 0 && (
                             <span
-                              className={`ml-auto min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums ${
+                              className={cn(
+                                'min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
                                 tab.urgency
                                   ? 'bg-destructive text-white'
-                                  : 'bg-muted text-muted-foreground'
-                              }`}
+                                  : 'bg-sidebar-accent text-sidebar-foreground/60',
+                              )}
                             >
                               {count}
                             </span>
@@ -183,21 +236,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuSub>
               </CollapsibleContent>
             </Collapsible>
-
-            {/* Sản phẩm — removed; managed by admin */}
           </SidebarMenu>
         </SidebarGroup>
 
+        {/* ── Quick Stats ──────────────────────────────────────────── */}
+        <SidebarGroup className="px-3 py-0">
+          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3 space-y-2">
+            <p className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest">
+              Hôm nay
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <QuickStat label="Tổng đơn" value={totalOrders} />
+              <QuickStat
+                label="Cần xử lý"
+                value={urgentTotal}
+                urgent={urgentTotal > 0}
+              />
+            </div>
+          </div>
+        </SidebarGroup>
+
+        {/* ── Support ──────────────────────────────────────────────── */}
         <SidebarGroup className="mt-auto">
-          <SidebarGroupLabel>Hỗ trợ</SidebarGroupLabel>
+          <SidebarSeparator className="mb-2" />
           <SidebarMenu>
             {SECONDARY_ITEMS.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   render={<Link href={item.url} />}
                   tooltip={item.title}
+                  className="gap-3 text-sidebar-foreground/55 hover:text-sidebar-foreground"
                 >
-                  <item.icon />
+                  <item.icon className="size-4" />
                   <span>{item.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -212,9 +282,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             name: MOCK_CURRENT_STAFF.full_name,
             email: MOCK_CURRENT_STAFF.email,
             avatar: MOCK_CURRENT_STAFF.avatar_url ?? '',
+            role: MOCK_CURRENT_STAFF.role,
           }}
         />
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function QuickStat({
+  label,
+  value,
+  urgent,
+}: {
+  label: string;
+  value: number;
+  urgent?: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] text-sidebar-foreground/50 font-medium">
+        {label}
+      </span>
+      <span
+        className={cn(
+          'text-base font-bold tabular-nums leading-tight',
+          urgent && value > 0 ? 'text-destructive' : 'text-sidebar-foreground',
+        )}
+      >
+        {value}
+      </span>
+    </div>
   );
 }

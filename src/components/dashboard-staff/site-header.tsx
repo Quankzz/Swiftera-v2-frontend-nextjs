@@ -16,7 +16,7 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { useTheme } from '@/context/theme-context';
 import { PanelLeftIcon } from 'lucide-react';
 import { MOCK_STATS } from '@/data/mockDashboard';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const PAGE_TITLES: Record<
   string,
@@ -48,7 +48,19 @@ const PAGE_TITLES: Record<
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  if (typeof window !== 'undefined' && !mounted) setMounted(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="h-8 w-8" aria-hidden="true" disabled>
+        <div className="size-4 animate-pulse rounded-full bg-muted" />
+      </Button>
+    );
+  }
+
   return (
     <Button
       variant="ghost"

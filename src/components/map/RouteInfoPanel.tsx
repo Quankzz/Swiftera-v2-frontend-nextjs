@@ -65,7 +65,7 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ onClear }) => {
     <div className="flex flex-col flex-1 min-h-0 border-t border-border">
       {/* Summary card */}
       <div className="mx-5 mt-5 mb-4 shrink-0">
-        <div className="p-4 bg-gradient-to-br from-info-muted to-card rounded-[20px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.3)] border border-info-border relative overflow-hidden">
+        <div className="p-4 bg-linear-to-br from-info-muted to-card rounded-[20px] shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.3)] border border-info-border relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-info/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           <div className="flex items-start justify-between gap-3 relative z-10">
             <div className="flex-1 min-w-0">

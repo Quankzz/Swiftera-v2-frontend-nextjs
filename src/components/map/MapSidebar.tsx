@@ -144,7 +144,9 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
               }
             `}
           >
-            {isActive && <span className="absolute inset-0 bg-theme-primary-start/10 dark:bg-theme-primary-start/20" />}
+            {isActive && (
+              <span className="absolute inset-0 bg-theme-primary-start/10 dark:bg-theme-primary-start/20" />
+            )}
             <Icon size={14} strokeWidth={2.5} className="relative z-10" />
             <span className="relative z-10">{label}</span>
           </button>
@@ -267,7 +269,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         {/* Panel body */}
         <div className="flex flex-col h-full flex-1 bg-background/95 backdrop-blur-xl shadow-[4px_0_32px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.5)] border-r border-border/60">
           {/* Branding strip */}
-          <div className="flex items-center gap-3 px-5 py-4 shrink-0 bg-gradient-to-r from-theme-primary-start to-theme-primary-end shadow-md shadow-theme-primary-start/20 relative overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-4 shrink-0 bg-linear-to-r from-theme-primary-start to-theme-primary-end shadow-md shadow-theme-primary-start/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
             <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md shadow-inner relative z-10 border border-white/20">
               <MapIcon size={18} className="text-white drop-shadow-sm" />
@@ -314,7 +316,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             fixed left-0 top-1/2 -translate-y-1/2 z-20
             flex flex-col items-center justify-center
             w-6 h-16
-            bg-gradient-to-b from-theme-primary-start to-theme-primary-end dark:bg-card
+            bg-linear-to-b from-theme-primary-start to-theme-primary-end dark:bg-card
             shadow-lg rounded-r-xl text-white dark:text-theme-primary-start
             hover:w-8 hover:brightness-110 cursor-pointer
             transition-all duration-150

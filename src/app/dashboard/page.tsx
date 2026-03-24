@@ -1,65 +1,67 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
-  Clock,
   ArrowRight,
-  Truck,
-  RotateCcw,
-  Activity,
-  Phone,
-  CalendarClock,
   TrendingUp,
+  TrendingDown,
+  Target,
+  Activity,
+  CheckCircle2,
+  RotateCcw,
+  Truck,
+  Clock,
+  Package,
+  PhoneCall,
+  CalendarDays,
+  Award,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MOCK_ORDERS, MOCK_CURRENT_STAFF } from '@/data/mockDashboard';
+import {
+  MOCK_ORDERS,
+  MOCK_CURRENT_STAFF,
+  MOCK_HUB_INFO,
+} from '@/data/mockDashboard';
 import type { DashboardOrder } from '@/types/dashboard.types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getGreeting = () => {
   const h = new Date().getHours();
-  if (h < 12) return 'Chào buổi sáng 🌅';
-  if (h < 18) return 'Chào buổi chiều ☀️';
-  return 'Chào buổi tối 🌙';
+  if (h < 12) return 'Buổi sáng';
+  if (h < 18) return 'Buổi chiều';
+  return 'Buổi tối';
 };
-
-const fmt = (v: number) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-    v,
-  );
 
 const fmtDate = (s: string) =>
   new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 
-// ─── Chart data: 30 days (deterministic) ────────────────────────────────────
-const CHART_DATA = Array.from({ length: 30 }, (_, i) => {
+// ─── Weekly chart (7 days, deterministic) ─────────────────────────────────────
+const WEEK_DATA = Array.from({ length: 7 }, (_, i) => {
   const d = new Date();
-  d.setDate(d.getDate() - (29 - i));
-  const weekday = d.getDay();
-  const base = weekday === 0 || weekday === 6 ? 3 : 7;
+  d.setDate(d.getDate() - (6 - i));
+  const wd = d.getDay();
+  const base = wd === 0 || wd === 6 ? 3 : 7;
   const noise = ((i * 17 + 11) % 7) - 3;
+  const dayLabel = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][d.getDay()];
   return {
-    label:
-      i === 29
-        ? 'Hôm nay'
-        : i === 28
-          ? 'Hôm qua'
-          : d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
+    label: i === 6 ? 'Hôm nay' : dayLabel,
     count: Math.max(1, base + noise),
-    isToday: i === 29,
+    isToday: i === 6,
   };
 });
 
-const URGENT_STATUS_CFG: Record<
+// ─── Urgent status config ──────────────────────────────────────────────────────
+const URGENT_CFG: Record<
   string,
   { label: string; color: string; bg: string; border: string; dot: string }
 > = {
   PENDING: {
     label: 'Chờ xác nhận',
     color: 'text-amber-600 dark:text-amber-400',
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    border: 'border-amber-200 dark:border-amber-800/50',
+    bg: 'bg-amber-50 dark:bg-amber-950/40',
+    border: 'border-amber-200 dark:border-amber-700/40',
     dot: 'bg-amber-400',
   },
   RETURNING: {
@@ -82,218 +84,518 @@ const URGENT_STATUS_CFG: Record<
 export default function DashboardPage() {
   const staffName = MOCK_CURRENT_STAFF.full_name.split(' ').pop() ?? '';
 
-  const pendingOrders = MOCK_ORDERS.filter((o) => o.status === 'PENDING');
-  const deliveringOrders = MOCK_ORDERS.filter((o) => o.status === 'DELIVERING');
-  const activeOrders = MOCK_ORDERS.filter((o) => o.status === 'ACTIVE');
-  const returningOrders = MOCK_ORDERS.filter((o) =>
-    ['RETURNING', 'OVERDUE'].includes(o.status),
+  const myOrders = MOCK_ORDERS.filter(
+    (o) =>
+      o.staff_checkin_id === MOCK_CURRENT_STAFF.staff_id ||
+      o.staff_checkout_id === MOCK_CURRENT_STAFF.staff_id,
   );
 
-  const urgentOrders = [
-    ...MOCK_ORDERS.filter((o) => o.status === 'OVERDUE'),
-    ...MOCK_ORDERS.filter((o) => o.status === 'RETURNING'),
-    ...pendingOrders,
-  ].slice(0, 8);
+  const counts = {
+    pending: myOrders.filter((o) => o.status === 'PENDING').length,
+    confirmed: myOrders.filter((o) => o.status === 'CONFIRMED').length,
+    delivering: myOrders.filter((o) => o.status === 'DELIVERING').length,
+    active: myOrders.filter((o) => o.status === 'ACTIVE').length,
+    returning: myOrders.filter((o) => o.status === 'RETURNING').length,
+    overdue: myOrders.filter((o) => o.status === 'OVERDUE').length,
+    completed: myOrders.filter((o) => o.status === 'COMPLETED').length,
+    cancelled: myOrders.filter((o) => o.status === 'CANCELLED').length,
+  };
 
-  const totalMonth = CHART_DATA.reduce((s, d) => s + d.count, 0);
-  const todayCount = CHART_DATA[CHART_DATA.length - 1].count;
-  const avgCount = Math.round(totalMonth / CHART_DATA.length);
-  const maxCount = Math.max(...CHART_DATA.map((x) => x.count));
+  const urgentOrders = [
+    ...myOrders.filter((o) => o.status === 'OVERDUE'),
+    ...myOrders.filter((o) => o.status === 'RETURNING'),
+    ...myOrders.filter((o) => o.status === 'PENDING'),
+  ].slice(0, 5);
+
+  // Chart metrics
+  const todayCount = WEEK_DATA[6].count;
+  const yesterdayCount = WEEK_DATA[5].count;
+  const weekTotal = WEEK_DATA.reduce((s, d) => s + d.count, 0);
+  const monthTotal = weekTotal * 4 + 3;
+  const maxBar = Math.max(...WEEK_DATA.map((d) => d.count));
+
+  // Performance
+  const finishedCount = counts.completed + counts.cancelled;
+  const successRate =
+    finishedCount > 0
+      ? Math.round((counts.completed / finishedCount) * 100)
+      : 100;
+  const todayDiff = todayCount - yesterdayCount;
+  const urgentTotal = counts.pending + counts.returning + counts.overdue;
+
+  // Status breakdown (active view)
+  const statusBreakdown = [
+    {
+      label: 'Đang hoạt động',
+      count: counts.confirmed + counts.delivering + counts.active,
+      color: 'bg-info',
+      textColor: 'text-info',
+    },
+    {
+      label: 'Cần xử lý',
+      count: counts.pending + counts.returning + counts.overdue,
+      color: 'bg-destructive',
+      textColor: 'text-destructive',
+    },
+    {
+      label: 'Hoàn thành',
+      count: counts.completed,
+      color: 'bg-success',
+      textColor: 'text-success',
+    },
+    {
+      label: 'Đã hủy',
+      count: counts.cancelled,
+      color: 'bg-muted-foreground',
+      textColor: 'text-muted-foreground',
+    },
+  ];
 
   return (
-    <div className="flex flex-col gap-6 p-5 md:p-8 max-w-5xl mx-auto w-full">
+    <div className="flex flex-col gap-5 p-4 md:p-6 lg:p-8 max-w-5xl w-full">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {getGreeting()}, {staffName}
+        <div className="space-y-0.5">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+            {getGreeting()} 👋
+          </p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            Xin chào, {staffName}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('vi-VN', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
               day: 'numeric',
             })}
+            {' · '}
+            <span className="text-muted-foreground/70">
+              {MOCK_HUB_INFO.name}
+            </span>
           </p>
         </div>
-        {urgentOrders.length > 0 && (
+        {urgentTotal > 0 && (
           <Link
             href="/dashboard/orders"
-            className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-destructive/35 bg-destructive/8 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/12 transition-colors shrink-0"
           >
-            <AlertCircle className="size-4 shrink-0" />
-            {urgentOrders.length} đơn cần xử lý ngay
-            <ArrowRight className="size-3.5 ml-0.5" />
+            <AlertCircle className="size-4" />
+            {urgentTotal} đơn cần xử lý
+            <ArrowRight className="size-3.5 opacity-70" />
           </Link>
         )}
       </div>
 
-      {/* ── 4 Stat Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          label="Chờ xác nhận"
-          value={pendingOrders.length}
-          icon={Clock}
-          colorClass="text-amber-500"
-          bgClass="bg-amber-500/10"
-          href="/dashboard/orders?status=PENDING"
-          urgent={pendingOrders.length > 0}
-          hint="Cần xác nhận ngay"
+      {/* ── KPI Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard
+          label="Hôm nay"
+          value={todayCount}
+          unit="đơn"
+          icon={Target}
+          color="text-theme-primary-start"
+          bg="bg-theme-primary-start/10"
+          trend={todayDiff}
+          trendLabel="vs hôm qua"
         />
-        <StatCard
-          label="Đang giao"
-          value={deliveringOrders.length}
-          icon={Truck}
-          colorClass="text-info"
-          bgClass="bg-info-muted"
-          href="/dashboard/orders?status=DELIVERING"
-        />
-        <StatCard
-          label="Đang thuê"
-          value={activeOrders.length}
+        <KpiCard
+          label="Tuần này"
+          value={weekTotal}
+          unit="đơn"
           icon={Activity}
-          colorClass="text-success"
-          bgClass="bg-success-muted"
-          href="/dashboard/orders?status=ACTIVE"
+          color="text-info"
+          bg="bg-info-muted"
         />
-        <StatCard
-          label="Cần thu hồi"
-          value={returningOrders.length}
-          icon={RotateCcw}
-          colorClass="text-destructive"
-          bgClass="bg-destructive/10"
-          href="/dashboard/orders?status=RETURNING"
-          urgent={returningOrders.length > 0}
-          hint="Cần đến lấy hàng"
+        <KpiCard
+          label="Tháng này"
+          value={monthTotal}
+          unit="đơn"
+          icon={Award}
+          color="text-success"
+          bg="bg-success-muted"
+        />
+        <KpiCard
+          label="Thành công"
+          value={successRate}
+          unit="%"
+          icon={CheckCircle2}
+          color={
+            successRate >= 90
+              ? 'text-success'
+              : successRate >= 70
+                ? 'text-warning'
+                : 'text-destructive'
+          }
+          bg={
+            successRate >= 90
+              ? 'bg-success-muted'
+              : successRate >= 70
+                ? 'bg-warning-muted'
+                : 'bg-destructive/10'
+          }
         />
       </div>
 
-      {/* ── Urgent action list ── */}
-      {urgentOrders.length > 0 && (
-        <section className="rounded-2xl border border-border/50 bg-card shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/30">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="size-4 text-destructive" />
+      {/* ── Status Pills — live operation view ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <StatusPill
+          label="Chờ xác nhận"
+          count={counts.pending}
+          dotClass="bg-amber-400"
+          colorClass="text-amber-600 dark:text-amber-400"
+          bgClass="bg-amber-50 dark:bg-amber-950/30"
+          borderClass="border-amber-200/80 dark:border-amber-700/30"
+          icon={Clock}
+          urgent={counts.pending > 0}
+          href="/dashboard/orders?status=PENDING"
+        />
+        <StatusPill
+          label="Đang giao"
+          count={counts.delivering}
+          dotClass="bg-info animate-pulse"
+          colorClass="text-info"
+          bgClass="bg-info-muted"
+          borderClass="border-info-border"
+          icon={Truck}
+          href="/dashboard/orders?status=DELIVERING"
+        />
+        <StatusPill
+          label="Đang thuê"
+          count={counts.active}
+          dotClass="bg-success"
+          colorClass="text-success"
+          bgClass="bg-success-muted"
+          borderClass="border-success-border"
+          icon={Package}
+          href="/dashboard/orders?status=ACTIVE"
+        />
+        <StatusPill
+          label="Cần thu hồi"
+          count={counts.returning + counts.overdue}
+          dotClass="bg-destructive animate-pulse"
+          colorClass="text-destructive"
+          bgClass="bg-destructive/8"
+          borderClass="border-destructive/25"
+          icon={RotateCcw}
+          urgent={counts.returning + counts.overdue > 0}
+          href="/dashboard/orders?status=RETURNING"
+        />
+      </div>
+
+      {/* ── Chart + Breakdown ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* 7-day bar chart */}
+        <section className="lg:col-span-3 rounded-2xl border border-border/50 bg-card shadow-sm p-5">
+          <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
+            <div>
               <h2 className="text-sm font-bold text-foreground">
-                Đơn cần xử lý ngay
+                Hoạt động 7 ngày
               </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Số đơn hoàn thành mỗi ngày
+              </p>
+            </div>
+            <div className="flex items-center gap-5">
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground">Hôm nay</p>
+                <p className="text-xl font-bold text-foreground tabular-nums">
+                  {todayCount}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground">Tuần</p>
+                <p className="text-xl font-bold text-theme-primary-start tabular-nums">
+                  {weekTotal}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bars */}
+          <div className="flex items-end gap-1.5 h-28">
+            {WEEK_DATA.map((d, i) => {
+              const pct = maxBar > 0 ? (d.count / maxBar) * 100 : 0;
+              return (
+                <div
+                  key={i}
+                  className="group relative flex-1 flex flex-col items-center gap-1.5 h-full"
+                >
+                  <div className="flex-1 w-full flex items-end">
+                    <div
+                      style={{ height: `${pct}%` }}
+                      className={cn(
+                        'w-full rounded-t min-h-1 transition-all duration-200',
+                        d.isToday
+                          ? 'bg-theme-primary-start shadow-sm shadow-theme-primary-start/30'
+                          : 'bg-muted-foreground/15 group-hover:bg-theme-primary-start/35',
+                      )}
+                    />
+                  </div>
+                  <span
+                    className={cn(
+                      'text-[9.5px] whitespace-nowrap font-medium leading-none',
+                      d.isToday
+                        ? 'text-theme-primary-start font-bold'
+                        : 'text-muted-foreground/60',
+                    )}
+                  >
+                    {d.label}
+                  </span>
+                  {/* Hover badge */}
+                  <div className="absolute bottom-full -translate-y-1 left-1/2 -translate-x-1/2 hidden group-hover:flex pointer-events-none z-10">
+                    <div className="rounded-lg bg-foreground/90 px-2 py-1 text-[10px] font-bold text-background shadow-lg whitespace-nowrap">
+                      {d.count} đơn
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Trend note */}
+          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border/20 text-xs text-muted-foreground">
+            {todayDiff >= 0 ? (
+              <TrendingUp className="size-3.5 text-success shrink-0" />
+            ) : (
+              <TrendingDown className="size-3.5 text-destructive shrink-0" />
+            )}
+            Hôm nay{' '}
+            <span
+              className={cn(
+                'font-semibold',
+                todayDiff >= 0 ? 'text-success' : 'text-destructive',
+              )}
+            >
+              {todayDiff >= 0 ? '+' : ''}
+              {todayDiff} đơn
+            </span>{' '}
+            so với hôm qua
+          </div>
+        </section>
+
+        {/* Right panel: breakdown + summary */}
+        <section className="lg:col-span-2 flex flex-col gap-4">
+          {/* Status breakdown */}
+          <div className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 flex-1">
+            <div className="mb-4">
+              <h2 className="text-sm font-bold text-foreground">
+                Phân bổ đơn hàng
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {myOrders.length} đơn được phân công
+              </p>
+            </div>
+            <div className="space-y-3">
+              {statusBreakdown.map((item) => (
+                <div key={item.label}>
+                  <div className="flex justify-between items-baseline text-xs mb-1.5">
+                    <span className="text-muted-foreground">{item.label}</span>
+                    <span
+                      className={cn('font-bold tabular-nums', item.textColor)}
+                    >
+                      {item.count}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all',
+                        item.color,
+                      )}
+                      style={{
+                        width: `${myOrders.length > 0 ? (item.count / myOrders.length) * 100 : 0}%`,
+                        minWidth: item.count > 0 ? '4px' : '0',
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Summary mini cards */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="rounded-xl border border-success-border bg-success-muted p-3.5">
+              <p className="text-[10px] text-muted-foreground mb-1 font-medium">
+                Thành công
+              </p>
+              <p className="text-2xl font-bold text-success tabular-nums">
+                {successRate}%
+              </p>
+            </div>
+            <div className="rounded-xl border border-border/40 bg-muted/40 p-3.5">
+              <p className="text-[10px] text-muted-foreground mb-1 font-medium">
+                Tháng này
+              </p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">
+                {monthTotal}
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* ── Urgent Action Queue ── */}
+      {urgentOrders.length > 0 && (
+        <section className="rounded-2xl border border-border/40 bg-card shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/25">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="size-4 text-destructive shrink-0" />
+              <h2 className="text-sm font-bold text-foreground">
+                Cần xử lý ngay
+              </h2>
+              <span className="ml-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+                {urgentOrders.length}
+              </span>
             </div>
             <Link
               href="/dashboard/orders"
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
             >
               Tất cả <ArrowRight className="size-3" />
             </Link>
           </div>
           <div className="divide-y divide-border/20">
             {urgentOrders.map((order) => (
-              <UrgentOrderRow key={order.rental_order_id} order={order} />
+              <UrgentRow key={order.rental_order_id} order={order} />
             ))}
           </div>
         </section>
       )}
-
-      {/* ── Monthly Chart ── */}
-      <section className="rounded-2xl border border-border/50 bg-card shadow-sm p-5">
-        <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
-          <div>
-            <h2 className="text-sm font-bold text-foreground">
-              Hoạt động 30 ngày qua
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Tổng số đơn hàng theo ngày
-            </p>
-          </div>
-          <div className="flex gap-5 sm:gap-8">
-            <div className="text-right">
-              <p className="text-[11px] text-muted-foreground">Hôm nay</p>
-              <p className="text-xl font-bold text-foreground">{todayCount}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] text-muted-foreground">30 ngày</p>
-              <p className="text-xl font-bold text-foreground">{totalMonth}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] text-muted-foreground">TB/ngày</p>
-              <p className="text-xl font-bold text-theme-primary-start">
-                {avgCount}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bar chart */}
-        <div className="flex items-end gap-px h-24 w-full">
-          {CHART_DATA.map((d, i) => {
-            const pct = maxCount > 0 ? (d.count / maxCount) * 100 : 0;
-            return (
-              <div
-                key={i}
-                title={`${d.label}: ${d.count} đơn`}
-                className="group relative flex-1 flex flex-col items-center justify-end h-full cursor-default"
-              >
-                <div
-                  style={{ height: `${pct}%` }}
-                  className={cn(
-                    'w-full rounded-t-sm min-h-0.5 transition-colors duration-150',
-                    d.isToday
-                      ? 'bg-theme-primary-start'
-                      : 'bg-muted-foreground/20 group-hover:bg-theme-primary-start/50',
-                  )}
-                />
-                {/* Hover tooltip */}
-                <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center pointer-events-none z-10">
-                  <div className="rounded-lg bg-foreground/90 px-2 py-1 text-[10px] font-semibold text-background whitespace-nowrap shadow-lg">
-                    {d.count}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* X-axis labels */}
-        <div className="flex justify-between mt-2 text-[10px] text-muted-foreground px-0.5">
-          <span>{CHART_DATA[0].label}</span>
-          <span>{CHART_DATA[14].label}</span>
-          <span className="font-semibold text-theme-primary-start">
-            Hôm nay
-          </span>
-        </div>
-
-        {/* Trend note */}
-        <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground border-t border-border/20 pt-3">
-          <TrendingUp className="size-3.5 text-success shrink-0" />
-          Hôm nay{' '}
-          <span
-            className={cn(
-              'font-semibold',
-              todayCount >= avgCount ? 'text-success' : 'text-destructive',
-            )}
-          >
-            {todayCount >= avgCount ? '+' : ''}
-            {todayCount - avgCount} đơn so với trung bình
-          </span>
-        </div>
-      </section>
     </div>
   );
 }
 
-function UrgentOrderRow({ order }: { order: DashboardOrder }) {
-  const cfg = URGENT_STATUS_CFG[order.status] ?? URGENT_STATUS_CFG['PENDING'];
-  const endDate = new Date(order.end_date);
-  const now = new Date().getTime();
-  const daysLeft = Math.ceil((endDate.getTime() - now) / (1000 * 60 * 60 * 24));
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
+function KpiCard({
+  label,
+  value,
+  unit,
+  icon: Icon,
+  color,
+  bg,
+  trend,
+  trendLabel,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  trend?: number;
+  trendLabel?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <div
+          className={cn(
+            'size-8 flex items-center justify-center rounded-lg shrink-0',
+            bg,
+          )}
+        >
+          <Icon className={cn('size-4', color)} />
+        </div>
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-bold text-foreground tabular-nums">
+          {value}
+        </span>
+        <span className="text-sm text-muted-foreground">{unit}</span>
+      </div>
+      {trend !== undefined && trendLabel && (
+        <div
+          className={cn(
+            'flex items-center gap-1 mt-2 text-xs font-medium',
+            trend >= 0 ? 'text-success' : 'text-destructive',
+          )}
+        >
+          {trend >= 0 ? (
+            <TrendingUp className="size-3 shrink-0" />
+          ) : (
+            <TrendingDown className="size-3 shrink-0" />
+          )}
+          {trend >= 0 ? '+' : ''}
+          {trend} {trendLabel}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Status Pill ──────────────────────────────────────────────────────────────
+function StatusPill({
+  label,
+  count,
+  dotClass,
+  colorClass,
+  bgClass,
+  borderClass,
+  icon: Icon,
+  urgent,
+  href,
+}: {
+  label: string;
+  count: number;
+  dotClass: string;
+  colorClass: string;
+  bgClass: string;
+  borderClass: string;
+  icon: React.ElementType;
+  urgent?: boolean;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:shadow-sm',
+        bgClass,
+        borderClass,
+      )}
+    >
+      <Icon className={cn('size-4 shrink-0', colorClass)} />
+      <div className="flex-1 min-w-0">
+        <p
+          className={cn(
+            'text-[11px] font-medium truncate leading-tight',
+            colorClass,
+          )}
+        >
+          {label}
+        </p>
+        <p
+          className={cn(
+            'text-xl font-bold tabular-nums leading-tight mt-0.5',
+            colorClass,
+          )}
+        >
+          {count}
+        </p>
+      </div>
+      {urgent && count > 0 && (
+        <span className="size-2 rounded-full bg-destructive shrink-0 animate-pulse" />
+      )}
+    </Link>
+  );
+}
+
+// ─── Urgent Row ───────────────────────────────────────────────────────────────
+function UrgentRow({ order }: { order: DashboardOrder }) {
+  const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PENDING'];
+  const daysLeft = Math.ceil(
+    (new Date(order.end_date).getTime() - Date.now()) / 86_400_000,
+  );
 
   return (
     <Link
       href={`/dashboard/orders/${order.rental_order_id}`}
-      className="flex items-center gap-3 px-5 py-3.5 hover:bg-accent/60 transition-colors"
+      className="flex items-center gap-3 px-5 py-3.5 hover:bg-accent/50 transition-colors group"
     >
-      <span className={cn('size-2.5 shrink-0 rounded-full', cfg.dot)} />
-
+      <span className={cn('size-2 shrink-0 rounded-full', cfg.dot)} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-bold text-foreground">
@@ -301,7 +603,7 @@ function UrgentOrderRow({ order }: { order: DashboardOrder }) {
           </span>
           <span
             className={cn(
-              'text-[10px] font-bold px-1.5 py-0.5 rounded-md border',
+              'text-[10px] font-bold px-1.5 py-0.5 rounded border',
               cfg.color,
               cfg.bg,
               cfg.border,
@@ -310,94 +612,26 @@ function UrgentOrderRow({ order }: { order: DashboardOrder }) {
             {cfg.label}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2 flex-wrap">
-          <span className="flex items-center gap-1">
-            <Phone className="size-2.5" /> {order.renter.full_name}
-          </span>
-          <span>·</span>
-          <span className="flex items-center gap-1">
-            <CalendarClock className="size-2.5" />
-            Hết hạn {fmtDate(order.end_date)}
-            {daysLeft <= 0 && (
-              <span className="text-destructive font-bold"> (quá hạn!)</span>
-            )}
-            {daysLeft > 0 && daysLeft <= 2 && (
-              <span className="text-warning font-bold">
-                {' '}
-                (còn {daysLeft} ngày)
-              </span>
-            )}
-          </span>
+        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
+          <PhoneCall className="size-2.5 shrink-0" />
+          {order.renter.full_name}
+          <span className="text-border">·</span>
+          <CalendarDays className="size-2.5 shrink-0" />
+          Hết hạn {fmtDate(order.end_date)}
+          {daysLeft <= 0 && (
+            <span className="text-destructive font-bold">(quá hạn!)</span>
+          )}
+          {daysLeft > 0 && daysLeft <= 2 && (
+            <span className="text-warning font-bold">(còn {daysLeft}d)</span>
+          )}
         </p>
       </div>
-
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <span className="text-xs text-muted-foreground hidden sm:block">
-          {order.items.length} sp · {fmt(order.total_rental_fee)}
+          {order.items.length} sp
         </span>
-        <ArrowRight className="size-4 text-muted-foreground" />
+        <ArrowRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
       </div>
     </Link>
   );
-}
-
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  colorClass,
-  bgClass,
-  href,
-  urgent,
-  hint,
-}: {
-  label: string;
-  value: number;
-  icon: React.ElementType;
-  colorClass: string;
-  bgClass: string;
-  href?: string;
-  urgent?: boolean;
-  hint?: string;
-}) {
-  const inner = (
-    <div
-      className={cn(
-        'group relative rounded-2xl border bg-card p-4 sm:p-5 shadow-sm transition-all',
-        href && 'hover:shadow-md hover:border-border/70 cursor-pointer',
-        urgent && value > 0
-          ? 'border-destructive/30 ring-1 ring-destructive/15'
-          : 'border-border/40',
-      )}
-    >
-      {urgent && value > 0 && (
-        <span className="absolute top-3 right-3 size-2 rounded-full bg-destructive animate-pulse" />
-      )}
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs text-muted-foreground mb-2 leading-none">
-            {label}
-          </p>
-          <p className="text-3xl font-bold text-foreground tabular-nums">
-            {value}
-          </p>
-          {hint && value > 0 && (
-            <p className={cn('text-[11px] font-semibold mt-1.5', colorClass)}>
-              {hint}
-            </p>
-          )}
-        </div>
-        <div
-          className={cn(
-            'size-10 shrink-0 flex items-center justify-center rounded-xl',
-            bgClass,
-          )}
-        >
-          <Icon className={cn('size-5', colorClass)} />
-        </div>
-      </div>
-    </div>
-  );
-  return href ? <Link href={href}>{inner}</Link> : inner;
 }
