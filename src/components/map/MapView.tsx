@@ -21,8 +21,6 @@ import LocationButton from '@/components/map/LocationButton';
 import HubModal from '@/components/map/HubModal';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 
-// ─── constants ─────────────────────────────────────────────────────────────────
-// const ROUTE_COLORS = ['#0EA5E9', '#6B7280', '#9CA3AF'] as const;
 const ROUTE_ACTIVE_COLOR = '#0EA5E9';
 const ROUTE_INACTIVE_COLOR = '#0EA5E4';
 const NEARBY_RADIUS_KM = 10;
@@ -178,10 +176,21 @@ const MapView: React.FC = () => {
     map.addControl(new goongjs.NavigationControl(), 'bottom-right');
     map.addControl(new goongjs.ScaleControl(), 'bottom-left');
 
+    let resizeObserver: ResizeObserver | null = null;
+
     map.on('load', () => {
       mapRef.current = map;
       setIsMapReady(true);
-      requestAnimationFrame(() => map.resize());
+      
+      // Delay resize slightly to allow layout changes to settle
+      setTimeout(() => map.resize(), 100);
+
+      if (mapContainerRef.current) {
+        resizeObserver = new ResizeObserver(() => {
+          map.resize();
+        });
+        resizeObserver.observe(mapContainerRef.current);
+      }
 
       // Hub markers
       MOCK_HUBS.forEach((hub) => {
@@ -233,6 +242,9 @@ const MapView: React.FC = () => {
     });
 
     return () => {
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       map.remove();
       mapRef.current = null;
       setIsMapReady(false);
@@ -891,11 +903,11 @@ const MapView: React.FC = () => {
 
   // ──────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 overflow-hidden bg-background">
+    <div className="fixed inset-0 w-full h-full overflow-hidden bg-background">
       {/* Map */}
       <div
         ref={mapContainerRef}
-        className="absolute inset-0 dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150 transition-all duration-500 ease-in-out"
+        className="absolute inset-0 w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150 transition-all duration-500 ease-in-out"
       />
 
       <MapSidebar
@@ -930,7 +942,10 @@ const MapView: React.FC = () => {
             `}
           >
             {n.type === 'error' ? (
-              <AlertCircle size={16} className="text-destructive shrink-0 mt-0.5" />
+              <AlertCircle
+                size={16}
+                className="text-destructive shrink-0 mt-0.5"
+              />
             ) : (
               <CheckCircle2
                 size={16}
