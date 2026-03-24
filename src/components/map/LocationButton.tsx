@@ -22,14 +22,14 @@ const LocationButton: React.FC<LocationButtonProps> = ({ onGetLocation }) => {
           active:scale-90 overflow-hidden
           ${
             isLocationOn
-              ? 'bg-card text-success border-success-border'
-              : 'bg-card text-muted-foreground border-border/80 hover:text-success'
+              ? 'bg-card text-theme-primary-start border-theme-primary-start/20'
+              : 'bg-card text-muted-foreground border-border/80 hover:text-theme-primary-start'
           }
         `}
         aria-label="Định vị của tôi"
       >
         <div
-          className={`absolute inset-0 bg-success-muted scale-0 transition-transform duration-300 rounded-2xl ${isLocationOn ? 'scale-100' : 'group-hover:scale-100'}`}
+          className={`absolute inset-0 bg-theme-primary-start/10 scale-0 transition-transform duration-300 rounded-2xl ${isLocationOn ? 'scale-100' : 'group-hover:scale-100'}`}
         />
         <LocateFixed
           size={20}
@@ -38,7 +38,7 @@ const LocationButton: React.FC<LocationButtonProps> = ({ onGetLocation }) => {
         />
         {/* Pulse ring when active */}
         {isLocationOn && (
-          <span className="absolute inset-0 rounded-2xl border-2 border-success animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30 pointer-events-none" />
+          <span className="absolute inset-0 rounded-2xl border-2 border-theme-primary-start animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30 pointer-events-none" />
         )}
       </button>
     </div>

@@ -35,17 +35,26 @@ const SearchTab: React.FC<SearchTabProps> = ({
   const hasLocation = !!userLocation;
 
   const results = useMemo(() => {
+    const baseHubs = nearbyHubs.length > 0 ? nearbyHubs : MOCK_HUBS;
+    
+    let filtered = baseHubs;
+
     if (showNearbyOnly) {
-      return MOCK_HUBS.filter((h) =>
-        nearbyHubs.some((n) => n.hub_id === h.hub_id),
+      filtered = filtered.filter((h) => {
+        const distance = nearbyHubs.find((n) => n.hub_id === h.hub_id)?.distance;
+        return distance !== undefined && distance <= 10;
+      });
+    }
+
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      filtered = filtered.filter(
+        (h) =>
+          h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q),
       );
     }
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return MOCK_HUBS;
-    return MOCK_HUBS.filter(
-      (h) =>
-        h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q),
-    );
+
+    return filtered;
   }, [searchQuery, showNearbyOnly, nearbyHubs]);
 
   const handleClearQuery = () => setSearchQuery('');
@@ -58,7 +67,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
           <div className="relative flex-1 group">
             <Search
               size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-success transition-colors pointer-events-none"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-theme-primary-start transition-colors pointer-events-none"
             />
             <input
               value={searchQuery}
@@ -69,7 +78,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
                 bg-muted/40
                 border border-border/50
                 rounded-2xl text-[14px] font-medium outline-none
-                focus:bg-card focus:ring-2 focus:ring-success/20 focus:border-transparent
+                focus:bg-card focus:ring-2 focus:ring-theme-primary-start/20 focus:border-transparent
                 text-foreground placeholder-muted-foreground
                 transition-all duration-300 shadow-[0_2px_10px_rgb(0,0,0,0.02)]
               "
@@ -93,8 +102,8 @@ const SearchTab: React.FC<SearchTabProps> = ({
                 transition-all duration-300 active:scale-90
                 ${
                   showNearbyOnly
-                    ? 'bg-success border-success text-success-foreground shadow-[0_4px_12px_rgb(0,0,0,0.15)]'
-                    : 'bg-card border-border/50 text-muted-foreground hover:border-success/50 hover:text-success shadow-[0_2px_10px_rgb(0,0,0,0.02)]'
+                    ? 'bg-theme-primary-start border-theme-primary-start text-white shadow-[0_4px_12px_rgb(0,0,0,0.15)]'
+                    : 'bg-card border-border/50 text-muted-foreground hover:border-theme-primary-start/50 hover:text-theme-primary-start shadow-[0_2px_10px_rgb(0,0,0,0.02)]'
                 }
               `}
             >
@@ -106,7 +115,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
         {/* Status row */}
         <div className="flex items-center justify-between px-0.5">
           {showNearbyOnly ? (
-            <span className="flex items-center gap-1.5 text-xs text-success font-semibold">
+            <span className="flex items-center gap-1.5 text-xs text-theme-primary-start font-semibold">
               <MapPin size={11} />
               {results.length} hub gần bạn
             </span>
@@ -183,7 +192,6 @@ interface HubCardProps {
 const HubCard: React.FC<HubCardProps> = ({
   hub,
   nearby,
-  availColor,
   onFly,
   onOpenModal,
   onNavigate,
@@ -194,18 +202,18 @@ const HubCard: React.FC<HubCardProps> = ({
       group p-4 rounded-[20px] cursor-pointer
       bg-card
       border border-border/50
-      hover:border-success/30
+      hover:border-theme-primary-start/30
       hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)]
       shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all duration-300
     "
   >
     {/* Header */}
     <div className="flex items-start gap-3.5 mb-4">
-      <div className="w-10 h-10 bg-success-muted rounded-2xl border border-success-border flex items-center justify-center shrink-0">
+      <div className="w-10 h-10 bg-theme-primary-start/10 rounded-2xl border border-theme-primary-start/20 flex items-center justify-center shrink-0">
         <Package
           size={18}
           strokeWidth={2.2}
-          className="text-success"
+          className="text-theme-primary-start"
         />
       </div>
       <div className="flex-1 min-w-0 pt-0.5">
@@ -218,11 +226,6 @@ const HubCard: React.FC<HubCardProps> = ({
       </div>
       {/* Stats */}
       <div className="flex flex-col items-end gap-1.5 shrink-0 pt-0.5">
-        <span
-          className={`text-[11px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm ${availColor}`}
-        >
-          {hub.available_products} còn
-        </span>
         {nearby && (
           <span className="text-[12px] text-info font-semibold tabular-nums mt-0.5">
             {nearby.distance.toFixed(1)} km
@@ -243,8 +246,8 @@ const HubCard: React.FC<HubCardProps> = ({
           text-[13px] font-semibold px-3 py-2.5 rounded-xl
           bg-muted/40 border border-border/50
           text-muted-foreground
-          hover:border-success/40
-          hover:text-success
+          hover:border-theme-primary-start/40
+          hover:text-theme-primary-start
           hover:bg-card
           transition-all duration-200 active:scale-95
         "
@@ -260,8 +263,8 @@ const HubCard: React.FC<HubCardProps> = ({
         className="
           flex flex-1 items-center justify-center gap-1.5
           text-[13px] font-bold px-3 py-2.5 rounded-xl
-          bg-success hover:bg-success/80 active:bg-success/70
-          text-success-foreground shadow-sm
+          bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-110
+          text-white shadow-sm
           transition-all duration-200 active:scale-95
         "
       >

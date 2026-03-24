@@ -800,7 +800,6 @@ const MapView: React.FC = () => {
         hub.longitude,
       ),
     }))
-      .filter((h) => h.distance <= NEARBY_RADIUS_KM)
       .sort((a, b) => a.distance - b.distance);
   }, [userLocation]);
 

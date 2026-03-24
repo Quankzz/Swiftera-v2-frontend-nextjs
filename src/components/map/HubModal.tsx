@@ -108,10 +108,10 @@ const HubModal = ({
                     className="
                       shrink-0 flex items-center justify-center gap-1.5
                       px-3 py-2 rounded-xl
-                      bg-success hover:bg-success/80 active:bg-success/70
-                      text-success-foreground font-semibold text-xs sm:text-sm
+                      bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-110 active:\scale-95
+                      text-white font-semibold text-xs sm:text-sm
                       shadow-lg shadow-black/20
-                      transition-all duration-150 active:scale-95
+                      transition-all duration-150 active:\scale-95
                     "
                   >
                     <Navigation2 size={16} strokeWidth={2.5} />
@@ -133,10 +133,10 @@ const HubModal = ({
                   className="
                     shrink-0 flex items-center justify-center gap-1.5
                     px-3 py-2 rounded-xl
-                    bg-success hover:bg-success/80 active:bg-success/70
-                    text-success-foreground font-semibold text-xs sm:text-sm
+                    bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-110 active:\scale-95
+                    text-white font-semibold text-xs sm:text-sm
                     shadow-sm
-                    transition-all duration-150 active:scale-95
+                    transition-all duration-150 active:\scale-95
                   "
                 >
                   <Navigation2 size={16} strokeWidth={2.5} />
@@ -152,7 +152,7 @@ const HubModal = ({
                 absolute top-4 right-4 p-2 rounded-full
                 bg-muted/80 text-muted-foreground
                 hover:bg-accent hover:text-foreground transition-all duration-150 backdrop-blur-md
-                active:scale-95 z-20 shadow-sm
+                active:\scale-95 z-20 shadow-sm
               "
               aria-label="Đóng"
             >
@@ -165,7 +165,7 @@ const HubModal = ({
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <MapPin
                     size={14}
-                    className="text-success mt-0.5 shrink-0"
+                    className="text-theme-primary-start mt-0.5 shrink-0"
                   />
                   <span className="leading-snug">{selectedHub.address}</span>
                 </div>
@@ -174,10 +174,13 @@ const HubModal = ({
               <div className="flex flex-wrap gap-x-5 gap-y-2">
                 {selectedHub.phone_number && (
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Phone size={13} className="text-success shrink-0" />
+                    <Phone
+                      size={13}
+                      className="text-theme-primary-start shrink-0"
+                    />
                     <a
                       href={`tel:${selectedHub.phone_number}`}
-                      className="hover:text-success transition-colors"
+                      className="hover:text-theme-primary-start transition-colors"
                     >
                       {selectedHub.phone_number}
                     </a>
@@ -185,7 +188,10 @@ const HubModal = ({
                 )}
                 {selectedHub.open_hours && (
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Clock size={13} className="text-success shrink-0" />
+                    <Clock
+                      size={13}
+                      className="text-theme-primary-start shrink-0"
+                    />
                     <span>{selectedHub.open_hours}</span>
                   </div>
                 )}
@@ -193,9 +199,9 @@ const HubModal = ({
 
               {/* Availability */}
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Package size={13} className="text-success" />
+                <Package size={13} className="text-theme-primary-start" />
                 <span>
-                  <b className="text-success font-bold">
+                  <b className="text-theme-primary-start font-bold">
                     {availableCount}
                   </b>
                   <span className="text-muted-foreground">
@@ -223,7 +229,7 @@ const HubModal = ({
                         flex gap-3 p-3.5 rounded-2xl
                         bg-muted/40
                         border border-border/50
-                        hover:border-success/30
+                        hover:border-theme-primary-start/30
                         transition-all duration-150
                       "
                     >
@@ -256,7 +262,7 @@ const HubModal = ({
                           {product.description}
                         </p>
                         <div className="flex items-center justify-between mt-2.5">
-                          <span className="text-success font-bold text-sm">
+                          <span className="text-theme-primary-start font-bold text-sm">
                             {product.current_daily_price.toLocaleString(
                               'vi-VN',
                             )}
@@ -269,10 +275,10 @@ const HubModal = ({
                             disabled={!isAvailable}
                             className={`
                               flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl
-                              transition-all duration-150 active:scale-95
+                              transition-all duration-150 active:\scale-95
                               ${
                                 isAvailable
-                                  ? 'bg-success hover:bg-success/80 text-success-foreground shadow-sm'
+                                  ? 'bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-110 text-white shadow-sm'
                                   : 'bg-muted text-muted-foreground cursor-not-allowed'
                               }
                             `}

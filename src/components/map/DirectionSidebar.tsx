@@ -26,16 +26,16 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
   return (
     <div className="absolute top-2 left-2 z-10 md:w-80 w-64 bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
       {/* Header */}
-      <div className="bg-gradient-to-r from-success to-success/80 px-4 py-3 flex items-center gap-2">
-        <Navigation size={15} className="text-success-foreground" />
-        <h2 className="text-success-foreground font-semibold text-sm">Tìm đường</h2>
+      <div className="bg-gradient-to-r from-theme-primary-start to-theme-primary-end px-4 py-3 flex items-center gap-2">
+        <Navigation size={15} className="text-white" />
+        <h2 className="text-white font-semibold text-sm">Tìm đường</h2>
       </div>
 
       {/* Inputs */}
       <div className="p-3 space-y-2">
         {/* Start input */}
         <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-success shrink-0" />
+          <div className="w-2.5 h-2.5 rounded-full bg-theme-primary-start shrink-0" />
           <div className="flex-1 relative">
             <input
               type="text"
@@ -50,7 +50,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
                 w-full border border-border
                 bg-muted/40 text-foreground
                 rounded-xl px-3 py-2 text-sm
-                focus:outline-none focus:ring-2 focus:ring-success/50
+                focus:outline-none focus:ring-2 focus:ring-theme-primary-start/50
                 pr-8 transition-all
               "
             />
@@ -59,7 +59,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
               onClick={() =>
                 useMapStore.setState({ currentLocationUsage: 'start' })
               }
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-success hover:text-success/80 transition-colors"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-theme-primary-start hover:text-theme-primary-start/80 transition-colors"
             >
               <MapPin size={14} />
             </button>
@@ -113,7 +113,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
         <button
           onClick={onRouteSearch}
           className="
-            w-full bg-theme-primary-start hover:bg-theme-primary-end active:scale-95
+            w-full bg-gradient-to-r from-theme-primary-start to-theme-primary-end hover:brightness-110 active:scale-95
             text-white rounded-xl py-2.5 text-sm font-semibold
             transition-all duration-150 shadow-sm shadow-theme-primary-start/20
           "

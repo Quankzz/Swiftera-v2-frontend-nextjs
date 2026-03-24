@@ -37,7 +37,7 @@ const Highlighted: React.FC<{ text: string; query?: string }> = ({
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="bg-success-muted text-success font-semibold rounded-sm not-italic px-0">
+      <mark className="bg-theme-primary-start/10 text-theme-primary-start font-semibold rounded-sm not-italic px-0">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -65,11 +65,11 @@ const SuggestionItem: React.FC<{
     className="
       w-full flex items-center gap-3 px-4 py-2.5
       hover:bg-accent/50
-      active:bg-success-muted
+      active:bg-theme-primary-start/10
       text-left transition-colors duration-150 group
     "
   >
-    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 group-hover:bg-success-muted transition-colors">
+    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 group-hover:bg-theme-primary-start/10 transition-colors">
       {icon}
     </div>
     <div className="flex-1 min-w-0">
@@ -306,7 +306,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
           <div className="flex items-center gap-2.5 px-4 py-3">
             <Loader2
               size={13}
-              className="animate-spin shrink-0 text-success"
+              className="animate-spin shrink-0 text-theme-primary-start"
             />
             <span className="text-sm text-muted-foreground">
               Đang tìm kiếm...
@@ -357,7 +357,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
       ref: startInputRef,
       value: startAddress,
       placeholder: 'Điểm xuất phát',
-      dotColor: 'bg-success',
+      dotColor: 'bg-theme-primary-start',
     },
     {
       type: 'end',
@@ -379,7 +379,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
                   group flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all duration-300
                   ${
                     activeField === field.type
-                      ? 'bg-card shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.4)] border border-transparent ring-2 ring-success/20'
+                      ? 'bg-card shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.4)] border border-transparent ring-2 ring-theme-primary-start/20'
                       : 'bg-muted/40 border border-border/50 hover:border-border'
                   }
                 `}
@@ -435,9 +435,9 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
               bg-card shadow-[0_4px_12px_rgb(0,0,0,0.06)] dark:shadow-[0_4px_12px_rgb(0,0,0,0.3)]
               border border-border
               text-muted-foreground
-              hover:bg-success-muted
-              hover:border-success-border
-              hover:text-success
+              hover:bg-theme-primary-start/10
+              hover:border-theme-primary-start/20
+              hover:text-theme-primary-start
               transition-all duration-300 hover:rotate-180 hover:scale-105 active:scale-90
             "
           >
@@ -457,7 +457,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
         }`}
       >
         <div className="relative h-full bg-muted">
-          <div className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-success to-transparent animate-[loading-bar_1.3s_ease-in-out_infinite]" />
+          <div className="absolute inset-y-0 w-1/3 bg-linear-to-r from-transparent via-theme-primary-start to-transparent animate-[loading-bar_1.3s_ease-in-out_infinite]" />
         </div>
       </div>
     </div>

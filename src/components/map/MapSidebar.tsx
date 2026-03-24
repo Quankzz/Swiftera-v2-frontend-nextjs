@@ -124,7 +124,6 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
     [mobileSheetHeight],
   );
 
-  // ── Tab header ────────────────────────────────────────────────────────────
   const tabBar = (
     <div className="flex shrink-0 bg-background/60 backdrop-blur-xl border-b border-border/50 p-1.5 gap-1.5 relative z-10">
       {(['search', 'direction'] as const).map((tab) => {
@@ -140,14 +139,12 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
               tracking-wide transition-all duration-300 rounded-xl overflow-hidden
               ${
                 isActive
-                  ? 'text-success bg-card shadow-[0_2px_10px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgb(0,0,0,0.2)]'
+                  ? 'text-theme-primary-end dark:text-theme-primary-start bg-card shadow-[0_2px_10px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgb(0,0,0,0.2)]'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
               }
             `}
           >
-            {isActive && (
-              <span className="absolute inset-0 bg-success-muted" />
-            )}
+            {isActive && <span className="absolute inset-0 bg-theme-primary-start/10 dark:bg-theme-primary-start/20" />}
             <Icon size={14} strokeWidth={2.5} className="relative z-10" />
             <span className="relative z-10">{label}</span>
           </button>
@@ -156,7 +153,6 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
     </div>
   );
 
-  // ── Tab content ───────────────────────────────────────────────────────────
   const tabContent = (
     <div className="flex-1 overflow-hidden relative min-h-0">
       <div
@@ -248,7 +244,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             "
             aria-label="Mở bảng điều khiển"
           >
-            <MapIcon size={15} className="text-success" />
+            <MapIcon size={15} className="text-theme-primary-start" />
             <span>Tra cứu · Tìm đường</span>
             <ChevronUp size={13} className="text-muted-foreground" />
           </button>
@@ -271,7 +267,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         {/* Panel body */}
         <div className="flex flex-col h-full flex-1 bg-background/95 backdrop-blur-xl shadow-[4px_0_32px_rgba(0,0,0,0.1)] dark:shadow-[4px_0_32px_rgba(0,0,0,0.5)] border-r border-border/60">
           {/* Branding strip */}
-          <div className="flex items-center gap-3 px-5 py-4 shrink-0 bg-gradient-to-r from-success via-success/90 to-success/70 shadow-sm relative overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-4 shrink-0 bg-gradient-to-r from-theme-primary-start to-theme-primary-end shadow-md shadow-theme-primary-start/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
             <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md shadow-inner relative z-10 border border-white/20">
               <MapIcon size={18} className="text-white drop-shadow-sm" />
@@ -300,7 +296,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             bg-card
             shadow-[2px_0_12px_rgba(0,0,0,0.1)]
             rounded-r-xl text-muted-foreground
-            hover:text-success
+            hover:text-theme-primary-start
              transition-all duration-150
             border border-l-0 border-border shrink-0
           "
@@ -318,11 +314,11 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             fixed left-0 top-1/2 -translate-y-1/2 z-20
             flex flex-col items-center justify-center
             w-6 h-16
-            bg-success dark:bg-card
-            shadow-lg rounded-r-xl text-white dark:text-success
-            hover:w-8 hover:bg-success/90
+            bg-gradient-to-b from-theme-primary-start to-theme-primary-end dark:bg-card
+            shadow-lg rounded-r-xl text-white dark:text-theme-primary-start
+            hover:w-8 hover:brightness-110 cursor-pointer
             transition-all duration-150
-            border border-l-0 border-success/50 dark:border-border
+            border border-l-0 border-theme-primary-start/50 dark:border-border
           "
         >
           <ChevronRight size={13} strokeWidth={2.5} />
