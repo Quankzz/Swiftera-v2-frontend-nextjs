@@ -66,3 +66,17 @@ export function useDeleteUserMutation() {
     },
   });
 }
+
+export function useAssignUserRolesMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, roleIds }: { userId: string; roleIds: string[] }) =>
+      usersRepository.assignRoles(userId, roleIds),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({
+        queryKey: ['users', 'detail', variables.userId],
+      });
+    },
+  });
+}

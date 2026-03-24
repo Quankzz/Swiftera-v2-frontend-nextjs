@@ -107,7 +107,7 @@ export function Header() {
                 <Search className='mr-3 size-5 text-text-sub' />
                 <input
                   type='text'
-                  placeholder='Search for streaming devices, phones, consoles...'
+                  placeholder='Tìm kiếm thiết bị, điện thoại, máy tính...'
                   className='w-full border-none bg-transparent text-sm text-text-main placeholder:text-text-sub focus:outline-none'
                   readOnly={!isSearchOpen}
                 />
@@ -120,7 +120,7 @@ export function Header() {
                     <input
                       type='text'
                       autoFocus
-                      placeholder='Search for streaming devices, phones, consoles...'
+                      placeholder='Tìm kiếm thiết bị, điện thoại, máy tính...'
                       className='flex-1 border-none bg-transparent text-sm text-text-main placeholder:text-text-sub focus:outline-none'
                     />
                     <button

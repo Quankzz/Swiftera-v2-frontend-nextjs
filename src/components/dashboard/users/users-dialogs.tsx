@@ -23,7 +23,9 @@ import {
   useDeleteUserMutation,
   useUpdateUserMutation,
   useUserQuery,
+  useAssignUserRolesMutation,
 } from '@/hooks/api/use-users';
+import { useRolesQuery } from '@/hooks/api/use-roles';
 import { CreateUserInput, UpdateUserInput, User } from '@/types/dashboard';
 import Cropper from 'react-easy-crop';
 import {
@@ -34,6 +36,10 @@ import {
   CheckCircle2,
   XCircle,
   Trash2,
+  Shield,
+  Clock,
+  ChevronDown,
+  X,
 } from 'lucide-react';
 
 type CropArea = { width: number; height: number; x: number; y: number };
@@ -111,11 +117,16 @@ export function UserFormDialog({
 
   const createMutation = useCreateUserMutation();
   const updateMutation = useUpdateUserMutation();
+  const assignRolesMutation = useAssignUserRolesMutation();
   const { data: userDetail, isFetching: isDetailLoading } = useUserQuery(
     initialUser?.userId,
   );
+  const { data: rolesData } = useRolesQuery({ limit: 100 });
+  const allRoles = rolesData?.data ?? [];
 
   const [formState, setFormState] = useState(buildState(initialUser));
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [avatarFile, setAvatarFile] = useState<FileWithPreview | null>(null);
   const [finalAvatarUrl, setFinalAvatarUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -130,6 +141,7 @@ export function UserFormDialog({
     if (!isEdit) {
       startTransition(() => {
         setFormState(buildState(null));
+        setSelectedRoleIds([]);
         setAvatarFile(null);
         setFinalAvatarUrl(null);
         setIsCropping(false);
@@ -141,6 +153,7 @@ export function UserFormDialog({
     if (userDetail) {
       startTransition(() => {
         setFormState(buildState(userDetail));
+        setSelectedRoleIds(userDetail.roles.map((r) => r.roleId));
         setFinalAvatarUrl(userDetail.avatarUrl || null);
         setAvatarFile(null);
         setIsCropping(false);
@@ -191,6 +204,7 @@ export function UserFormDialog({
       phoneNumber: formState.phoneNumber ? formState.phoneNumber.trim() : null,
       avatarUrl: finalAvatarUrl,
       isVerified: formState.isVerified,
+      roleIds: selectedRoleIds,
     };
 
     if (isEdit && initialUser) {
@@ -203,7 +217,10 @@ export function UserFormDialog({
     setFinalAvatarUrl(null);
   };
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const isSubmitting =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    assignRolesMutation.isPending;
 
   const avatarInitial = formState.fullName
     ? formState.fullName.charAt(0).toUpperCase()
@@ -215,7 +232,7 @@ export function UserFormDialog({
       open={open}
       onOpenChange={(val) => !val && onClose()}
     >
-      <DialogContent className='max-w-2xl'>
+      <DialogContent className='sm:max-w-4xl w-full'>
         <DialogHeader>
           <DialogTitle className='text-text-main flex items-center gap-2'>
             <UserIcon size={18} className='text-theme-primary-start' />
@@ -429,6 +446,184 @@ export function UserFormDialog({
                   )}
                 </span>
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Roles & Last login — OUTSIDE scroll container so dropdown isn't clipped ── */}
+        <div className='grid grid-cols-2 gap-4 px-0'>
+          {/* Role multi-select */}
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
+              <Shield size={11} /> Vai trò
+            </label>
+            <div className='relative'>
+              {/* Trigger — div avoids nested <button> hydration error */}
+              <div
+                role='button'
+                tabIndex={0}
+                onClick={() => setRoleDropdownOpen((v) => !v)}
+                onKeyDown={(e) =>
+                  (e.key === 'Enter' || e.key === ' ') &&
+                  setRoleDropdownOpen((v) => !v)
+                }
+                className='w-full h-10 flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 cursor-pointer hover:border-blue-300 transition-colors select-none overflow-hidden'
+              >
+                {/* Pills — single row, never wrap */}
+                <span className='flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden'>
+                  {selectedRoleIds.length === 0 ? (
+                    <span className='text-text-sub opacity-50 italic text-xs'>
+                      Chọn vai trò...
+                    </span>
+                  ) : (
+                    <>
+                      {selectedRoleIds.slice(0, 2).map((id) => {
+                        const role = allRoles.find((r) => r.roleId === id);
+                        return role ? (
+                          <span
+                            key={id}
+                            className='inline-flex items-center gap-1 rounded-full bg-blue-100 border border-blue-300 pl-2 pr-1 py-0.5 text-xs text-blue-800 font-medium whitespace-nowrap shrink-0'
+                          >
+                            <Shield size={9} className='shrink-0' />
+                            {role.name}
+                            <span
+                              role='button'
+                              tabIndex={0}
+                              aria-label={`Xóa ${role.name}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedRoleIds((prev) =>
+                                  prev.filter((rid) => rid !== id),
+                                );
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.stopPropagation();
+                                  setSelectedRoleIds((prev) =>
+                                    prev.filter((rid) => rid !== id),
+                                  );
+                                }
+                              }}
+                              className='ml-0.5 flex items-center justify-center rounded-full w-3.5 h-3.5 hover:bg-blue-300 cursor-pointer'
+                            >
+                              <X size={8} />
+                            </span>
+                          </span>
+                        ) : null;
+                      })}
+                      {selectedRoleIds.length > 2 && (
+                        <span className='inline-flex items-center rounded-full bg-gray-100 border border-gray-200 px-2 py-0.5 text-xs text-gray-500 font-medium whitespace-nowrap shrink-0'>
+                          +{selectedRoleIds.length - 2}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </span>
+                <ChevronDown
+                  size={15}
+                  className={`shrink-0 text-gray-400 transition-transform duration-150 ${roleDropdownOpen ? 'rotate-180' : ''}`}
+                />
+              </div>
+
+              {/* Dropdown panel */}
+              {roleDropdownOpen && (
+                <div className='absolute z-50 top-full mt-1.5 w-full rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden'>
+                  <div className='px-3 pt-2.5 pb-1 border-b border-gray-100'>
+                    <p className='text-[11px] font-semibold text-text-sub uppercase tracking-wider'>
+                      Chọn vai trò ({selectedRoleIds.length} đã chọn)
+                    </p>
+                  </div>
+                  {allRoles.length === 0 ? (
+                    <p className='px-4 py-3 text-xs text-text-sub italic'>
+                      Không có vai trò nào
+                    </p>
+                  ) : (
+                    <div className='max-h-44 overflow-y-auto py-1'>
+                      {allRoles.map((role) => {
+                        const checked = selectedRoleIds.includes(role.roleId);
+                        return (
+                          <label
+                            key={role.roleId}
+                            className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+                              checked ? 'bg-blue-50' : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <input
+                              type='checkbox'
+                              checked={checked}
+                              onChange={() =>
+                                setSelectedRoleIds((prev) =>
+                                  checked
+                                    ? prev.filter((id) => id !== role.roleId)
+                                    : [...prev, role.roleId],
+                                )
+                              }
+                              className='h-4 w-4 rounded accent-blue-600 shrink-0'
+                            />
+                            <span className='flex-1 min-w-0'>
+                              <span
+                                className={`block text-sm font-semibold ${checked ? 'text-blue-700' : 'text-text-main'}`}
+                              >
+                                {role.name}
+                              </span>
+                              {role.description && (
+                                <span className='block text-xs text-text-sub truncate'>
+                                  {role.description}
+                                </span>
+                              )}
+                            </span>
+                            {!role.isActive && (
+                              <span className='shrink-0 text-[10px] text-orange-600 border border-orange-200 bg-orange-50 rounded-full px-2 py-0.5 font-medium'>
+                                Tắt
+                              </span>
+                            )}
+                            {checked && (
+                              <span className='shrink-0 text-blue-500'>
+                                <CheckCircle2 size={14} />
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className='border-t border-gray-100 px-3 py-2 flex justify-end'>
+                    <button
+                      type='button'
+                      onClick={() => setRoleDropdownOpen(false)}
+                      className='text-xs font-medium text-blue-600 hover:text-blue-800'
+                    >
+                      Xong
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Last login — read-only */}
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
+              <Clock size={11} /> Đăng nhập lần cuối
+            </label>
+            <div className='min-h-10 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 flex items-center'>
+              {(userDetail?.lastLoginAt ?? initialUser?.lastLoginAt) ? (
+                <span className='text-sm text-text-sub'>
+                  {new Date(
+                    (userDetail?.lastLoginAt ?? initialUser?.lastLoginAt)!,
+                  ).toLocaleString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              ) : (
+                <span className='text-xs italic text-text-sub opacity-50'>
+                  Chưa đăng nhập
+                </span>
+              )}
             </div>
           </div>
         </div>

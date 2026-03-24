@@ -44,7 +44,7 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/40 bg-white p-7 shadow-sm',
+        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/75 bg-white p-7 shadow-sm',
         !isPreview &&
           'transition-transform duration-500 hover:-translate-y-1 hover:shadow-md',
       )}

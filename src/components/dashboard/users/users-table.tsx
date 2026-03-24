@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types/dashboard';
 import { useUsersQuery } from '@/hooks/api/use-users';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Clock, Shield } from 'lucide-react';
 
 type UsersTableProps = {
   onEdit?: (user: User) => void;
@@ -101,6 +101,84 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
               Chưa xác minh
             </Badge>
           ),
+      },
+      {
+        accessorKey: 'roles',
+        header: 'Vai trò',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const roles = row.original.roles;
+          if (!roles || roles.length === 0)
+            return (
+              <span className='italic text-text-sub opacity-40 text-sm'>
+                Chưa có
+              </span>
+            );
+
+          // Priority order — highest first
+          const PRIORITY: Record<string, number> = {
+            admin: 0,
+            'quản trị': 0,
+            manager: 1,
+            'quản lý': 1,
+            user: 2,
+            'người dùng': 2,
+            guest: 3,
+            khách: 3,
+          };
+          const rank = (name: string) => PRIORITY[name.toLowerCase()] ?? 99;
+
+          const sorted = [...roles].sort((a, b) => rank(a.name) - rank(b.name));
+          const top = sorted[0];
+          const rest = sorted.length - 1;
+
+          return (
+            <div className='flex items-center gap-1 flex-nowrap'>
+              <span className='inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs text-blue-700 font-medium whitespace-nowrap'>
+                <Shield size={10} className='shrink-0' />
+                {top.name}
+              </span>
+              {rest > 0 && (
+                <span
+                  title={sorted
+                    .slice(1)
+                    .map((r) => r.name)
+                    .join(', ')}
+                  className='inline-flex items-center rounded-full bg-gray-100 border border-gray-200 px-2 py-0.5 text-xs text-gray-500 font-medium whitespace-nowrap cursor-default shrink-0'
+                >
+                  +{rest}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: 'lastLoginAt',
+        header: 'Đăng nhập lần cuối',
+        enableSorting: false,
+        cell: ({ getValue }) => {
+          const val = getValue() as string | null;
+          if (!val)
+            return (
+              <span className='italic text-text-sub opacity-40 text-sm'>
+                Chưa đăng nhập
+              </span>
+            );
+          const date = new Date(val);
+          return (
+            <span className='inline-flex items-center gap-1 text-sm text-text-sub'>
+              <Clock size={12} className='shrink-0' />
+              {date.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
+          );
+        },
       },
       {
         id: 'actions',

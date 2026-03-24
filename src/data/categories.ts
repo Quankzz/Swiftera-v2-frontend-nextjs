@@ -1,11 +1,11 @@
 import type { Category, CategoryTree } from '@/types/catalog';
 
 export const categories: Category[] = [
-  // 1. Phones & Tablets
+  // 1. Điện thoại & Máy tính bảng
   {
     categoryId: 'cat-phones',
     parentId: null,
-    name: 'Phones & Tablets',
+    name: 'Điện thoại & Máy tính bảng',
     slug: 'phones-tablets',
     sortOrder: 1,
     image:
@@ -15,65 +15,65 @@ export const categories: Category[] = [
   {
     categoryId: 'cat-phones-show-all',
     parentId: 'cat-phones',
-    name: 'Show all',
+    name: 'Xem tất cả',
     slug: 'phones-tablets',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-smartphones',
     parentId: 'cat-phones',
-    name: 'Smartphones',
+    name: 'Điện thoại thông minh',
     slug: 'smartphones',
     sortOrder: 2,
   },
   {
     categoryId: 'cat-smartphones-show-all',
     parentId: 'cat-smartphones',
-    name: 'Show all Smartphones',
+    name: 'Xem tất cả điện thoại',
     slug: 'smartphones',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-iphones',
     parentId: 'cat-smartphones',
-    name: 'iPhones',
+    name: 'iPhone',
     slug: 'iphones',
     sortOrder: 2,
   },
   {
     categoryId: 'cat-androids',
     parentId: 'cat-smartphones',
-    name: 'Android Phones',
+    name: 'Điện thoại Android',
     slug: 'android-phones',
     sortOrder: 3,
   },
   {
     categoryId: 'cat-tablets',
     parentId: 'cat-phones',
-    name: 'Tablets',
+    name: 'Máy tính bảng',
     slug: 'tablets',
     sortOrder: 3,
   },
   {
     categoryId: 'cat-ereaders',
     parentId: 'cat-phones',
-    name: 'E-Readers & E-Paper Tablets',
+    name: 'Máy đọc sách điện tử',
     slug: 'e-readers',
     sortOrder: 4,
   },
   {
     categoryId: 'cat-phones-accessories',
     parentId: 'cat-phones',
-    name: 'Accessories',
+    name: 'Phụ kiện',
     slug: 'accessories',
     sortOrder: 5,
   },
 
-  // 2. Computers
+  // 2. Máy tính
   {
     categoryId: 'cat-computers',
     parentId: null,
-    name: 'Computers',
+    name: 'Máy tính',
     slug: 'computers',
     sortOrder: 2,
     image:
@@ -83,37 +83,37 @@ export const categories: Category[] = [
   {
     categoryId: 'cat-laptops',
     parentId: 'cat-computers',
-    name: 'Laptops',
+    name: 'Máy tính xách tay',
     slug: 'laptops',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-macbooks',
     parentId: 'cat-laptops',
-    name: 'MacBooks',
+    name: 'MacBook',
     slug: 'macbooks',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-windows-laptops',
     parentId: 'cat-laptops',
-    name: 'Windows Laptops',
+    name: 'Laptop Windows',
     slug: 'windows-laptops',
     sortOrder: 2,
   },
   {
     categoryId: 'cat-monitors',
     parentId: 'cat-computers',
-    name: 'Monitors',
+    name: 'Màn hình',
     slug: 'monitors',
     sortOrder: 2,
   },
 
-  // 3. Consoles
+  // 3. Máy chơi game
   {
     categoryId: 'cat-consoles',
     parentId: null,
-    name: 'Consoles',
+    name: 'Máy chơi game',
     slug: 'consoles',
     sortOrder: 3,
     image:
@@ -156,56 +156,56 @@ export const categories: Category[] = [
   {
     categoryId: 'cat-vr-headsets',
     parentId: 'cat-gaming',
-    name: 'VR Headsets',
+    name: 'Kính thực tế ảo VR',
     slug: 'vr-headsets',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-gaming-accessories',
     parentId: 'cat-gaming',
-    name: 'Gaming Accessories',
+    name: 'Phụ kiện gaming',
     slug: 'gaming-accessories',
     sortOrder: 2,
   },
 
-  // 5. Audio & Music
-  {
-    categoryId: 'cat-audio',
-    parentId: null,
-    name: 'Audio & Music',
-    slug: 'audio-music',
-    sortOrder: 5,
-    image:
-      'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
-    brands: ['Sony', 'Bose', 'Sennheiser', 'JBL'],
-  },
-  {
-    categoryId: 'cat-headphones',
-    parentId: 'cat-audio',
-    name: 'Headphones',
-    slug: 'headphones',
-    sortOrder: 1,
-  },
-  {
-    categoryId: 'cat-speakers',
-    parentId: 'cat-audio',
-    name: 'Speakers',
-    slug: 'speakers',
-    sortOrder: 2,
-  },
-  {
-    categoryId: 'cat-microphones',
-    parentId: 'cat-audio',
-    name: 'Microphones',
-    slug: 'microphones',
-    sortOrder: 3,
-  },
+  // 5. Âm thanh & Âm nhạc
+  // {
+  //   categoryId: 'cat-audio',
+  //   parentId: null,
+  //   name: 'Âm thanh & Âm nhạc',
+  //   slug: 'audio-music',
+  //   sortOrder: 5,
+  //   image:
+  //     'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
+  //   brands: ['Sony', 'Bose', 'Sennheiser', 'JBL'],
+  // },
+  // {
+  //   categoryId: 'cat-headphones',
+  //   parentId: 'cat-audio',
+  //   name: 'Tai nghe',
+  //   slug: 'headphones',
+  //   sortOrder: 1,
+  // },
+  // {
+  //   categoryId: 'cat-speakers',
+  //   parentId: 'cat-audio',
+  //   name: 'Loa',
+  //   slug: 'speakers',
+  //   sortOrder: 2,
+  // },
+  // {
+  //   categoryId: 'cat-microphones',
+  //   parentId: 'cat-audio',
+  //   name: 'Micro',
+  //   slug: 'microphones',
+  //   sortOrder: 3,
+  // },
 
-  // 6. Wearables
+  // 6. Thiết bị đeo
   {
     categoryId: 'cat-wearables',
     parentId: null,
-    name: 'Wearables',
+    name: 'Thiết bị đeo',
     slug: 'wearables',
     sortOrder: 6,
     image:
@@ -215,49 +215,49 @@ export const categories: Category[] = [
   {
     categoryId: 'cat-smartwatches',
     parentId: 'cat-wearables',
-    name: 'Smartwatches',
+    name: 'Đồng hồ thông minh',
     slug: 'smartwatches',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-fitness-trackers',
     parentId: 'cat-wearables',
-    name: 'Fitness Trackers',
+    name: 'Vòng đeo theo dõi sức khỏe',
     slug: 'fitness-trackers',
     sortOrder: 2,
   },
 
-  // 7. Smart Home
-  {
-    categoryId: 'cat-smart-home',
-    parentId: null,
-    name: 'Smart Home',
-    slug: 'smart-home',
-    sortOrder: 7,
-    image:
-      'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
-    brands: ['Google', 'Amazon', 'Philips', 'Ring'],
-  },
-  {
-    categoryId: 'cat-smart-speakers',
-    parentId: 'cat-smart-home',
-    name: 'Smart Speakers',
-    slug: 'smart-speakers',
-    sortOrder: 1,
-  },
-  {
-    categoryId: 'cat-security-cameras',
-    parentId: 'cat-smart-home',
-    name: 'Security Cameras',
-    slug: 'security-cameras',
-    sortOrder: 2,
-  },
+  // 7. Nhà thông minh
+  // {
+  //   categoryId: 'cat-smart-home',
+  //   parentId: null,
+  //   name: 'Nhà thông minh',
+  //   slug: 'smart-home',
+  //   sortOrder: 7,
+  //   image:
+  //     'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
+  //   brands: ['Google', 'Amazon', 'Philips', 'Ring'],
+  // },
+  // {
+  //   categoryId: 'cat-smart-speakers',
+  //   parentId: 'cat-smart-home',
+  //   name: 'Loa thông minh',
+  //   slug: 'smart-speakers',
+  //   sortOrder: 1,
+  // },
+  // {
+  //   categoryId: 'cat-security-cameras',
+  //   parentId: 'cat-smart-home',
+  //   name: 'Camera an ninh',
+  //   slug: 'security-cameras',
+  //   sortOrder: 2,
+  // },
 
-  // 8. Cameras
+  // 8. Máy ảnh
   {
     categoryId: 'cat-cameras',
     parentId: null,
-    name: 'Cameras',
+    name: 'Máy ảnh',
     slug: 'cameras',
     sortOrder: 8,
     image:
@@ -267,30 +267,30 @@ export const categories: Category[] = [
   {
     categoryId: 'cat-dslr',
     parentId: 'cat-cameras',
-    name: 'DSLR Cameras',
+    name: 'Máy ảnh DSLR',
     slug: 'dslr-cameras',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-mirrorless',
     parentId: 'cat-cameras',
-    name: 'Mirrorless Cameras',
+    name: 'Máy ảnh không gương lật',
     slug: 'mirrorless-cameras',
     sortOrder: 2,
   },
   {
     categoryId: 'cat-action-cameras',
     parentId: 'cat-cameras',
-    name: 'Action Cameras',
+    name: 'Camera hành động',
     slug: 'action-cameras',
     sortOrder: 3,
   },
 
-  // 9. Desktops
+  // 9. Máy tính để bàn
   {
     categoryId: 'cat-desktops',
     parentId: null,
-    name: 'Desktops',
+    name: 'Máy tính để bàn',
     slug: 'desktops',
     sortOrder: 9,
     image:
@@ -300,23 +300,23 @@ export const categories: Category[] = [
   {
     categoryId: 'cat-imacs',
     parentId: 'cat-desktops',
-    name: 'iMacs & Mac minis',
+    name: 'iMac & Mac mini',
     slug: 'imacs-mac-minis',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-windows-desktops',
     parentId: 'cat-desktops',
-    name: 'Windows Desktops',
+    name: 'Máy tính để bàn Windows',
     slug: 'windows-desktops',
     sortOrder: 2,
   },
 
-  // 10. Accessories
+  // 10. Phụ kiện
   {
     categoryId: 'cat-accessories',
     parentId: null,
-    name: 'Accessories',
+    name: 'Phụ kiện',
     slug: 'accessories',
     sortOrder: 10,
     image:
@@ -326,21 +326,21 @@ export const categories: Category[] = [
   {
     categoryId: 'cat-keyboards',
     parentId: 'cat-accessories',
-    name: 'Keyboards',
+    name: 'Bàn phím',
     slug: 'keyboards',
     sortOrder: 1,
   },
   {
     categoryId: 'cat-mice',
     parentId: 'cat-accessories',
-    name: 'Mice',
+    name: 'Chuột',
     slug: 'mice',
     sortOrder: 2,
   },
   {
     categoryId: 'cat-cables',
     parentId: 'cat-accessories',
-    name: 'Cables & Adapters',
+    name: 'Cáp & Bộ chuyển đổi',
     slug: 'cables-adapters',
     sortOrder: 3,
   },

@@ -5,6 +5,8 @@ export interface User {
   phoneNumber: string | null;
   avatarUrl: string | null;
   isVerified: boolean;
+  lastLoginAt: string | null; // ISO datetime string
+  roles: Pick<Role, 'roleId' | 'name'>[];
 }
 
 export interface UserListParams {
@@ -19,6 +21,7 @@ export interface CreateUserInput {
   phoneNumber?: string | null;
   avatarUrl?: string | null;
   isVerified: boolean;
+  roleIds?: string[];
 }
 
 export interface UpdateUserInput {
@@ -26,6 +29,7 @@ export interface UpdateUserInput {
   phoneNumber?: string | null;
   avatarUrl?: string | null;
   isVerified?: boolean;
+  roleIds?: string[];
 }
 
 export interface Role {
