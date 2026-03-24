@@ -1405,8 +1405,13 @@ function DeliveryMiniMap({
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-border shadow-sm">
-      {/* Map canvas */}
-      <div ref={mapContainerRef} className={cn('w-full', mapHeightClass)} />
+      <div
+        ref={mapContainerRef}
+        className={cn(
+          'w-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150',
+          mapHeightClass,
+        )}
+      />
 
       {mapLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted/95">
@@ -1688,11 +1693,11 @@ function DeliveringWorkflow({
             <div className="flex flex-col gap-3">
               <Button
                 size="lg"
-                onClick={() => setShowQrScanner(true)}
-                className="w-full gap-2.5 h-14 text-base"
+                onClick={() => setQrVerified(true)}
+                className="w-full gap-2.5 h-14 text-base bg-success hover:bg-success/90 text-white"
               >
                 <QrCode className="size-5" />
-                Mở máy quét QR
+                Quét mã QR (Mock: Thành công ngay)
               </Button>
 
               {/* Manual fallback */}
@@ -1839,7 +1844,15 @@ function DeliveringWorkflow({
 }
 
 // ─── STEP 4 — ACTIVE / OVERDUE ────────────────────────────────────────────────
-function ActiveWorkflow({ order }: { order: DashboardOrder }) {
+function ActiveWorkflow({
+  order,
+  onRequestReturnEarly,
+  loading,
+}: {
+  order: DashboardOrder;
+  onRequestReturnEarly?: () => void;
+  loading?: boolean;
+}) {
   const now = new Date();
   const endDate = new Date(order.end_date);
   const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / 86400000);
@@ -1956,6 +1969,32 @@ function ActiveWorkflow({ order }: { order: DashboardOrder }) {
           >
             <Phone className="size-4" /> Gọi ngay
           </a>
+        </div>
+      )}
+
+      {/* Mock return early button */}
+      {!isOverdue && onRequestReturnEarly && (
+        <div className="rounded-2xl border border-theme-primary-start/20 bg-theme-primary-start/5 p-5 mt-2">
+          <p className="text-sm font-bold text-foreground mb-1">
+            Khách yêu cầu trả sớm?
+          </p>
+          <p className="text-xs text-muted-foreground mb-4">
+            Tính năng mô phỏng: Bấm vào đây nếu khách hàng thông báo muốn chấm dứt hợp đồng sớm và yêu cầu bạn đến lấy thiết bị.
+          </p>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={onRequestReturnEarly}
+            disabled={loading}
+            className="w-full gap-2 border-theme-primary-start text-theme-primary-start hover:bg-theme-primary-start hover:text-white transition-colors"
+          >
+            {loading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <AlertCircle className="size-5" />
+            )}
+            (Mô phỏng) Khách trả hàng sớm
+          </Button>
         </div>
       )}
     </div>
@@ -2498,7 +2537,11 @@ export default function OrderDetailPage({
             )}
 
             {(order.status === 'ACTIVE' || order.status === 'OVERDUE') && (
-              <ActiveWorkflow order={order} />
+              <ActiveWorkflow
+                order={order}
+                onRequestReturnEarly={() => handleStatusChange('RETURNING')}
+                loading={statusLoading}
+              />
             )}
 
             {order.status === 'OVERDUE' && (

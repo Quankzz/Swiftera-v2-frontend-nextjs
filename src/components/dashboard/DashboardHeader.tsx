@@ -12,7 +12,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Tổng quan',
   '/dashboard/orders': 'Quản lý đơn hàng',
   '/dashboard/products': 'Quản lý sản phẩm',
-  '/dashboard/scanner': 'Quét mã QR',
   '/dashboard/contracts': 'Hợp đồng',
   '/dashboard/contracts/new': 'Tạo hợp đồng mới',
 };
@@ -53,7 +52,7 @@ export function DashboardHeader({ onMenuOpen }: DashboardHeaderProps) {
   });
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/20 bg-background/80 px-4 sm:px-6 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-border/40 bg-background/70 px-4 sm:px-6 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] transition-all">
       <div className="flex items-center gap-3">
         {/* Mobile hamburger */}
         <Button
@@ -104,9 +103,9 @@ export function DashboardHeader({ onMenuOpen }: DashboardHeaderProps) {
           <Image
             src={MOCK_CURRENT_STAFF.avatar_url}
             alt={MOCK_CURRENT_STAFF.full_name}
-            width={28}
-            height={28}
-            className="size-7 rounded-full object-cover ring-2 ring-theme-primary-start/30"
+            width={32}
+            height={32}
+            className="size-8 rounded-full object-cover ring-2 ring-background shadow-md border border-border"
           />
         ) : (
           <div className="flex size-7 items-center justify-center rounded-full bg-theme-primary-start/20 text-theme-primary-start text-xs font-bold">

@@ -33,13 +33,13 @@ const PAGE_TITLES: Record<
     parent: 'Dashboard',
     parentUrl: '/dashboard',
   },
-  '/dashboard/scanner': {
-    label: 'Quét mã QR',
+  '/dashboard/contracts': {
+    label: 'Hợp đồng',
     parent: 'Dashboard',
     parentUrl: '/dashboard',
   },
-  '/map': {
-    label: 'Bản đồ giao hàng',
+  '/dashboard/contracts/new': {
+    label: 'Tạo hợp đồng mới',
     parent: 'Dashboard',
     parentUrl: '/dashboard',
   },
@@ -81,8 +81,8 @@ export function SiteHeader() {
     : (PAGE_TITLES[pathname] ?? { label: 'Dashboard' });
 
   return (
-    <header className="sticky top-0 z-50 flex w-full items-center border-b border-border/20 bg-background/90 backdrop-blur-sm">
-      <div className="flex h-14 w-full items-center gap-2 px-4">
+    <header className="sticky top-0 z-50 flex w-full h-16 shrink-0 items-center justify-between border-b border-border/40 bg-background/70 px-2 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] transition-all">
+      <div className="flex w-full items-center gap-2 px-2">
         <Button
           className="h-8 w-8"
           variant="ghost"

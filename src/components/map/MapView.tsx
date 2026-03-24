@@ -891,9 +891,12 @@ const MapView: React.FC = () => {
 
   // ──────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+    <div className="fixed inset-0 overflow-hidden bg-background">
       {/* Map */}
-      <div ref={mapContainerRef} style={{ position: 'absolute', inset: 0 }} />
+      <div
+        ref={mapContainerRef}
+        className="absolute inset-0 dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150 transition-all duration-500 ease-in-out"
+      />
 
       <MapSidebar
         onRouteSearch={handleRouteSearch}

@@ -41,12 +41,6 @@ const NAV_ITEMS = [
     icon: Package,
     exact: false,
   },
-  {
-    title: 'Quét mã QR',
-    url: '/dashboard/scanner',
-    icon: QrCode,
-    exact: false,
-  },
   { title: 'Bản đồ giao hàng', url: '/map', icon: MapPin, exact: false },
 ] as const;
 
@@ -64,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-theme-primary-start to-theme-primary-end text-white shadow-md ambient-glow">
                 <Zap className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
