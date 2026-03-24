@@ -67,7 +67,9 @@ export default function QRScannerPage() {
           setState('error');
           return;
         }
-        const order = MOCK_ORDERS.find((o) => o.rental_order_id === payload.orderId);
+        const order = MOCK_ORDERS.find(
+          (o) => o.rental_order_id === payload.orderId,
+        );
         if (!order) {
           setError(
             `Không tìm thấy đơn hàng "${payload.orderCode}". Có thể đơn hàng đã bị xóa.`,
@@ -80,7 +82,8 @@ export default function QRScannerPage() {
         setState('found');
       } catch {
         const order = MOCK_ORDERS.find(
-          (o) => o.order_code === data.trim() || o.rental_order_id === data.trim(),
+          (o) =>
+            o.order_code === data.trim() || o.rental_order_id === data.trim(),
         );
         if (order) {
           stopCamera();
@@ -193,7 +196,9 @@ export default function QRScannerPage() {
 
   const handleProceedToContract = () => {
     if (foundOrder) {
-      router.push(`/dashboard/contracts/new?orderId=${foundOrder.rental_order_id}`);
+      router.push(
+        `/dashboard/contracts/new?orderId=${foundOrder.rental_order_id}`,
+      );
     }
   };
 

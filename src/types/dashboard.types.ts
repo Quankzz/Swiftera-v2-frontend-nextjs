@@ -117,6 +117,8 @@ export interface DashboardOrder {
   staff_current_latitude?: number;
   staff_current_longitude?: number;
   staff_location_updated_at?: string;
+  /** Short code customer shows to staff on delivery to confirm receipt */
+  confirmation_code?: string;
 }
 
 // ─── Product ──────────────────────────────────────────────────────────────────

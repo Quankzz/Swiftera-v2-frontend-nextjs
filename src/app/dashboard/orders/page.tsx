@@ -20,7 +20,7 @@ import {
   Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MOCK_ORDERS } from '@/data/mockDashboard';
+import { MOCK_ORDERS, MOCK_CURRENT_STAFF } from '@/data/mockDashboard';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -138,8 +138,15 @@ export default function OrdersPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Only show orders assigned to this staff member
+  const myOrders = MOCK_ORDERS.filter(
+    (o) =>
+      o.staff_checkin_id === MOCK_CURRENT_STAFF.staff_id ||
+      o.staff_checkout_id === MOCK_CURRENT_STAFF.staff_id,
+  );
+
   const filtered = useMemo(() => {
-    let list = [...MOCK_ORDERS];
+    let list = [...myOrders];
     const q = search.toLowerCase().trim();
     if (q) {
       list = list.filter(
@@ -175,7 +182,7 @@ export default function OrdersPage() {
     }
   };
 
-  const urgentCount = MOCK_ORDERS.filter((o) =>
+  const urgentCount = myOrders.filter((o) =>
     ['PENDING', 'OVERDUE', 'RETURNING'].includes(o.status),
   ).length;
 
@@ -183,11 +190,9 @@ export default function OrdersPage() {
     <div className="flex flex-col gap-5 p-5 md:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Quản lý đơn hàng
-        </h1>
+        <h1 className="text-2xl font-bold text-foreground">Đơn hàng của tôi</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} / {MOCK_ORDERS.length} đơn
+          {filtered.length} / {myOrders.length} đơn được phân công
           {urgentCount > 0 && (
             <span className="ml-2 text-destructive font-semibold">
               · {urgentCount} cần xử lý
@@ -202,7 +207,7 @@ export default function OrdersPage() {
           {
             key: 'ALL',
             label: 'Tất cả',
-            count: MOCK_ORDERS.length,
+            count: myOrders.length,
             urgent: false,
           },
           {
@@ -215,7 +220,7 @@ export default function OrdersPage() {
           {
             key: 'in_progress',
             label: 'Đang diễn ra',
-            count: MOCK_ORDERS.filter((o) =>
+            count: myOrders.filter((o) =>
               ['CONFIRMED', 'DELIVERING', 'ACTIVE'].includes(o.status),
             ).length,
             urgent: false,
@@ -224,7 +229,7 @@ export default function OrdersPage() {
           {
             key: 'done',
             label: 'Kết thúc',
-            count: MOCK_ORDERS.filter((o) =>
+            count: myOrders.filter((o) =>
               ['COMPLETED', 'CANCELLED'].includes(o.status),
             ).length,
             urgent: false,
