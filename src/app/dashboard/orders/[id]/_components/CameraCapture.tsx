@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Camera, X } from 'lucide-react';
+import { Camera, X, SwitchCamera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +17,9 @@ export function CameraCapture({
 }) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [errorLine, setErrorLine] = useState('');
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>(
+    'environment',
+  );
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -26,19 +29,20 @@ export function CameraCapture({
     }
   }, [isCameraOpen]);
 
-  const startCamera = async () => {
+  const startCamera = async (facing: 'environment' | 'user' = facingMode) => {
     try {
       setErrorLine('');
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
+          video: { facingMode: { ideal: facing } },
         });
       } catch (e) {
         // Fallback for devices without an environment camera (like most desktop webcams)
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
       }
       streamRef.current = stream;
+      setFacingMode(facing);
       setIsCameraOpen(true);
     } catch (err) {
       console.error('Camera error:', err);
@@ -58,6 +62,19 @@ export function CameraCapture({
     }
     setIsCameraOpen(false);
   }, []);
+
+  const flipCamera = useCallback(async () => {
+    const nextFacing = facingMode === 'environment' ? 'user' : 'environment';
+    // Stop current stream first
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    await startCamera(nextFacing);
+  }, [facingMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     return () => {
@@ -120,7 +137,7 @@ export function CameraCapture({
         {!isCameraOpen && (
           <button
             type="button"
-            onClick={startCamera}
+            onClick={() => startCamera()}
             className="size-20 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-theme-primary-start/50 hover:bg-theme-primary-start/5 transition-all"
           >
             <Camera className="size-5 text-muted-foreground" />
@@ -145,6 +162,15 @@ export function CameraCapture({
               playsInline
               className="h-full w-full object-cover"
             />
+            {/* Flip camera button overlay */}
+            <button
+              type="button"
+              onClick={flipCamera}
+              title="Đổi camera trước/sau"
+              className="absolute top-2 right-2 size-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
+            >
+              <SwitchCamera className="size-4 text-white" />
+            </button>
           </div>
           <div className="flex gap-3">
             <Button
@@ -154,6 +180,15 @@ export function CameraCapture({
               onClick={stopCamera}
             >
               Đóng
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-1.5 px-3"
+              onClick={flipCamera}
+              title="Đổi camera"
+            >
+              <SwitchCamera className="size-4" />
             </Button>
             <Button
               type="button"

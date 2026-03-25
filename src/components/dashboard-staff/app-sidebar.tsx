@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation'; // Thêm useSearchParams
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -104,7 +104,10 @@ const SECONDARY_ITEMS = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const searchParams = useSearchParams(); // Lấy query params trên URL
+  const currentStatus = searchParams.get('status');
 
+  const isDashboardActive = pathname === '/dashboard';
   const isOrdersActive =
     pathname === '/dashboard/orders' ||
     pathname.startsWith('/dashboard/orders/');
@@ -153,26 +156,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* ── Main Navigation ──────────────────────────────────────── */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4">
-            Nhân viên portal
+          <SidebarGroupLabel className="text-lg font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4">
+            Nhân viên
           </SidebarGroupLabel>
           <SidebarMenu>
             {/* Tổng quan */}
             <SidebarMenuItem>
               <SidebarMenuButton
                 render={<Link href="/dashboard" />}
-                isActive={pathname === '/dashboard'}
+                isActive={isDashboardActive}
                 tooltip="Tổng quan"
-                className="gap-3"
+                className={cn(
+                  'gap-3 transition-colors',
+                  isDashboardActive &&
+                    'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                )}
               >
                 <LayoutDashboard className="size-4" />
-                <span>Tổng quan</span>
+                <span className="text-[16px] font-bold">Tổng quan</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {/* Đơn hàng — collapsible (controlled to avoid Base UI warning) */}
+            {/* Đơn hàng — collapsible */}
             <Collapsible
               open={ordersOpen}
               onOpenChange={setOrdersOpen}
@@ -180,14 +186,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <SidebarMenuButton
                 render={<Link href="/dashboard/orders" />}
-                isActive={isOrdersActive}
+                isActive={isOrdersActive && !currentStatus}
                 tooltip="Đơn hàng"
-                className="gap-3"
+                className={cn(
+                  'gap-3 transition-colors',
+                  isOrdersActive &&
+                    !currentStatus &&
+                    'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                )}
               >
                 <ShoppingBag className="size-4" />
-                <span>Đơn hàng</span>
+                <span className="text-[16px] font-bold">Đơn hàng</span>
                 {urgentTotal > 0 && (
-                  <span className=" flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums">
+                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums">
                     {urgentTotal}
                   </span>
                 )}
@@ -196,24 +207,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 render={<CollapsibleTrigger />}
                 className={cn(
                   'aria-expanded:rotate-90 transition-transform duration-200',
-                  urgentTotal > 0 ? 'right-8' : '',
+                  urgentTotal > 0 ? 'right-4' : '',
                 )}
               >
-                <ChevronRight className="size-3.5" />
+                <ChevronRight className="size-6" />
                 <span className="sr-only">Mở rộng</span>
               </SidebarMenuAction>
               <CollapsibleContent>
-                <SidebarMenuSub className="ml-4 mt-0.5">
+                <SidebarMenuSub className="ml-4 mt-0.5 w-full">
                   {ORDER_WORKFLOW_TABS.map((tab) => {
                     const count = tab.statuses.reduce(
                       (s, st) => s + (orderCounts[st] ?? 0),
                       0,
                     );
+                    // Check xem sub-tab này có phải là tab đang xem không
+                    const isTabActive =
+                      pathname === '/dashboard/orders' &&
+                      currentStatus === tab.statuses[0];
+
                     return (
                       <SidebarMenuSubItem key={tab.title}>
                         <SidebarMenuSubButton
                           render={<Link href={tab.url} />}
-                          className="py-2 gap-2.5"
+                          isActive={isTabActive}
+                          className={cn(
+                            'py-4 transition-colors',
+                            isTabActive &&
+                              'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                          )}
                         >
                           <span
                             className={cn(
@@ -221,16 +242,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                               tab.dotClass,
                             )}
                           />
-                          <span className="flex-1 truncate text-[12.5px]">
+                          <span className="flex-1 truncate text-sm">
                             {tab.title}
                           </span>
                           {count > 0 && (
                             <span
                               className={cn(
-                                'min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                'mr-4 min-w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
                                 tab.urgency
                                   ? 'bg-destructive text-white'
-                                  : 'bg-sidebar-accent text-sidebar-foreground/60',
+                                  : isTabActive
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'bg-sidebar-accent text-sidebar-foreground/60',
                               )}
                             >
                               {count}
@@ -246,7 +269,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* ── Quick Stats ──────────────────────────────────────────── */}
         <SidebarGroup className="px-3 py-0">
           <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3 space-y-2">
             <p className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest">

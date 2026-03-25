@@ -14,6 +14,8 @@ import {
   ScanLine,
   AlertCircle,
   Loader2,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +23,7 @@ import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { WorkflowBanner } from '../WorkflowBanner';
 import { fmtDatetime } from '../utils';
-import { DeliveryMiniMap, haversineKm } from '../DeliveryMiniMap';
+import { haversineKm } from '../DeliveryMiniMap';
 import { QrScanner } from '../QrScanner';
 import { CameraCapture } from '../CameraCapture';
 
@@ -43,6 +45,9 @@ export function DeliveringWorkflow({
   const [phase, setPhase] = useState<'transit' | 'arrived'>('transit');
   const [qrVerified, setQrVerified] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
+  const [qrSimulate, setQrSimulate] = useState<
+    'confirmed' | 'failed' | undefined
+  >(undefined);
   const [manualCode, setManualCode] = useState('');
   const [manualError, setManualError] = useState('');
   const [showManualFallback, setShowManualFallback] = useState(false);
@@ -203,6 +208,8 @@ export function DeliveringWorkflow({
           ) : showQrScanner ? (
             <QrScanner
               expectedCode={expectedCode}
+              order={order}
+              simulate={qrSimulate}
               onSuccess={() => {
                 setQrVerified(true);
                 setShowQrScanner(false);
@@ -211,14 +218,43 @@ export function DeliveringWorkflow({
             />
           ) : (
             <div className="flex flex-col gap-3">
+              {/* Real QR scan */}
               <Button
                 size="lg"
-                onClick={() => setQrVerified(true)}
-                className="w-full gap-2.5 h-14 text-base bg-success hover:bg-success/90 text-white"
+                onClick={() => {
+                  setQrSimulate(undefined);
+                  setShowQrScanner(true);
+                }}
+                className="w-full gap-2.5 h-14 text-base bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
               >
                 <QrCode className="size-5" />
-                Quét mã QR (Mock: Thành công ngay)
+                Mở máy quét QR
               </Button>
+              {/* Dev simulation buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setQrSimulate('confirmed');
+                    setShowQrScanner(true);
+                  }}
+                  className="flex-1 gap-1.5 text-xs h-9 border-success/50 text-success hover:bg-success/5"
+                >
+                  <CheckCircle2 className="size-3.5" /> Mock: Thành công
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setQrSimulate('failed');
+                    setShowQrScanner(true);
+                  }}
+                  className="flex-1 gap-1.5 text-xs h-9 border-destructive/50 text-destructive hover:bg-destructive/5"
+                >
+                  <XCircle className="size-3.5" /> Mock: Thất bại
+                </Button>
+              </div>
 
               {/* Manual fallback */}
               {!showManualFallback ? (

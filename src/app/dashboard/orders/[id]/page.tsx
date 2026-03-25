@@ -97,7 +97,7 @@ export default function OrderDetailPage({
     [],
   );
 
-  const handleDepositRefund = useCallback(async () => {
+  const handleDepositRefund = useCallback(async (_method: 'cash' | 'bank') => {
     await new Promise((r) => setTimeout(r, 500));
     setOrder((prev) =>
       prev ? { ...prev, deposit_refund_status: 'REFUNDED' } : prev,
@@ -326,10 +326,8 @@ export default function OrderDetailPage({
             {order.status === 'RETURNING' && (
               <ReturningWorkflow
                 order={order}
-                onCompleteReturn={(penalty) =>
+                onCompleteReturn={() =>
                   handleStatusChange('COMPLETED', {
-                    total_penalty_amount:
-                      (order.total_penalty_amount ?? 0) + penalty,
                     actual_return_date: new Date().toISOString().split('T')[0],
                     staff_checkout_id: MOCK_CURRENT_STAFF.staff_id,
                   })
