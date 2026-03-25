@@ -62,7 +62,7 @@ export function AuthContainer({ initialMode = 'signin' }: AuthContainerProps) {
             className={cn(
               'flex-1 py-3 text-xs font-semibold uppercase tracking-wider transition-colors',
               !isActive
-                ? 'border-b-2 border-[#512da8] text-[#512da8] dark:border-[#8b77c9] dark:text-[#8b77c9]'
+                ? 'border-b-2 border-[#fe1451] text-[#fe1451] dark:border-[#fe2560] dark:text-[#fe2560]'
                 : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300'
             )}
           >
@@ -74,7 +74,7 @@ export function AuthContainer({ initialMode = 'signin' }: AuthContainerProps) {
             className={cn(
               'flex-1 py-3 text-xs font-semibold uppercase tracking-wider transition-colors',
               isActive
-                ? 'border-b-2 border-[#512da8] text-[#512da8] dark:border-[#8b77c9] dark:text-[#8b77c9]'
+                ? 'border-b-2 border-[#fe1451] text-[#fe1451] dark:border-[#fe2560] dark:text-[#fe2560]'
                 : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300'
             )}
           >

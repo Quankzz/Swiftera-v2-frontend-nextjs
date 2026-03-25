@@ -38,7 +38,7 @@ export function RentalProductDescription({
       <div className="flex justify-center mt-4">
         <Button
           variant="ghost"
-          className="flex items-center justify-center font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
+          className="flex items-center justify-center font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? 'Thu gọn' : 'Xem thêm'}

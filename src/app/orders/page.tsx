@@ -21,7 +21,7 @@ export default function OrdersPage() {
   const orders = useRentalOrderStore((s) => s.orders);
 
   return (
-    <div className='min-h-screen bg-transparent px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
+    <div className='min-h-screen bg-white dark:bg-surface-base px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
       <div className='mx-auto max-w-3xl'>
         <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>Đơn đã thanh toán</h1>
         <p className='mt-1 text-sm text-muted-foreground'>
@@ -31,12 +31,12 @@ export default function OrdersPage() {
         {orders.length === 0 ? (
           <SpotlightCard
             className='mt-8 rounded-2xl border border-dashed border-border/70 bg-card/80 p-10 text-center'
-            spotlightColor='rgba(99, 102, 241, 0.12)'
+            spotlightColor='rgba(254, 20, 81, 0.12)'
           >
             <Package className='mx-auto size-12 text-muted-foreground/60' />
             <p className='mt-4 font-semibold text-foreground'>Chưa có đơn nào</p>
             <p className='mt-1 text-sm text-muted-foreground'>Thanh toán từ giỏ hàng để đơn xuất hiện tại đây.</p>
-            <Button className='kinetic-gradient mt-6 rounded-xl text-white' render={<Link href='/cart' />}>
+            <Button className='mt-6 rounded-xl bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600' render={<Link href='/cart' />}>
               Đi tới giỏ hàng
             </Button>
           </SpotlightCard>
@@ -46,18 +46,18 @@ export default function OrdersPage() {
               <li key={o.id}>
                 <SpotlightCard
                   className='rounded-2xl border border-border/60 bg-card/85 shadow-sm dark:bg-card/70'
-                  spotlightColor='rgba(45, 212, 191, 0.08)'
+                  spotlightColor='rgba(254, 20, 81, 0.08)'
                 >
                   <Link
                     href={`/orders/${o.id}`}
                     className='flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5'
                   >
                     <div className='flex min-w-0 items-start gap-3'>
-                      <div className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400'>
+                      <div className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400'>
                         <FileText className='size-5' />
                       </div>
                       <div className='min-w-0'>
-                        <p className='font-mono text-sm font-bold text-teal-700 dark:text-teal-300'>{o.orderCode}</p>
+                        <p className='font-mono text-sm font-bold text-rose-700 dark:text-rose-300'>{o.orderCode}</p>
                         <p className='text-xs text-muted-foreground'>{formatDate(o.createdAt)}</p>
                         <p className='mt-1 text-sm text-foreground'>
                           {o.lines.length} dòng ·{' '}
@@ -67,7 +67,7 @@ export default function OrdersPage() {
                         </p>
                       </div>
                     </div>
-                    <span className='inline-flex items-center gap-1 text-sm font-medium text-teal-600 dark:text-teal-400'>
+                    <span className='inline-flex items-center gap-1 text-sm font-medium text-rose-600 dark:text-rose-400'>
                       Chi tiết &amp; hợp đồng
                       <ChevronRight className='size-4' />
                     </span>

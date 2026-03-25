@@ -36,7 +36,7 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className='min-h-screen bg-transparent px-3 pb-16 pt-24 font-sans sm:pt-28'>
+      <div className='min-h-screen bg-white dark:bg-surface-base px-3 pb-16 pt-24 font-sans sm:pt-28'>
         <div className='mx-auto max-w-lg text-center'>
           <p className='text-lg font-semibold text-foreground'>Không tìm thấy đơn</p>
           <p className='mt-1 text-sm text-muted-foreground'>Mã có thể đã hết hạn hoặc không tồn tại trên thiết bị này.</p>
@@ -74,7 +74,7 @@ export default function OrderDetailPage() {
   );
 
   return (
-    <div className='min-h-screen bg-transparent px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
+    <div className='min-h-screen bg-white dark:bg-surface-base px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
       <div className='mx-auto max-w-4xl'>
         <Button variant='ghost' size='sm' className='mb-4 gap-1 text-muted-foreground' render={<Link href='/orders' />}>
           <ArrowLeft className='size-4' />
@@ -83,7 +83,7 @@ export default function OrderDetailPage() {
 
         <div className='flex flex-wrap items-end justify-between gap-3'>
           <div>
-            <p className='font-mono text-sm font-bold text-teal-600 dark:text-teal-400'>{order.orderCode}</p>
+            <p className='font-mono text-sm font-bold text-rose-600 dark:text-rose-400'>{order.orderCode}</p>
             <h1 className='mt-1 text-2xl font-extrabold text-foreground'>Chi tiết đơn &amp; hợp đồng</h1>
             <p className='mt-1 text-sm text-muted-foreground'>{formatDate(order.createdAt)}</p>
           </div>
@@ -95,10 +95,10 @@ export default function OrderDetailPage() {
         <div className='mt-8 grid gap-8 lg:grid-cols-2 lg:gap-10'>
           <SpotlightCard
             className='rounded-2xl border border-border/60 bg-card/85 p-5 dark:bg-card/75'
-            spotlightColor='rgba(99, 102, 241, 0.08)'
+            spotlightColor='rgba(254, 20, 81, 0.08)'
           >
             <div className='flex items-center gap-2 font-bold text-foreground'>
-              <ListOrdered className='size-5 text-teal-600 dark:text-teal-400' />
+              <ListOrdered className='size-5 text-rose-600 dark:text-rose-400' />
               Sản phẩm
             </div>
             <ul className='mt-4 space-y-4'>
@@ -113,7 +113,7 @@ export default function OrderDetailPage() {
                       {line.durationLabel} × {line.quantity}
                     </p>
                     {line.voucher && disc > 0 && (
-                      <p className='mt-1 text-xs text-teal-600 dark:text-teal-400'>
+                      <p className='mt-1 text-xs text-rose-600 dark:text-rose-400'>
                         {line.voucher.code} · −{disc.toLocaleString('vi-VN')}₫
                       </p>
                     )}
@@ -135,7 +135,7 @@ export default function OrderDetailPage() {
             <div className='mt-4 space-y-1 border-t border-border pt-4 text-sm'>
               <div className='flex justify-between gap-2'>
                 <span className='text-muted-foreground'>Tổng thanh toán</span>
-                <span className='font-bold tabular-nums text-teal-600 dark:text-teal-400'>
+                <span className='font-bold tabular-nums text-rose-600 dark:text-rose-400'>
                   {order.totals.grandTotal.toLocaleString('vi-VN')}₫
                 </span>
               </div>

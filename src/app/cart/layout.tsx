@@ -5,7 +5,7 @@ import { ChillBackground } from '@/components/common/chill-background';
 export default function CartLayout({ children }: { children: React.ReactNode }) {
   return (
     <Layout>
-      <SplashCursor />
+      {/* <SplashCursor /> */}
       <ChillBackground />
       {children}
     </Layout>

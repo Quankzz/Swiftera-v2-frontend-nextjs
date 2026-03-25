@@ -15,7 +15,7 @@ export default function AuthLayout({
 }) {
   return (
     <div
-      className={`${montserrat.className} relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-r from-[#e2e2e2] to-[#c9d6ff] dark:from-[#0f0f1a] dark:to-[#1a1a2e]`}
+      className={`${montserrat.className} relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-r from-[#fce4ec] to-[#f8bbd0] dark:from-[#0f0f11] dark:to-[#1a1018]`}
     >
       <div className='absolute inset-0 flex items-center justify-center opacity-70 dark:opacity-45'>
         <Waves
@@ -40,7 +40,7 @@ export default function AuthLayout({
           pointerEvents: 'none',
         }}
       >
-        <SplashCursor
+        {/* <SplashCursor
           SIM_RESOLUTION={128}
           DYE_RESOLUTION={1440}
           DENSITY_DISSIPATION={3.5}
@@ -50,7 +50,7 @@ export default function AuthLayout({
           SPLAT_RADIUS={0.2}
           SPLAT_FORCE={6000}
           COLOR_UPDATE_SPEED={10}
-        />
+        /> */}
       </div>
       <AuthHeader />
       {children}

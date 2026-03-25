@@ -49,12 +49,12 @@ function CartLineRow({ line, index }: { line: RentalCartLine; index: number }) {
     >
       <SpotlightCard
         className='rounded-2xl border border-border/70 bg-card/90 shadow-sm backdrop-blur-sm dark:bg-card/80'
-        spotlightColor='rgba(45, 212, 191, 0.14)'
+        spotlightColor='rgba(254, 20, 81, 0.14)'
       >
         <div className='flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-5 sm:p-5'>
           <Link
             href={`/product/${line.productId}`}
-            className='group relative mx-auto aspect-square w-full max-w-[148px] shrink-0 overflow-hidden rounded-xl border border-teal-500/20 bg-muted/50 shadow-inner ring-1 ring-teal-500/10 transition-transform duration-300 hover:scale-[1.02] sm:mx-0'
+            className='group relative mx-auto aspect-square w-full max-w-[148px] shrink-0 overflow-hidden rounded-xl border border-rose-500/20 bg-muted/50 shadow-inner ring-1 ring-rose-500/10 transition-transform duration-300 hover:scale-[1.02] sm:mx-0'
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -69,7 +69,7 @@ function CartLineRow({ line, index }: { line: RentalCartLine; index: number }) {
               <div>
                 <Link
                   href={`/product/${line.productId}`}
-                  className='text-base font-semibold leading-snug text-foreground transition-colors hover:text-teal-600 dark:hover:text-teal-400'
+                  className='text-base font-semibold leading-snug text-foreground transition-colors hover:text-rose-600 dark:hover:text-rose-400'
                 >
                   {line.name}
                 </Link>
@@ -87,13 +87,13 @@ function CartLineRow({ line, index }: { line: RentalCartLine; index: number }) {
                   )}
                   <Badge
                     variant='outline'
-                    className='rounded-lg border-teal-500/30 text-xs font-normal text-teal-700 dark:text-teal-300'
+                    className='rounded-lg border-rose-500/30 text-xs font-normal text-rose-700 dark:text-rose-300'
                   >
                     {line.durationLabel}
                   </Badge>
                 </div>
                 {line.voucher && discount > 0 && (
-                  <p className='mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-600 dark:text-teal-400'>
+                  <p className='mt-2 inline-flex items-center gap-1 text-xs font-medium text-rose-600 dark:text-rose-400'>
                     <Sparkles className='size-3.5' />
                     {line.voucher.code} · −{discount.toLocaleString('vi-VN')}₫
                   </p>
@@ -150,7 +150,7 @@ function CartLineRow({ line, index }: { line: RentalCartLine; index: number }) {
                       {dep.toLocaleString('vi-VN')}₫
                     </span>
                   </div>
-                  <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-teal-600 dark:text-teal-400'>
+                  <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
                     {(rentalAfter + dep).toLocaleString('vi-VN')}₫
                   </div>
                 </div>
@@ -174,14 +174,14 @@ export default function CartPage() {
   );
 
   return (
-    <div className='relative min-h-screen overflow-x-hidden bg-transparent font-sans'>
+    <div className='relative min-h-screen overflow-x-hidden bg-white font-sans dark:bg-surface-base'>
       <div className='relative mx-auto w-full max-w-7xl px-3 pb-16 pt-20 sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
         <nav className='mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm'>
           <ol className='flex flex-wrap items-center gap-x-1.5 gap-y-1'>
             <li>
               <Link
                 href='/'
-                className='font-medium text-teal-600 transition-colors hover:underline dark:text-teal-400'
+                className='font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
               >
                 Trang chủ
               </Link>
@@ -202,14 +202,14 @@ export default function CartPage() {
               Giỏ hàng{' '}
               <HighlightText
                 variant='marker'
-                color='teal'
+                color='destructive'
                 className='font-extrabold'
               >
                 cho thuê
               </HighlightText>
             </h1>
             {lines.length > 0 && (
-              <Badge className='kinetic-gradient border-0 text-white shadow-md'>
+              <Badge className='border-0 bg-rose-600 text-white shadow-md dark:bg-rose-500'>
                 {totalQty} sản phẩm
               </Badge>
             )}
@@ -220,22 +220,22 @@ export default function CartPage() {
             </ShinyText>
             {' — '}
             Kiểm tra đơn trước khi tiến hành thuê. Giao nhanh toàn quốc.
-            <Truck className='ml-1 inline size-4 align-text-bottom text-teal-600 dark:text-teal-400' />
+            <Truck className='ml-1 inline size-4 align-text-bottom text-rose-600 dark:text-rose-400' />
           </p>
         </motion.header>
 
         {lines.length === 0 ? (
           <SpotlightCard
             className='rounded-3xl border border-dashed border-border/80 bg-card/80 p-12 text-center shadow-lg backdrop-blur-md dark:bg-card/60'
-            spotlightColor='rgba(99, 102, 241, 0.15)'
+            spotlightColor='rgba(254, 20, 81, 0.15)'
           >
             <motion.div
               initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             >
-              <div className='mx-auto flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-teal-500/20 to-indigo-500/20 ring-1 ring-teal-500/20'>
-                <ShoppingBag className='size-10 text-teal-600 dark:text-teal-400' />
+              <div className='mx-auto flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-rose-500/20 to-rose-400/20 ring-1 ring-rose-500/20'>
+                <ShoppingBag className='size-10 text-rose-600 dark:text-rose-400' />
               </div>
               <p className='mt-6 text-xl font-bold text-foreground'>
                 Giỏ hàng đang trống
@@ -246,7 +246,7 @@ export default function CartPage() {
               </p>
               <Magnetic intensity={0.35} range={120}>
                 <Button
-                  className='kinetic-gradient mt-8 rounded-xl px-8 font-semibold text-white shadow-lg'
+                  className='mt-8 rounded-xl bg-rose-600 px-8 font-semibold text-white shadow-lg hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
                   render={<Link href='/' />}
                 >
                   Khám phá sản phẩm
@@ -259,7 +259,7 @@ export default function CartPage() {
             <div className='space-y-4 lg:col-span-7'>
               <SpotlightCard
                 className='rounded-2xl border border-border/60 bg-card/70 shadow-md backdrop-blur-sm dark:bg-card/50'
-                spotlightColor='rgba(99, 102, 241, 0.1)'
+                spotlightColor='rgba(254, 20, 81, 0.1)'
               >
                 <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-4 py-4 sm:px-6'>
                   <div className='flex items-center gap-2'>
@@ -291,12 +291,12 @@ export default function CartPage() {
             <div className='lg:col-span-5'>
               <div className='lg:sticky lg:top-28'>
                 <SpotlightCard
-                  className='rounded-2xl border border-teal-500/20 bg-card/90 shadow-xl backdrop-blur-md dark:border-teal-500/25 dark:bg-card/80'
-                  spotlightColor='rgba(20, 184, 166, 0.18)'
+                  className='rounded-2xl border border-rose-500/20 bg-card/90 shadow-xl backdrop-blur-md dark:border-rose-500/25 dark:bg-card/80'
+                  spotlightColor='rgba(254, 20, 81, 0.18)'
                 >
                   <div className='space-y-5 p-5 sm:p-6'>
                     <div className='flex items-center gap-2'>
-                      <Sparkles className='size-5 text-teal-600 dark:text-teal-400' />
+                      <Sparkles className='size-5 text-rose-600 dark:text-rose-400' />
                       <h2 className='text-lg font-bold text-foreground'>
                         Tóm tắt thanh toán
                       </h2>
@@ -310,7 +310,7 @@ export default function CartPage() {
                         </span>
                       </div>
                       {totals.voucherDiscount > 0 && (
-                        <div className='flex min-w-0 flex-nowrap items-baseline justify-between gap-3 overflow-x-auto text-teal-600 dark:text-teal-400'>
+                        <div className='flex min-w-0 flex-nowrap items-baseline justify-between gap-3 overflow-x-auto text-rose-600 dark:text-rose-400'>
                           <span className='shrink-0 whitespace-nowrap'>Giảm voucher</span>
                           <span className='shrink-0 whitespace-nowrap font-semibold tabular-nums'>
                             −{totals.voucherDiscount.toLocaleString('vi-VN')}₫
@@ -328,7 +328,7 @@ export default function CartPage() {
                           <span className='shrink-0 whitespace-nowrap text-base font-bold text-foreground'>
                             Tổng thanh toán
                           </span>
-                          <span className='shrink-0 whitespace-nowrap text-2xl font-extrabold tabular-nums text-teal-600 dark:text-teal-400'>
+                          <span className='shrink-0 whitespace-nowrap text-2xl font-extrabold tabular-nums text-rose-600 dark:text-rose-400'>
                             {totals.grandTotal.toLocaleString('vi-VN')}₫
                           </span>
                         </div>
@@ -337,7 +337,7 @@ export default function CartPage() {
                     <Magnetic intensity={0.3} range={100}>
                       {lines.length > 0 ? (
                         <Button
-                          className='kinetic-gradient h-12 w-full rounded-xl text-base font-bold text-white shadow-lg hover:opacity-95'
+                          className='h-12 w-full rounded-xl bg-rose-600 text-base font-bold text-white shadow-lg hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
                           render={<Link href='/checkout' />}
                         >
                           Tiến hành thuê
@@ -352,7 +352,7 @@ export default function CartPage() {
 
                     <Button
                       variant='outline'
-                      className='w-full rounded-xl border-teal-500/30'
+                      className='w-full rounded-xl border-rose-500/30'
                       render={<Link href='/' />}
                     >
                       Tiếp tục xem sản phẩm

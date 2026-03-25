@@ -67,7 +67,7 @@ export default function CheckoutPage() {
   const editingSubtotal = editingLine ? rentalSubtotalLine(editingLine) : 0;
 
   return (
-    <div className='min-h-screen bg-transparent px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
+    <div className='min-h-screen bg-white px-3 pb-16 pt-20 font-sans dark:bg-surface-base sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
       <div className='mx-auto max-w-7xl'>
         <Button variant='ghost' size='sm' className='mb-4 gap-1 text-muted-foreground' render={<Link href='/cart' />}>
           <ArrowLeft className='size-4' />
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
           <div className='space-y-6 lg:col-span-7'>
             <SpotlightCard
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md backdrop-blur-sm dark:bg-card/70'
-              spotlightColor='rgba(45, 212, 191, 0.1)'
+              spotlightColor='rgba(254, 20, 81, 0.1)'
             >
               <h2 className='text-lg font-bold text-foreground'>Sản phẩm &amp; voucher</h2>
               <ul className='mt-4 space-y-4'>
@@ -108,7 +108,7 @@ export default function CheckoutPage() {
                           {line.durationLabel} · SL: {line.quantity}
                         </p>
                         {line.voucher && disc > 0 && (
-                          <p className='mt-1 text-xs font-medium text-teal-600 dark:text-teal-400'>
+                          <p className='mt-1 text-xs font-medium text-rose-600 dark:text-rose-400'>
                             {line.voucher.code} · −{disc.toLocaleString('vi-VN')}₫
                           </p>
                         )}
@@ -141,7 +141,7 @@ export default function CheckoutPage() {
 
             <SpotlightCard
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md dark:bg-card/70'
-              spotlightColor='rgba(99, 102, 241, 0.08)'
+              spotlightColor='rgba(254, 20, 81, 0.08)'
             >
               <h2 className='text-lg font-bold text-foreground'>Thông tin liên hệ</h2>
               <div className='mt-4 grid gap-4 sm:grid-cols-2'>
@@ -171,7 +171,7 @@ export default function CheckoutPage() {
 
             <SpotlightCard
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md dark:bg-card/70'
-              spotlightColor='rgba(45, 212, 191, 0.08)'
+              spotlightColor='rgba(254, 20, 81, 0.08)'
             >
               <h2 className='mb-4 text-lg font-bold text-foreground'>Phương thức thanh toán</h2>
               <RadioGroup value={payment} onValueChange={(v) => setPayment(v as RentalPaymentMethod)} className='gap-3'>
@@ -179,13 +179,13 @@ export default function CheckoutPage() {
                   htmlFor='pay-bank'
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-xl border border-input bg-muted/20 p-4 dark:bg-muted/10',
-                    payment === 'bank_transfer' && 'border-teal-500/50 bg-teal-500/5 dark:border-teal-500/40',
+                    payment === 'bank_transfer' && 'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
                   )}
                 >
                   <RadioGroupItem value='bank_transfer' id='pay-bank' className='mt-0.5' />
                   <div>
                     <div className='flex items-center gap-2 font-semibold text-foreground'>
-                      <CreditCard className='size-4 text-teal-600 dark:text-teal-400' />
+                      <CreditCard className='size-4 text-rose-600 dark:text-rose-400' />
                       Chuyển khoản ngân hàng
                     </div>
                     <p className='mt-1 text-xs text-muted-foreground'>QR / số tài khoản Swiftera (demo — không thu tiền thật).</p>
@@ -195,13 +195,13 @@ export default function CheckoutPage() {
                   htmlFor='pay-wallet'
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-xl border border-input bg-muted/20 p-4 dark:bg-muted/10',
-                    payment === 'e_wallet' && 'border-teal-500/50 bg-teal-500/5 dark:border-teal-500/40',
+                    payment === 'e_wallet' && 'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
                   )}
                 >
                   <RadioGroupItem value='e_wallet' id='pay-wallet' className='mt-0.5' />
                   <div>
                     <div className='flex items-center gap-2 font-semibold text-foreground'>
-                      <Wallet className='size-4 text-teal-600 dark:text-teal-400' />
+                      <Wallet className='size-4 text-rose-600 dark:text-rose-400' />
                       Ví điện tử
                     </div>
                     <p className='mt-1 text-xs text-muted-foreground'>Momo, ZaloPay… (demo).</p>
@@ -214,10 +214,10 @@ export default function CheckoutPage() {
           <div className='lg:col-span-5'>
             <div className='lg:sticky lg:top-28'>
               <SpotlightCard
-                className='rounded-2xl border border-teal-500/25 bg-card/90 p-6 shadow-xl dark:bg-card/80'
-                spotlightColor='rgba(20, 184, 166, 0.15)'
+                className='rounded-2xl border border-rose-500/25 bg-card/90 p-6 shadow-xl dark:bg-card/80'
+                spotlightColor='rgba(254, 20, 81, 0.15)'
               >
-                <div className='flex items-center gap-2 text-teal-700 dark:text-teal-300'>
+                <div className='flex items-center gap-2 text-rose-700 dark:text-rose-300'>
                   <ShieldCheck className='size-5' />
                   <span className='font-bold'>Tóm tắt thanh toán</span>
                 </div>
@@ -229,7 +229,7 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                   {totals.voucherDiscount > 0 && (
-                    <div className='flex justify-between gap-3 text-teal-600 dark:text-teal-400'>
+                    <div className='flex justify-between gap-3 text-rose-600 dark:text-rose-400'>
                       <span className='shrink-0'>Giảm voucher</span>
                       <span className='whitespace-nowrap tabular-nums font-semibold'>
                         −{totals.voucherDiscount.toLocaleString('vi-VN')}₫
@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                   <div className='border-t border-border pt-3'>
                     <div className='flex justify-between gap-3 text-base font-bold'>
                       <span className='shrink-0'>Tổng cộng</span>
-                      <span className='whitespace-nowrap tabular-nums text-teal-600 dark:text-teal-400'>
+                      <span className='whitespace-nowrap tabular-nums text-rose-600 dark:text-rose-400'>
                         {totals.grandTotal.toLocaleString('vi-VN')}₫
                       </span>
                     </div>
@@ -253,7 +253,7 @@ export default function CheckoutPage() {
                 </div>
                 <Button
                   type='button'
-                  className='kinetic-gradient mt-6 h-12 w-full rounded-xl text-base font-bold text-white disabled:opacity-50'
+                  className='mt-6 h-12 w-full rounded-xl bg-rose-600 text-base font-bold text-white hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600'
                   disabled={!name.trim() || !phone.trim() || submitting}
                   onClick={handlePay}
                 >

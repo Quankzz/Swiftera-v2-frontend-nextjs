@@ -60,7 +60,10 @@ const mockProduct = {
     { label: 'Tình trạng', value: 'Mới 99% - Đầy đủ phụ kiện' },
     { label: 'Bảo hành', value: 'Đổi máy trong 24h nếu lỗi kỹ thuật' },
     { label: 'Bộ nhớ', value: 'SSD 1TB' },
-    { label: 'Phụ kiện kèm theo', value: '2 Tay cầm DualSense, Dây HDMI 2.1, Dây nguồn, 3 Game đĩa' },
+    {
+      label: 'Phụ kiện kèm theo',
+      value: '2 Tay cầm DualSense, Dây HDMI 2.1, Dây nguồn, 3 Game đĩa',
+    },
     { label: 'Tiền cọc', value: '2,000,000₫ (hoàn trả khi trả máy)' },
     { label: 'Khu vực cho thuê', value: 'TP.HCM, Hà Nội' },
     { label: 'Giao hàng', value: 'Giao tận nơi hoặc nhận tại cửa hàng' },
@@ -106,53 +109,59 @@ export default function ProductDetailPage() {
 
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(productVariants[0].id);
-  const [selectedDuration, setSelectedDuration] = useState(rentalDurations[0].id);
+  const [selectedDuration, setSelectedDuration] = useState(
+    rentalDurations[0].id,
+  );
   const [quantity, setQuantity] = useState(1);
 
   const currentDuration = useMemo(
-    () => rentalDurations.find((d) => d.id === selectedDuration) ?? rentalDurations[0],
-    [selectedDuration]
+    () =>
+      rentalDurations.find((d) => d.id === selectedDuration) ??
+      rentalDurations[0],
+    [selectedDuration],
   );
 
   const currentPrice = currentDuration.price;
   const originalPrice = currentDuration.originalPrice;
-  const selectedVariantLabel = productVariants.find((v) => v.id === selectedVariant)?.label;
+  const selectedVariantLabel = productVariants.find(
+    (v) => v.id === selectedVariant,
+  )?.label;
 
   return (
-    <div className="min-h-screen bg-transparent font-sans">
-      <div className="mx-auto max-w-7xl px-3 pb-8 pt-20 sm:px-4 sm:pb-10 sm:pt-24 md:px-6 md:pt-28">
-        <nav className="mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm">
-          <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+    <div className='min-h-screen bg-white font-sans dark:bg-surface-base'>
+      <div className='mx-auto max-w-7xl px-3 pb-8 pt-20 sm:px-4 sm:pb-10 sm:pt-24 md:px-6 md:pt-28'>
+        <nav className='mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm'>
+          <ol className='flex flex-wrap items-center gap-x-1.5 gap-y-1'>
             <li>
               <a
-                href="/"
-                className="font-medium text-teal-600 transition-colors hover:underline dark:text-teal-400"
+                href='/'
+                className='font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
               >
                 Trang chủ
               </a>
             </li>
-            <li className="text-border">/</li>
+            <li className='text-border'>/</li>
             <li>
-              <span className="cursor-pointer font-medium text-teal-600 transition-colors hover:underline dark:text-teal-400">
+              <span className='cursor-pointer font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'>
                 Gaming
               </span>
             </li>
-            <li className="text-border">/</li>
+            <li className='text-border'>/</li>
             <li>
-              <span className="cursor-pointer font-medium text-teal-600 transition-colors hover:underline dark:text-teal-400">
+              <span className='cursor-pointer font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'>
                 PlayStation
               </span>
             </li>
-            <li className="text-border">/</li>
-            <li className="min-w-0 max-w-full flex-[1_1_100%] font-semibold text-foreground sm:max-w-xs sm:flex-[unset] sm:truncate">
+            <li className='text-border'>/</li>
+            <li className='min-w-0 max-w-full flex-[1_1_100%] font-semibold text-foreground sm:max-w-xs sm:flex-[unset] sm:truncate'>
               {mockProduct.name}
             </li>
           </ol>
         </nav>
 
-        <div className="grid grid-cols-12 gap-4 sm:gap-6">
-          <div className="col-span-12 lg:col-span-5">
-            <div className="rounded-xl border border-border/60 bg-card p-3 ambient-glow sm:p-4 lg:sticky lg:top-24">
+        <div className='grid grid-cols-12 gap-4 sm:gap-6'>
+          <div className='col-span-12 lg:col-span-5'>
+            <div className='rounded-xl border border-border/60 bg-card p-3 ambient-glow sm:p-4 lg:sticky lg:top-24'>
               <RentalProductGallery
                 images={mockProduct.images}
                 currentImage={currentImage}
@@ -161,8 +170,8 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-7">
-            <div className="rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5">
+          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-7'>
+            <div className='rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5'>
               <RentalProductSummary
                 productData={{
                   name: mockProduct.name,
@@ -204,30 +213,36 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-12 gap-4 sm:mt-6 sm:gap-6">
-          <div className="col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-8">
-            <div className="rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5">
-              <h2 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">
+        <div className='mt-4 grid grid-cols-12 gap-4 sm:mt-6 sm:gap-6'>
+          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-8'>
+            <div className='rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5'>
+              <h2 className='mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg'>
                 Mô tả sản phẩm
               </h2>
-              <RentalProductDescription text={mockProduct.description} maxHeight={300} />
+              <RentalProductDescription
+                text={mockProduct.description}
+                maxHeight={300}
+              />
             </div>
 
             <RentalSpecifications specifications={mockProduct.specifications} />
           </div>
 
-          <div className="col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4">
+          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4'>
             <RentalDeliverySection />
             <RentalProcessSection />
             {/* <RentalAddonServicesSection /> */}
           </div>
         </div>
 
-        <div className="mt-4 sm:mt-6">
-          <RentalReviewsSection rating={mockProduct.rating} reviews={mockProduct.reviews} />
+        <div className='mt-4 sm:mt-6'>
+          <RentalReviewsSection
+            rating={mockProduct.rating}
+            reviews={mockProduct.reviews}
+          />
         </div>
 
-        <div className="mt-4 sm:mt-6">
+        <div className='mt-4 sm:mt-6'>
           <RentalRelatedProducts />
         </div>
       </div>

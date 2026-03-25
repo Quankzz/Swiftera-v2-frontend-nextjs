@@ -7,7 +7,7 @@ import { SocialIcons } from './SocialIcons';
 import { PasswordStrength } from './PasswordStrength';
 
 const inputClassName =
-  'my-1.5 h-auto border-none bg-zinc-100 px-4 py-2 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#512da8]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#8b77c9]/40';
+  'my-1.5 h-auto border-none bg-zinc-100 px-4 py-2 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
 
 export function SignUpForm() {
   const router = useRouter();
@@ -110,7 +110,7 @@ export function SignUpForm() {
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       <Button
         type="submit"
-        className="mt-2 h-auto w-full bg-[#512da8] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#5c6bc0]"
+        className="mt-2 h-auto w-full bg-[#fe1451] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#ba264d]"
       >
         Đăng ký
       </Button>

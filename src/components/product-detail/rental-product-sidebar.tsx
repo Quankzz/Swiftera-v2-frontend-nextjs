@@ -109,7 +109,7 @@ function RentalDeliveryAddressDialog() {
             </div>
           )}
 
-          <Button className="h-11 w-full rounded-xl bg-teal-600 font-bold text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
+          <Button className="h-11 w-full rounded-xl bg-rose-600 font-bold text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600">
             GIAO ĐẾN ĐỊA CHỈ NÀY
           </Button>
         </div>
@@ -125,7 +125,7 @@ export function RentalDeliverySection() {
       <h2 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">Thông tin giao hàng</h2>
       <div className="space-y-3">
         <div className="flex items-start gap-3">
-          <MapPin className="mt-0.5 size-5 shrink-0 text-teal-600 dark:text-teal-400" />
+          <MapPin className="mt-0.5 size-5 shrink-0 text-rose-600 dark:text-rose-400" />
           <div className="min-w-0">
             <p className="text-sm leading-relaxed text-muted-foreground">
               Nhập địa chỉ để xem thời gian giao hàng và phí vận chuyển chính xác
@@ -138,7 +138,7 @@ export function RentalDeliverySection() {
           <p className="text-sm text-muted-foreground">Giao tận nơi hoặc nhận tại cửa hàng</p>
         </div>
         <div className="flex items-start gap-3">
-          <Clock className="mt-0.5 size-5 shrink-0 text-teal-600 dark:text-teal-400" />
+          <Clock className="mt-0.5 size-5 shrink-0 text-rose-600 dark:text-rose-400" />
           <p className="text-sm text-muted-foreground">Nhận hàng trong 2-4h (nội thành TP.HCM, Hà Nội)</p>
         </div>
       </div>
@@ -149,7 +149,7 @@ export function RentalDeliverySection() {
 const processSteps = [
   {
     step: 1,
-    icon: <CalendarDays className="size-5 text-teal-600 dark:text-teal-400" />,
+    icon: <CalendarDays className="size-5 text-rose-600 dark:text-rose-400" />,
     title: 'Chọn thời gian thuê',
     desc: 'Chọn số ngày thuê phù hợp; hệ thống hiển thị tiền thuê tương ứng. Có thể chọn thêm dịch vụ bổ sung nếu cần.',
   },
@@ -173,7 +173,7 @@ const processSteps = [
   },
   {
     step: 5,
-    icon: <Wallet className="w-5 h-5 text-teal-500 dark:text-teal-400" />,
+    icon: <Wallet className="w-5 h-5 text-rose-500 dark:text-rose-400" />,
     title: 'Hoàn cọc',
     desc: 'Sau khi trả thiết bị và hoàn tất kiểm tra, tiền cọc được hoàn trong tối đa 24 giờ.',
   },
@@ -214,11 +214,11 @@ export function RentalProcessSection() {
 export function RentalAddonServicesSection() {
   const services = [
     {
-      icon: <Shield className="size-5 text-teal-600 dark:text-teal-400" />,
+      icon: <Shield className="size-5 text-rose-600 dark:text-rose-400" />,
       name: 'Bảo hiểm thiết bị',
       desc: 'Bảo vệ khi hư hỏng ngoài ý muốn',
       price: '50,000₫/ngày',
-      iconBg: 'bg-teal-100 dark:bg-teal-950/50',
+      iconBg: 'bg-rose-100 dark:bg-rose-950/50',
     },
     {
       icon: <Truck className="size-5 text-indigo-600 dark:text-indigo-400" />,
@@ -243,7 +243,7 @@ export function RentalAddonServicesSection() {
         {services.map((service, index) => (
           <div
             key={index}
-            className="flex flex-col gap-3 rounded-lg border border-border p-3 transition-colors hover:border-teal-500/40 sm:flex-row sm:items-center sm:justify-between dark:hover:border-teal-400/30"
+            className="flex flex-col gap-3 rounded-lg border border-border p-3 transition-colors hover:border-rose-500/40 sm:flex-row sm:items-center sm:justify-between dark:hover:border-rose-400/30"
           >
             <div className="flex min-w-0 items-center gap-3">
               <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${service.iconBg}`}>
@@ -259,7 +259,7 @@ export function RentalAddonServicesSection() {
               <Button
                 variant="outline"
                 size="xs"
-                className="border-teal-200 font-bold text-teal-700 hover:bg-teal-50 dark:border-teal-800 dark:text-teal-300 dark:hover:bg-teal-950/50"
+                className="border-rose-200 font-bold text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/50"
               >
                 Thêm
               </Button>

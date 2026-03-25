@@ -522,7 +522,7 @@ export function RentalRelatedProducts() {
                     </span>
                   )}
                 </div>
-                <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-foreground transition-colors group-hover:text-teal-600 dark:group-hover:text-teal-400">
+                <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-foreground transition-colors group-hover:text-rose-600 dark:group-hover:text-rose-400">
                   {product.name}
                 </h3>
                 <div className="flex items-center gap-1 mb-1">
@@ -534,7 +534,7 @@ export function RentalRelatedProducts() {
                   <span className="ml-1 text-xs text-muted-foreground">{product.rating}</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-base font-bold text-teal-600 dark:text-teal-400">{product.pricePerDay.toLocaleString()}₫</span>
+                  <span className="text-base font-bold text-rose-600 dark:text-rose-400">{product.pricePerDay.toLocaleString()}₫</span>
                   <span className="text-xs text-muted-foreground">/ngày</span>
                 </div>
                 {product.originalPrice && (

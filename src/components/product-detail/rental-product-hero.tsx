@@ -96,7 +96,7 @@ export function RentalProductGallery({
                 onClick={() => handleManualChange(actualIndex)}
                 className={`relative size-14 shrink-0 overflow-hidden rounded-md border transition-transform duration-300 ease-in-out sm:size-16 ${
                   currentImage === actualIndex
-                    ? 'scale-105 border-teal-600 sm:scale-110 dark:border-teal-400'
+                    ? 'scale-105 border-rose-600 sm:scale-110 dark:border-rose-400'
                     : 'border-border'
                 }`}
               >
@@ -154,7 +154,7 @@ function RentalStars({ rating, reviews }: { rating: number; reviews?: number }) 
 }
 
 const badgeStyles = {
-  green: 'bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300',
+  green: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
   blue: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
   orange: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
   purple: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
@@ -236,9 +236,9 @@ export function RentalProductSummary({
   } = productData;
 
   const selectedRing =
-    'border-teal-600 bg-teal-50 text-teal-900 ring-1 ring-teal-600 dark:border-teal-400 dark:bg-teal-950/50 dark:text-teal-100 dark:ring-teal-400';
+    'border-rose-600 bg-rose-50 text-rose-900 ring-1 ring-rose-600 dark:border-rose-400 dark:bg-rose-950/50 dark:text-rose-100 dark:ring-rose-400';
   const idleOption =
-    'border-border bg-card text-foreground hover:border-teal-500/50 dark:hover:border-teal-400/40';
+    'border-border bg-card text-foreground hover:border-rose-500/50 dark:hover:border-rose-400/40';
 
   return (
     <div className="space-y-4 font-sans sm:space-y-5">
@@ -255,7 +255,7 @@ export function RentalProductSummary({
         </div>
         <div className="text-muted-foreground">
           Thương hiệu:{' '}
-          <span className="font-bold text-teal-600 dark:text-teal-400">{brand}</span>
+          <span className="font-bold text-rose-600 dark:text-rose-400">{brand}</span>
         </div>
         <div className="text-muted-foreground">
           Loại: <span className="text-foreground font-medium">{productType}</span>
@@ -272,13 +272,13 @@ export function RentalProductSummary({
 
       <div className="rounded-xl border border-border/60 bg-muted/40 p-3 dark:bg-muted/20 sm:p-4">
         <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-          <span className="text-2xl font-bold text-teal-600 sm:text-3xl dark:text-teal-400">
+          <span className="text-2xl font-bold text-rose-600 sm:text-3xl dark:text-rose-400">
             {currentPrice.toLocaleString()}₫
           </span>
           {originalPrice && originalPrice > currentPrice && (
             <>
               <span className="text-lg text-muted-foreground line-through">{originalPrice.toLocaleString()}₫</span>
-              <span className="rounded bg-teal-600 px-2 py-0.5 text-xs font-bold text-white dark:bg-teal-500">
+              <span className="rounded bg-rose-600 px-2 py-0.5 text-xs font-bold text-white dark:bg-rose-500">
                 -{discount}%
               </span>
             </>
@@ -325,7 +325,7 @@ export function RentalProductSummary({
               <div
                 className={`mt-0.5 text-xs ${
                   selectedDuration === duration.id
-                    ? 'text-teal-800 dark:text-teal-300'
+                    ? 'text-rose-800 dark:text-rose-300'
                     : 'text-muted-foreground'
                 }`}
               >
@@ -437,23 +437,23 @@ export function RentalCheckoutCard({
         </div>
         {appliedVoucher && voucherDiscount > 0 && (
           <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-            <span className="text-xs text-teal-700 dark:text-teal-300 sm:text-sm">
+            <span className="text-xs text-rose-700 dark:text-rose-300 sm:text-sm">
               Giảm voucher ({appliedVoucher.code})
             </span>
-            <span className="text-sm font-semibold text-teal-600 dark:text-teal-400 sm:text-base">
+            <span className="text-sm font-semibold text-rose-600 dark:text-rose-400 sm:text-base">
               −{voucherDiscount.toLocaleString()}₫
             </span>
           </div>
         )}
         <div className="flex flex-col gap-1 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
           <span className="text-sm font-bold text-foreground">Tổng thanh toán</span>
-          <span className="text-lg font-bold text-teal-600 sm:text-xl dark:text-teal-400">
+          <span className="text-lg font-bold text-rose-600 sm:text-xl dark:text-rose-400">
             {totalPayment.toLocaleString()}₫
           </span>
         </div>
       </div>
 
-      <div className="rounded-lg border border-teal-200 bg-teal-50/80 p-3 text-xs leading-relaxed text-teal-900 dark:border-teal-900/50 dark:bg-teal-950/40 dark:text-teal-100">
+      <div className="rounded-lg border border-rose-200 bg-rose-50/80 p-3 text-xs leading-relaxed text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100">
         Tiền cọc sẽ được <span className="font-bold">hoàn trả trong 24h</span> sau khi bạn trả thiết bị. Giá thuê chưa
         bao gồm phí vận chuyển và 8% VAT.
       </div>
@@ -494,7 +494,7 @@ export function RentalCheckoutCard({
           type="button"
           disabled={!cartProduct}
           onClick={handleAddToCart}
-          className="kinetic-gradient h-12 min-h-12 min-w-0 flex-1 rounded-xl text-sm font-bold text-white hover:opacity-90 disabled:opacity-50 sm:text-base"
+          className="h-12 min-h-12 min-w-0 flex-1 rounded-xl bg-rose-600 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600 sm:text-base"
           title={!cartProduct ? 'Thiếu thông tin sản phẩm để thêm giỏ' : undefined}
         >
           <ShoppingCart className="mr-2 size-5 shrink-0" />
@@ -531,7 +531,7 @@ export function RentalCheckoutCard({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-mono text-xs font-bold text-teal-600 dark:text-teal-400">{v.code}</p>
+                      <p className="font-mono text-xs font-bold text-rose-600 dark:text-rose-400">{v.code}</p>
                       <p className="mt-0.5 text-sm font-semibold text-foreground">{v.title}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{v.description}</p>
                       {v.minRental != null && (

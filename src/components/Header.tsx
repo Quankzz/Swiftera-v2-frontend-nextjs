@@ -9,6 +9,7 @@ import {
   Heart,
   LayoutDashboard,
   LogOut,
+  LogIn,
   Menu,
   Moon,
   Search,
@@ -243,7 +244,7 @@ export function Header() {
                         Thông tin cá nhân
                       </Link>
                       <Link
-                        href='/my-orders'
+                        href='/orders'
                         onClick={() => setIsUserMenuOpen(false)}
                         className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
                       >
@@ -294,14 +295,26 @@ export function Header() {
                 )}
               </Button>
 
-              <Button
-                variant='ghost'
-                size='icon'
-                aria-label='Cart'
-                className='dark:hover:bg-white/10'
-              >
-                <ShoppingCart className='size-5 text-text-main' />
-              </Button>
+              <Link href='/cart'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  aria-label='Cart'
+                  className='dark:hover:bg-white/10'
+                >
+                  <ShoppingCart className='size-5 text-text-main' />
+                </Button>
+              </Link>
+              <Link href='/auth/login'>
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  aria-label='Đi tới trang đăng nhập'
+                  className='dark:hover:bg-white/10'
+                >
+                  <LogIn className='size-5 text-text-main' />
+                </Button>
+              </Link>
               <Button
                 variant='secondary'
                 size='icon'
