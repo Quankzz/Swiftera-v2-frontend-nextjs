@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TabData {
@@ -21,13 +21,14 @@ export function VercelTabs({ tabs, defaultTab, className }: VercelTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.value);
   const [hoverStyle, setHoverStyle] = useState({});
   const [activeStyle, setActiveStyle] = useState({ left: "0px", width: "0px" });
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const activeIndex = tabs.findIndex((tab) => tab.value === activeTab);
 
   useEffect(() => {
     if (hoveredIndex !== null) {
-      const hoveredElement = tabRefs.current[hoveredIndex];
+      const hoveredElement = document.querySelector<HTMLButtonElement>(
+        `[data-vercel-tabs-index="${hoveredIndex}"]`
+      );
       if (hoveredElement) {
         const { offsetLeft, offsetWidth } = hoveredElement;
         setHoverStyle({
@@ -39,7 +40,9 @@ export function VercelTabs({ tabs, defaultTab, className }: VercelTabsProps) {
   }, [hoveredIndex]);
 
   useEffect(() => {
-    const activeElement = tabRefs.current[activeIndex];
+    const activeElement = document.querySelector<HTMLButtonElement>(
+      `[data-vercel-tabs-index="${activeIndex}"]`
+    );
     if (activeElement) {
       const { offsetLeft, offsetWidth } = activeElement;
       setActiveStyle({
@@ -51,7 +54,9 @@ export function VercelTabs({ tabs, defaultTab, className }: VercelTabsProps) {
 
   useEffect(() => {
     requestAnimationFrame(() => {
-      const activeElement = tabRefs.current[activeIndex];
+      const activeElement = document.querySelector<HTMLButtonElement>(
+        `[data-vercel-tabs-index="${activeIndex}"]`
+      );
       if (activeElement) {
         const { offsetLeft, offsetWidth } = activeElement;
         setActiveStyle({
@@ -88,9 +93,7 @@ export function VercelTabs({ tabs, defaultTab, className }: VercelTabsProps) {
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            ref={(el) => {
-              tabRefs.current[index] = el;
-            }}
+            data-vercel-tabs-index={index}
             className={`z-10 h-[30px] cursor-pointer rounded-md border-0 bg-transparent px-3 py-2 outline-none transition-colors duration-300 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none ${
               activeTab === tab.value
                 ? "text-[#0e0e10] dark:text-white"

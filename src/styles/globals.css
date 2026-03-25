@@ -535,14 +535,16 @@
 .dark .rich-content hr {
   border-top-color: rgba(255, 255, 255, 0.1);
 
-  /* Scanner scan-line animation */
-  @keyframes scan-line {
-    0% { top: 8px; }
-    50% { top: calc(100% - 8px); }
-    100% { top: 8px; }
-  }
 }
-  .animate-react-bits-shimmer {
+
+/* Scanner scan-line animation */
+@keyframes scan-line {
+  0% { top: 8px; }
+  50% { top: calc(100% - 8px); }
+  100% { top: 8px; }
+}
+
+.animate-react-bits-shimmer {
     animation: react-bits-shimmer 4s linear infinite;
     background-image: linear-gradient(
       105deg,
