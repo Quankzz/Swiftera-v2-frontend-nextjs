@@ -1,6 +1,3 @@
-/**
- * TypeScript types cho dự án
- */
 
 export interface User {
   id: string;

@@ -213,6 +213,40 @@
   --theme-accent-end: #ba264d; */
 }
 
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.809 0.105 251.813);
+  --chart-2: oklch(0.623 0.214 259.815);
+  --chart-3: oklch(0.546 0.245 262.881);
+  --chart-4: oklch(0.488 0.243 264.376);
+  --chart-5: oklch(0.424 0.199 265.638);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -225,7 +259,130 @@
   }
 }
 
+@keyframes auth-move {
+  0%,
+  49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+  50%,
+  100% {
+    opacity: 1;
+    z-index: 5;
+  }
+}
+
+/* Nền chill — blob trôi chậm */
+@keyframes chill-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -3%) scale(1.04);
+  }
+  66% {
+    transform: translate(-3%, 4%) scale(0.96);
+  }
+}
+
+@keyframes chill-drift-reverse {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-4%, 3%) scale(0.97);
+  }
+  66% {
+    transform: translate(3%, -4%) scale(1.05);
+  }
+}
+
+/* Hợp đồng PDF — animation xem trước */
+@keyframes contract-pdf-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.5deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+}
+
+@keyframes contract-pdf-scan {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(320%);
+    opacity: 0;
+  }
+}
+
+@keyframes contract-page-sway {
+  0%,
+  100% {
+    transform: rotateY(-4deg) rotateZ(-1deg);
+  }
+  50% {
+    transform: rotateY(3deg) rotateZ(0.5deg);
+  }
+}
+
+/* React Bits–style text shimmer (cart / marketing) */
+@keyframes react-bits-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
 @layer utilities {
+  .chill-bg-wash {
+    background: linear-gradient(
+      165deg,
+      oklch(0.985 0.012 200) 0%,
+      oklch(0.98 0.018 270) 42%,
+      oklch(0.99 0.008 165) 100%
+    );
+  }
+  .dark .chill-bg-wash {
+    background: linear-gradient(
+      165deg,
+      oklch(0.14 0.03 250) 0%,
+      oklch(0.12 0.025 200) 45%,
+      oklch(0.15 0.02 280) 100%
+    );
+  }
+  .animate-chill-drift {
+    animation: chill-drift 24s ease-in-out infinite;
+  }
+  .animate-chill-drift-reverse {
+    animation: chill-drift-reverse 30s ease-in-out infinite;
+  }
+  .animate-contract-pdf-float {
+    animation: contract-pdf-float 5s ease-in-out infinite;
+  }
+  .animate-contract-pdf-scan {
+    animation: contract-pdf-scan 3.2s ease-in-out infinite;
+  }
+  .animate-contract-page-sway {
+    animation: contract-page-sway 6s ease-in-out infinite;
+    transform-style: preserve-3d;
+  }
+  .animate-auth-move {
+    animation: auth-move 0.6s;
+  }
   .glass-nav {
     background: oklch(1 0 0 / 0.7);
     backdrop-filter: blur(20px);
@@ -281,5 +438,27 @@
     0% { top: 8px; }
     50% { top: calc(100% - 8px); }
     100% { top: 8px; }
+  }
+}
+  .animate-react-bits-shimmer {
+    animation: react-bits-shimmer 4s linear infinite;
+    background-image: linear-gradient(
+      105deg,
+      oklch(0.55 0 0) 0%,
+      oklch(0.55 0 0) 35%,
+      oklch(0.75 0.12 180) 50%,
+      oklch(0.55 0 0) 65%,
+      oklch(0.55 0 0) 100%
+    );
+  }
+  .dark .animate-react-bits-shimmer {
+    background-image: linear-gradient(
+      105deg,
+      oklch(0.65 0 0) 0%,
+      oklch(0.65 0 0) 35%,
+      oklch(0.85 0.14 180) 50%,
+      oklch(0.65 0 0) 65%,
+      oklch(0.65 0 0) 100%
+    );
   }
 }
