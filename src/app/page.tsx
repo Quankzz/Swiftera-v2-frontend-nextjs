@@ -57,7 +57,7 @@ const budgetProducts = [...products].sort(
 export default function Home() {
   return (
     <Layout>
-      <div className='bg-white dark:bg-[#0f0f11] pb-20'>
+      <div className='bg-white dark:bg-surface-base pb-20'>
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           <HeroBanner slides={heroSlides} />
 

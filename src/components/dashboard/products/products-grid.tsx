@@ -183,7 +183,7 @@ export function ProductsGrid({
           ))}
         </div>
       ) : (
-        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1a1f] py-24 text-center'>
+        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white dark:bg-surface-card py-24 text-center'>
           <p className='text-base font-medium text-text-main'>
             Không tìm thấy sản phẩm
           </p>

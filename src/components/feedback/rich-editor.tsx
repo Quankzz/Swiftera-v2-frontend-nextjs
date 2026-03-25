@@ -227,7 +227,7 @@ export default function RichEditor({
   };
 
   return (
-    <div className='rounded-xl border border-border/60 dark:border-white/8 bg-white dark:bg-[#1a1a1f] overflow-hidden shadow-sm'>
+    <div className='rounded-xl border border-border/60 dark:border-white/8 bg-white dark:bg-surface-card overflow-hidden shadow-sm'>
       {/* ── Toolbar ── */}
       <div className='flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-border/50 dark:border-white/8 bg-gray-50/80 dark:bg-white/3'>
         {/* Text formatting */}

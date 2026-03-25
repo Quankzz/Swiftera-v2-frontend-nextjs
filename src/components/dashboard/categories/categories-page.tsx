@@ -49,17 +49,17 @@ function filterTree(nodes: CategoryTree[], q: string): CategoryTree[] {
 function StatsBar({ total, roots }: { total: number; roots: number }) {
   return (
     <div className='flex flex-wrap gap-4'>
-      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-4 py-2.5'>
+      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
         <Layers className='size-4 text-theme-primary-start' />
         <span className='text-sm font-medium text-text-main'>{total}</span>
         <span className='text-sm text-text-sub'>danh mục</span>
       </div>
-      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-4 py-2.5'>
+      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
         <ChevronRight className='size-4 text-blue-400' />
         <span className='text-sm font-medium text-text-main'>{roots}</span>
         <span className='text-sm text-text-sub'>danh mục gốc</span>
       </div>
-      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-4 py-2.5'>
+      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
         <ChevronDown className='size-4 text-amber-400' />
         <span className='text-sm font-medium text-text-main'>
           {total - roots}
@@ -218,7 +218,7 @@ export function CategoriesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder='Tìm kiếm danh mục...'
-          className='h-10 w-full rounded-sm border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] pl-9 pr-4 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
+          className='h-10 w-full rounded-sm border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-9 pr-4 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
         />
       </div>
 
@@ -278,7 +278,7 @@ export function CategoriesPage() {
             {/* Floating drag preview */}
             <DragOverlay dropAnimation={null}>
               {activeCategory && (
-                <div className='flex min-h-11 items-center gap-2 rounded-md border border-theme-primary-start/40 bg-white dark:bg-[#1a1a1f] px-3 shadow-lg ring-2 ring-theme-primary-start/20 opacity-90'>
+                <div className='flex min-h-11 items-center gap-2 rounded-md border border-theme-primary-start/40 bg-white dark:bg-surface-card px-3 shadow-lg ring-2 ring-theme-primary-start/20 opacity-90'>
                   <GripVertical className='size-4 text-gray-400' />
                   <span className='text-sm font-medium text-text-main'>
                     {activeCategory.name}

@@ -77,7 +77,7 @@ export function UserPasswordForm() {
   );
 
   return (
-    <div className='bg-white dark:bg-[#1a1a1f] rounded-xl border border-gray-200 dark:border-white/8 shadow-sm p-6 space-y-6'>
+    <div className='bg-white dark:bg-surface-card rounded-xl border border-gray-200 dark:border-white/8 shadow-sm p-6 space-y-6'>
       <div className='flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/8'>
         <div className='h-10 w-10 rounded-full bg-purple-50 dark:bg-purple-500/15 flex items-center justify-center'>
           <Lock size={18} className='text-purple-600 dark:text-purple-400' />

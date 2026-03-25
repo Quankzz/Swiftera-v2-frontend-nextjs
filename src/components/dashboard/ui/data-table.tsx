@@ -122,7 +122,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className='space-y-3'>
       {/* Toolbar */}
-      <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-4 py-3 shadow-sm'>
+      <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-3 shadow-sm'>
         <div className='flex items-center gap-2 flex-1 min-w-0'>
           {searchColumn && (
             <div className='relative max-w-xs w-full'>
@@ -171,7 +171,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className='rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] overflow-hidden shadow-sm'>
+      <div className='rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card overflow-hidden shadow-sm'>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm text-left'>
             <thead className='bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/8'>

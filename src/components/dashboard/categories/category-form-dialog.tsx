@@ -22,7 +22,7 @@ interface CategoryFormDialogProps {
 // ─── Helpers ─────────────────────────────────────────────────────
 function inputCls(error?: boolean) {
   return cn(
-    'h-10 w-full rounded-sm border bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main focus:outline-none focus:ring-2 transition',
+    'h-10 w-full rounded-sm border bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 transition',
     error
       ? 'border-red-400 focus:ring-red-200'
       : 'border-gray-200 dark:border-white/8 focus:border-theme-primary-start focus:ring-theme-primary-start/20',
@@ -117,7 +117,7 @@ export function CategoryFormDialog({
       className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className='w-full max-w-lg rounded-xl bg-white dark:bg-[#1a1a1f] shadow-2xl dark:shadow-black/50'>
+      <div className='w-full max-w-lg rounded-xl bg-white dark:bg-surface-card shadow-2xl dark:shadow-black/50'>
         {/* Header */}
         <div className='flex items-center justify-between border-b border-gray-100 dark:border-white/8 px-6 py-4'>
           <h2 className='text-base font-semibold text-text-main'>

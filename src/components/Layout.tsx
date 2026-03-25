@@ -34,7 +34,7 @@ export function Layout({ children }: LayoutProps) {
             <Phone className='size-6' />
           </a>
           {/* Tooltip - Đặt ngoài thẻ a để không bị ảnh hưởng bởi translate-x của thẻ a nếu muốn */}
-          <span className='pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100'>
+          <span className='pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white dark:bg-surface-card dark:text-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100'>
             Gọi ngay
           </span>
         </div>
@@ -50,7 +50,7 @@ export function Layout({ children }: LayoutProps) {
           >
             <MapPinned className='size-6' />
           </Link>
-          <span className='pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100'>
+          <span className='pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white dark:bg-surface-card dark:text-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100'>
             Bản đồ
           </span>
         </div>

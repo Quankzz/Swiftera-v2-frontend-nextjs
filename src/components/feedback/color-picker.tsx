@@ -196,7 +196,7 @@ export default function ColorPicker({ onColorSelect }: ColorPickerProps) {
           e.preventDefault(); // keep editor focus
           setIsOpen(!isOpen);
         }}
-        className='flex items-center gap-1.5 px-2.5 py-1.5 border border-border/60 dark:border-white/8 bg-white dark:bg-[#1a1a1f] rounded-md text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
+        className='flex items-center gap-1.5 px-2.5 py-1.5 border border-border/60 dark:border-white/8 bg-white dark:bg-surface-card rounded-md text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
         title='Màu chữ'
       >
         <Palette className='w-4 h-4 text-text-sub' />
@@ -216,7 +216,7 @@ export default function ColorPicker({ onColorSelect }: ColorPickerProps) {
             className='fixed inset-0 z-10'
             onClick={() => setIsOpen(false)}
           />
-          <div className='absolute top-full left-0 mt-2 p-3 bg-white dark:bg-[#1a1a1f] border border-border/60 dark:border-white/8 rounded-xl shadow-xl dark:shadow-black/40 z-20 w-72'>
+          <div className='absolute top-full left-0 mt-2 p-3 bg-white dark:bg-surface-card border border-border/60 dark:border-white/8 rounded-xl shadow-xl dark:shadow-black/40 z-20 w-72'>
             <p className='text-xs font-medium text-text-sub mb-2'>Màu chữ</p>
             <div className='grid grid-cols-10 gap-1'>
               {displayedColors.map((color, i) => (

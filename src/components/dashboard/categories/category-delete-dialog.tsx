@@ -33,7 +33,7 @@ export function CategoryDeleteDialog({
       className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className='w-full max-w-md rounded-xl bg-white dark:bg-[#1a1a1f] shadow-2xl dark:shadow-black/50'>
+      <div className='w-full max-w-md rounded-xl bg-white dark:bg-surface-card shadow-2xl dark:shadow-black/50'>
         {/* Header */}
         <div className='flex items-center justify-between border-b border-gray-100 dark:border-white/8 px-6 py-4'>
           <div className='flex items-center gap-2 text-red-500'>

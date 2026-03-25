@@ -179,7 +179,7 @@ export function CatalogGrid({
         <div
           className={cn(
             // Mobile drawer
-            'fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white dark:bg-[#0f0f11] p-5 shadow-xl transition-transform duration-300 lg:static lg:z-auto lg:w-auto lg:overflow-visible lg:bg-transparent lg:dark:bg-transparent lg:p-0 lg:shadow-none',
+            'fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white dark:bg-surface-base p-5 shadow-xl transition-transform duration-300 lg:static lg:z-auto lg:w-auto lg:overflow-visible lg:bg-transparent lg:dark:bg-transparent lg:p-0 lg:shadow-none',
             // Desktop: take 1 of 4 cols naturally (min-w-[220px] max-w-[260px])
             'lg:min-w-55 lg:max-w-65 lg:flex-none lg:translate-x-0',
             // Mobile open/close

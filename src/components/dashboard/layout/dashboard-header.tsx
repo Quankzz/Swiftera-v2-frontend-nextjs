@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { usePathname } from 'next/navigation';
 import {
   Moon,
   Sun,
@@ -15,25 +14,35 @@ import {
 import { useTheme } from '@/context/theme-context';
 import { Button } from '@/components/ui/button';
 
-const PAGE_TITLES: Record<string, { title: string; description: string }> = {
-  '/dashboard': { title: 'Tổng quan', description: 'Xem tổng quan hệ thống' },
-  '/dashboard/users': {
-    title: 'Quản lý người dùng',
-    description: 'Xem, thêm mới, sửa hoặc xóa người dùng',
-  },
-  '/dashboard/products': {
-    title: 'Quản lý sản phẩm',
-    description: 'Xem, thêm mới, sửa hoặc xóa sản phẩm cho thuê',
-  },
-  '/dashboard/roles': {
-    title: 'Quản lý vai trò',
-    description: 'Xem, thêm mới, sửa và phân quyền cho vai trò',
-  },
-  '/dashboard/permissions': {
-    title: 'Cấu hình phân quyền',
-    description: 'Quản lý các quyền API của hệ thống',
-  },
-};
+function ThemeToggle() {
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Avoid hydration mismatch: next-themes resolvedTheme is undefined on server
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <Button
+      variant='ghost'
+      size='icon'
+      onClick={toggleTheme}
+      className='h-8 w-8 text-text-sub hover:text-text-main'
+      title={
+        mounted
+          ? resolvedTheme === 'dark'
+            ? 'Chuyển sang sáng'
+            : 'Chuyển sang tối'
+          : ''
+      }
+    >
+      {mounted &&
+        (resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />)}
+    </Button>
+  );
+}
 
 const ADMIN = { name: 'Admin', email: 'admin@swiftera.com', initials: 'AD' };
 
@@ -58,8 +67,6 @@ function useOutsideClick(
 }
 
 export function DashboardHeader() {
-  const pathname = usePathname();
-  const { resolvedTheme, toggleTheme } = useTheme();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -75,10 +82,8 @@ export function DashboardHeader() {
     useCallback(() => setProfileOpen(false), []),
   );
 
-  const page = PAGE_TITLES[pathname] ?? { title: 'Dashboard', description: '' };
-
   return (
-    <header className='sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 dark:border-white/8 bg-white/90 dark:bg-[#0f0f11]/95 px-4 backdrop-blur shrink-0'>
+    <header className='sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 dark:border-white/8 bg-white/90 dark:bg-surface-base/95 px-4 backdrop-blur shrink-0'>
       {/* Left — page title */}
       {/* <div className='hidden sm:flex flex-col min-w-0'>
         <h1 className='text-sm font-semibold text-text-main leading-none truncate'>
@@ -94,17 +99,7 @@ export function DashboardHeader() {
       {/* Right — actions */}
       <div className='flex items-center gap-1 ml-auto'>
         {/* Theme toggle */}
-        <Button
-          variant='ghost'
-          size='icon'
-          onClick={toggleTheme}
-          className='h-8 w-8 text-text-sub hover:text-text-main'
-          title={
-            resolvedTheme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'
-          }
-        >
-          {resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-        </Button>
+        <ThemeToggle />
 
         {/* Notifications */}
         <div ref={notifRef} className='relative'>
@@ -119,7 +114,7 @@ export function DashboardHeader() {
           </button>
 
           {notifOpen && (
-            <div className='absolute right-0 top-10 w-76 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-lg dark:shadow-black/30 overflow-hidden z-50'>
+            <div className='absolute right-0 top-10 w-76 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-lg dark:shadow-black/30 overflow-hidden z-50'>
               <div className='flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/8'>
                 <span className='text-sm font-semibold text-text-main'>
                   Thông báo
@@ -174,7 +169,7 @@ export function DashboardHeader() {
           </button>
 
           {profileOpen && (
-            <div className='absolute right-0 top-10 w-52 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-lg dark:shadow-black/30 overflow-hidden z-50'>
+            <div className='absolute right-0 top-10 w-52 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-lg dark:shadow-black/30 overflow-hidden z-50'>
               <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
                 <p className='text-sm font-semibold text-text-main'>
                   {ADMIN.name}

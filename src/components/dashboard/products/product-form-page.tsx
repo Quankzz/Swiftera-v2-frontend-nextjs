@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { ProductCard } from '@/components/home/product-card';
 import { ImageCropModal } from './image-crop-modal';
 import { useProductForm, type DraftImage } from './use-product-form';
+import { InventorySection } from './inventory-section';
 import { categories } from '@/data/categories';
 import type { Product, ProductColor } from '@/types/catalog';
 import RichEditor from '@/components/feedback/rich-editor';
@@ -60,7 +61,7 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className='rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f]'>
+    <section className='rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card'>
       <div className='border-b border-gray-100 dark:border-white/8 px-5 py-3.5'>
         <h3 className='text-sm font-semibold text-text-main'>{title}</h3>
       </div>
@@ -115,7 +116,7 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       className={cn(
-        'h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20',
+        'h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20',
         className,
       )}
     />
@@ -164,7 +165,7 @@ function ImageItem({
 
       <div className='flex gap-3 rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 p-3'>
         {/* Preview thumbnail */}
-        <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/8'>
+        <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8'>
           {img.imageUrl ? (
             <Image
               src={img.imageUrl}
@@ -196,7 +197,7 @@ function ImageItem({
                 'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
                 urlMode
                   ? 'border-theme-primary-start bg-theme-primary-start/5 text-theme-primary-start'
-                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub hover:bg-gray-50 dark:hover:bg-white/8',
+                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card text-text-sub hover:bg-gray-50 dark:hover:bg-white/8',
               )}
             >
               <LinkIcon size={12} />
@@ -209,7 +210,7 @@ function ImageItem({
                 'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
                 !urlMode
                   ? 'border-theme-primary-start bg-theme-primary-start/5 text-theme-primary-start'
-                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub hover:bg-gray-50 dark:hover:bg-white/8',
+                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card text-text-sub hover:bg-gray-50 dark:hover:bg-white/8',
               )}
             >
               <Upload size={12} />
@@ -230,7 +231,7 @@ function ImageItem({
               value={img.imageUrl.startsWith('data:') ? '' : img.imageUrl}
               onChange={(e) => onUpdateUrl(e.target.value)}
               placeholder='https://example.com/image.jpg'
-              className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+              className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
             />
           )}
 
@@ -245,7 +246,7 @@ function ImageItem({
                 'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
                 img.isPrimary
                   ? 'cursor-default border-amber-200 bg-amber-50 text-amber-600'
-                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub hover:border-amber-300 hover:text-amber-600',
+                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card text-text-sub hover:border-amber-300 hover:text-amber-600',
               )}
             >
               <Star
@@ -258,7 +259,7 @@ function ImageItem({
             <button
               type='button'
               onClick={onRemove}
-              className='ml-auto flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-1.5 text-xs font-medium text-red-500 transition hover:border-red-200 hover:bg-red-50'
+              className='ml-auto flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-1.5 text-xs font-medium text-red-500 transition hover:border-red-200 hover:bg-red-50'
             >
               <Trash2 size={12} />
               Xóa
@@ -292,6 +293,10 @@ export function ProductFormPage({
     colors,
     addColor,
     removeColor,
+    inventoryItems,
+    addInventoryItem,
+    removeInventoryItem,
+    updateInventoryItem,
     previewProduct,
     errors,
     isValid,
@@ -310,7 +315,7 @@ export function ProductFormPage({
     setSubmitted(true);
     if (!isValid) return;
     // TODO: gọi API tạo / cập nhật
-    console.log('Submit:', form, images, colors);
+    console.log('Submit:', form, images, colors, inventoryItems);
     router.push('/dashboard/products');
   };
 
@@ -345,7 +350,7 @@ export function ProductFormPage({
               <select
                 value={form.categoryId}
                 onChange={(e) => setField('categoryId', e.target.value)}
-                className='h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+                className='h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
               >
                 <option value=''>— Chọn danh mục —</option>
                 {topCategories.map((c) => (
@@ -428,7 +433,7 @@ export function ProductFormPage({
                 required
                 error={showError('minRentalDays')}
               >
-                <div className='flex h-11 overflow-hidden rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] focus-within:border-theme-primary-start focus-within:ring-2 focus-within:ring-theme-primary-start/20'>
+                <div className='flex h-11 overflow-hidden rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card focus-within:border-theme-primary-start focus-within:ring-2 focus-within:ring-theme-primary-start/20'>
                   <button
                     type='button'
                     onClick={() => {
@@ -556,7 +561,7 @@ export function ProductFormPage({
                       setCustomColor((p) => ({ ...p, name: e.target.value }))
                     }
                     placeholder='VD: Blue Titanium'
-                    className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+                    className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
                   />
                 </div>
                 {/* Styled color picker */}
@@ -564,7 +569,7 @@ export function ProductFormPage({
                   <label className='text-xs text-text-sub'>Chọn màu</label>
                   <label
                     title='Bấm để chọn màu'
-                    className='relative flex h-10 w-28 cursor-pointer items-center gap-2 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-2.5 transition hover:border-gray-300 dark:hover:border-white/20'
+                    className='relative flex h-10 w-28 cursor-pointer items-center gap-2 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-2.5 transition hover:border-gray-300 dark:hover:border-white/20'
                   >
                     {/* Color swatch */}
                     <span
@@ -634,6 +639,16 @@ export function ProductFormPage({
               Thêm ảnh
             </button>
           </div>
+        </FormSection>
+
+        {/* ── SECTION 4: Kho thiết bị (Inventory) ── */}
+        <FormSection title='Kho thiết bị vật lý'>
+          <InventorySection
+            items={inventoryItems}
+            onAdd={addInventoryItem}
+            onRemove={removeInventoryItem}
+            onUpdate={updateInventoryItem}
+          />
         </FormSection>
 
         {/* ── Submit ── */}

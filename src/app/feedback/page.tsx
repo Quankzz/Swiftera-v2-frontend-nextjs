@@ -8,9 +8,9 @@ import RichEditor from '@/components/feedback/rich-editor';
 export default function FeedbackPage() {
   return (
     <Layout>
-      <section className='min-h-screen bg-white dark:bg-[#0f0f11] py-10'>
+      <section className='min-h-screen bg-white dark:bg-surface-base py-10'>
         <div className='mx-auto max-w-6xl px-4 lg:px-8'>
-          <div className='mb-6 rounded-2xl border border-border/60 dark:border-white/8 bg-white dark:bg-[#1a1a1f] p-6 md:p-8'>
+          <div className='mb-6 rounded-2xl border border-border/60 dark:border-white/8 bg-white dark:bg-surface-card p-6 md:p-8'>
             <h1 className='text-4xl font-extrabold text-text-main'>
               Ý kiến khách hàng
             </h1>
@@ -21,7 +21,7 @@ export default function FeedbackPage() {
           </div>
 
           <form className='space-y-6'>
-            <div className='rounded-2xl border border-border/60 dark:border-white/8 bg-white dark:bg-[#1a1a1f] p-6 md:p-8'>
+            <div className='rounded-2xl border border-border/60 dark:border-white/8 bg-white dark:bg-surface-card p-6 md:p-8'>
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <label className='text-sm font-semibold text-text-main'>

@@ -119,7 +119,7 @@ export function TicketStatusDialog({
       />
 
       {/* Panel */}
-      <div className='relative bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/8 rounded-2xl shadow-2xl dark:shadow-black/50 w-full max-w-lg mx-4 overflow-hidden'>
+      <div className='relative bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8 rounded-2xl shadow-2xl dark:shadow-black/50 w-full max-w-lg mx-4 overflow-hidden'>
         {/* Header */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/8'>
           <div className='flex items-center gap-2.5'>

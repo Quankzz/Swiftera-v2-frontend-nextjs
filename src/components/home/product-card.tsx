@@ -44,7 +44,7 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/75 dark:border-white/6 bg-white dark:bg-[#1a1a1f] p-7 shadow-sm dark:shadow-black/30',
+        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/75 dark:border-white/6 bg-white dark:bg-surface-card p-7 shadow-sm dark:shadow-black/30',
         !isPreview &&
           'transition-transform duration-500 hover:-translate-y-1 hover:shadow-md dark:hover:shadow-black/50',
       )}
@@ -62,7 +62,7 @@ export function ProductCard({
       )}
 
       {/* SLOT 1: Title + description (fixed block height) */}
-      <header className='mt-2.5 mb-3.5 flex h-24 flex-col items-center justify-start text-center'>
+      <header className='mt-2.5 mb-3.5 flex flex-col items-center justify-start text-center'>
         <h3 className='line-clamp-2 min-h-12 text-lg font-semibold text-text-main'>
           {product.name || (
             <span className='italic text-text-sub opacity-50'>
@@ -70,11 +70,11 @@ export function ProductCard({
             </span>
           )}
         </h3>
-        <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
+        {/* <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
           {product.description || (
             <span className='italic opacity-50'>Mô tả sản phẩm</span>
           )}
-        </p>
+        </p> */}
       </header>
 
       {/* SLOT 2: Image area (fixed height) */}

@@ -25,7 +25,7 @@ function StatusFilter({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as ContactTicketStatus | '')}
-      className='h-9 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+      className='h-9 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
     >
       <option value=''>Tất cả trạng thái</option>
       {TICKET_STATUSES.map(({ value, label }) => (

@@ -205,7 +205,7 @@ export function CatalogFilter({
       )} */}
 
       {/* Filter body */}
-      <div className='rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-4'>
+      <div className='rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-4'>
         {/* Danh mục */}
         <FilterSection title='Danh mục'>
           <CheckList

@@ -56,7 +56,7 @@ export default function PermissionsPage() {
         <div className='flex items-center gap-2'>
           <Button
             size='lg'
-            className='bg-theme-primary-start hover:opacity-90 transition-opacity rounded-sm'
+            className='bg-theme-primary-start hover:opacity-90 transition-opacity text-white rounded-sm'
             onClick={() => handleAddPermission()}
           >
             <Plus className='mr-2 h-4 w-4' /> Thêm quyền mới

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { MoreHorizontal, Eye, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Eye, Pencil, Trash2, Package } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/types/catalog';
@@ -60,6 +60,14 @@ export function ProductCardDashboard({
   const displayColors = product.colors ?? [];
   const hasColors = displayColors.length > 0;
 
+  // Inventory stats
+  const inventoryItems = product.inventoryItems ?? [];
+  const totalUnits = inventoryItems.length;
+  const availableUnits = inventoryItems.filter(
+    (i) => i.status === 'AVAILABLE',
+  ).length;
+  const plainDescription = product.description.replace(/<[^>]*>/g, '').trim();
+
   return (
     <article
       onClick={() => onSelect(product.productId)}
@@ -68,7 +76,7 @@ export function ProductCardDashboard({
         selected
           ? 'border-theme-primary-start shadow-md'
           : 'border-transparent hover:border-gray-200 dark:hover:border-white/15',
-        'bg-white dark:bg-[#1a1a1f]',
+        'bg-white dark:bg-surface-card',
       )}
     >
       {/* Selection indicator */}
@@ -117,7 +125,7 @@ export function ProductCardDashboard({
         </button>
 
         {menuOpen && (
-          <div className='absolute right-0 top-9 z-50 w-36 overflow-hidden rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/30 animate-in fade-in slide-in-from-top-1'>
+          <div className='absolute right-0 top-9 z-50 w-36 overflow-hidden rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/30 animate-in fade-in slide-in-from-top-1'>
             <button
               type='button'
               onClick={() => {
@@ -161,7 +169,7 @@ export function ProductCardDashboard({
           {product.name}
         </h3>
         <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
-          {product.description}
+          {plainDescription}
         </p>
       </header>
 
@@ -182,7 +190,24 @@ export function ProductCardDashboard({
         )}
       </div>
 
-      {/* SLOT 3: Colors + Price */}
+      {/* SLOT 3: Inventory count */}
+      {totalUnits > 0 && (
+        <div className='mt-2.5 flex items-center justify-center gap-2'>
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
+              availableUnits > 0
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400'
+                : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400',
+            )}
+          >
+            <Package size={11} />
+            {availableUnits}/{totalUnits} sẵn sàng
+          </span>
+        </div>
+      )}
+
+      {/* SLOT 4: Colors + Price */}
       <div className='flex flex-1 flex-col pt-2'>
         <div className='flex h-10 items-center justify-center'>
           {hasColors ? (

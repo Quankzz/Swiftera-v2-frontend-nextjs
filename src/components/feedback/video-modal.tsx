@@ -41,7 +41,7 @@ export default function VideoModal({
       />
 
       {/* Modal */}
-      <div className='relative bg-white dark:bg-[#1a1a1f] rounded-xl shadow-2xl dark:shadow-black/50 w-full max-w-md mx-4 p-6 border border-border/60 dark:border-white/8'>
+      <div className='relative bg-white dark:bg-surface-card rounded-xl shadow-2xl dark:shadow-black/50 w-full max-w-md mx-4 p-6 border border-border/60 dark:border-white/8'>
         {/* Header */}
         <div className='flex items-center justify-between mb-5'>
           <div className='flex items-center gap-2.5'>
@@ -84,7 +84,7 @@ export default function VideoModal({
                 }
               }}
               placeholder='https://www.youtube.com/watch?v=...'
-              className='w-full px-3 py-2.5 rounded-lg border border-border/60 dark:border-white/8 bg-white dark:bg-[#0f0f11] text-text-main placeholder:text-text-sub text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30 focus:border-theme-primary-start transition'
+              className='w-full px-3 py-2.5 rounded-lg border border-border/60 dark:border-white/8 bg-white dark:bg-surface-base text-text-main placeholder:text-text-sub text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30 focus:border-theme-primary-start transition'
               autoFocus
             />
             <p className='mt-1.5 text-xs text-text-sub'>

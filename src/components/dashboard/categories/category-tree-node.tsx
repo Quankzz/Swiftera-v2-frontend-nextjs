@@ -113,7 +113,7 @@ export function CategoryTreeNode({
       {/* Row */}
       <div
         className={cn(
-          'group flex min-h-11 items-center gap-2 rounded-md border bg-white dark:bg-[#1a1a1f] pr-1 transition-all',
+          'group flex min-h-11 items-center gap-2 rounded-md border bg-white dark:bg-surface-card pr-1 transition-all',
           // Root level: left-accent border + light shadow
           depth === 0
             ? 'border-l-4 border-l-theme-primary-start border-gray-100 dark:border-white/8 shadow-sm'

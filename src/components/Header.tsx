@@ -71,7 +71,7 @@ export function Header() {
     <>
       <header
         className={cn(
-          'top-0 w-full bg-white dark:bg-[#0f0f11] transition-colors duration-300 shadow-sm dark:shadow-black/30',
+          'top-0 w-full bg-white dark:bg-surface-base transition-colors duration-300 shadow-sm dark:shadow-black/30',
           isSearchOpen
             ? 'z-50 border-transparent'
             : 'z-40 border-b border-border/20 dark:border-white/5 backdrop-blur',
@@ -122,7 +122,7 @@ export function Header() {
               </div>
 
               {isSearchOpen && (
-                <div className='absolute -top-2 left-0 z-50 p-2 w-full rounded-3xl bg-white dark:bg-[#1a1a1f] shadow-2xl dark:shadow-black/60'>
+                <div className='absolute -top-2 left-0 z-50 p-2 w-full rounded-3xl bg-white dark:bg-surface-card shadow-2xl dark:shadow-black/60'>
                   <div className='flex h-12 items-center gap-3 border-2 border-theme-primary-start rounded-full px-4'>
                     <Search className='size-5 text-text-sub' />
                     <input
@@ -219,7 +219,7 @@ export function Header() {
                 </Button>
 
                 {isUserMenuOpen && (
-                  <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1'>
+                  <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1'>
                     {/* User info header */}
                     <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
                       <p className='text-sm font-semibold text-text-main'>
@@ -252,17 +252,6 @@ export function Header() {
                           className='text-text-sub shrink-0'
                         />
                         Đơn thuê của tôi
-                      </Link>
-                      <Link
-                        href='/settings'
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
-                      >
-                        <Settings
-                          size={15}
-                          className='text-text-sub shrink-0'
-                        />
-                        Cài đặt tài khoản
                       </Link>
                       <Link
                         href='/dashboard'
@@ -360,7 +349,7 @@ export function Header() {
             (hoveredCategoryData.children?.length ||
               hoveredCategoryData.brands?.length) ? (
               <div
-                className='absolute left-1/2 w-screen -translate-x-1/2 border-t border-border/40 dark:border-white/5 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default'
+                className='absolute left-1/2 w-screen -translate-x-1/2 border-t border-border/40 dark:border-white/5 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default'
                 style={{ top: `calc(100% + ${HOVER_BRIDGE_HEIGHT}px)` }}
                 onMouseEnter={() =>
                   setHoveredCategoryId(hoveredCategoryData.categoryId)

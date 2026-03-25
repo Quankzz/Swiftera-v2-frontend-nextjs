@@ -26,6 +26,22 @@ export interface ProductColor {
   value: string; // ví dụ: #111111
 }
 
+// ─── Inventory Item (bảng inventory_items) ────────────────────────
+export type InventoryItemStatus =
+  | 'AVAILABLE'
+  | 'RENTED'
+  | 'MAINTENANCE'
+  | 'RETIRED';
+
+export interface InventoryItem {
+  inventoryItemId: string;
+  productId: string;
+  serialNumber: string;
+  status: InventoryItemStatus;
+  conditionGrade: string; // VD: "A", "B", "C" hoặc "Mới", "Tốt", "Trung bình"
+  staffNote: string;
+}
+
 export interface Product {
   productId: string;
   categoryId: string;
@@ -37,4 +53,6 @@ export interface Product {
   productImages: ProductImage[];
   colors?: ProductColor[];
   minRentalDays: number;
+  /** Danh sách thiết bị vật lý thuộc sản phẩm này */
+  inventoryItems?: InventoryItem[];
 }

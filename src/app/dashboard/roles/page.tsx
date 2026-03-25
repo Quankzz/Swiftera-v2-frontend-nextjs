@@ -31,7 +31,7 @@ export default function RolesPage() {
         <div className='flex items-center gap-2'>
           <Button
             size='lg'
-            className='bg-theme-primary-start hover:opacity-90 transition-opacity'
+            className='bg-theme-primary-start hover:opacity-90 transition-opacity text-white'
             onClick={() => {
               setDialogRole(null);
               setFormOpen(true);

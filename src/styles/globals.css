@@ -55,6 +55,14 @@
   --color-theme-accent-end: var(--theme-accent-end);
   --color-text-main: var(--text-main);
   --color-text-sub: var(--text-sub);
+
+  /* ── Surface backgrounds (dùng thay dark:bg-[#0f0f11] và dark:bg-[#1a1a1f] ── */
+  --color-surface-base: var(
+    --surface-base
+  ); /* dark: #0f0f11 — nền trang chính */
+  --color-surface-card: var(
+    --surface-card
+  ); /* dark: #1a1a1f — nền card/panel  */
 }
 
 :root {
@@ -91,11 +99,13 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* ========================================= */
-  /* COLOR TEXT CHÍNH & PHỤ                    */
-  /* ========================================= */
+  /* ── Text ── */
   --text-main: #333333;
   --text-sub: #666666;
+
+  /* ── Surfaces ── */
+  --surface-base: #ffffff;
+  --surface-card: #f9f9f9;
 
   /* ========================================= */
   /* TÙY CHỌN MÀU SẮC (ĐÓNG/MỞ COMMENT ĐỂ ĐỔI) */
@@ -159,6 +169,10 @@
   /* ── Text ── */
   --text-main: #f0f0f2;
   --text-sub: #8a8a9a;
+
+  /* ── Surfaces ── */
+  --surface-base: #0f0f11;
+  --surface-card: #1a1a1f;
 
   /* ── Brand colors — giữ nguyên đỏ chủ đạo ── */
   --theme-primary-start: #fe2560;

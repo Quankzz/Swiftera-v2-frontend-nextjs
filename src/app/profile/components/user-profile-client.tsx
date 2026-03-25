@@ -40,7 +40,7 @@ export function UserProfileClient() {
           onValueChange={setActiveTab}
           className='w-full'
         >
-          <TabsList className='grid w-full grid-cols-3 mb-8 bg-white dark:bg-[#1a1a1f] p-1 rounded-xl shadow-sm dark:shadow-black/30'>
+          <TabsList className='grid w-full grid-cols-3 mb-8 bg-white dark:bg-surface-card p-1 rounded-xl shadow-sm dark:shadow-black/30'>
             <TabsTrigger
               value='profile'
               className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2'

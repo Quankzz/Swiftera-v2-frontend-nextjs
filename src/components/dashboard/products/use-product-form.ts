@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { Product, ProductImage, ProductColor } from '@/types/catalog';
+import type {
+  Product,
+  ProductImage,
+  ProductColor,
+  InventoryItem,
+  InventoryItemStatus,
+} from '@/types/catalog';
 
 /** Dạng draft của một ảnh trong form (chưa có productImageId) */
 export interface DraftImage {
@@ -10,6 +16,16 @@ export interface DraftImage {
   imageUrl: string;
   isPrimary: boolean;
   sortOrder: number;
+}
+
+/** Dạng draft của một inventory item trong form */
+export interface DraftInventoryItem {
+  /** id tạm thời dùng trong UI */
+  draftId: string;
+  serialNumber: string;
+  status: InventoryItemStatus;
+  conditionGrade: string;
+  staffNote: string;
 }
 
 export interface ProductFormData {
@@ -56,11 +72,22 @@ function imagesToDrafts(images: ProductImage[]): DraftImage[] {
   }));
 }
 
+function inventoryToDrafts(items: InventoryItem[]): DraftInventoryItem[] {
+  return items.map((item) => ({
+    draftId: item.inventoryItemId,
+    serialNumber: item.serialNumber,
+    status: item.status,
+    conditionGrade: item.conditionGrade,
+    staffNote: item.staffNote,
+  }));
+}
+
 /** Chuyển DraftImage[] + colors[] về Product shape để hiển thị live preview */
 export function draftToProduct(
   form: ProductFormData,
   images: DraftImage[],
   colors: ProductColor[],
+  inventoryItems: DraftInventoryItem[],
 ): Product {
   return {
     productId: form.productId || 'preview',
@@ -83,6 +110,14 @@ export function draftToProduct(
       productImageId: img.draftId,
     })),
     colors: colors.length > 0 ? colors : undefined,
+    inventoryItems: inventoryItems.map((item) => ({
+      inventoryItemId: item.draftId,
+      productId: form.productId || 'preview',
+      serialNumber: item.serialNumber,
+      status: item.status,
+      conditionGrade: item.conditionGrade,
+      staffNote: item.staffNote,
+    })),
   };
 }
 
@@ -94,6 +129,9 @@ export function useProductForm(initial?: Product) {
     initial ? imagesToDrafts(initial.productImages) : [],
   );
   const [colors, setColors] = useState<ProductColor[]>(initial?.colors ?? []);
+  const [inventoryItems, setInventoryItems] = useState<DraftInventoryItem[]>(
+    initial?.inventoryItems ? inventoryToDrafts(initial.inventoryItems) : [],
+  );
 
   /* ─── Form field handler ─── */
   const setField = useCallback(
@@ -122,7 +160,6 @@ export function useProductForm(initial?: Product) {
   const removeImage = useCallback((draftId: string) => {
     setImages((prev) => {
       const next = prev.filter((img) => img.draftId !== draftId);
-      // nếu ảnh bị xóa là primary, gán primary cho ảnh đầu tiên còn lại
       const hasPrimary = next.some((img) => img.isPrimary);
       if (!hasPrimary && next.length > 0) {
         next[0] = { ...next[0], isPrimary: true };
@@ -148,7 +185,6 @@ export function useProductForm(initial?: Product) {
   /* ─── Color handlers ─── */
   const addColor = useCallback((color: ProductColor) => {
     setColors((prev) => {
-      // không thêm trùng value
       if (prev.some((c) => c.value === color.value)) return prev;
       return [...prev, color];
     });
@@ -162,8 +198,39 @@ export function useProductForm(initial?: Product) {
     setColors((prev) => prev.map((c, i) => (i === index ? updated : c)));
   }, []);
 
+  /* ─── Inventory Item handlers ─── */
+  const addInventoryItem = useCallback(() => {
+    setInventoryItems((prev) => [
+      ...prev,
+      {
+        draftId: `inv-draft-${Date.now()}`,
+        serialNumber: '',
+        status: 'AVAILABLE' as InventoryItemStatus,
+        conditionGrade: 'A',
+        staffNote: '',
+      },
+    ]);
+  }, []);
+
+  const removeInventoryItem = useCallback((draftId: string) => {
+    setInventoryItems((prev) =>
+      prev.filter((item) => item.draftId !== draftId),
+    );
+  }, []);
+
+  const updateInventoryItem = useCallback(
+    (draftId: string, patch: Partial<Omit<DraftInventoryItem, 'draftId'>>) => {
+      setInventoryItems((prev) =>
+        prev.map((item) =>
+          item.draftId === draftId ? { ...item, ...patch } : item,
+        ),
+      );
+    },
+    [],
+  );
+
   /* ─── Derived live preview product ─── */
-  const previewProduct = draftToProduct(form, images, colors);
+  const previewProduct = draftToProduct(form, images, colors, inventoryItems);
 
   /* ─── Validation ─── */
   const errors: Partial<Record<keyof ProductFormData, string>> = {};
@@ -193,6 +260,10 @@ export function useProductForm(initial?: Product) {
     addColor,
     removeColor,
     updateColor,
+    inventoryItems,
+    addInventoryItem,
+    removeInventoryItem,
+    updateInventoryItem,
     previewProduct,
     errors,
     isValid,

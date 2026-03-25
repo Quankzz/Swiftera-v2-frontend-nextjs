@@ -469,7 +469,7 @@ export function UserFormDialog({
                   (e.key === 'Enter' || e.key === ' ') &&
                   setRoleDropdownOpen((v) => !v)
                 }
-                className='w-full h-10 flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 cursor-pointer hover:border-blue-300 transition-colors select-none overflow-hidden'
+                className='w-full h-10 flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 cursor-pointer hover:border-blue-300 transition-colors select-none overflow-hidden'
               >
                 {/* Pills — single row, never wrap */}
                 <span className='flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden'>
@@ -529,7 +529,7 @@ export function UserFormDialog({
 
               {/* Dropdown panel */}
               {roleDropdownOpen && (
-                <div className='absolute z-50 top-full mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/30 overflow-hidden'>
+                <div className='absolute z-50 top-full mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/30 overflow-hidden'>
                   <div className='px-3 pt-2.5 pb-1 border-b border-gray-100 dark:border-white/8'>
                     <p className='text-[11px] font-semibold text-text-sub uppercase tracking-wider'>
                       Chọn vai trò ({selectedRoleIds.length} đã chọn)
