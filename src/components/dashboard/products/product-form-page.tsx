@@ -19,6 +19,7 @@ import { ImageCropModal } from './image-crop-modal';
 import { useProductForm, type DraftImage } from './use-product-form';
 import { categories } from '@/data/categories';
 import type { Product, ProductColor } from '@/types/catalog';
+import RichEditor from '@/components/feedback/rich-editor';
 
 // Top-level danh mục
 const topCategories = categories.filter((c) => c.parentId === null);
@@ -366,12 +367,12 @@ export function ProductFormPage({
 
             {/* Mô tả */}
             <Field label='Mô tả' required error={showError('description')}>
-              <textarea
-                value={form.description}
-                onChange={(e) => setField('description', e.target.value)}
+              <RichEditor
                 placeholder='Mô tả ngắn gọn về sản phẩm...'
-                rows={3}
-                className='w-full resize-none rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-2.5 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+                minHeight='160px'
+                onChange={(html) =>
+                  setField('description', html === '<br>' ? '' : html)
+                }
               />
             </Field>
 

@@ -1,7 +1,9 @@
+'use client';
+
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import RichEditor from '@/components/feedback/rich-editor';
 
 export default function FeedbackPage() {
   return (
@@ -49,10 +51,9 @@ export default function FeedbackPage() {
                 <label className='text-sm font-semibold text-text-main'>
                   Chi tiết (*)
                 </label>
-                <Textarea
-                  rows={5}
-                  placeholder='Mô tả chi tiết ý kiến của bạn'
-                  className='text-text-main placeholder:text-text-sub'
+                <RichEditor
+                  placeholder='Mô tả chi tiết ý kiến của bạn...'
+                  minHeight='200px'
                 />
               </div>
 
