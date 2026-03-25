@@ -57,7 +57,7 @@ export function DashboardSidebar() {
     <>
       {/* Mobile Menu Toggle */}
       <button
-        className='md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-md shadow-md text-text-main'
+        className='md:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-[#1a1a1f] rounded-md shadow-md dark:shadow-black/30 text-text-main'
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -74,13 +74,13 @@ export function DashboardSidebar() {
       {/* Sidebar Content */}
       <aside
         className={`
-        fixed md:sticky top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-40
+        fixed md:sticky top-0 left-0 h-screen w-64 bg-white dark:bg-[#0f0f11] border-r border-gray-200 dark:border-white/8 z-40
         transform transition-transform duration-200 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         flex flex-col
       `}
       >
-        <div className='flex items-center h-16 px-6 border-b border-gray-200'>
+        <div className='flex items-center h-16 px-6 border-b border-gray-200 dark:border-white/8'>
           {/* <span className='text-xl font-bold text-theme-primary-start'>
             Swiftera Panel
           </span> */}
@@ -119,7 +119,7 @@ export function DashboardSidebar() {
                     ${
                       isActive
                         ? 'bg-theme-primary-start/10 text-theme-primary-start'
-                        : 'text-text-main hover:bg-gray-100'
+                        : 'text-text-main hover:bg-gray-100 dark:hover:bg-white/8'
                     }
                   `}
                 >
@@ -133,7 +133,7 @@ export function DashboardSidebar() {
           </nav>
         </div>
 
-        <div className='p-4 border-t border-gray-200'>
+        <div className='p-4 border-t border-gray-200 dark:border-white/8'>
           <div className='flex items-center gap-3 px-2'>
             <div className='w-8 h-8 rounded-full bg-theme-primary-start/20 flex items-center justify-center text-theme-primary-start font-bold'>
               A

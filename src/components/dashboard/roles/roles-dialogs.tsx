@@ -124,7 +124,7 @@ export function RoleFormDialog({
             />
           </div>
 
-          <div className='flex items-center justify-between rounded-md border border-gray-200 px-3 py-2'>
+          <div className='flex items-center justify-between rounded-md border border-gray-200 dark:border-white/8 px-3 py-2'>
             <div>
               <p className='text-sm font-medium text-text-main'>Trạng thái</p>
               <p className='text-xs text-text-sub'>

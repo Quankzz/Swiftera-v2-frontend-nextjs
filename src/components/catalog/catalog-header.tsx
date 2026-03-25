@@ -73,7 +73,7 @@ export function CatalogHeader({
           <button
             type='button'
             onClick={onToggleFilter}
-            className='flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-text-main transition hover:bg-gray-50 lg:hidden'
+            className='flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-sm font-medium text-text-main transition hover:bg-gray-50 dark:hover:bg-white/10 lg:hidden'
           >
             <SlidersHorizontal className='size-4' />
             Lọc
@@ -87,7 +87,7 @@ export function CatalogHeader({
             <select
               value={sort}
               onChange={(e) => onSortChange(e.target.value as SortOption)}
-              className='h-9 rounded-lg border border-gray-200 bg-white pl-3 pr-8 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+              className='h-9 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 pl-3 pr-8 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -100,7 +100,7 @@ export function CatalogHeader({
       </div>
 
       {/* Divider */}
-      <div className='h-px bg-gray-100' />
+      <div className='h-px bg-gray-100 dark:bg-white/8' />
     </div>
   );
 }

@@ -22,10 +22,10 @@ interface CategoryFormDialogProps {
 // ─── Helpers ─────────────────────────────────────────────────────
 function inputCls(error?: boolean) {
   return cn(
-    'h-10 w-full rounded-sm border bg-white px-3 text-sm text-text-main focus:outline-none focus:ring-2 transition',
+    'h-10 w-full rounded-sm border bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main focus:outline-none focus:ring-2 transition',
     error
       ? 'border-red-400 focus:ring-red-200'
-      : 'border-gray-200 focus:border-theme-primary-start focus:ring-theme-primary-start/20',
+      : 'border-gray-200 dark:border-white/8 focus:border-theme-primary-start focus:ring-theme-primary-start/20',
   );
 }
 
@@ -117,16 +117,16 @@ export function CategoryFormDialog({
       className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className='w-full max-w-lg rounded-xl bg-white shadow-2xl'>
+      <div className='w-full max-w-lg rounded-xl bg-white dark:bg-[#1a1a1f] shadow-2xl dark:shadow-black/50'>
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-gray-100 px-6 py-4'>
+        <div className='flex items-center justify-between border-b border-gray-100 dark:border-white/8 px-6 py-4'>
           <h2 className='text-base font-semibold text-text-main'>
             {isEdit ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
           </h2>
           <button
             type='button'
             onClick={onClose}
-            className='rounded-sm p-1 text-text-sub hover:bg-gray-100 transition'
+            className='rounded-sm p-1 text-text-sub hover:bg-gray-100 dark:hover:bg-white/8 transition'
           >
             <X className='size-4' />
           </button>
@@ -170,7 +170,7 @@ export function CategoryFormDialog({
                     setSlugManual(false);
                     setSlugOverride(generateSlug(name));
                   }}
-                  className='rounded-sm border border-gray-200 px-3 text-xs text-text-sub hover:bg-gray-50 transition'
+                  className='rounded-sm border border-gray-200 dark:border-white/8 px-3 text-xs text-text-sub hover:bg-gray-50 dark:hover:bg-white/8 transition'
                 >
                   Tự động
                 </button>
@@ -260,7 +260,7 @@ export function CategoryFormDialog({
               <button
                 type='button'
                 onClick={() => addBrand(brandInput)}
-                className='flex items-center gap-1 rounded-sm border border-gray-200 px-3 text-sm text-text-sub hover:bg-gray-50 transition'
+                className='flex items-center gap-1 rounded-sm border border-gray-200 dark:border-white/8 px-3 text-sm text-text-sub hover:bg-gray-50 dark:hover:bg-white/8 transition'
               >
                 <Plus className='size-3.5' />
                 Thêm
@@ -284,11 +284,11 @@ export function CategoryFormDialog({
           </div>
 
           {/* Footer actions */}
-          <div className='flex justify-end gap-3 border-t border-gray-100 pt-4'>
+          <div className='flex justify-end gap-3 border-t border-gray-100 dark:border-white/8 pt-4'>
             <button
               type='button'
               onClick={onClose}
-              className='rounded-sm border border-gray-200 px-4 py-2 text-sm font-medium text-text-main hover:bg-gray-50 transition'
+              className='rounded-sm border border-gray-200 dark:border-white/8 px-4 py-2 text-sm font-medium text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition'
             >
               Huỷ
             </button>

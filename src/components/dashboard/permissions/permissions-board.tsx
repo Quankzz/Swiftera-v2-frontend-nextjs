@@ -82,13 +82,15 @@ function PermissionRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 ${
-        isDraggingContext ? 'bg-gray-50' : 'hover:border-theme-primary-start'
+      className={`flex items-center justify-between rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-2 ${
+        isDraggingContext
+          ? 'bg-gray-50 dark:bg-white/5'
+          : 'hover:border-theme-primary-start'
       }`}
     >
       <div className='flex items-center gap-3'>
         <button
-          className='cursor-grab touch-none p-1 shrink-0 hover:bg-gray-100 rounded text-text-sub'
+          className='cursor-grab touch-none p-1 shrink-0 hover:bg-gray-100 dark:hover:bg-white/8 rounded text-text-sub'
           {...attributes}
           {...listeners}
         >
@@ -171,7 +173,7 @@ function ModuleNode({
   }, [menuOpen]);
 
   return (
-    <div className='rounded-lg border border-gray-200 bg-gray-50'>
+    <div className='rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/3'>
       <div
         className='flex items-center justify-between px-3 py-2 cursor-pointer'
         onClick={onToggleCollapse}
@@ -209,9 +211,9 @@ function ModuleNode({
             </Button>
 
             {menuOpen && (
-              <div className='absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-gray-100 bg-white shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1'>
+              <div className='absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/30 overflow-hidden animate-in fade-in slide-in-from-top-1'>
                 <button
-                  className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 transition-colors'
+                  className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
                   onClick={() => {
                     setMenuOpen(false);
                     onEditModule?.(moduleName);
@@ -220,7 +222,7 @@ function ModuleNode({
                   <Pencil size={13} className='text-text-sub' />
                   Đổi tên
                 </button>
-                <div className='h-px bg-gray-100 mx-2' />
+                <div className='h-px bg-gray-100 dark:bg-white/8 mx-2' />
                 <button
                   className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 transition-colors'
                   onClick={() => {
@@ -253,7 +255,7 @@ function ModuleNode({
       {!isCollapsed && (
         <div
           ref={setNodeRef}
-          className={`p-2 border-t border-gray-200 bg-white rounded-b-lg ${
+          className={`p-2 border-t border-gray-200 dark:border-white/8 bg-white dark:bg-[#0f0f11] rounded-b-lg ${
             isOver ? 'bg-theme-primary-start/10 border-dashed' : ''
           }`}
         >
@@ -273,7 +275,7 @@ function ModuleNode({
             </SortableContext>
 
             {permissions.length === 0 && (
-              <div className='py-6 text-center text-sm text-text-sub border-2 border-dashed border-gray-200 rounded-md'>
+              <div className='py-6 text-center text-sm text-text-sub border-2 border-dashed border-gray-200 dark:border-white/10 rounded-md'>
                 Kéo thả quyền vào đây hoặc thêm quyền mới
               </div>
             )}
@@ -432,7 +434,7 @@ export function PermissionsBoard({
           ))}
 
           {!modules.length && (
-            <div className='py-10 text-center text-text-sub bg-gray-50 rounded-md border border-dashed border-gray-300'>
+            <div className='py-10 text-center text-text-sub bg-gray-50 dark:bg-white/3 rounded-md border border-dashed border-gray-300 dark:border-white/15'>
               Chưa có cấu hình quyền nào trong hệ thống
             </div>
           )}

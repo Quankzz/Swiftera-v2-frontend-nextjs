@@ -257,7 +257,7 @@ export function UserFormDialog({
           <div className='flex items-start gap-5'>
             {/* Avatar preview */}
             <div className='flex flex-col items-center gap-2 shrink-0'>
-              <div className='relative w-20 h-20 rounded-full border-2 border-dashed border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center group'>
+              <div className='relative w-20 h-20 rounded-full border-2 border-dashed border-gray-200 dark:border-white/15 overflow-hidden bg-gray-50 dark:bg-white/5 flex items-center justify-center group'>
                 {finalAvatarUrl ? (
                   <NextImage
                     src={finalAvatarUrl}
@@ -337,7 +337,9 @@ export function UserFormDialog({
                   placeholder='email@domain.com'
                   disabled={isEdit}
                   className={
-                    isEdit ? 'opacity-60 bg-gray-100' : 'bg-gray-50/50'
+                    isEdit
+                      ? 'opacity-60 bg-gray-100 dark:bg-white/5'
+                      : 'bg-gray-50/50 dark:bg-white/3'
                   }
                 />
                 {isEdit && (
@@ -467,7 +469,7 @@ export function UserFormDialog({
                   (e.key === 'Enter' || e.key === ' ') &&
                   setRoleDropdownOpen((v) => !v)
                 }
-                className='w-full h-10 flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 cursor-pointer hover:border-blue-300 transition-colors select-none overflow-hidden'
+                className='w-full h-10 flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 cursor-pointer hover:border-blue-300 transition-colors select-none overflow-hidden'
               >
                 {/* Pills — single row, never wrap */}
                 <span className='flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden'>
@@ -527,8 +529,8 @@ export function UserFormDialog({
 
               {/* Dropdown panel */}
               {roleDropdownOpen && (
-                <div className='absolute z-50 top-full mt-1.5 w-full rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden'>
-                  <div className='px-3 pt-2.5 pb-1 border-b border-gray-100'>
+                <div className='absolute z-50 top-full mt-1.5 w-full rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/30 overflow-hidden'>
+                  <div className='px-3 pt-2.5 pb-1 border-b border-gray-100 dark:border-white/8'>
                     <p className='text-[11px] font-semibold text-text-sub uppercase tracking-wider'>
                       Chọn vai trò ({selectedRoleIds.length} đã chọn)
                     </p>
@@ -545,7 +547,9 @@ export function UserFormDialog({
                           <label
                             key={role.roleId}
                             className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
-                              checked ? 'bg-blue-50' : 'hover:bg-gray-50'
+                              checked
+                                ? 'bg-blue-50 dark:bg-blue-900/20'
+                                : 'hover:bg-gray-50 dark:hover:bg-white/5'
                             }`}
                           >
                             <input
@@ -587,7 +591,7 @@ export function UserFormDialog({
                       })}
                     </div>
                   )}
-                  <div className='border-t border-gray-100 px-3 py-2 flex justify-end'>
+                  <div className='border-t border-gray-100 dark:border-white/8 px-3 py-2 flex justify-end'>
                     <button
                       type='button'
                       onClick={() => setRoleDropdownOpen(false)}
@@ -606,7 +610,7 @@ export function UserFormDialog({
             <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
               <Clock size={11} /> Đăng nhập lần cuối
             </label>
-            <div className='min-h-10 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 flex items-center'>
+            <div className='min-h-10 rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 px-3 py-2.5 flex items-center'>
               {(userDetail?.lastLoginAt ?? initialUser?.lastLoginAt) ? (
                 <span className='text-sm text-text-sub'>
                   {new Date(
@@ -693,7 +697,7 @@ export function UserDeleteDialog({
         </DialogHeader>
 
         {user && (
-          <div className='flex items-center gap-3 rounded-lg bg-gray-50 px-4 py-3 border border-gray-200'>
+          <div className='flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3 border border-gray-200 dark:border-white/8'>
             <div className='h-9 w-9 rounded-full bg-theme-primary-start/10 flex items-center justify-center shrink-0'>
               <span className='text-sm font-bold text-theme-primary-start'>
                 {user.fullName.charAt(0).toUpperCase()}

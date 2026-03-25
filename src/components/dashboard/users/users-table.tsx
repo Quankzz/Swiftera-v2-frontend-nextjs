@@ -18,7 +18,7 @@ type UsersTableProps = {
 function AvatarCell({ user }: { user: User }) {
   return (
     <div className='flex items-center gap-3'>
-      <div className='w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200'>
+      <div className='w-8 h-8 rounded-full bg-gray-100 dark:bg-white/8 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200 dark:border-white/8'>
         {user.avatarUrl ? (
           <Image
             src={user.avatarUrl}
@@ -134,7 +134,7 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
 
           return (
             <div className='flex items-center gap-1 flex-nowrap'>
-              <span className='inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs text-blue-700 font-medium whitespace-nowrap'>
+              <span className='inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-500/30 px-2 py-0.5 text-xs text-blue-700 dark:text-blue-300 font-medium whitespace-nowrap'>
                 <Shield size={10} className='shrink-0' />
                 {top.name}
               </span>
@@ -144,7 +144,7 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
                     .slice(1)
                     .map((r) => r.name)
                     .join(', ')}
-                  className='inline-flex items-center rounded-full bg-gray-100 border border-gray-200 px-2 py-0.5 text-xs text-gray-500 font-medium whitespace-nowrap cursor-default shrink-0'
+                  className='inline-flex items-center rounded-full bg-gray-100 dark:bg-white/8 border border-gray-200 dark:border-white/8 px-2 py-0.5 text-xs text-gray-500 font-medium whitespace-nowrap cursor-default shrink-0'
                 >
                   +{rest}
                 </span>

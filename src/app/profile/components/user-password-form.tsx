@@ -26,14 +26,19 @@ export function UserPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const msg = validate();
-    if (msg) { setError(msg); return; }
+    if (msg) {
+      setError(msg);
+      return;
+    }
     setSaving(true);
     setError('');
     // TODO: wire up to real API
     await new Promise((r) => setTimeout(r, 800));
     setSaving(false);
     setDone(true);
-    setCurrent(''); setNext(''); setConfirm('');
+    setCurrent('');
+    setNext('');
+    setConfirm('');
     setTimeout(() => setDone(false), 3000);
   };
 
@@ -46,12 +51,17 @@ export function UserPasswordForm() {
     placeholder: string,
   ) => (
     <div className='space-y-1.5'>
-      <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>{label}</label>
+      <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+        {label}
+      </label>
       <div className='relative'>
         <Input
           type={show ? 'text' : 'password'}
           value={value}
-          onChange={(e) => { onChange(e.target.value); setError(''); }}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setError('');
+          }}
           placeholder={placeholder}
           className='bg-gray-50/50 pr-10'
         />
@@ -67,27 +77,52 @@ export function UserPasswordForm() {
   );
 
   return (
-    <div className='bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6'>
-      <div className='flex items-center gap-3 pb-4 border-b border-gray-100'>
-        <div className='h-10 w-10 rounded-full bg-purple-50 flex items-center justify-center'>
-          <Lock size={18} className='text-purple-600' />
+    <div className='bg-white dark:bg-[#1a1a1f] rounded-xl border border-gray-200 dark:border-white/8 shadow-sm p-6 space-y-6'>
+      <div className='flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/8'>
+        <div className='h-10 w-10 rounded-full bg-purple-50 dark:bg-purple-500/15 flex items-center justify-center'>
+          <Lock size={18} className='text-purple-600 dark:text-purple-400' />
         </div>
         <div>
-          <h2 className='text-base font-semibold text-text-main'>Đổi mật khẩu</h2>
-          <p className='text-xs text-text-sub'>Mật khẩu mới phải có ít nhất 8 ký tự</p>
+          <h2 className='text-base font-semibold text-text-main'>
+            Đổi mật khẩu
+          </h2>
+          <p className='text-xs text-text-sub'>
+            Mật khẩu mới phải có ít nhất 8 ký tự
+          </p>
         </div>
       </div>
 
       {done && (
-        <div className='flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700'>
+        <div className='flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 px-4 py-3 text-sm text-green-700 dark:text-green-400'>
           <CheckCircle2 size={16} /> Mật khẩu đã được đổi thành công.
         </div>
       )}
 
       <form onSubmit={handleSubmit} className='space-y-4'>
-        {field('Mật khẩu hiện tại', current, setCurrent, showCurrent, () => setShowCurrent((v) => !v), '••••••••')}
-        {field('Mật khẩu mới', next, setNext, showNext, () => setShowNext((v) => !v), 'Ít nhất 8 ký tự')}
-        {field('Xác nhận mật khẩu mới', confirm, setConfirm, showConfirm, () => setShowConfirm((v) => !v), 'Nhập lại mật khẩu mới')}
+        {field(
+          'Mật khẩu hiện tại',
+          current,
+          setCurrent,
+          showCurrent,
+          () => setShowCurrent((v) => !v),
+          '••••••••',
+        )}
+        {field(
+          'Mật khẩu mới',
+          next,
+          setNext,
+          showNext,
+          () => setShowNext((v) => !v),
+          'Ít nhất 8 ký tự',
+        )}
+        {field(
+          'Xác nhận mật khẩu mới',
+          confirm,
+          setConfirm,
+          showConfirm,
+          () => setShowConfirm((v) => !v),
+          'Nhập lại mật khẩu mới',
+        )}
 
         {error && <p className='text-xs text-red-500'>{error}</p>}
 

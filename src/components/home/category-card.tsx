@@ -13,7 +13,7 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
     <Link
       href={`/catalog?category=${category.categoryId}`}
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden rounded-md border border-border/40 bg-gray-50 p-4 transition-all duration-300 hover:border-theme-primary-start/30 hover:shadow-md',
+        'group relative flex h-full flex-col overflow-hidden rounded-md border border-border/40 dark:border-white/6 bg-gray-50 dark:bg-white/4 p-4 transition-all duration-300 hover:border-theme-primary-start/30 hover:shadow-md dark:hover:bg-white/8',
         className,
       )}
     >

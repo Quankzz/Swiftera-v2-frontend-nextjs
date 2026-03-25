@@ -7,7 +7,7 @@ import logo from '../../public/logo.png';
 
 export function Footer() {
   return (
-    <footer className='border-t-2 border-border/15 bg-background pt-10 pb-10 px-6 lg:px-18'>
+    <footer className='border-t-2 border-border/15 dark:border-white/5 bg-background dark:bg-[#0a0a0e] pt-10 pb-10 px-6 lg:px-18'>
       <div className='mx-auto max-w-full'>
         <div className='mb-20 grid gap-12 md:grid-cols-12'>
           <div className='md:col-span-5'>
@@ -107,7 +107,7 @@ export function Footer() {
 
           <div className='md:col-span-3'>
             <p className='mb-6 font-bold text-text-main'>Nhận tin ưu đãi</p>
-            <div className='flex rounded-xl bg-muted p-1'>
+            <div className='flex rounded-xl bg-muted dark:bg-white/8 p-1'>
               <Input
                 type='email'
                 placeholder='Nhập email của bạn'
@@ -124,7 +124,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className='flex flex-col items-center justify-between gap-6 border-t border-border/10 pt-8 md:flex-row'>
+        <div className='flex flex-col items-center justify-between gap-6 border-t border-border/10 dark:border-white/5 pt-8 md:flex-row'>
           <p className='text-xs text-text-sub'>
             © {new Date().getFullYear()} Swiftera. Bảo lưu mọi quyền.
           </p>

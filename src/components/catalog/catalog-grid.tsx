@@ -179,7 +179,7 @@ export function CatalogGrid({
         <div
           className={cn(
             // Mobile drawer
-            'fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white p-5 shadow-xl transition-transform duration-300 lg:static lg:z-auto lg:w-auto lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none',
+            'fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white dark:bg-[#0f0f11] p-5 shadow-xl transition-transform duration-300 lg:static lg:z-auto lg:w-auto lg:overflow-visible lg:bg-transparent lg:dark:bg-transparent lg:p-0 lg:shadow-none',
             // Desktop: take 1 of 4 cols naturally (min-w-[220px] max-w-[260px])
             'lg:min-w-55 lg:max-w-65 lg:flex-none lg:translate-x-0',
             // Mobile open/close
@@ -198,7 +198,7 @@ export function CatalogGrid({
         {/* Product grid (takes remaining 3 cols) */}
         <div className='min-h-96 min-w-0 flex-1'>
           {visible.length === 0 ? (
-            <div className='flex min-h-96 flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 py-24 text-center'>
+            <div className='flex min-h-96 flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 dark:border-white/10 py-24 text-center'>
               <SearchX
                 className='size-20 text-theme-primary-start'
                 strokeWidth={1.5}
@@ -222,7 +222,7 @@ export function CatalogGrid({
           {total > 0 && (
             <div className='mt-10 flex flex-col items-center gap-4'>
               {/* Progress bar */}
-              <div className='w-full max-w-xs overflow-hidden rounded-full bg-gray-200'>
+              <div className='w-full max-w-xs overflow-hidden rounded-full bg-gray-200 dark:bg-white/10'>
                 <div
                   role='progressbar'
                   aria-valuenow={Math.round(progress)}
@@ -249,7 +249,7 @@ export function CatalogGrid({
                 <button
                   type='button'
                   onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}
-                  className='flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-text-main shadow-sm transition hover:border-gray-300 hover:shadow-md'
+                  className='flex items-center gap-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-5 py-2.5 text-sm font-medium text-text-main shadow-sm transition hover:border-gray-300 dark:hover:bg-white/10 hover:shadow-md'
                 >
                   {/* <SlidersHorizontal className='size-4 text-text-sub' /> */}
                   Xem thêm sản phẩm

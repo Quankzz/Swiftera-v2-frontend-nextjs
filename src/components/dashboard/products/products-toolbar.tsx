@@ -87,7 +87,7 @@ export function ProductsToolbar({
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder='Tìm sản phẩm...'
-            className='h-9 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+            className='h-9 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] pl-9 pr-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
           />
           {search && (
             <button
@@ -106,7 +106,7 @@ export function ProductsToolbar({
           <select
             value={categoryFilter}
             onChange={(e) => onCategoryFilterChange(e.target.value)}
-            className='h-9 appearance-none rounded-lg border border-gray-200 bg-white pl-9 pr-8 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+            className='h-9 appearance-none rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] pl-9 pr-8 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
           >
             <option value=''>Tất cả danh mục</option>
             {categoryOptions.map((c) => (
@@ -121,7 +121,7 @@ export function ProductsToolbar({
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className='h-9 appearance-none rounded-lg border border-gray-200 bg-white px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+          className='h-9 appearance-none rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -138,7 +138,7 @@ export function ProductsToolbar({
           <button
             type='button'
             onClick={allSelected ? onClearSelection : onSelectAll}
-            className='flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-text-main transition hover:bg-gray-50'
+            className='flex items-center gap-1.5 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-1.5 text-sm text-text-main transition hover:bg-gray-50 dark:hover:bg-white/8'
           >
             {allSelected ? (
               <CheckSquare size={15} className='text-theme-primary-start' />
@@ -185,7 +185,7 @@ export function ProductsToolbar({
               type='button'
               disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
-              className='flex size-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-text-sub transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+              className='flex size-8 items-center justify-center rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-40'
             >
               <ChevronLeft size={16} />
             </button>
@@ -198,7 +198,7 @@ export function ProductsToolbar({
                 className={`flex size-8 items-center justify-center rounded-lg border text-sm font-medium transition ${
                   p === page
                     ? 'border-theme-primary-start bg-theme-primary-start text-white'
-                    : 'border-gray-200 bg-white text-text-main hover:bg-gray-50'
+                    : 'border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-main hover:bg-gray-50 dark:hover:bg-white/8'
                 }`}
               >
                 {p}
@@ -209,7 +209,7 @@ export function ProductsToolbar({
               type='button'
               disabled={page >= totalPages}
               onClick={() => onPageChange(page + 1)}
-              className='flex size-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-text-sub transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+              className='flex size-8 items-center justify-center rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-40'
             >
               <ChevronRight size={16} />
             </button>

@@ -116,7 +116,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
   return (
     <>
       {/* Stats bar */}
-      <div className='flex items-center justify-between rounded-lg bg-gray-50 px-4 py-2.5 border border-gray-200'>
+      <div className='flex items-center justify-between rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-2.5 border border-gray-200 dark:border-white/8'>
         <div className='flex items-center gap-2 text-sm'>
           <ShieldCheck size={14} className='text-green-600' />
           <span className='text-text-sub'>
@@ -162,7 +162,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               activeModule === ''
                 ? 'bg-theme-primary-start text-white'
-                : 'bg-gray-100 text-text-sub hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-white/8 text-text-sub hover:bg-gray-200 dark:hover:bg-white/12'
             }`}
           >
             Tất cả
@@ -179,7 +179,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
                 className={`rounded-full px-3 py-1 text-xs font-medium transition-colors flex items-center gap-1.5 ${
                   activeModule === m
                     ? 'bg-theme-primary-start text-white'
-                    : 'bg-gray-100 text-text-sub hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-white/8 text-text-sub hover:bg-gray-200 dark:hover:bg-white/12'
                 }`}
               >
                 {m}
@@ -201,7 +201,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
       </div>
 
       {/* Permissions list */}
-      <div className='flex-1 overflow-y-auto min-h-0 rounded-lg border border-gray-200'>
+      <div className='flex-1 overflow-y-auto min-h-0 rounded-lg border border-gray-200 dark:border-white/8'>
         {isLoading ? (
           <div className='flex items-center justify-center py-10'>
             <div className='h-5 w-5 rounded-full border-2 border-theme-primary-start border-t-transparent animate-spin' />
@@ -211,7 +211,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
             Không tìm thấy quyền nào
           </div>
         ) : (
-          <div className='divide-y divide-gray-100'>
+          <div className='divide-y divide-gray-100 dark:divide-white/5'>
             {allModules
               .filter((m) => !activeModule || m === activeModule)
               .map((moduleName) => {
@@ -228,7 +228,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
 
                 return (
                   <div key={moduleName}>
-                    <div className='flex items-center gap-3 bg-gray-50 px-4 py-2.5 sticky top-0'>
+                    <div className='flex items-center gap-3 bg-gray-50 dark:bg-white/5 px-4 py-2.5 sticky top-0'>
                       <input
                         type='checkbox'
                         className='h-4 w-4 accent-theme-primary-start cursor-pointer'
@@ -253,7 +253,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
                     {modulePerms.map((perm) => (
                       <label
                         key={perm.permissionId}
-                        className='flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors'
+                        className='flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors'
                       >
                         <input
                           type='checkbox'

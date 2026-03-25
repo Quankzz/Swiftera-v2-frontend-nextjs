@@ -44,13 +44,13 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/75 bg-white p-7 shadow-sm',
+        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/75 dark:border-white/6 bg-white dark:bg-[#1a1a1f] p-7 shadow-sm dark:shadow-black/30',
         !isPreview &&
-          'transition-transform duration-500 hover:-translate-y-1 hover:shadow-md',
+          'transition-transform duration-500 hover:-translate-y-1 hover:shadow-md dark:hover:shadow-black/50',
       )}
     >
       {!isPreview && (
-        <div className='absolute right-3 top-3 z-10 rounded-full bg-white/90 p-2 shadow-sm'>
+        <div className='absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-white/10 p-2 shadow-sm'>
           <Heart className='size-4 text-muted-foreground' />
         </div>
       )}
@@ -92,7 +92,7 @@ export function ProductCard({
             )}
           />
         ) : (
-          <div className='flex h-full w-full items-center justify-center rounded-md bg-gray-100 text-xs text-text-sub'>
+          <div className='flex h-full w-full items-center justify-center rounded-md bg-gray-100 dark:bg-white/8 text-xs text-text-sub'>
             Chưa có ảnh
           </div>
         )}

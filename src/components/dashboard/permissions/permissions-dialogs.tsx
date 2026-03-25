@@ -154,7 +154,7 @@ export function PermissionFormDialog({
                 Phương thức
               </label>
               <select
-                className='w-full rounded-md border border-gray-200 px-3 py-2 text-sm'
+                className='w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-2 text-sm text-text-main'
                 value={formState.method}
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, method: e.target.value }))
@@ -188,7 +188,7 @@ export function PermissionFormDialog({
             </label>
             <div className='flex gap-2'>
               <select
-                className='w-1/2 rounded-md border border-gray-200 px-3 py-2 text-sm'
+                className='w-1/2 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-2 text-sm text-text-main'
                 value={formState.module}
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, module: e.target.value }))

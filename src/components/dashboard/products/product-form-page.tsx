@@ -59,8 +59,8 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className='rounded-md border border-gray-200 bg-white'>
-      <div className='border-b border-gray-100 px-5 py-3.5'>
+    <section className='rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f]'>
+      <div className='border-b border-gray-100 dark:border-white/8 px-5 py-3.5'>
         <h3 className='text-sm font-semibold text-text-main'>{title}</h3>
       </div>
       <div className='px-5 py-5'>{children}</div>
@@ -114,7 +114,7 @@ function TextInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       className={cn(
-        'h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20',
+        'h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20',
         className,
       )}
     />
@@ -161,9 +161,9 @@ function ImageItem({
         />
       )}
 
-      <div className='flex gap-3 rounded-md border border-gray-200 bg-gray-50 p-3'>
+      <div className='flex gap-3 rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 p-3'>
         {/* Preview thumbnail */}
-        <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white border border-gray-200'>
+        <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white dark:bg-[#1a1a1f] border border-gray-200 dark:border-white/8'>
           {img.imageUrl ? (
             <Image
               src={img.imageUrl}
@@ -195,7 +195,7 @@ function ImageItem({
                 'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
                 urlMode
                   ? 'border-theme-primary-start bg-theme-primary-start/5 text-theme-primary-start'
-                  : 'border-gray-200 bg-white text-text-sub hover:bg-gray-50',
+                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub hover:bg-gray-50 dark:hover:bg-white/8',
               )}
             >
               <LinkIcon size={12} />
@@ -208,7 +208,7 @@ function ImageItem({
                 'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
                 !urlMode
                   ? 'border-theme-primary-start bg-theme-primary-start/5 text-theme-primary-start'
-                  : 'border-gray-200 bg-white text-text-sub hover:bg-gray-50',
+                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub hover:bg-gray-50 dark:hover:bg-white/8',
               )}
             >
               <Upload size={12} />
@@ -229,7 +229,7 @@ function ImageItem({
               value={img.imageUrl.startsWith('data:') ? '' : img.imageUrl}
               onChange={(e) => onUpdateUrl(e.target.value)}
               placeholder='https://example.com/image.jpg'
-              className='h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+              className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
             />
           )}
 
@@ -244,7 +244,7 @@ function ImageItem({
                 'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
                 img.isPrimary
                   ? 'cursor-default border-amber-200 bg-amber-50 text-amber-600'
-                  : 'border-gray-200 bg-white text-text-sub hover:border-amber-300 hover:text-amber-600',
+                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] text-text-sub hover:border-amber-300 hover:text-amber-600',
               )}
             >
               <Star
@@ -257,7 +257,7 @@ function ImageItem({
             <button
               type='button'
               onClick={onRemove}
-              className='ml-auto flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-red-500 transition hover:border-red-200 hover:bg-red-50'
+              className='ml-auto flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-1.5 text-xs font-medium text-red-500 transition hover:border-red-200 hover:bg-red-50'
             >
               <Trash2 size={12} />
               Xóa
@@ -344,7 +344,7 @@ export function ProductFormPage({
               <select
                 value={form.categoryId}
                 onChange={(e) => setField('categoryId', e.target.value)}
-                className='h-11 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+                className='h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
               >
                 <option value=''>— Chọn danh mục —</option>
                 {topCategories.map((c) => (
@@ -371,7 +371,7 @@ export function ProductFormPage({
                 onChange={(e) => setField('description', e.target.value)}
                 placeholder='Mô tả ngắn gọn về sản phẩm...'
                 rows={3}
-                className='w-full resize-none rounded-md border border-gray-200 bg-white px-3 py-2.5 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+                className='w-full resize-none rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 py-2.5 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
               />
             </Field>
 
@@ -427,14 +427,14 @@ export function ProductFormPage({
                 required
                 error={showError('minRentalDays')}
               >
-                <div className='flex h-11 overflow-hidden rounded-md border border-gray-200 bg-white focus-within:border-theme-primary-start focus-within:ring-2 focus-within:ring-theme-primary-start/20'>
+                <div className='flex h-11 overflow-hidden rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] focus-within:border-theme-primary-start focus-within:ring-2 focus-within:ring-theme-primary-start/20'>
                   <button
                     type='button'
                     onClick={() => {
                       const cur = parseInt(form.minRentalDays) || 1;
                       if (cur > 1) setField('minRentalDays', String(cur - 1));
                     }}
-                    className='flex w-10 shrink-0 items-center justify-center border-r border-gray-200 text-lg font-medium text-text-sub transition hover:bg-gray-50 hover:text-text-main select-none'
+                    className='flex w-10 shrink-0 items-center justify-center border-r border-gray-200 dark:border-white/8 text-lg font-medium text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/8 hover:text-text-main select-none'
                   >
                     −
                   </button>
@@ -444,13 +444,22 @@ export function ProductFormPage({
                     value={form.minRentalDays}
                     onChange={(e) => {
                       const raw = e.target.value.replace(/\D/g, '');
-                      setField('minRentalDays', raw === '' ? '' : String(Math.max(1, parseInt(raw))));
+                      setField(
+                        'minRentalDays',
+                        raw === '' ? '' : String(Math.max(1, parseInt(raw))),
+                      );
                     }}
                     onWheel={(e) => e.currentTarget.blur()}
                     onKeyDown={(e) => {
                       if (
                         !/^[0-9]$/.test(e.key) &&
-                        !['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.key)
+                        ![
+                          'Backspace',
+                          'Delete',
+                          'ArrowUp',
+                          'ArrowDown',
+                          'Tab',
+                        ].includes(e.key)
                       ) {
                         e.preventDefault();
                       }
@@ -464,7 +473,7 @@ export function ProductFormPage({
                       const cur = parseInt(form.minRentalDays) || 0;
                       setField('minRentalDays', String(cur + 1));
                     }}
-                    className='flex w-10 shrink-0 items-center justify-center border-l border-gray-200 text-lg font-medium text-text-sub transition hover:bg-gray-50 hover:text-text-main select-none'
+                    className='flex w-10 shrink-0 items-center justify-center border-l border-gray-200 dark:border-white/8 text-lg font-medium text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/8 hover:text-text-main select-none'
                   >
                     +
                   </button>
@@ -483,7 +492,7 @@ export function ProductFormPage({
                 {colors.map((c) => (
                   <div
                     key={c.value}
-                    className='flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 pl-1.5 pr-2.5 py-1'
+                    className='flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 pl-1.5 pr-2.5 py-1'
                   >
                     <span
                       className='size-4 rounded-full border border-white shadow ring-1 ring-black/10 shrink-0'
@@ -532,7 +541,7 @@ export function ProductFormPage({
             </div>
 
             {/* Custom color */}
-            <div className='rounded-md border border-gray-200 bg-gray-50 p-3'>
+            <div className='rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 p-3'>
               <p className='mb-2.5 text-xs font-medium text-text-sub'>
                 Thêm màu tùy chỉnh
               </p>
@@ -546,7 +555,7 @@ export function ProductFormPage({
                       setCustomColor((p) => ({ ...p, name: e.target.value }))
                     }
                     placeholder='VD: Blue Titanium'
-                    className='h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+                    className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-3 text-sm focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
                   />
                 </div>
                 {/* Styled color picker */}
@@ -554,7 +563,7 @@ export function ProductFormPage({
                   <label className='text-xs text-text-sub'>Chọn màu</label>
                   <label
                     title='Bấm để chọn màu'
-                    className='relative flex h-10 w-28 cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-white px-2.5 transition hover:border-gray-300'
+                    className='relative flex h-10 w-28 cursor-pointer items-center gap-2 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-2.5 transition hover:border-gray-300 dark:hover:border-white/20'
                   >
                     {/* Color swatch */}
                     <span
@@ -618,7 +627,7 @@ export function ProductFormPage({
             <button
               type='button'
               onClick={() => addImage('')}
-              className='flex h-11 items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 bg-gray-50 text-sm text-text-sub transition hover:border-theme-primary-start hover:bg-theme-primary-start/5 hover:text-theme-primary-start'
+              className='flex h-11 items-center justify-center gap-2 rounded-md border border-dashed border-gray-300 dark:border-white/15 bg-gray-50 dark:bg-white/3 text-sm text-text-sub transition hover:border-theme-primary-start hover:bg-theme-primary-start/5 hover:text-theme-primary-start'
             >
               <Plus size={16} />
               Thêm ảnh
@@ -631,7 +640,7 @@ export function ProductFormPage({
           <button
             type='button'
             onClick={() => router.push('/dashboard/products')}
-            className='rounded-md border border-gray-200 px-6 py-2.5 text-sm font-medium text-text-main transition hover:bg-gray-50'
+            className='rounded-md border border-gray-200 dark:border-white/8 px-6 py-2.5 text-sm font-medium text-text-main transition hover:bg-gray-50 dark:hover:bg-white/8'
           >
             Hủy bỏ
           </button>

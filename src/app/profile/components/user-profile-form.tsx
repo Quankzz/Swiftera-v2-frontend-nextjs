@@ -142,9 +142,9 @@ export function UserProfileForm({
   const avatarSrc = finalAvatarUrl;
 
   return (
-    <div className='bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6'>
+    <div className='bg-white dark:bg-[#1a1a1f] rounded-xl border border-gray-200 dark:border-white/8 shadow-sm p-6 space-y-6'>
       {/* Header row */}
-      <div className='flex items-center gap-3 pb-4 border-b border-gray-100'>
+      <div className='flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/8'>
         <div className='h-10 w-10 rounded-full bg-theme-primary-start/10 flex items-center justify-center'>
           <User size={18} className='text-theme-primary-start' />
         </div>
@@ -320,9 +320,8 @@ export function UserProfileForm({
           <Button
             type='submit'
             disabled={saving || !name.trim()}
-            className='bg-theme-primary-start hover:opacity-90 gap-2'
+            className='bg-theme-primary-start hover:opacity-90 gap-2 text-white'
           >
-            <Save size={14} />
             {saving ? 'Đang lưu...' : saved ? 'Đã lưu!' : 'Lưu thay đổi'}
           </Button>
         </div>

@@ -51,16 +51,16 @@ export function ProductViewDialog({
       />
 
       {/* Panel */}
-      <div className='relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl'>
+      <div className='relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white dark:bg-[#1a1a1f] shadow-2xl dark:shadow-black/50'>
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-gray-100 px-6 py-4'>
+        <div className='flex items-center justify-between border-b border-gray-100 dark:border-white/8 px-6 py-4'>
           <h2 className='text-lg font-semibold text-text-main'>
             Chi tiết sản phẩm
           </h2>
           <button
             type='button'
             onClick={onClose}
-            className='flex size-8 items-center justify-center rounded-md text-text-sub transition hover:bg-gray-100 hover:text-text-main'
+            className='flex size-8 items-center justify-center rounded-md text-text-sub transition hover:bg-gray-100 dark:hover:bg-white/8 hover:text-text-main'
           >
             <X size={18} />
           </button>
@@ -70,7 +70,7 @@ export function ProductViewDialog({
         <div className='overflow-y-auto max-h-[80vh]'>
           <div className='grid grid-cols-1 gap-0 md:grid-cols-2'>
             {/* Left: primary image */}
-            <div className='flex items-center justify-center bg-gray-50 p-8'>
+            <div className='flex items-center justify-center bg-gray-50 dark:bg-white/3 p-8'>
               {primaryImage ? (
                 <div className='relative h-64 w-64'>
                   <Image
@@ -82,7 +82,7 @@ export function ProductViewDialog({
                   />
                 </div>
               ) : (
-                <div className='flex h-64 w-64 flex-col items-center justify-center gap-2 rounded-md bg-gray-100 text-text-sub'>
+                <div className='flex h-64 w-64 flex-col items-center justify-center gap-2 rounded-md bg-gray-100 dark:bg-white/5 text-text-sub'>
                   <ImageOff size={32} className='opacity-40' />
                   <span className='text-sm'>Không có ảnh</span>
                 </div>
@@ -107,7 +107,7 @@ export function ProductViewDialog({
               </div>
 
               {/* Price block */}
-              <div className='rounded-md bg-gray-50 px-4 py-3'>
+              <div className='rounded-md bg-gray-50 dark:bg-white/5 px-4 py-3'>
                 <div className='flex items-baseline gap-2'>
                   <span className='text-2xl font-bold text-theme-accent-start'>
                     {formatter.format(product.dailyPrice)}
@@ -171,7 +171,7 @@ export function ProductViewDialog({
 
           {/* All images gallery */}
           {product.productImages.length > 1 && (
-            <div className='border-t border-gray-100 px-6 py-5'>
+            <div className='border-t border-gray-100 dark:border-white/8 px-6 py-5'>
               <div className='mb-3 flex items-center gap-2 text-sm font-medium text-text-main'>
                 <Layers size={15} className='text-text-sub' />
                 Tất cả hình ảnh ({product.productImages.length})
@@ -184,7 +184,7 @@ export function ProductViewDialog({
                       'relative h-20 w-20 overflow-hidden rounded-md border-2',
                       img.isPrimary
                         ? 'border-theme-primary-start'
-                        : 'border-gray-200',
+                        : 'border-gray-200 dark:border-white/8',
                     )}
                   >
                     <Image
@@ -207,11 +207,11 @@ export function ProductViewDialog({
         </div>
 
         {/* Footer */}
-        <div className='flex justify-end border-t border-gray-100 px-6 py-4'>
+        <div className='flex justify-end border-t border-gray-100 dark:border-white/8 px-6 py-4'>
           <button
             type='button'
             onClick={onClose}
-            className='rounded-md border border-gray-200 px-5 py-2 text-sm font-medium text-text-main transition hover:bg-gray-50'
+            className='rounded-md border border-gray-200 dark:border-white/8 px-5 py-2 text-sm font-medium text-text-main transition hover:bg-gray-50 dark:hover:bg-white/8'
           >
             Đóng
           </button>

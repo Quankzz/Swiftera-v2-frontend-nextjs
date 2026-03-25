@@ -6,9 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 export default function FeedbackPage() {
   return (
     <Layout>
-      <section className='min-h-screen bg-white py-10'>
+      <section className='min-h-screen bg-white dark:bg-[#0f0f11] py-10'>
         <div className='mx-auto max-w-6xl px-4 lg:px-8'>
-          <div className='mb-6 rounded-2xl border border-border/60 bg-white p-6 md:p-8'>
+          <div className='mb-6 rounded-2xl border border-border/60 dark:border-white/8 bg-white dark:bg-[#1a1a1f] p-6 md:p-8'>
             <h1 className='text-4xl font-extrabold text-text-main'>
               Ý kiến khách hàng
             </h1>
@@ -19,7 +19,7 @@ export default function FeedbackPage() {
           </div>
 
           <form className='space-y-6'>
-            <div className='rounded-2xl border border-border/60 bg-white p-6 md:p-8'>
+            <div className='rounded-2xl border border-border/60 dark:border-white/8 bg-white dark:bg-[#1a1a1f] p-6 md:p-8'>
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <label className='text-sm font-semibold text-text-main'>
@@ -36,7 +36,7 @@ export default function FeedbackPage() {
                   <label className='text-sm font-semibold text-text-main'>
                     Mã đơn hàng
                   </label>
-                  <select className='h-12 w-full rounded-md border border-input bg-white px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'>
+                  <select className='h-12 w-full rounded-md border border-input dark:border-white/10 bg-white dark:bg-white/5 px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'>
                     <option value=''>-- Chọn đơn hàng (nếu có) --</option>
                     <option value='DH-2026-001'>#DH-2026-001</option>
                     <option value='DH-2026-002'>#DH-2026-002</option>

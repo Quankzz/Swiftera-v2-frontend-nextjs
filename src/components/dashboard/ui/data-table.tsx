@@ -122,7 +122,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className='space-y-3'>
       {/* Toolbar */}
-      <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm dark:bg-gray-900 dark:border-gray-700'>
+      <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] px-4 py-3 shadow-sm'>
         <div className='flex items-center gap-2 flex-1 min-w-0'>
           {searchColumn && (
             <div className='relative max-w-xs w-full'>
@@ -171,10 +171,10 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className='rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm dark:bg-gray-900 dark:border-gray-700'>
+      <div className='rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-[#1a1a1f] overflow-hidden shadow-sm'>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm text-left'>
-            <thead className='bg-gray-50 border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700'>
+            <thead className='bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/8'>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -203,7 +203,7 @@ export function DataTable<TData, TValue>({
                 </tr>
               ))}
             </thead>
-            <tbody className='divide-y divide-gray-100 dark:divide-gray-700/60'>
+            <tbody className='divide-y divide-gray-100 dark:divide-white/5'>
               {isLoading ? (
                 <tr>
                   <td
@@ -224,7 +224,7 @@ export function DataTable<TData, TValue>({
                     colSpan={columns.length}
                     className='px-4 py-10 text-center'
                   >
-                    <div className='inline-flex items-center gap-2 rounded-lg bg-red-50 px-4 py-2 text-sm text-theme-primary-start dark:bg-red-900/20'>
+                    <div className='inline-flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-2 text-sm text-theme-primary-start'>
                       {errorMessage}
                     </div>
                   </td>
@@ -242,7 +242,7 @@ export function DataTable<TData, TValue>({
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className='hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors'
+                    className='hover:bg-gray-50 dark:hover:bg-white/5 transition-colors'
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className='px-4 py-3.5'>

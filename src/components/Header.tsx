@@ -10,18 +10,22 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Moon,
   Search,
   ShoppingCart,
+  Sun,
   UserRound,
   FileText,
   Settings,
 } from 'lucide-react';
 import { topLevelCategories } from '@/data/categories';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/context/theme-context';
 import logo from '../../public/logo.png';
 
 export function Header() {
   const HOVER_BRIDGE_HEIGHT = 10;
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   const sortedCategories = useMemo(
     () => [...topLevelCategories].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -67,10 +71,10 @@ export function Header() {
     <>
       <header
         className={cn(
-          'top-0 w-full bg-white transition-colors duration-300 shadow-sm',
+          'top-0 w-full bg-white dark:bg-[#0f0f11] transition-colors duration-300 shadow-sm dark:shadow-black/30',
           isSearchOpen
             ? 'z-50 border-transparent'
-            : 'z-40 border-b border-border/20 backdrop-blur',
+            : 'z-40 border-b border-border/20 dark:border-white/5 backdrop-blur',
         )}
       >
         {isSearchOpen && (
@@ -82,7 +86,11 @@ export function Header() {
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           <div className='flex items-center gap-4 lg:gap-6'>
             <div className='flex items-center gap-3 relative z-30'>
-              <Button variant='ghost' size='icon' className='lg:hidden'>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='lg:hidden dark:hover:bg-white/10'
+              >
                 <Menu className='size-5' />
               </Button>
               <Link href='/' className='flex items-center gap-2'>
@@ -91,7 +99,7 @@ export function Header() {
                   alt='logo'
                   width={150}
                   height={40}
-                  className='object-contain'
+                  className='object-contain dark:brightness-[1.15]'
                 />
               </Link>
             </div>
@@ -100,7 +108,7 @@ export function Header() {
             <div className='relative hidden flex-1 lg:flex z-50'>
               <div
                 className={cn(
-                  'flex h-12 w-full max-w-2xl cursor-text items-center rounded-full border border-border/60 bg-white px-4 shadow-sm transition-all',
+                  'flex h-12 w-full max-w-2xl cursor-text items-center rounded-full border border-border/60 dark:border-white/10 bg-white dark:bg-white/5 px-4 shadow-sm transition-all',
                 )}
                 onClick={() => setIsSearchOpen(true)}
               >
@@ -114,7 +122,7 @@ export function Header() {
               </div>
 
               {isSearchOpen && (
-                <div className='absolute -top-2 left-0 z-50 p-2 w-full rounded-3xl bg-white shadow-2xl'>
+                <div className='absolute -top-2 left-0 z-50 p-2 w-full rounded-3xl bg-white dark:bg-[#1a1a1f] shadow-2xl dark:shadow-black/60'>
                   <div className='flex h-12 items-center gap-3 border-2 border-theme-primary-start rounded-full px-4'>
                     <Search className='size-5 text-text-sub' />
                     <input
@@ -129,7 +137,7 @@ export function Header() {
                         e.stopPropagation();
                         setIsSearchOpen(false);
                       }}
-                      className='flex size-8 items-center justify-center rounded-full hover:bg-gray-100'
+                      className='flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10'
                     >
                       <svg
                         xmlns='http://www.w3.org/2000/svg'
@@ -156,10 +164,10 @@ export function Header() {
                           <button
                             type='button'
                             key={category.categoryId}
-                            className='group flex flex-col items-center justify-center gap-3 rounded-2xl bg-gray-50/50 p-4 transition-colors hover:bg-gray-100'
+                            className='group flex flex-col items-center justify-center gap-3 rounded-2xl bg-gray-50/50 dark:bg-white/5 p-4 transition-colors hover:bg-gray-100 dark:hover:bg-white/10'
                           >
                             {category.image && (
-                              <div className='relative h-20 w-20 overflow-hidden mix-blend-multiply'>
+                              <div className='relative h-20 w-20 overflow-hidden mix-blend-multiply dark:mix-blend-normal'>
                                 <Image
                                   src={category.image}
                                   alt={category.name}
@@ -186,7 +194,12 @@ export function Header() {
                 isSearchOpen ? 'z-30' : 'z-50',
               )}
             >
-              <Button variant='ghost' size='icon' aria-label='Wishlist'>
+              <Button
+                variant='ghost'
+                size='icon'
+                aria-label='Wishlist'
+                className='dark:hover:bg-white/10'
+              >
                 <Heart className='size-5 text-text-main' />
               </Button>
 
@@ -197,15 +210,18 @@ export function Header() {
                   size='icon'
                   aria-label='Tài khoản'
                   onClick={() => setIsUserMenuOpen((v) => !v)}
-                  className={isUserMenuOpen ? 'bg-gray-100' : ''}
+                  className={cn(
+                    'dark:hover:bg-white/10',
+                    isUserMenuOpen ? 'bg-gray-100 dark:bg-white/10' : '',
+                  )}
                 >
                   <UserRound className='size-5 text-text-main' />
                 </Button>
 
                 {isUserMenuOpen && (
-                  <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 bg-white shadow-xl py-1 z-50 animate-in fade-in slide-in-from-top-1'>
+                  <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1'>
                     {/* User info header */}
-                    <div className='px-4 py-3 border-b border-gray-100'>
+                    <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
                       <p className='text-sm font-semibold text-text-main'>
                         Khách hàng
                       </p>
@@ -218,7 +234,7 @@ export function Header() {
                       <Link
                         href='/profile'
                         onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
                       >
                         <UserRound
                           size={15}
@@ -229,7 +245,7 @@ export function Header() {
                       <Link
                         href='/my-orders'
                         onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
                       >
                         <FileText
                           size={15}
@@ -240,7 +256,7 @@ export function Header() {
                       <Link
                         href='/settings'
                         onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
                       >
                         <Settings
                           size={15}
@@ -251,7 +267,7 @@ export function Header() {
                       <Link
                         href='/dashboard'
                         onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 hover:text-theme-primary-start transition-colors'
+                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
                       >
                         <LayoutDashboard
                           size={15}
@@ -261,10 +277,10 @@ export function Header() {
                       </Link>
                     </div>
 
-                    <div className='border-t border-gray-100 py-1'>
+                    <div className='border-t border-gray-100 dark:border-white/8 py-1'>
                       <button
                         onClick={() => setIsUserMenuOpen(false)}
-                        className='flex w-full items-center gap-3 px-4 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 transition-colors'
+                        className='flex w-full items-center gap-3 px-4 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-theme-primary-start/10 transition-colors'
                       >
                         <LogOut size={15} className='shrink-0' />
                         Đăng xuất
@@ -274,13 +290,33 @@ export function Header() {
                 )}
               </div>
 
-              <Button variant='ghost' size='icon' aria-label='Cart'>
+              {/* Dark / Light mode toggle */}
+              <Button
+                variant='ghost'
+                size='icon'
+                aria-label='Chuyển chế độ sáng/tối'
+                onClick={toggleTheme}
+                className='dark:hover:bg-white/10'
+              >
+                {resolvedTheme === 'dark' ? (
+                  <Sun className='size-5 text-text-main' />
+                ) : (
+                  <Moon className='size-5 text-text-main' />
+                )}
+              </Button>
+
+              <Button
+                variant='ghost'
+                size='icon'
+                aria-label='Cart'
+                className='dark:hover:bg-white/10'
+              >
                 <ShoppingCart className='size-5 text-text-main' />
               </Button>
               <Button
                 variant='secondary'
                 size='icon'
-                className='hidden rounded-full bg-foreground text-white hover:bg-foreground/90 lg:inline-flex'
+                className='hidden rounded-full bg-foreground text-white hover:bg-foreground/90 dark:bg-white/15 dark:hover:bg-white/25 lg:inline-flex'
                 aria-label='More actions'
               >
                 <Menu className='size-5' />
@@ -324,7 +360,7 @@ export function Header() {
             (hoveredCategoryData.children?.length ||
               hoveredCategoryData.brands?.length) ? (
               <div
-                className='absolute left-1/2 w-screen -translate-x-1/2 border-t border-border/40 bg-white shadow-xl animate-in fade-in slide-in-from-top-1 z-50 cursor-default'
+                className='absolute left-1/2 w-screen -translate-x-1/2 border-t border-border/40 dark:border-white/5 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default'
                 style={{ top: `calc(100% + ${HOVER_BRIDGE_HEIGHT}px)` }}
                 onMouseEnter={() =>
                   setHoveredCategoryId(hoveredCategoryData.categoryId)
@@ -357,13 +393,13 @@ export function Header() {
                               {/* Sub-menu level 3 */}
                               {child.children && child.children.length > 0 && (
                                 <div className='absolute left-full top-0 pl-8 hidden group-hover/child:block z-50'>
-                                  <div className='w-64 rounded-2xl bg-white shadow-xl border border-gray-100 p-4'>
+                                  <div className='w-64 rounded-2xl bg-white dark:bg-[#1e1e26] shadow-xl dark:shadow-black/50 border border-gray-100 dark:border-white/8 p-4'>
                                     <ul className='space-y-1.5'>
                                       {child.children.map((subChild) => (
                                         <li key={subChild.categoryId}>
                                           <Link
                                             href={`/${subChild.slug}`}
-                                            className='block px-4 py-2.5 rounded-xl hover:bg-rose-50/50 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors'
+                                            className='block px-4 py-2.5 rounded-xl hover:bg-rose-50/50 dark:hover:bg-theme-primary-start/10 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors'
                                           >
                                             {subChild.name}
                                           </Link>
@@ -382,7 +418,7 @@ export function Header() {
                   {hoveredCategoryData.brands &&
                     hoveredCategoryData.brands.length > 0 && (
                       <div className='w-70 shrink-0'>
-                        <h3 className='text-lg font-bold text-color-text-main mb-6'>
+                        <h3 className='text-lg font-bold text-text-main mb-6'>
                           Brands
                         </h3>
                         <ul className='space-y-2'>

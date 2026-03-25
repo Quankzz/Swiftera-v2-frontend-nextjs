@@ -57,15 +57,15 @@ const budgetProducts = [...products].sort(
 export default function Home() {
   return (
     <Layout>
-      <div className='bg-white pb-20'>
+      <div className='bg-white dark:bg-[#0f0f11] pb-20'>
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           <HeroBanner slides={heroSlides} />
 
           {/* Highlight stats */}
-          <div className='mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-border/40 bg-white/80 p-4 shadow-sm md:grid-cols-2 lg:grid-cols-4'>
+          <div className='mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-border/40 dark:border-white/5 bg-white/80 dark:bg-white/4 p-4 shadow-sm md:grid-cols-2 lg:grid-cols-4'>
             {highlightStats.map((item) => (
               <div key={item.label} className='flex items-center gap-3'>
-                <span className='flex size-11 items-center justify-center rounded-full bg-rose-50 text-theme-primary-start'>
+                <span className='flex size-11 items-center justify-center rounded-full bg-rose-50 dark:bg-theme-primary-start/15 text-theme-primary-start'>
                   <item.icon className='size-5' />
                 </span>
                 <p className='text-sm font-semibold text-text-main'>

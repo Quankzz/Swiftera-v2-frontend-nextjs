@@ -33,9 +33,9 @@ export function CategoryDeleteDialog({
       className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className='w-full max-w-md rounded-xl bg-white shadow-2xl'>
+      <div className='w-full max-w-md rounded-xl bg-white dark:bg-[#1a1a1f] shadow-2xl dark:shadow-black/50'>
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-gray-100 px-6 py-4'>
+        <div className='flex items-center justify-between border-b border-gray-100 dark:border-white/8 px-6 py-4'>
           <div className='flex items-center gap-2 text-red-500'>
             <AlertTriangle className='size-5' />
             <h2 className='text-base font-semibold'>Xoá danh mục</h2>
@@ -43,7 +43,7 @@ export function CategoryDeleteDialog({
           <button
             type='button'
             onClick={onClose}
-            className='rounded-sm p-1 text-text-sub hover:bg-gray-100 transition'
+            className='rounded-sm p-1 text-text-sub hover:bg-gray-100 dark:hover:bg-white/8 transition'
           >
             <X className='size-4' />
           </button>
@@ -58,7 +58,7 @@ export function CategoryDeleteDialog({
           </p>
 
           {hasChildren && (
-            <div className='rounded-sm border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800'>
+            <div className='rounded-sm border border-amber-200 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-300'>
               <p className='font-medium mb-2'>
                 Danh mục này có {descendantCount} danh mục con.
               </p>
@@ -99,11 +99,11 @@ export function CategoryDeleteDialog({
         </div>
 
         {/* Footer */}
-        <div className='flex justify-end gap-3 border-t border-gray-100 px-6 py-4'>
+        <div className='flex justify-end gap-3 border-t border-gray-100 dark:border-white/8 px-6 py-4'>
           <button
             type='button'
             onClick={onClose}
-            className='rounded-sm border border-gray-200 px-4 py-2 text-sm font-medium text-text-main hover:bg-gray-50 transition'
+            className='rounded-sm border border-gray-200 dark:border-white/8 px-4 py-2 text-sm font-medium text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition'
           >
             Huỷ
           </button>

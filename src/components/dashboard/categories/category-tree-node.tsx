@@ -113,14 +113,14 @@ export function CategoryTreeNode({
       {/* Row */}
       <div
         className={cn(
-          'group flex min-h-11 items-center gap-2 rounded-md border bg-white pr-1 transition-all',
+          'group flex min-h-11 items-center gap-2 rounded-md border bg-white dark:bg-[#1a1a1f] pr-1 transition-all',
           // Root level: left-accent border + light shadow
           depth === 0
-            ? 'border-l-4 border-l-theme-primary-start border-gray-100 shadow-sm'
-            : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50/60',
+            ? 'border-l-4 border-l-theme-primary-start border-gray-100 dark:border-white/8 shadow-sm'
+            : 'border-gray-100 dark:border-white/8 hover:border-gray-200 dark:hover:border-white/15 hover:bg-gray-50/60 dark:hover:bg-white/5',
           isSortableOver &&
             !isDragging &&
-            'bg-rose-50/30 border-theme-primary-start/40',
+            'bg-rose-50/30 dark:bg-rose-900/10 border-theme-primary-start/40',
         )}
         style={{ paddingLeft: depth === 0 ? '10px' : '8px' }}
       >
@@ -145,7 +145,7 @@ export function CategoryTreeNode({
           className={cn(
             'flex size-6 shrink-0 items-center justify-center rounded-sm transition-colors',
             hasChildren
-              ? 'text-text-sub hover:bg-gray-100 hover:text-text-main'
+              ? 'text-text-sub hover:bg-gray-100 dark:hover:bg-white/8 hover:text-text-main'
               : 'pointer-events-none opacity-0',
           )}
         >
@@ -170,7 +170,7 @@ export function CategoryTreeNode({
         </span>
 
         {/* Slug chip */}
-        <span className='hidden shrink-0 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] text-text-sub sm:inline'>
+        <span className='hidden shrink-0 rounded bg-gray-100 dark:bg-white/8 px-1.5 py-0.5 font-mono text-[11px] text-text-sub sm:inline'>
           {node.slug}
         </span>
 
@@ -184,7 +184,7 @@ export function CategoryTreeNode({
 
         {/* Children count */}
         {hasChildren && (
-          <span className='shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-text-sub'>
+          <span className='shrink-0 rounded-full bg-gray-100 dark:bg-white/8 px-2 py-0.5 text-xs font-medium text-text-sub'>
             {node.children.length}
           </span>
         )}
@@ -203,7 +203,7 @@ export function CategoryTreeNode({
             type='button'
             onClick={() => onEdit(node)}
             title='Chỉnh sửa'
-            className='flex size-7 items-center justify-center rounded-sm text-text-sub transition hover:bg-gray-100 hover:text-text-main'
+            className='flex size-7 items-center justify-center rounded-sm text-text-sub transition hover:bg-gray-100 dark:hover:bg-white/8 hover:text-text-main'
           >
             <Pencil className='size-3.5' />
           </button>
@@ -220,7 +220,7 @@ export function CategoryTreeNode({
 
       {/* Children — each level has its OWN SortableContext so DnD stays within siblings */}
       {showChildren && hasChildren && (
-        <div className='ml-5 mt-1 flex flex-col gap-1 border-l-2 border-dashed border-gray-200 pl-3'>
+        <div className='ml-5 mt-1 flex flex-col gap-1 border-l-2 border-dashed border-gray-200 dark:border-white/10 pl-3'>
           <SortableContext
             items={childIds}
             strategy={verticalListSortingStrategy}
@@ -249,8 +249,8 @@ export function CategoryTreeNode({
           className={cn(
             'ml-5 mt-0.5 flex items-center gap-2 rounded-md border-2 border-dashed px-3 py-1.5 text-xs transition-all',
             isDropIntoOver
-              ? 'border-theme-primary-start bg-rose-50/60 text-theme-primary-start font-medium'
-              : 'border-gray-200 text-text-sub',
+              ? 'border-theme-primary-start bg-rose-50/60 dark:bg-rose-900/10 text-theme-primary-start font-medium'
+              : 'border-gray-200 dark:border-white/15 text-text-sub',
           )}
         >
           <Plus className='size-3 shrink-0' />

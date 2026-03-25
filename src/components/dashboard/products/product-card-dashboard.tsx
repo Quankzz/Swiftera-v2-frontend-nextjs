@@ -67,7 +67,8 @@ export function ProductCardDashboard({
         'group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border-2 bg-white p-7 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
         selected
           ? 'border-theme-primary-start shadow-md'
-          : 'border-transparent hover:border-gray-200',
+          : 'border-transparent hover:border-gray-200 dark:hover:border-white/15',
+        'bg-white dark:bg-[#1a1a1f]',
       )}
     >
       {/* Selection indicator */}
@@ -109,21 +110,21 @@ export function ProductCardDashboard({
         <button
           type='button'
           onClick={() => setMenuOpen((v) => !v)}
-          className='flex size-8 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:bg-gray-100'
+          className='flex size-8 items-center justify-center rounded-full bg-white/90 dark:bg-black/60 shadow-sm transition hover:bg-gray-100 dark:hover:bg-white/10'
           aria-label='Tùy chọn'
         >
           <MoreHorizontal className='size-4 text-text-sub' />
         </button>
 
         {menuOpen && (
-          <div className='absolute right-0 top-9 z-50 w-36 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl animate-in fade-in slide-in-from-top-1'>
+          <div className='absolute right-0 top-9 z-50 w-36 overflow-hidden rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-[#1a1a1f] shadow-xl dark:shadow-black/30 animate-in fade-in slide-in-from-top-1'>
             <button
               type='button'
               onClick={() => {
                 setMenuOpen(false);
                 onView?.(product);
               }}
-              className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 transition-colors'
+              className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
             >
               <Eye size={14} className='text-text-sub' />
               Xem chi tiết
@@ -134,7 +135,7 @@ export function ProductCardDashboard({
                 setMenuOpen(false);
                 onEdit?.(product);
               }}
-              className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 transition-colors'
+              className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
             >
               <Pencil size={14} className='text-text-sub' />
               Chỉnh sửa
@@ -145,7 +146,7 @@ export function ProductCardDashboard({
                 setMenuOpen(false);
                 onDelete?.(product);
               }}
-              className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors'
+              className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
             >
               <Trash2 size={14} />
               Xóa
@@ -175,7 +176,7 @@ export function ProductCardDashboard({
             className='object-contain transition-transform duration-500 group-hover:scale-105'
           />
         ) : (
-          <div className='flex h-full w-full items-center justify-center rounded-xl bg-gray-100 text-xs text-text-sub'>
+          <div className='flex h-full w-full items-center justify-center rounded-xl bg-gray-100 dark:bg-white/5 text-xs text-text-sub'>
             Không có ảnh
           </div>
         )}
