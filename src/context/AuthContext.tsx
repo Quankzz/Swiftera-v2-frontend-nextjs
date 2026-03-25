@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createContext,
@@ -6,8 +6,8 @@ import {
   useState,
   useCallback,
   type ReactNode,
-} from "react";
-import type { User } from "@/types";
+} from 'react';
+import type { User } from '@/types/index';
 
 type AuthContextType = {
   user: User | null;
@@ -24,9 +24,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, _password: string) => {
     void _password;
     setUser({
-      id: "1",
+      user_id: '1',
       email,
-      name: "User",
+      full_name: 'Nhân viên',
+      is_verified: true,
+      created_at: new Date().toISOString(),
     });
   }, []);
 
@@ -51,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
