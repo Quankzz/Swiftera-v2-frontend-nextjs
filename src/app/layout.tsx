@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Swiftera - Cho thuê sản phẩm ngắn hạn',
-  description:
+  description: 'Nền tảng cho thuê sản phẩm linh hoạt, nhanh chóng và tin cậy.',
 };
 
 export default function RootLayout({
@@ -20,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body
+        className={`${inter.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
