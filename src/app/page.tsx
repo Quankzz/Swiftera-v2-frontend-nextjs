@@ -1,11 +1,11 @@
+"use client";
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
 import {
   Search,
   ArrowRight,
@@ -13,6 +13,11 @@ import {
   Rocket,
   RefreshCcw,
 } from 'lucide-react';
+import { RotatingText } from '@/components/ui/rotate-text';
+import { NumberCounter } from '@/components/ui/number-counter';
+import { Magnetic } from '@/components/ui/magnetic';
+import { HighlightText } from '@/components/ui/highlight-text';
+import { RainbowButton } from '@/components/ui/rainbow-button';
 
 const categories = [
   {
@@ -78,10 +83,10 @@ const howItWorks = [
 ];
 
 const stats = [
-  { value: '15k+', label: 'Active Users' },
-  { value: '100%', label: 'Insured Gear' },
-  { value: '4.9/5', label: 'Member Rating' },
-  { value: '24/7', label: 'Expert Support' },
+  { value: 15000, label: 'Active Users', suffix: '+', prefix: '' },
+  { value: 100, label: 'Insured Gear', suffix: '%', prefix: '' },
+  { value: 4.9, label: 'Member Rating', suffix: '/5', prefix: '', decimals: 1 },
+  { value: 24, label: 'Expert Support', suffix: '/7', prefix: '' },
 ];
 
 export default function Home() {
@@ -93,15 +98,23 @@ export default function Home() {
           <div className='lg:col-span-7'>
             <h1 className='mb-8 text-6xl font-extrabold leading-[0.9] tracking-tighter text-foreground md:text-8xl'>
               RENT THE{' '}
-              <span className='italic text-teal-600 dark:text-teal-400'>
-                FUTURE
-              </span>{' '}
+              <RotatingText
+                words={['FUTURE', 'BEST', 'LATEST', 'PREMIUM']}
+                interval={2500}
+                className='italic text-teal-600 dark:text-teal-400'
+              />{' '}
               IN MINUTES.
             </h1>
             <p className='mb-10 max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl'>
-              Access premium products on-demand. From high-end cameras to
-              ergonomic office setups, skip ownership and embrace kinetic
-              living.
+              Access{' '}
+              <HighlightText variant='marker' color='teal' strokeWidth={3}>
+                premium products
+              </HighlightText>{' '}
+              on-demand. From high-end cameras to ergonomic office setups,{' '}
+              <HighlightText variant='underline' color='teal' animationDelay={0.3}>
+                skip ownership
+              </HighlightText>{' '}
+              and embrace kinetic living.
             </p>
 
             {/* Search bar */}
@@ -203,11 +216,13 @@ export default function Home() {
           <div className='order-2 space-y-12 lg:order-1 lg:w-1/2'>
             {howItWorks.map((step) => (
               <div key={step.title} className='group flex gap-8'>
-                <div
-                  className={`flex size-16 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 ${step.bgColor}`}
-                >
-                  <step.icon className={`size-7 ${step.iconColor}`} />
-                </div>
+                <Magnetic intensity={0.4} range={80}>
+                  <div
+                    className={`flex size-16 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 ${step.bgColor}`}
+                  >
+                    <step.icon className={`size-7 ${step.iconColor}`} />
+                  </div>
+                </Magnetic>
                 <div>
                   <h4 className='mb-2 text-xl font-bold'>{step.title}</h4>
                   <p className='leading-relaxed text-muted-foreground'>
@@ -267,13 +282,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Signals */}
+      {/* Trust Signals with Animated Counters */}
       <section className='border-y border-border/10 bg-background px-6 py-16'>
         <div className='mx-auto grid max-w-7xl grid-cols-2 gap-8 md:grid-cols-4'>
           {stats.map((stat) => (
             <div key={stat.label} className='text-center'>
               <p className='text-3xl font-extrabold text-teal-600 dark:text-teal-400'>
-                {stat.value}
+                <NumberCounter
+                  value={stat.value}
+                  suffix={stat.suffix}
+                  prefix={stat.prefix}
+                  decimals={stat.decimals ?? 0}
+                  duration={2.5}
+                  easing='easeOut'
+                />
               </p>
               <p className='mt-2 text-xs font-bold uppercase tracking-widest text-muted-foreground'>
                 {stat.label}
@@ -285,12 +307,19 @@ export default function Home() {
 
       {/* Floating Rent Now FAB */}
       <div className='fixed right-10 bottom-10 z-50'>
-        <Button
-          className='kinetic-gradient h-14 gap-3 rounded-full px-8 font-bold text-white ambient-glow hover:scale-105'
-          render={<Link href='/categories' />}
-        >
-          Rent Now
-        </Button>
+        <Magnetic intensity={0.3} range={120}>
+          <Link href='/categories'>
+            <RainbowButton
+              colors={['#006875', '#00e5ff', '#8b5cf6', '#006875']}
+              duration={3}
+              borderWidth={2}
+              className='shadow-lg bg-teal-600 dark:bg-teal-400'
+            >
+              <Rocket className='size-4' />
+              Rent Now
+            </RainbowButton>
+          </Link>
+        </Magnetic>
       </div>
     </Layout>
   );
