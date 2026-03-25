@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProviders } from '@/providers/app-providers';
@@ -12,7 +11,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Swiftera - Cho thuê sản phẩm ngắn hạn',
   description:
-    'Thuê sản phẩm khi cần, trả khi xong. Điện tử, thiết bị sự kiện, đồ gia dụng, thể thao - tiết kiệm, tiện lợi.',
 };
 
 export default function RootLayout({

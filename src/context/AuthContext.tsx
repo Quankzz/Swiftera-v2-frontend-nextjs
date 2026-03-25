@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const login = useCallback(async (email: string, _password: string) => {
+    void _password;
     setUser({
       user_id: '1',
       email,

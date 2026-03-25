@@ -1,6 +1,5 @@
-import { AppSidebar } from '@/components/dashboard-staff/app-sidebar';
-import { SiteHeader } from '@/components/dashboard-staff/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { DashboardSidebar } from '@/components/dashboard/layout/sidebar';
+import { DashboardHeader } from '@/components/dashboard/layout/dashboard-header';
 
 export default function DashboardLayout({
   children,
@@ -8,12 +7,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <SiteHeader />
-        <main className="flex flex-1 flex-col">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className='flex h-screen w-full bg-gray-50/30 dark:bg-surface-base overflow-hidden text-text-main'>
+      <DashboardSidebar />
+      <div className='flex flex-1 flex-col min-w-0 overflow-hidden'>
+        <DashboardHeader />
+        <main className='flex-1 overflow-y-auto'>
+          <div className='min-h-full'>{children}</div>
+        </main>
+      </div>
+    </div>
   );
 }

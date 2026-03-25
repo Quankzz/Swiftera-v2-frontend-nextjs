@@ -1,0 +1,58 @@
+export interface Category {
+  categoryId: string;
+  parentId: string | null;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  image?: string;
+  brands?: string[]; // For brands under this category
+}
+
+export interface CategoryTree extends Category {
+  children: CategoryTree[];
+}
+
+export interface ProductImage {
+  productImageId?: string;
+  productId: string;
+  imageUrl: string;
+  sortOrder: number;
+  isPrimary: boolean;
+}
+
+export interface ProductColor {
+  colorId?: string;
+  name: string;
+  value: string; // ví dụ: #111111
+}
+
+// ─── Inventory Item (bảng inventory_items) ────────────────────────
+export type InventoryItemStatus =
+  | 'AVAILABLE'
+  | 'RENTED'
+  | 'MAINTENANCE'
+  | 'RETIRED';
+
+export interface InventoryItem {
+  inventoryItemId: string;
+  productId: string;
+  serialNumber: string;
+  status: InventoryItemStatus;
+  conditionGrade: string; // VD: "A", "B", "C" hoặc "Mới", "Tốt", "Trung bình"
+  staffNote: string;
+}
+
+export interface Product {
+  productId: string;
+  categoryId: string;
+  name: string;
+  dailyPrice: number;
+  oldDailyPrice?: number;
+  depositAmount?: number;
+  description: string;
+  productImages: ProductImage[];
+  colors?: ProductColor[];
+  minRentalDays: number;
+  /** Danh sách thiết bị vật lý thuộc sản phẩm này */
+  inventoryItems?: InventoryItem[];
+}

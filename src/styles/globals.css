@@ -113,6 +113,13 @@
   --color-text-main: var(--text-main);
   --color-text-sub: var(--text-sub);
 
+  /* ── Surface backgrounds (dùng thay dark:bg-[#0f0f11] và dark:bg-[#1a1a1f] ── */
+  --color-surface-base: var(
+    --surface-base
+  ); /* dark: #0f0f11 — nền trang chính */
+  --color-surface-card: var(
+    --surface-card
+  ); /* dark: #1a1a1f — nền card/panel  */
   /* Semantic color tokens */
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -200,51 +207,68 @@
   --theme-accent-start: #fe1451;
   --theme-accent-end: #ba264d;
 
-  /* OPTION 2: PINK */
+  /* OPTION 2: CHỈ MÀU PINK */
   /* --theme-primary-start: #ff007f;
   --theme-primary-end: #cc0066;
   --theme-accent-start: #ff007f;
   --theme-accent-end: #cc0066; */
 
-  /* OPTION 3: MINT + ROSE */
+  /* OPTION 3: MINT + ROSE  */
   /* --theme-primary-start: #10b981;
   --theme-primary-end: #059669;
   --theme-accent-start: #fe1451;
   --theme-accent-end: #ba264d; */
 }
 
+/* =========================================
+   DARK MODE — đặt SAU :root để cascade đúng
+   ========================================= */
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: #0f0f11;
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: #1a1a1f;
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: #1a1a1f;
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: #252530;
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --muted: #252530;
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: #252530;
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: #15151a;
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: #fe1451;
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: #252530;
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* ── Text ── */
+  --text-main: #f0f0f2;
+  --text-sub: #8a8a9a;
+
+  /* ── Surfaces ── */
+  --surface-base: #0f0f11;
+  --surface-card: #1a1a1f;
+
+  /* ── Brand colors — giữ nguyên đỏ chủ đạo ── */
+  --theme-primary-start: #fe2560;
+  --theme-primary-end: #c41d44;
+  --theme-accent-start: #fe2560;
+  --theme-accent-end: #c41d44;
 }
 
 @layer base {
@@ -252,10 +276,19 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-text-main;
+    @apply bg-background text-text-main; /* Gắn màu text mặc định */
   }
   html {
     @apply font-sans;
+  }
+
+  @keyframes brandScroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
   }
 }
 
@@ -384,12 +417,12 @@
     animation: auth-move 0.6s;
   }
   .glass-nav {
-    background: oklch(1 0 0 / 0.7);
+    background: oklch(1 0 0 / 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
   .dark .glass-nav {
-    background: oklch(0.145 0 0 / 0.7);
+    background: oklch(0.09 0 0 / 0.85);
   }
   .kinetic-gradient {
     background: linear-gradient(135deg, #006875 0%, #00e5ff 100%);
@@ -401,7 +434,7 @@
     box-shadow: 0 20px 32px -8px oklch(0 0 0 / 0.3);
   }
 
-  /* Primary gradient button */
+  /* Utility cho nút Primary (ví dụ: Nút Xem tất cả) */
   .btn-gradient-primary {
     padding: 4px 8px;
     background: linear-gradient(
@@ -417,7 +450,8 @@
       var(--theme-primary-end);
   }
 
-  /* Accent gradient button */
+  /* Utility cho phần Nhấn nhá / Giá / Tag (ví dụ: Màu Rose trong Option 3) */
+
   .btn-gradient-accent {
     padding: 4px 8px;
     background: linear-gradient(
@@ -432,6 +466,74 @@
     border-color: transparent var(--theme-accent-start) transparent
       var(--theme-accent-end);
   }
+}
+
+/* ─── Rich HTML content renderer ──────────────────────────────────── */
+.rich-content p {
+  margin-bottom: 0.5em;
+}
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+.rich-content h1,
+.rich-content h2,
+.rich-content h3 {
+  font-weight: 600;
+  margin-bottom: 0.4em;
+  margin-top: 0.6em;
+}
+.rich-content h1 {
+  font-size: 1.15em;
+}
+.rich-content h2 {
+  font-size: 1.05em;
+}
+.rich-content h3 {
+  font-size: 0.95em;
+}
+.rich-content ul {
+  list-style: disc;
+  padding-left: 1.4em;
+  margin-bottom: 0.5em;
+}
+.rich-content ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+  margin-bottom: 0.5em;
+}
+.rich-content li {
+  margin-bottom: 0.2em;
+}
+.rich-content strong {
+  font-weight: 600;
+}
+.rich-content em {
+  font-style: italic;
+}
+.rich-content u {
+  text-decoration: underline;
+}
+.rich-content blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 0.75em;
+  color: var(--color-text-sub, #6b7280);
+  margin: 0.5em 0;
+  font-style: italic;
+}
+.dark .rich-content blockquote {
+  border-left-color: rgba(255, 255, 255, 0.2);
+}
+.rich-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+.rich-content hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.5em 0;
+}
+.dark .rich-content hr {
+  border-top-color: rgba(255, 255, 255, 0.1);
 
   /* Scanner scan-line animation */
   @keyframes scan-line {
