@@ -28,21 +28,6 @@ const PAGE_TITLES: Record<
     parent: 'Dashboard',
     parentUrl: '/dashboard',
   },
-  '/dashboard/products': {
-    label: 'Sản phẩm',
-    parent: 'Dashboard',
-    parentUrl: '/dashboard',
-  },
-  '/dashboard/contracts': {
-    label: 'Hợp đồng',
-    parent: 'Dashboard',
-    parentUrl: '/dashboard',
-  },
-  '/dashboard/contracts/new': {
-    label: 'Tạo hợp đồng mới',
-    parent: 'Dashboard',
-    parentUrl: '/dashboard',
-  },
 };
 
 function ThemeToggle() {
@@ -55,7 +40,13 @@ function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-8 w-8" aria-hidden="true" disabled>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        aria-hidden="true"
+        disabled
+      >
         <div className="size-4 animate-pulse rounded-full bg-muted" />
       </Button>
     );

@@ -9,7 +9,6 @@ import {
   TrendingDown,
   Target,
   Activity,
-  CheckCircle2,
   RotateCcw,
   Truck,
   Clock,
@@ -112,12 +111,6 @@ export default function DashboardPage() {
   const monthTotal = weekTotal * 4 + 3;
   const maxBar = Math.max(...WEEK_DATA.map((d) => d.count));
 
-  // Performance
-  const finishedCount = counts.completed + counts.cancelled;
-  const successRate =
-    finishedCount > 0
-      ? Math.round((counts.completed / finishedCount) * 100)
-      : 100;
   const todayDiff = todayCount - yesterdayCount;
   const urgentTotal = counts.pending + counts.returning + counts.overdue;
 
@@ -150,10 +143,10 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-5 p-4 md:p-6 lg:p-8 max-w-5xl w-full">
+    <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto w-full">
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div className="space-y-0.5">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-1">
+        <div className="space-y-1">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
             {getGreeting()} 👋
           </p>
@@ -168,7 +161,7 @@ export default function DashboardPage() {
               day: 'numeric',
             })}
             {' · '}
-            <span className="text-muted-foreground/70">
+            <span className="text-muted-foreground/60">
               {MOCK_HUB_INFO.name}
             </span>
           </p>
@@ -176,7 +169,7 @@ export default function DashboardPage() {
         {urgentTotal > 0 && (
           <Link
             href="/dashboard/orders"
-            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-destructive/35 bg-destructive/8 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/12 transition-colors shrink-0"
+            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/14 transition-colors shrink-0 shadow-sm shadow-destructive/10"
           >
             <AlertCircle className="size-4" />
             {urgentTotal} đơn cần xử lý
@@ -186,7 +179,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 lg:grid-cols-3 gap-3">
         <KpiCard
           label="Hôm nay"
           value={todayCount}
@@ -212,26 +205,6 @@ export default function DashboardPage() {
           icon={Award}
           color="text-success"
           bg="bg-success-muted"
-        />
-        <KpiCard
-          label="Thành công"
-          value={successRate}
-          unit="%"
-          icon={CheckCircle2}
-          color={
-            successRate >= 90
-              ? 'text-success'
-              : successRate >= 70
-                ? 'text-warning'
-                : 'text-destructive'
-          }
-          bg={
-            successRate >= 90
-              ? 'bg-success-muted'
-              : successRate >= 70
-                ? 'bg-warning-muted'
-                : 'bg-destructive/10'
-          }
         />
       </div>
 
@@ -411,26 +384,6 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-
-          {/* Summary mini cards */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="rounded-xl border border-success-border bg-success-muted p-3.5">
-              <p className="text-[10px] text-muted-foreground mb-1 font-medium">
-                Thành công
-              </p>
-              <p className="text-2xl font-bold text-success tabular-nums">
-                {successRate}%
-              </p>
-            </div>
-            <div className="rounded-xl border border-border/40 bg-muted/40 p-3.5">
-              <p className="text-[10px] text-muted-foreground mb-1 font-medium">
-                Tháng này
-              </p>
-              <p className="text-2xl font-bold text-foreground tabular-nums">
-                {monthTotal}
-              </p>
-            </div>
-          </div>
         </section>
       </div>
 
@@ -486,7 +439,14 @@ function KpiCard({
   trendLabel?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div className="relative rounded-2xl border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      {/* Subtle top accent line */}
+      <div
+        className={cn(
+          'absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-60',
+          bg.replace('/10', '').replace('-muted', ''),
+        )}
+      />
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
         <div
@@ -524,11 +484,9 @@ function KpiCard({
   );
 }
 
-// ─── Status Pill ──────────────────────────────────────────────────────────────
 function StatusPill({
   label,
   count,
-  dotClass,
   colorClass,
   bgClass,
   borderClass,

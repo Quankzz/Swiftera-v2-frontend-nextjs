@@ -109,6 +109,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     pathname === '/dashboard/orders' ||
     pathname.startsWith('/dashboard/orders/');
 
+  // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
+  const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
+  React.useEffect(() => {
+    if (isOrdersActive) setOrdersOpen(true);
+  }, [isOrdersActive]);
+
   const orderCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
     MOCK_ORDERS.forEach((o) => {
@@ -166,9 +172,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {/* Đơn hàng — collapsible */}
+            {/* Đơn hàng — collapsible (controlled to avoid Base UI warning) */}
             <Collapsible
-              defaultOpen={isOrdersActive}
+              open={ordersOpen}
+              onOpenChange={setOrdersOpen}
               render={<SidebarMenuItem />}
             >
               <SidebarMenuButton

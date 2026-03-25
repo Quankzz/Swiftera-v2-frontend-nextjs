@@ -125,7 +125,7 @@ export default function OrdersPage() {
   ).length;
 
   return (
-    <div className="flex flex-col gap-5 p-5 md:p-8">
+    <div className="flex flex-col gap-5 p-5 md:p-8 max-w-6xl mx-auto w-full">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Đơn hàng của tôi</h1>
@@ -137,81 +137,6 @@ export default function OrdersPage() {
             </span>
           )}
         </p>
-      </div>
-
-      {/* Quick status tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {[
-          {
-            key: 'ALL' as FilterKey,
-            label: 'Tất cả',
-            count: myOrders.length,
-            urgent: false,
-          },
-          {
-            key: 'urgent' as FilterKey,
-            label: 'Cần xử lý',
-            count: urgentCount,
-            urgent: true,
-          },
-          {
-            key: 'in_progress' as FilterKey,
-            label: 'Đang diễn ra',
-            count: myOrders.filter((o) =>
-              ['CONFIRMED', 'DELIVERING', 'ACTIVE'].includes(o.status),
-            ).length,
-            urgent: false,
-          },
-          {
-            key: 'done' as FilterKey,
-            label: 'Kết thúc',
-            count: myOrders.filter((o) =>
-              ['COMPLETED', 'CANCELLED'].includes(o.status),
-            ).length,
-            urgent: false,
-          },
-        ].map((tab) => {
-          const isActive =
-            tab.key === 'ALL'
-              ? activeFilter === 'ALL'
-              : activeFilter === tab.key ||
-                (GROUP_STATUSES[tab.key]?.includes(
-                  activeFilter as OrderStatus,
-                ) ??
-                  false);
-          return (
-            <button
-              key={tab.key}
-              onClick={() => {
-                if (tab.key === 'ALL') setFilter('ALL');
-                else if (activeFilter === tab.key) setFilter('ALL');
-                else setFilter(tab.key);
-              }}
-              className={cn(
-                'flex items-center gap-1.5 whitespace-nowrap rounded-xl border px-3.5 py-2 text-sm font-semibold transition-all shrink-0',
-                isActive
-                  ? 'bg-theme-primary-start text-white border-theme-primary-start shadow-sm'
-                  : tab.urgent && tab.count > 0
-                    ? 'border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive/10'
-                    : 'border-border/40 bg-card text-muted-foreground hover:bg-accent hover:text-foreground',
-              )}
-            >
-              {tab.label}
-              <span
-                className={cn(
-                  'flex h-5 min-w-5 px-1 items-center justify-center rounded-full text-xs font-bold',
-                  isActive
-                    ? 'bg-white/20 text-inherit'
-                    : tab.urgent && tab.count > 0
-                      ? 'bg-destructive text-white'
-                      : 'bg-muted text-muted-foreground',
-                )}
-              >
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
       </div>
 
       {/* Search + controls */}
@@ -280,9 +205,7 @@ export default function OrdersPage() {
                 {ALL_STATUSES.map((s) => (
                   <button
                     key={s}
-                    onClick={() =>
-                      setFilter(activeFilter === s ? 'ALL' : s)
-                    }
+                    onClick={() => setFilter(activeFilter === s ? 'ALL' : s)}
                     className={cn(
                       'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
                       activeFilter === s
@@ -368,12 +291,16 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
     <Link
       href={`/dashboard/orders/${order.rental_order_id}`}
       className={cn(
-        'group flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-border/50',
+        'group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md',
         isUrgent
-          ? 'border-destructive/30 ring-1 ring-destructive/10'
-          : 'border-border/20',
+          ? 'border-destructive/25 hover:border-destructive/40'
+          : 'border-border/30 hover:border-border/60',
       )}
     >
+      {/* Urgent left accent bar */}
+      {isUrgent && (
+        <span className="absolute left-0 inset-y-4 w-0.5 rounded-full bg-destructive" />
+      )}
       <div
         className={cn(
           'flex size-11 shrink-0 items-center justify-center rounded-xl',
@@ -385,45 +312,49 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
 
       <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-base font-bold text-foreground">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-bold text-foreground">
               {order.order_code}
             </p>
             {daysOverdue > 0 && (
-              <span className="text-xs font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-lg">
-                +{daysOverdue}d
+              <span className="text-[11px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-md border border-destructive/20">
+                Quá {daysOverdue}d
               </span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
             <User className="size-3.5 shrink-0" />
-            <span className="truncate">{order.renter.full_name}</span>
+            <span className="truncate font-medium text-foreground/80">
+              {order.renter.full_name}
+            </span>
             <span className="text-border">·</span>
-            <span className="shrink-0">{order.renter.phone_number}</span>
+            <span className="shrink-0 tabular-nums">
+              {order.renter.phone_number}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:w-40 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1.5 sm:w-44 text-sm text-muted-foreground">
           <Package className="size-3.5 shrink-0" />
           <span className="truncate">
             {order.items.map((i) => i.product_name).join(', ')}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:w-40 text-sm text-muted-foreground">
+        <div className="flex items-center gap-1.5 sm:w-36 text-sm text-muted-foreground">
           <Calendar className="size-3.5 shrink-0" />
-          <span>
-              {fmtDateShort(order.start_date)} → {fmtDateShort(order.end_date)}
+          <span className="tabular-nums">
+            {fmtDateShort(order.start_date)} → {fmtDateShort(order.end_date)}
           </span>
         </div>
 
         <div className="sm:w-28 sm:text-right">
-          <p className="text-base font-bold text-foreground">
+          <p className="text-sm font-bold text-foreground tabular-nums">
             {fmt(order.total_rental_fee)}
           </p>
           {order.total_penalty_amount ? (
-            <p className="text-sm text-destructive font-medium">
-              +{fmt(order.total_penalty_amount)}
+            <p className="text-xs text-destructive font-semibold tabular-nums mt-0.5">
+              +{fmt(order.total_penalty_amount)} phạt
             </p>
           ) : null}
         </div>
@@ -432,19 +363,19 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
       <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-sm font-semibold',
+            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
             cfg.color,
             cfg.bg,
             cfg.border,
           )}
         >
-          <span className={cn('size-2 rounded-full', cfg.dot)} />
+          <span className={cn('size-1.5 rounded-full', cfg.dot)} />
           {cfg.label}
         </span>
         <span className="text-xs text-muted-foreground">
           {fmtRelative(order.created_at, now)}
         </span>
-        <ArrowRight className="size-4 text-muted-foreground/40 group-hover:text-primary transition-colors sm:ml-0 ml-auto" />
+        <ArrowRight className="size-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all sm:ml-0 ml-auto" />
       </div>
     </Link>
   );
