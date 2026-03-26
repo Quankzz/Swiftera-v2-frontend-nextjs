@@ -25,13 +25,15 @@ export function CameraCapture({
   // Tracks whether this component instance is still mounted.
   // Checked after every async getUserMedia call to prevent orphaned streams.
   const isMountedRef = useRef(true);
+  const intendedToBeOpenRef = useRef(false);
 
-  // ── Attach stream to video element whenever camera opens ──────────────────
-  useEffect(() => {
-    if (isCameraOpen && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
+  const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node;
+    if (node && streamRef.current) {
+      node.srcObject = streamRef.current;
+      node.play().catch(() => {});
     }
-  }, [isCameraOpen]);
+  }, []);
 
   // ── Hard-stop all tracks on unmount (direct ref access, no deps) ──────────
   useEffect(() => {
@@ -39,6 +41,7 @@ export function CameraCapture({
 
     return () => {
       isMountedRef.current = false;
+      intendedToBeOpenRef.current = false;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
@@ -47,6 +50,7 @@ export function CameraCapture({
   }, []);
 
   const stopCamera = useCallback(() => {
+    intendedToBeOpenRef.current = false;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -59,6 +63,7 @@ export function CameraCapture({
 
   const startCamera = useCallback(
     async (requestedFacing?: 'environment' | 'user') => {
+      intendedToBeOpenRef.current = true;
       const facing = requestedFacing ?? facingMode;
       try {
         setErrorLine('');
@@ -71,7 +76,7 @@ export function CameraCapture({
           // Fallback for devices without an environment camera (e.g. most desktop webcams)
           stream = await navigator.mediaDevices.getUserMedia({ video: true });
         }
-        if (!isMountedRef.current) {
+        if (!isMountedRef.current || !intendedToBeOpenRef.current) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
@@ -82,14 +87,14 @@ export function CameraCapture({
         setFacingMode(facing);
         setIsCameraOpen(true);
 
-        // Bind stream immediately to avoid a frame where camera opens then blanks.
+        // Bind stream immediately if video ref is already populated.
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => {});
+          videoRef.current.play().catch(() => {});
         }
       } catch (err) {
         console.error('Camera error:', err);
-        if (isMountedRef.current) {
+        if (isMountedRef.current && intendedToBeOpenRef.current) {
           setErrorLine(
             'Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.',
           );
@@ -190,7 +195,7 @@ export function CameraCapture({
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/20 p-4">
           <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
             <video
-              ref={videoRef}
+              ref={setVideoRef}
               autoPlay
               playsInline
               className="h-full w-full object-cover"
