@@ -355,126 +355,117 @@ export default function OrderDetailPage({
               </div>
             )}
 
-            {/* Collapsible full details */}
-            <Section
-              title="Chi tiết đơn hàng đầy đủ"
-              icon={ClipboardList}
-              defaultOpen={false}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
-                <div className="space-y-3.5">
-                  <InfoRow
-                    icon={User}
-                    label="Khách thuê"
-                    value={order.renter.full_name}
-                    strong
-                  />
-                  <InfoRow
-                    icon={Phone}
-                    label="Điện thoại"
-                    value={order.renter.phone_number}
-                  />
-                  <InfoRow
-                    icon={ClipboardList}
-                    label="CCCD"
-                    value={order.renter.cccd_number}
-                    mono
-                  />
-                  <InfoRow
-                    icon={MapPin}
-                    label="Địa chỉ giao"
-                    value={order.delivery_address ?? order.renter.address}
-                  />
-                  <InfoRow
-                    icon={Calendar}
-                    label="Bắt đầu"
-                    value={fmtDate(order.start_date)}
-                  />
-                  <InfoRow
-                    icon={Calendar}
-                    label="Kết thúc"
-                    value={fmtDate(order.end_date)}
-                  />
-                  {order.actual_return_date && (
+            {/* Collapsible full details — hidden for COMPLETED (merged into CompletedWorkflow) */}
+            {order.status !== 'COMPLETED' && (
+              <Section
+                title="Chi tiết đơn hàng đầy đủ"
+                icon={ClipboardList}
+                defaultOpen={false}
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+                  <div className="space-y-3.5">
+                    <InfoRow
+                      icon={User}
+                      label="Khách thuê"
+                      value={order.renter.full_name}
+                      strong
+                    />
+                    <InfoRow
+                      icon={Phone}
+                      label="Điện thoại"
+                      value={order.renter.phone_number}
+                    />
+                    <InfoRow
+                      icon={ClipboardList}
+                      label="CCCD"
+                      value={order.renter.cccd_number}
+                      mono
+                    />
+                    <InfoRow
+                      icon={MapPin}
+                      label="Địa chỉ giao"
+                      value={order.delivery_address ?? order.renter.address}
+                    />
                     <InfoRow
                       icon={Calendar}
-                      label="Ngày trả thực tế"
-                      value={fmtDate(order.actual_return_date)}
+                      label="Bắt đầu"
+                      value={fmtDate(order.start_date)}
                     />
-                  )}
-                </div>
-                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2.5 self-start">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Phí thuê</span>
-                    <span className="font-bold">
-                      {fmt(order.total_rental_fee)}
-                    </span>
+                    <InfoRow
+                      icon={Calendar}
+                      label="Kết thúc"
+                      value={fmtDate(order.end_date)}
+                    />
+                    {order.actual_return_date && (
+                      <InfoRow
+                        icon={Calendar}
+                        label="Ngày trả thực tế"
+                        value={fmtDate(order.actual_return_date)}
+                      />
+                    )}
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tiền cọc</span>
-                    <span className="font-bold">
-                      {fmt(order.total_deposit)}
-                    </span>
-                  </div>
-                  {(order.total_penalty_amount ?? 0) > 0 && (
+                  <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2.5 self-start">
                     <div className="flex justify-between text-sm">
-                      <span className="text-destructive font-semibold">
-                        Phí phạt
-                      </span>
-                      <span className="font-bold text-destructive">
-                        +{fmt(order.total_penalty_amount!)}
+                      <span className="text-muted-foreground">Phí thuê</span>
+                      <span className="font-bold">
+                        {fmt(order.total_rental_fee)}
                       </span>
                     </div>
-                  )}
-                  <div className="border-t border-border pt-2.5 flex justify-between">
-                    <span className="text-sm font-bold">Tổng</span>
-                    <span className="text-base font-bold text-theme-primary-start">
-                      {fmt(
-                        order.total_rental_fee +
-                          (order.total_penalty_amount ?? 0),
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-muted-foreground">
-                      Thanh toán
-                    </span>
-                    <span
-                      className={cn(
-                        'text-xs font-bold px-2 py-0.5 rounded-lg border',
-                        order.payment_status === 'PAID'
-                          ? 'text-success bg-success-muted border-success-border'
-                          : 'text-muted-foreground bg-muted border-border',
-                      )}
-                    >
-                      {order.payment_status === 'PAID'
-                        ? 'Đã thanh toán'
-                        : 'Chưa thanh toán'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      Hoàn cọc
-                    </span>
-                    <span className="text-xs font-semibold text-foreground">
-                      {order.deposit_refund_status === 'REFUNDED'
-                        ? '✓ Đã hoàn cọc'
-                        : order.deposit_refund_status === 'PARTIAL_REFUNDED'
-                          ? 'Hoàn một phần'
-                          : 'Chưa hoàn cọc'}
-                    </span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Tiền cọc giữ
+                      </span>
+                      <span className="font-bold">
+                        {fmt(order.total_deposit)}
+                      </span>
+                    </div>
+                    <div className="border-t border-border pt-2.5 flex justify-between">
+                      <span className="text-sm font-bold">Đã thanh toán</span>
+                      <span className="text-base font-bold text-theme-primary-start">
+                        {fmt(order.total_rental_fee)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs text-muted-foreground">
+                        Thanh toán
+                      </span>
+                      <span
+                        className={cn(
+                          'text-xs font-bold px-2 py-0.5 rounded-lg border',
+                          order.payment_status === 'PAID'
+                            ? 'text-success bg-success-muted border-success-border'
+                            : 'text-muted-foreground bg-muted border-border',
+                        )}
+                      >
+                        {order.payment_status === 'PAID'
+                          ? 'Đã thanh toán'
+                          : 'Chưa thanh toán'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Hoàn cọc
+                      </span>
+                      <span className="text-xs font-semibold text-foreground">
+                        {order.deposit_refund_status === 'REFUNDED'
+                          ? '✓ Đã hoàn cọc'
+                          : order.deposit_refund_status === 'PARTIAL_REFUNDED'
+                            ? 'Hoàn một phần'
+                            : 'Chưa hoàn cọc'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              {order.notes && (
-                <div className="mt-4 rounded-xl border border-border bg-muted/30 px-4 py-3">
-                  <p className="text-xs font-bold text-muted-foreground mb-1">
-                    Ghi chú
-                  </p>
-                  <p className="text-sm text-foreground">{order.notes}</p>
-                </div>
-              )}
-            </Section>
+                {order.notes && (
+                  <div className="mt-4 rounded-xl border border-border bg-muted/30 px-4 py-3">
+                    <p className="text-xs font-bold text-muted-foreground mb-1">
+                      Ghi chú
+                    </p>
+                    <p className="text-sm text-foreground">{order.notes}</p>
+                  </div>
+                )}
+              </Section>
+            )}
           </div>
         </div>
       </div>
