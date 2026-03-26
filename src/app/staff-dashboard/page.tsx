@@ -145,41 +145,43 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto w-full">
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-1">
-        <div className="space-y-1">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             {getGreeting()} 👋
           </p>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Xin chào, {staffName}
+          <h1 className="text-3xl font-black text-foreground tracking-tight leading-none">
+            {staffName}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString('vi-VN', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-            {' · '}
-            <span className="text-muted-foreground/60">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              {new Date().toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </span>
+            <span className="size-1 rounded-full bg-border" />
+            <span className="inline-flex items-center gap-1 font-semibold text-foreground/70">
               {MOCK_HUB_INFO.name}
             </span>
-          </p>
+          </div>
         </div>
         {urgentTotal > 0 && (
           <Link
             href="/staff-dashboard/orders"
-            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/14 transition-colors shrink-0 shadow-sm shadow-destructive/10"
+            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-2xl border border-destructive/30 bg-destructive/8 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/15 transition-all duration-200 shrink-0 shadow-sm shadow-destructive/10 hover:shadow-md hover:shadow-destructive/15 active:scale-95"
           >
-            <AlertCircle className="size-4" />
-            {urgentTotal} đơn cần xử lý
+            <AlertCircle className="size-4 animate-pulse" />
+            {urgentTotal} đơn cần xử lý ngay
             <ArrowRight className="size-3.5 opacity-70" />
           </Link>
         )}
       </div>
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-3 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3 lg:gap-4">
         <KpiCard
           label="Hôm nay"
           value={todayCount}
@@ -208,8 +210,8 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Status Pills — live operation view ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      {/* ── Status Pills ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatusPill
           label="Chờ xác nhận"
           count={counts.pending}
@@ -257,10 +259,10 @@ export default function DashboardPage() {
       {/* ── Chart + Breakdown ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* 7-day bar chart */}
-        <section className="lg:col-span-3 rounded-2xl border border-border/50 bg-card shadow-sm p-5">
-          <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
+        <section className="lg:col-span-3 rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
             <div>
-              <h2 className="text-sm font-bold text-foreground">
+              <h2 className="text-base font-bold text-foreground">
                 Hoạt động 7 ngày
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -269,14 +271,19 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-5">
               <div className="text-right">
-                <p className="text-[10px] text-muted-foreground">Hôm nay</p>
-                <p className="text-xl font-bold text-foreground tabular-nums">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  Hôm nay
+                </p>
+                <p className="text-3xl font-black text-foreground tabular-nums leading-none mt-0.5">
                   {todayCount}
                 </p>
               </div>
+              <div className="w-px h-8 bg-border/60" />
               <div className="text-right">
-                <p className="text-[10px] text-muted-foreground">Tuần</p>
-                <p className="text-xl font-bold text-theme-primary-start tabular-nums">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                  Tuần
+                </p>
+                <p className="text-3xl font-black text-theme-primary-start tabular-nums leading-none mt-0.5">
                   {weekTotal}
                 </p>
               </div>
@@ -284,38 +291,38 @@ export default function DashboardPage() {
           </div>
 
           {/* Bars */}
-          <div className="flex items-end gap-1.5 h-28">
+          <div className="flex items-end gap-2 h-32">
             {WEEK_DATA.map((d, i) => {
               const pct = maxBar > 0 ? (d.count / maxBar) * 100 : 0;
               return (
                 <div
                   key={i}
-                  className="group relative flex-1 flex flex-col items-center gap-1.5 h-full"
+                  className="group relative flex-1 flex flex-col items-center gap-2 h-full"
                 >
                   <div className="flex-1 w-full flex items-end">
                     <div
                       style={{ height: `${pct}%` }}
                       className={cn(
-                        'w-full rounded-t min-h-1 transition-all duration-200',
+                        'w-full rounded-t-lg min-h-1 transition-all duration-300',
                         d.isToday
-                          ? 'bg-theme-primary-start shadow-sm shadow-theme-primary-start/30'
-                          : 'bg-muted-foreground/15 group-hover:bg-theme-primary-start/35',
+                          ? 'bg-theme-primary-start shadow-md shadow-theme-primary-start/30'
+                          : 'bg-muted-foreground/15 group-hover:bg-theme-primary-start/40',
                       )}
                     />
                   </div>
                   <span
                     className={cn(
-                      'text-[9.5px] whitespace-nowrap font-medium leading-none',
+                      'text-[10px] whitespace-nowrap font-semibold leading-none',
                       d.isToday
-                        ? 'text-theme-primary-start font-bold'
-                        : 'text-muted-foreground/60',
+                        ? 'text-theme-primary-start font-black'
+                        : 'text-muted-foreground/70',
                     )}
                   >
                     {d.label}
                   </span>
                   {/* Hover badge */}
-                  <div className="absolute bottom-full -translate-y-1 left-1/2 -translate-x-1/2 hidden group-hover:flex pointer-events-none z-10">
-                    <div className="rounded-lg bg-foreground/90 px-2 py-1 text-[10px] font-bold text-background shadow-lg whitespace-nowrap">
+                  <div className="absolute bottom-full -translate-y-1 left-1/2 -translate-x-1/2 hidden group-hover:flex pointer-events-none z-10 animate-in fade-in zoom-in-75 duration-150">
+                    <div className="rounded-lg bg-foreground/90 px-2 py-1 text-[11px] font-bold text-background shadow-lg whitespace-nowrap">
                       {d.count} đơn
                     </div>
                   </div>
@@ -325,7 +332,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Trend note */}
-          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border/20 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-border/30 text-xs text-muted-foreground">
             {todayDiff >= 0 ? (
               <TrendingUp className="size-3.5 text-success shrink-0" />
             ) : (
@@ -334,7 +341,7 @@ export default function DashboardPage() {
             Hôm nay{' '}
             <span
               className={cn(
-                'font-semibold',
+                'font-bold',
                 todayDiff >= 0 ? 'text-success' : 'text-destructive',
               )}
             >
@@ -345,66 +352,75 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Right panel: breakdown + summary */}
-        <section className="lg:col-span-2 flex flex-col gap-4">
-          {/* Status breakdown */}
-          <div className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 flex-1">
-            <div className="mb-4">
-              <h2 className="text-sm font-bold text-foreground">
-                Phân bổ đơn hàng
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {myOrders.length} đơn được phân công
-              </p>
-            </div>
-            <div className="space-y-3">
-              {statusBreakdown.map((item) => (
-                <div key={item.label}>
-                  <div className="flex justify-between items-baseline text-xs mb-1.5">
-                    <span className="text-muted-foreground">{item.label}</span>
-                    <span
-                      className={cn('font-bold tabular-nums', item.textColor)}
-                    >
-                      {item.count}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={cn(
-                        'h-full rounded-full transition-all',
-                        item.color,
-                      )}
-                      style={{
-                        width: `${myOrders.length > 0 ? (item.count / myOrders.length) * 100 : 0}%`,
-                        minWidth: item.count > 0 ? '4px' : '0',
-                      }}
-                    />
-                  </div>
+        {/* Right panel: breakdown */}
+        <section className="lg:col-span-2 rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+          <div className="mb-5">
+            <h2 className="text-base font-bold text-foreground">
+              Phân bổ đơn hàng
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {myOrders.length} đơn được phân công
+            </p>
+          </div>
+          <div className="space-y-4">
+            {statusBreakdown.map((item) => (
+              <div key={item.label}>
+                <div className="flex justify-between items-baseline mb-2">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {item.label}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-base font-black tabular-nums',
+                      item.textColor,
+                    )}
+                  >
+                    {item.count}
+                  </span>
                 </div>
-              ))}
-            </div>
+                <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      'h-full rounded-full transition-all duration-500',
+                      item.color,
+                    )}
+                    style={{
+                      width: `${myOrders.length > 0 ? (item.count / myOrders.length) * 100 : 0}%`,
+                      minWidth: item.count > 0 ? '6px' : '0',
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>
 
       {/* ── Urgent Action Queue ── */}
       {urgentOrders.length > 0 && (
-        <section className="rounded-2xl border border-border/40 bg-card shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/25">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="size-4 text-destructive shrink-0" />
-              <h2 className="text-sm font-bold text-foreground">
-                Cần xử lý ngay
-              </h2>
-              <span className="ml-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+        <section className="rounded-2xl border border-destructive/20 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border/25 bg-destructive/3">
+            <div className="flex items-center gap-2.5">
+              <div className="size-7 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="size-4 text-destructive" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-foreground leading-none">
+                  Cần xử lý ngay
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {urgentOrders.length} đơn ưu tiên cao
+                </p>
+              </div>
+              <span className="ml-1 flex h-6 min-w-6 px-1.5 items-center justify-center rounded-full bg-destructive text-[11px] font-black text-white shadow-sm">
                 {urgentOrders.length}
               </span>
             </div>
             <Link
               href="/staff-dashboard/orders"
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors hover:gap-1.5"
             >
-              Tất cả <ArrowRight className="size-3" />
+              Tất cả <ArrowRight className="size-3.5" />
             </Link>
           </div>
           <div className="divide-y divide-border/20">
@@ -439,35 +455,39 @@ function KpiCard({
   trendLabel?: string;
 }) {
   return (
-    <div className="relative rounded-2xl border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-      {/* Subtle top accent line */}
+    <div className="relative rounded-2xl border border-border/40 bg-card p-4 lg:p-5 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
+      {/* Top accent bar */}
       <div
         className={cn(
-          'absolute inset-x-0 top-0 h-0.5 rounded-t-2xl opacity-60',
+          'absolute inset-x-0 top-0 h-0.5 rounded-t-2xl transition-opacity duration-200 group-hover:opacity-100 opacity-70',
           bg.replace('/10', '').replace('-muted', ''),
         )}
       />
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="flex items-start justify-between mb-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          {label}
+        </p>
         <div
           className={cn(
-            'size-8 flex items-center justify-center rounded-lg shrink-0',
+            'size-9 flex items-center justify-center rounded-xl shrink-0 transition-transform duration-200 group-hover:scale-110',
             bg,
           )}
         >
-          <Icon className={cn('size-4', color)} />
+          <Icon className={cn('size-4.5', color)} />
         </div>
       </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold text-foreground tabular-nums">
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-3xl font-black text-foreground tabular-nums leading-none">
           {value}
         </span>
-        <span className="text-sm text-muted-foreground">{unit}</span>
+        <span className="text-sm font-medium text-muted-foreground">
+          {unit}
+        </span>
       </div>
       {trend !== undefined && trendLabel && (
         <div
           className={cn(
-            'flex items-center gap-1 mt-2 text-xs font-medium',
+            'flex items-center gap-1 mt-2.5 text-xs font-semibold',
             trend >= 0 ? 'text-success' : 'text-destructive',
           )}
         >
@@ -508,33 +528,36 @@ function StatusPill({
     <Link
       href={href}
       className={cn(
-        'group flex items-center gap-3 rounded-xl border px-4 py-3 transition-all hover:shadow-sm',
+        'group flex flex-col gap-2 rounded-2xl border px-4 py-3.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0',
         bgClass,
         borderClass,
       )}
     >
-      <Icon className={cn('size-4 shrink-0', colorClass)} />
-      <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between">
+        <Icon className={cn('size-4 shrink-0', colorClass)} />
+        {urgent && count > 0 && (
+          <span className="size-2 rounded-full bg-destructive shrink-0 animate-pulse" />
+        )}
+      </div>
+      <div>
         <p
           className={cn(
-            'text-[11px] font-medium truncate leading-tight',
-            colorClass,
-          )}
-        >
-          {label}
-        </p>
-        <p
-          className={cn(
-            'text-xl font-bold tabular-nums leading-tight mt-0.5',
+            'text-3xl font-black tabular-nums leading-none',
             colorClass,
           )}
         >
           {count}
         </p>
+        <p
+          className={cn(
+            'text-xs font-semibold mt-1 leading-tight',
+            colorClass,
+            'opacity-80',
+          )}
+        >
+          {label}
+        </p>
       </div>
-      {urgent && count > 0 && (
-        <span className="size-2 rounded-full bg-destructive shrink-0 animate-pulse" />
-      )}
     </Link>
   );
 }
@@ -550,9 +573,9 @@ function UrgentRow({ order }: { order: DashboardOrder }) {
   return (
     <Link
       href={`/staff-dashboard/orders/${order.rental_order_id}`}
-      className="flex items-center gap-3 px-5 py-3.5 hover:bg-accent/50 transition-colors group"
+      className="flex items-center gap-4 px-5 py-4 hover:bg-accent/40 transition-all duration-150 group"
     >
-      <span className={cn('size-2 shrink-0 rounded-full', cfg.dot)} />
+      <span className={cn('size-2.5 shrink-0 rounded-full', cfg.dot)} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-bold text-foreground">
@@ -560,7 +583,7 @@ function UrgentRow({ order }: { order: DashboardOrder }) {
           </span>
           <span
             className={cn(
-              'text-[10px] font-bold px-1.5 py-0.5 rounded border',
+              'text-[10px] font-bold px-1.5 py-0.5 rounded-lg border',
               cfg.color,
               cfg.bg,
               cfg.border,
@@ -569,11 +592,11 @@ function UrgentRow({ order }: { order: DashboardOrder }) {
             {cfg.label}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 flex-wrap">
-          <PhoneCall className="size-2.5 shrink-0" />
-          {order.renter.full_name}
+        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+          <PhoneCall className="size-3 shrink-0" />
+          <span className="font-medium">{order.renter.full_name}</span>
           <span className="text-border">·</span>
-          <CalendarDays className="size-2.5 shrink-0" />
+          <CalendarDays className="size-3 shrink-0" />
           Hết hạn {fmtDate(order.end_date)}
           {daysLeft <= 0 && (
             <span className="text-destructive font-bold">(quá hạn!)</span>
@@ -584,10 +607,10 @@ function UrgentRow({ order }: { order: DashboardOrder }) {
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-xs text-muted-foreground hidden sm:block">
+        <span className="text-xs font-semibold text-muted-foreground hidden sm:block bg-muted px-2 py-1 rounded-lg">
           {order.items.length} sp
         </span>
-        <ArrowRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+        <ArrowRight className="size-4 text-muted-foreground group-hover:translate-x-1 transition-transform duration-150" />
       </div>
     </Link>
   );

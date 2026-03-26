@@ -1,8 +1,8 @@
+'use client';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Camera, X, SwitchCamera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export function CameraCapture({
   photos,
@@ -22,35 +22,29 @@ export function CameraCapture({
   );
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // Tracks whether this component instance is still mounted.
+  // Checked after every async getUserMedia call to prevent orphaned streams.
+  const isMountedRef = useRef(true);
 
+  // ── Attach stream to video element whenever camera opens ──────────────────
   useEffect(() => {
     if (isCameraOpen && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
   }, [isCameraOpen]);
 
-  const startCamera = async (facing: 'environment' | 'user' = facingMode) => {
-    try {
-      setErrorLine('');
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: facing } },
-        });
-      } catch (e) {
-        // Fallback for devices without an environment camera (like most desktop webcams)
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  // ── Hard-stop all tracks on unmount (direct ref access, no deps) ──────────
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
       }
-      streamRef.current = stream;
-      setFacingMode(facing);
-      setIsCameraOpen(true);
-    } catch (err) {
-      console.error('Camera error:', err);
-      setErrorLine(
-        'Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.',
-      );
-    }
-  };
+    };
+  }, []);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -63,9 +57,51 @@ export function CameraCapture({
     setIsCameraOpen(false);
   }, []);
 
-  const flipCamera = useCallback(async () => {
+  const startCamera = useCallback(
+    async (requestedFacing?: 'environment' | 'user') => {
+      const facing = requestedFacing ?? facingMode;
+      try {
+        setErrorLine('');
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: facing } },
+          });
+        } catch {
+          // Fallback for devices without an environment camera (e.g. most desktop webcams)
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        }
+        if (!isMountedRef.current) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((t) => t.stop());
+        }
+        streamRef.current = stream;
+        setFacingMode(facing);
+        setIsCameraOpen(true);
+
+        // Bind stream immediately to avoid a frame where camera opens then blanks.
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+        }
+      } catch (err) {
+        console.error('Camera error:', err);
+        if (isMountedRef.current) {
+          setErrorLine(
+            'Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.',
+          );
+        }
+      }
+    },
+    [facingMode],
+  );
+
+  const flipCamera = async () => {
     const nextFacing = facingMode === 'environment' ? 'user' : 'environment';
-    // Stop current stream first
+    // Stop current stream before requesting the new one
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -74,13 +110,7 @@ export function CameraCapture({
       videoRef.current.srcObject = null;
     }
     await startCamera(nextFacing);
-  }, [facingMode]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, [stopCamera]);
+  };
 
   const capturePhoto = () => {
     if (!videoRef.current) return;
@@ -105,6 +135,9 @@ export function CameraCapture({
 
   return (
     <div className="flex flex-col gap-3">
+      {label && (
+        <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+      )}
       {/* ── Horizontal row of squares ── */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {/* Existing photo tiles */}
