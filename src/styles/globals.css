@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -36,13 +36,38 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* ── Semantic colors (dark mode) ── */
+  --text-main: #f3f4f6;
+  --text-sub: #9ca3af;
+
+  --success: #34d399;
+  --success-foreground: #064e3b;
+  --success-muted: rgba(52, 211, 153, 0.12);
+  --success-border: rgba(52, 211, 153, 0.25);
+
+  --warning: #fbbf24;
+  --warning-foreground: #451a03;
+  --warning-muted: rgba(251, 191, 36, 0.12);
+  --warning-border: rgba(251, 191, 36, 0.25);
+
+  --info: #38bdf8;
+  --info-foreground: #0c4a6e;
+  --info-muted: rgba(56, 189, 248, 0.12);
+  --info-border: rgba(56, 189, 248, 0.25);
+
+  --scanner-bg: #0a0c10;
+  --scanner-accent: #2dd4bf;
+  --scanner-accent-muted: rgba(45, 212, 191, 0.12);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -79,6 +104,41 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Map custom variables → Tailwind */
+  --color-theme-primary-start: var(--theme-primary-start);
+  --color-theme-primary-end: var(--theme-primary-end);
+  --color-theme-accent-start: var(--theme-accent-start);
+  --color-theme-accent-end: var(--theme-accent-end);
+  --color-text-main: var(--text-main);
+  --color-text-sub: var(--text-sub);
+
+  /* ── Surface backgrounds (dùng thay dark:bg-[#0f0f11] và dark:bg-[#1a1a1f] ── */
+  --color-surface-base: var(
+    --surface-base
+  ); /* dark: #0f0f11 — nền trang chính */
+  --color-surface-card: var(
+    --surface-card
+  ); /* dark: #1a1a1f — nền card/panel  */
+  /* Semantic color tokens */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-success-border: var(--success-border);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-border: var(--warning-border);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-muted: var(--info-muted);
+  --color-info-border: var(--info-border);
+
+  --color-scanner-bg: var(--scanner-bg);
+  --color-scanner-accent: var(--scanner-accent);
+  --color-scanner-accent-muted: var(--scanner-accent-muted);
 }
 
 :root {
@@ -114,6 +174,101 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* ── Semantic text colors ── */
+  --text-main: #333333;
+  --text-sub: #666666;
+
+  /* ── Semantic status colors (light mode) ── */
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --success-muted: rgba(5, 150, 105, 0.08);
+  --success-border: rgba(5, 150, 105, 0.2);
+
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --warning-muted: rgba(217, 119, 6, 0.08);
+  --warning-border: rgba(217, 119, 6, 0.2);
+
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+  --info-muted: rgba(2, 132, 199, 0.08);
+  --info-border: rgba(2, 132, 199, 0.2);
+
+  --scanner-bg: #0a0c10;
+  --scanner-accent: #14b8a6;
+  --scanner-accent-muted: rgba(20, 184, 166, 0.1);
+
+  /* ── Theme color options ── */
+
+  /* OPTION 1: ROSE */
+  --theme-primary-start: #fe1451;
+  --theme-primary-end: #ba264d;
+  --theme-accent-start: #fe1451;
+  --theme-accent-end: #ba264d;
+
+  /* OPTION 2: CHỈ MÀU PINK */
+  /* --theme-primary-start: #ff007f;
+  --theme-primary-end: #cc0066;
+  --theme-accent-start: #ff007f;
+  --theme-accent-end: #cc0066; */
+
+  /* OPTION 3: MINT + ROSE  */
+  /* --theme-primary-start: #10b981;
+  --theme-primary-end: #059669;
+  --theme-accent-start: #fe1451;
+  --theme-accent-end: #ba264d; */
+}
+
+/* =========================================
+   DARK MODE — đặt SAU :root để cascade đúng
+   ========================================= */
+.dark {
+  --background: #0f0f11;
+  --foreground: oklch(0.985 0 0);
+  --card: #1a1a1f;
+  --card-foreground: oklch(0.985 0 0);
+  --popover: #1a1a1f;
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: #252530;
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: #252530;
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: #252530;
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.809 0.105 251.813);
+  --chart-2: oklch(0.623 0.214 259.815);
+  --chart-3: oklch(0.546 0.245 262.881);
+  --chart-4: oklch(0.488 0.243 264.376);
+  --chart-5: oklch(0.424 0.199 265.638);
+  --sidebar: #15151a;
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #fe1451;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: #252530;
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.556 0 0);
+
+  /* ── Text ── */
+  --text-main: #f0f0f2;
+  --text-sub: #8a8a9a;
+
+  /* ── Surfaces ── */
+  --surface-base: #0f0f11;
+  --surface-card: #1a1a1f;
+
+  /* ── Brand colors — giữ nguyên đỏ chủ đạo ── */
+  --theme-primary-start: #fe2560;
+  --theme-primary-end: #c41d44;
+  --theme-accent-start: #fe2560;
+  --theme-accent-end: #c41d44;
 }
 
 @layer base {
@@ -121,21 +276,153 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-text-main; /* Gắn màu text mặc định */
   }
   html {
     @apply font-sans;
   }
+
+  @keyframes brandScroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@keyframes auth-move {
+  0%,
+  49.99% {
+    opacity: 0;
+    z-index: 1;
+  }
+  50%,
+  100% {
+    opacity: 1;
+    z-index: 5;
+  }
+}
+
+/* Nền chill — blob trôi chậm */
+@keyframes chill-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -3%) scale(1.04);
+  }
+  66% {
+    transform: translate(-3%, 4%) scale(0.96);
+  }
+}
+
+@keyframes chill-drift-reverse {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-4%, 3%) scale(0.97);
+  }
+  66% {
+    transform: translate(3%, -4%) scale(1.05);
+  }
+}
+
+/* Hợp đồng PDF — animation xem trước */
+@keyframes contract-pdf-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.5deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+}
+
+@keyframes contract-pdf-scan {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(320%);
+    opacity: 0;
+  }
+}
+
+@keyframes contract-page-sway {
+  0%,
+  100% {
+    transform: rotateY(-4deg) rotateZ(-1deg);
+  }
+  50% {
+    transform: rotateY(3deg) rotateZ(0.5deg);
+  }
+}
+
+/* React Bits–style text shimmer (cart / marketing) */
+@keyframes react-bits-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
 }
 
 @layer utilities {
+  .chill-bg-wash {
+    background: linear-gradient(
+      165deg,
+      oklch(0.985 0.012 200) 0%,
+      oklch(0.98 0.018 270) 42%,
+      oklch(0.99 0.008 165) 100%
+    );
+  }
+  .dark .chill-bg-wash {
+    background: linear-gradient(
+      165deg,
+      oklch(0.14 0.03 250) 0%,
+      oklch(0.12 0.025 200) 45%,
+      oklch(0.15 0.02 280) 100%
+    );
+  }
+  .animate-chill-drift {
+    animation: chill-drift 24s ease-in-out infinite;
+  }
+  .animate-chill-drift-reverse {
+    animation: chill-drift-reverse 30s ease-in-out infinite;
+  }
+  .animate-contract-pdf-float {
+    animation: contract-pdf-float 5s ease-in-out infinite;
+  }
+  .animate-contract-pdf-scan {
+    animation: contract-pdf-scan 3.2s ease-in-out infinite;
+  }
+  .animate-contract-page-sway {
+    animation: contract-page-sway 6s ease-in-out infinite;
+    transform-style: preserve-3d;
+  }
+  .animate-auth-move {
+    animation: auth-move 0.6s;
+  }
   .glass-nav {
-    background: oklch(1 0 0 / 0.7);
+    background: oklch(1 0 0 / 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
   .dark .glass-nav {
-    background: oklch(0.145 0 0 / 0.7);
+    background: oklch(0.09 0 0 / 0.85);
   }
   .kinetic-gradient {
     background: linear-gradient(135deg, #006875 0%, #00e5ff 100%);
@@ -146,4 +433,136 @@
   .dark .ambient-glow {
     box-shadow: 0 20px 32px -8px oklch(0 0 0 / 0.3);
   }
+
+  /* Utility cho nút Primary (ví dụ: Nút Xem tất cả) */
+  .btn-gradient-primary {
+    padding: 4px 8px;
+    background: linear-gradient(
+      270deg,
+      var(--theme-primary-start) 0%,
+      var(--theme-primary-end) 100%
+    );
+    color: rgb(255, 255, 255);
+    border-radius: 9999px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent var(--theme-primary-start) transparent
+      var(--theme-primary-end);
+  }
+
+  /* Utility cho phần Nhấn nhá / Giá / Tag (ví dụ: Màu Rose trong Option 3) */
+
+  .btn-gradient-accent {
+    padding: 4px 8px;
+    background: linear-gradient(
+      270deg,
+      var(--theme-accent-start) 0%,
+      var(--theme-accent-end) 100%
+    );
+    color: rgb(255, 255, 255);
+    border-radius: 9999px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent var(--theme-accent-start) transparent
+      var(--theme-accent-end);
+  }
 }
+
+/* ─── Rich HTML content renderer ──────────────────────────────────── */
+.rich-content p {
+  margin-bottom: 0.5em;
+}
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+.rich-content h1,
+.rich-content h2,
+.rich-content h3 {
+  font-weight: 600;
+  margin-bottom: 0.4em;
+  margin-top: 0.6em;
+}
+.rich-content h1 {
+  font-size: 1.15em;
+}
+.rich-content h2 {
+  font-size: 1.05em;
+}
+.rich-content h3 {
+  font-size: 0.95em;
+}
+.rich-content ul {
+  list-style: disc;
+  padding-left: 1.4em;
+  margin-bottom: 0.5em;
+}
+.rich-content ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+  margin-bottom: 0.5em;
+}
+.rich-content li {
+  margin-bottom: 0.2em;
+}
+.rich-content strong {
+  font-weight: 600;
+}
+.rich-content em {
+  font-style: italic;
+}
+.rich-content u {
+  text-decoration: underline;
+}
+.rich-content blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 0.75em;
+  color: var(--color-text-sub, #6b7280);
+  margin: 0.5em 0;
+  font-style: italic;
+}
+.dark .rich-content blockquote {
+  border-left-color: rgba(255, 255, 255, 0.2);
+}
+.rich-content a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+.rich-content hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.5em 0;
+}
+.dark .rich-content hr {
+  border-top-color: rgba(255, 255, 255, 0.1);
+
+}
+
+/* Scanner scan-line animation */
+@keyframes scan-line {
+  0% { top: 8px; }
+  50% { top: calc(100% - 8px); }
+  100% { top: 8px; }
+}
+
+.animate-react-bits-shimmer {
+    animation: react-bits-shimmer 4s linear infinite;
+    background-image: linear-gradient(
+      105deg,
+      oklch(0.55 0 0) 0%,
+      oklch(0.55 0 0) 35%,
+      oklch(0.75 0.12 180) 50%,
+      oklch(0.55 0 0) 65%,
+      oklch(0.55 0 0) 100%
+    );
+  }
+  .dark .animate-react-bits-shimmer {
+    background-image: linear-gradient(
+      105deg,
+      oklch(0.65 0 0) 0%,
+      oklch(0.65 0 0) 35%,
+      oklch(0.85 0.14 180) 50%,
+      oklch(0.65 0 0) 65%,
+      oklch(0.65 0 0) 100%
+    );
+  }
+
