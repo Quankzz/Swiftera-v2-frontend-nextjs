@@ -23,7 +23,7 @@ const PAGE_TITLES: Record<
   { label: string; parent?: string; parentUrl?: string }
 > = {
   '/dashboard': { label: 'Tổng quan' },
-  '/dashboard/orders': {
+  '/staff-dashboard/orders': {
     label: 'Đơn hàng',
     parent: 'Dashboard',
     parentUrl: '/dashboard',
@@ -73,13 +73,13 @@ export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const pathname = usePathname();
 
-  // Match dynamic routes like /dashboard/orders/[id]
+  // Match dynamic routes like /staff-dashboard/orders/[id]
   const orderDetailMatch = pathname.match(/^\/dashboard\/orders\/(.+)$/);
   const pageInfo = orderDetailMatch
     ? {
         label: `Đơn #${orderDetailMatch[1].toUpperCase().slice(0, 10)}`,
         parent: 'Đơn hàng',
-        parentUrl: '/dashboard/orders',
+        parentUrl: '/staff-dashboard/orders',
       }
     : (PAGE_TITLES[pathname] ?? { label: 'Dashboard' });
 

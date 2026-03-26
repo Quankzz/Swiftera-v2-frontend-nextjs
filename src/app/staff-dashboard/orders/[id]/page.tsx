@@ -111,7 +111,7 @@ export default function OrderDetailPage({
         <p className="text-base text-muted-foreground">
           Không tìm thấy đơn hàng
         </p>
-        <Link href="/dashboard/orders">
+        <Link href="/staff-dashboard/orders">
           <Button variant="outline">
             <ArrowLeft className="size-4 mr-2" /> Quay lại danh sách
           </Button>
@@ -155,7 +155,7 @@ export default function OrderDetailPage({
       >
         {/* Header */}
         <div className="flex items-start gap-3 mb-5">
-          <Link href="/dashboard/orders">
+          <Link href="/staff-dashboard/orders">
             <Button variant="ghost" size="icon" className="size-10 shrink-0">
               <ArrowLeft className="size-5" />
             </Button>

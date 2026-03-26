@@ -58,7 +58,7 @@ export default function OrdersPage() {
   const setFilter = useCallback(
     (key: FilterKey) => {
       const params = key === 'ALL' ? '' : `?status=${key}`;
-      router.replace(`/dashboard/orders${params}`, { scroll: false });
+      router.replace(`/staff-dashboard/orders${params}`, { scroll: false });
     },
     [router],
   );
@@ -289,7 +289,7 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
 
   return (
     <Link
-      href={`/dashboard/orders/${order.rental_order_id}`}
+      href={`/staff-dashboard/orders/${order.rental_order_id}`}
       className={cn(
         'group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md',
         isUrgent

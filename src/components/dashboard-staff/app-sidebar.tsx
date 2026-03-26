@@ -45,11 +45,10 @@ import {
 } from '@/data/mockDashboard';
 import { cn } from '@/lib/utils';
 
-// ─── Workflow sub-tabs ────────────────────────────────────────────────────────
 const ORDER_WORKFLOW_TABS = [
   {
     title: 'Chờ xác nhận',
-    url: '/dashboard/orders?status=PENDING',
+    url: '/staff-dashboard/orders?status=PENDING',
     statuses: ['PENDING'] as const,
     dotClass: 'bg-amber-400',
     urgency: true,
@@ -57,7 +56,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Đang giao hàng',
-    url: '/dashboard/orders?status=DELIVERING',
+    url: '/staff-dashboard/orders?status=DELIVERING',
     statuses: ['DELIVERING'] as const,
     dotClass: 'bg-info animate-pulse',
     urgency: false,
@@ -65,7 +64,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Đang thuê',
-    url: '/dashboard/orders?status=ACTIVE',
+    url: '/staff-dashboard/orders?status=ACTIVE',
     statuses: ['ACTIVE'] as const,
     dotClass: 'bg-success',
     urgency: false,
@@ -73,7 +72,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Cần thu hồi',
-    url: '/dashboard/orders?status=RETURNING',
+    url: '/staff-dashboard/orders?status=RETURNING',
     statuses: ['RETURNING'] as const,
     dotClass: 'bg-destructive animate-pulse',
     urgency: true,
@@ -81,7 +80,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Đã quá hạn',
-    url: '/dashboard/orders?status=OVERDUE',
+    url: '/staff-dashboard/orders?status=OVERDUE',
     statuses: ['OVERDUE'] as const,
     dotClass: 'bg-destructive animate-pulse',
     urgency: true,
@@ -89,7 +88,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Đã hoàn thành',
-    url: '/dashboard/orders?status=COMPLETED',
+    url: '/staff-dashboard/orders?status=COMPLETED',
     statuses: ['COMPLETED'] as const,
     dotClass: 'bg-success',
     urgency: false,
@@ -109,8 +108,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const isDashboardActive = pathname === '/dashboard';
   const isOrdersActive =
-    pathname === '/dashboard/orders' ||
-    pathname.startsWith('/dashboard/orders/');
+    pathname === '/staff-dashboard/orders' ||
+    pathname.startsWith('/staff-dashboard/orders/');
 
   // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
@@ -185,7 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               render={<SidebarMenuItem />}
             >
               <SidebarMenuButton
-                render={<Link href="/dashboard/orders" />}
+                render={<Link href="/staff-dashboard/orders" />}
                 isActive={isOrdersActive && !currentStatus}
                 tooltip="Đơn hàng"
                 className={cn(
@@ -222,7 +221,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     );
                     // Check xem sub-tab này có phải là tab đang xem không
                     const isTabActive =
-                      pathname === '/dashboard/orders' &&
+                      pathname === '/staff-dashboard/orders' &&
                       currentStatus === tab.statuses[0];
 
                     return (
