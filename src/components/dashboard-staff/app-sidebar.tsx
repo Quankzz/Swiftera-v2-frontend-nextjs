@@ -163,7 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {/* Tổng quan */}
             <SidebarMenuItem>
               <SidebarMenuButton
-                render={<Link href="/dashboard" />}
+                render={<Link href="/staff-dashboard" />}
                 isActive={isDashboardActive}
                 tooltip="Tổng quan"
                 className={cn(

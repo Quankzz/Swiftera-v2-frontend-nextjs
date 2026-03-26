@@ -22,11 +22,11 @@ const PAGE_TITLES: Record<
   string,
   { label: string; parent?: string; parentUrl?: string }
 > = {
-  '/dashboard': { label: 'Tổng quan' },
+  '/staff-dashboard': { label: 'Tổng quan' },
   '/staff-dashboard/orders': {
     label: 'Đơn hàng',
-    parent: 'Dashboard',
-    parentUrl: '/dashboard',
+    parent: 'Tổng quan',
+    parentUrl: '/staff-dashboard',
   },
 };
 
@@ -81,7 +81,7 @@ export function SiteHeader() {
         parent: 'Đơn hàng',
         parentUrl: '/staff-dashboard/orders',
       }
-    : (PAGE_TITLES[pathname] ?? { label: 'Dashboard' });
+    : (PAGE_TITLES[pathname] ?? { label: 'Tổng quan' });
 
   return (
     <header className="sticky top-0 z-50 flex w-full h-16 shrink-0 items-center justify-between border-b border-border/40 bg-background/70 px-2 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] transition-all">
