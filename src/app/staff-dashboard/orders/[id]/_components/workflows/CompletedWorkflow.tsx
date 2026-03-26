@@ -340,10 +340,10 @@ export function CompletedWorkflow({
 
             {/* Submit button */}
             <Button
-              size="lg"
+              size="default"
               variant={damageAmount > depositAmount ? 'destructive' : 'default'}
               onClick={() => onDepositRefund(refundMethod)}
-              className="gap-2"
+              className="w-full h-11 gap-2 text-sm font-semibold"
             >
               {damageAmount > depositAmount ? (
                 <>

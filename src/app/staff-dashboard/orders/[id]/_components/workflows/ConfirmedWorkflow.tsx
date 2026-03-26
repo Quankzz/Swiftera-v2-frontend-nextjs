@@ -93,15 +93,15 @@ export function ConfirmedWorkflow({
 
       <div className="rounded-2xl border border-border bg-card p-5">
         <Button
-          size="lg"
+          size="default"
           onClick={onStartDelivery}
           disabled={loading}
-          className="w-full gap-2 text-base"
+          className="w-full h-11 gap-2 text-sm font-semibold"
         >
           {loading ? (
-            <Loader2 className="size-5 animate-spin" />
+            <Loader2 className="size-4.5 animate-spin" />
           ) : (
-            <Truck className="size-5" />
+            <Truck className="size-4.5" />
           )}
           Đã lấy hàng — Bắt đầu giao
         </Button>

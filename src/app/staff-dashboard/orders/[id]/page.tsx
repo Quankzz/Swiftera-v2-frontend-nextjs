@@ -97,7 +97,7 @@ export default function OrderDetailPage({
     [],
   );
 
-  const handleDepositRefund = useCallback(async (_method: 'cash' | 'bank') => {
+  const handleDepositRefund = useCallback(async () => {
     await new Promise((r) => setTimeout(r, 500));
     setOrder((prev) =>
       prev ? { ...prev, deposit_refund_status: 'REFUNDED' } : prev,

@@ -146,16 +146,16 @@ export function ActiveWorkflow({
             dứt hợp đồng sớm và yêu cầu bạn đến lấy thiết bị.
           </p>
           <Button
-            size="lg"
+            size="default"
             variant="outline"
             onClick={onRequestReturnEarly}
             disabled={loading}
-            className="w-full gap-2 border-theme-primary-start text-theme-primary-start hover:bg-theme-primary-start hover:text-white transition-colors"
+            className="w-full h-11 gap-2 text-sm font-semibold border-theme-primary-start text-theme-primary-start hover:bg-theme-primary-start hover:text-white transition-colors"
           >
             {loading ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="size-4.5 animate-spin" />
             ) : (
-              <AlertCircle className="size-5" />
+              <AlertCircle className="size-4.5" />
             )}
             (Mô phỏng) Khách trả hàng sớm
           </Button>

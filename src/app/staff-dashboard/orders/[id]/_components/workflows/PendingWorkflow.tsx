@@ -146,15 +146,15 @@ export function PendingWorkflow({
 
       <div className="rounded-2xl border border-border bg-card p-5 flex flex-col gap-3">
         <Button
-          size="lg"
+          size="default"
           onClick={onConfirm}
           disabled={loading || !isPaid}
-          className="w-full gap-2 text-base"
+          className="w-full h-11 gap-2 text-sm font-semibold"
         >
           {loading ? (
-            <Loader2 className="size-5 animate-spin" />
+            <Loader2 className="size-4.5 animate-spin" />
           ) : (
-            <CheckCircle2 className="size-5" />
+            <CheckCircle2 className="size-4.5" />
           )}
           Xác nhận đơn hàng
         </Button>

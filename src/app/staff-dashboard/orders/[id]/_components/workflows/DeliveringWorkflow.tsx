@@ -137,16 +137,16 @@ export function DeliveringWorkflow({
             </div>
           )}
           <Button
-            size="lg"
+            size="default"
             onClick={() => setPhase('arrived')}
             className={cn(
-              'w-full gap-2 text-base h-14',
+              'w-full gap-2 h-11 text-sm font-semibold',
               isNearDestination
                 ? 'bg-success hover:bg-success/90'
                 : 'bg-theme-primary-start hover:bg-theme-primary-start/90',
             )}
           >
-            <Locate className="size-5" />
+            <Locate className="size-4.5" />
             Tôi đã đến nơi — Bắt đầu bàn giao
           </Button>
           <p className="text-xs text-muted-foreground text-center mt-2">
@@ -220,14 +220,14 @@ export function DeliveringWorkflow({
             <div className="flex flex-col gap-3">
               {/* Real QR scan */}
               <Button
-                size="lg"
+                size="default"
                 onClick={() => {
                   setQrSimulate(undefined);
                   setShowQrScanner(true);
                 }}
-                className="w-full gap-2.5 h-14 text-base bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
+                className="w-full gap-2 h-11 text-sm font-semibold bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
               >
-                <QrCode className="size-5" />
+                <QrCode className="size-4.5" />
                 Mở máy quét QR
               </Button>
               {/* Dev simulation buttons */}
@@ -382,15 +382,15 @@ export function DeliveringWorkflow({
           </div>
         )}
         <Button
-          size="lg"
+          size="default"
           onClick={onConfirmDelivery}
           disabled={!canConfirm || loading}
-          className="w-full gap-2 text-base h-14"
+          className="w-full gap-2 h-11 text-sm font-semibold"
         >
           {loading ? (
-            <Loader2 className="size-5 animate-spin" />
+            <Loader2 className="size-4.5 animate-spin" />
           ) : (
-            <PackageCheck className="size-5" />
+            <PackageCheck className="size-4.5" />
           )}
           Xác nhận đã bàn giao thành công
         </Button>

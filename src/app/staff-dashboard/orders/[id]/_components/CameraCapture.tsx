@@ -205,16 +205,16 @@ export function CameraCapture({
               type="button"
               onClick={flipCamera}
               title="Đổi camera trước/sau"
-              className="absolute top-2 right-2 size-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
+              className="absolute top-2 right-2 size-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
             >
               <SwitchCamera className="size-4 text-white" />
             </button>
           </div>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-2.5">
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              className="h-10 text-sm font-semibold"
               onClick={stopCamera}
             >
               Đóng
@@ -222,7 +222,7 @@ export function CameraCapture({
             <Button
               type="button"
               variant="outline"
-              className="gap-1.5 px-3"
+              className="h-10 gap-1.5 px-2"
               onClick={flipCamera}
               title="Đổi camera"
             >
@@ -230,10 +230,10 @@ export function CameraCapture({
             </Button>
             <Button
               type="button"
-              className="flex-1 gap-2 bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
+              className="h-10 gap-1.5 text-sm font-semibold bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
               onClick={capturePhoto}
             >
-              <Camera className="size-4" /> Chụp ảnh
+              <Camera className="size-4" /> Chụp
             </Button>
           </div>
         </div>

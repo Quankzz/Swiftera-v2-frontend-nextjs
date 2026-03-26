@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Search,
-  ArrowUpDown,
   Filter,
   ChevronDown,
   ShoppingBag,
@@ -13,6 +12,10 @@ import {
   User,
   Calendar,
   Package,
+  X,
+  MapPin,
+  Phone,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CFG } from '@/lib/order-status';
@@ -33,13 +36,6 @@ const ALL_STATUSES: OrderStatus[] = [
   'CANCELLED',
 ];
 
-type FilterKey = 'ALL' | 'urgent' | 'in_progress' | 'done' | OrderStatus;
-const GROUP_STATUSES: Partial<Record<FilterKey, OrderStatus[]>> = {
-  urgent: ['PENDING', 'OVERDUE', 'RETURNING'],
-  in_progress: ['CONFIRMED', 'DELIVERING', 'ACTIVE'],
-  done: ['COMPLETED', 'CANCELLED'],
-};
-
 type SortKey = 'created_at' | 'start_date' | 'end_date' | 'total_rental_fee';
 type SortDir = 'asc' | 'desc';
 
@@ -48,25 +44,52 @@ export default function OrdersPage() {
   const router = useRouter();
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState('');
-  const activeFilter = useMemo<FilterKey>(() => {
-    const s = searchParams.get('status') as FilterKey | null;
-    if (!s) return 'ALL';
-    if (s === 'urgent' || s === 'in_progress' || s === 'done') return s;
-    if (ALL_STATUSES.includes(s as OrderStatus)) return s as OrderStatus;
-    return 'ALL';
+
+  // 1. Logic lọc NHIỀU trạng thái (Multi-select)
+  const activeStatuses = useMemo<OrderStatus[]>(() => {
+    const s = searchParams.get('status');
+    if (!s) return [];
+    // Cắt chuỗi status từ URL thành mảng, chỉ lấy các trạng thái hợp lệ
+    return s
+      .split(',')
+      .filter((val) =>
+        ALL_STATUSES.includes(val as OrderStatus),
+      ) as OrderStatus[];
   }, [searchParams]);
-  const setFilter = useCallback(
-    (key: FilterKey) => {
-      const params = key === 'ALL' ? '' : `?status=${key}`;
-      router.replace(`/staff-dashboard/orders${params}`, { scroll: false });
+
+  const toggleStatusFilter = useCallback(
+    (status: OrderStatus | 'ALL') => {
+      if (status === 'ALL') {
+        router.replace(`/staff-dashboard/orders`, { scroll: false });
+        return;
+      }
+
+      let newStatuses = [...activeStatuses];
+      if (newStatuses.includes(status)) {
+        // Nếu đã chọn thì gỡ bỏ
+        newStatuses = newStatuses.filter((s) => s !== status);
+      } else {
+        // Nếu chưa chọn thì thêm vào
+        newStatuses.push(status);
+      }
+
+      if (newStatuses.length === 0) {
+        router.replace(`/staff-dashboard/orders`, { scroll: false });
+      } else {
+        router.replace(
+          `/staff-dashboard/orders?status=${newStatuses.join(',')}`,
+          { scroll: false },
+        );
+      }
     },
-    [router],
+    [activeStatuses, router],
   );
+
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Only show orders assigned to this staff member (stable ref since MOCK data is constant)
+  // Lọc đơn hàng của Staff hiện tại
   const myOrders = useMemo(
     () =>
       MOCK_ORDERS.filter(
@@ -90,14 +113,12 @@ export default function OrdersPage() {
           o.items.some((i) => i.product_name.toLowerCase().includes(q)),
       );
     }
-    if (activeFilter !== 'ALL') {
-      const groupStatuses = GROUP_STATUSES[activeFilter];
-      if (groupStatuses) {
-        list = list.filter((o) => groupStatuses.includes(o.status));
-      } else {
-        list = list.filter((o) => o.status === (activeFilter as OrderStatus));
-      }
+
+    // Áp dụng bộ lọc mảng trạng thái
+    if (activeStatuses.length > 0) {
+      list = list.filter((o) => activeStatuses.includes(o.status));
     }
+
     list.sort((a, b) => {
       const av =
         sortKey === 'total_rental_fee'
@@ -110,7 +131,7 @@ export default function OrdersPage() {
       return sortDir === 'desc' ? bv - av : av - bv;
     });
     return list;
-  }, [search, activeFilter, sortKey, sortDir, myOrders]);
+  }, [search, activeStatuses, sortKey, sortDir, myOrders]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
@@ -125,109 +146,135 @@ export default function OrdersPage() {
   ).length;
 
   return (
-    <div className="flex flex-col gap-5 p-5 md:p-8 max-w-6xl mx-auto w-full">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Đơn hàng của tôi</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {filtered.length} / {myOrders.length} đơn được phân công
-          {urgentCount > 0 && (
-            <span className="ml-2 text-destructive font-semibold">
-              · {urgentCount} cần xử lý
+    <div className="min-h-screen bg-background text-foreground pb-12">
+      <div className="max-w-6xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+        {/* ===== Header ===== */}
+        <div className="mb-6 space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Đơn hàng của tôi
+          </h1>
+          <div className="flex items-center gap-2 text-[16px] text-muted-foreground flex-wrap">
+            <span>
+              Hiển thị{' '}
+              <strong className="text-foreground font-semibold">
+                {filtered.length}
+              </strong>{' '}
+              / {myOrders.length} đơn
             </span>
-          )}
-        </p>
-      </div>
-
-      {/* Search + controls */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            placeholder="Tìm theo mã đơn, tên khách, sản phẩm..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-10 bg-background border-border/40"
-          />
+            {urgentCount > 0 && (
+              <>
+                <span className="text-border">•</span>
+                <span className="inline-flex items-center gap-1.5 text-destructive font-semibold bg-destructive/10 px-2 py-0.5 rounded-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                  {urgentCount} cần xử lý
+                </span>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-10"
-            onClick={() => setShowFilters((v) => !v)}
-          >
-            <Filter className="size-4" />
-            Lọc
-            <ChevronDown
-              className={cn(
-                'size-3 transition-transform',
-                showFilters && 'rotate-180',
-              )}
+
+        {/* ===== Search & Filters Bar ===== */}
+        <div className="flex flex-col gap-3 mb-6">
+          <div className="relative w-full">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
+            <Input
+              placeholder="Tìm mã đơn, tên khách, số điện thoại, sản phẩm..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 pr-4 h-11 w-full bg-card border-border/60 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all text-[16px]"
             />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-10"
-            onClick={() => toggleSort('created_at')}
-          >
-            <ArrowUpDown className="size-4" />
-            {sortKey === 'created_at'
-              ? sortDir === 'desc'
-                ? 'Mới nhất'
-                : 'Cũ nhất'
-              : 'Sắp xếp'}
-          </Button>
-        </div>
-      </div>
+          </div>
 
-      {/* Filter panel */}
-      {showFilters && (
-        <div className="rounded-2xl border border-border/30 bg-card p-5 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <p className="text-sm font-semibold text-muted-foreground mb-2.5">
-                Trạng thái đơn
-              </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant={showFilters ? 'secondary' : 'outline'}
+              onClick={() => setShowFilters((v) => !v)}
+              className={cn(
+                'gap-2 h-10 rounded-lg border-border/60 shadow-sm transition-all',
+                !showFilters && 'bg-card hover:bg-accent',
+              )}
+            >
+              <Filter className="w-4 h-4" />
+              <span>Bộ lọc</span>
+              {activeStatuses.length > 0 && (
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold ml-1">
+                  {activeStatuses.length}
+                </span>
+              )}
+              <ChevronDown
+                className={cn(
+                  'w-4 h-4 transition-transform opacity-70',
+                  showFilters && 'rotate-180',
+                )}
+              />
+            </Button>
+
+            {search && (
+              <Button
+                variant="ghost"
+                onClick={() => setSearch('')}
+                className="gap-2 h-10 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg"
+              >
+                <X className="w-4 h-4" />
+                Xóa tìm kiếm
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* ===== Filter Panel ===== */}
+        {showFilters && (
+          <div className="bg-card border border-border/60 rounded-xl p-5 mb-6 space-y-6 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+            {/* Statuses Filter (Multi-select) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-semibold text-foreground uppercase tracking-wide">
+                  Lọc theo Trạng thái
+                </h3>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => setFilter('ALL')}
+                  onClick={() => toggleStatusFilter('ALL')}
                   className={cn(
-                    'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
-                    activeFilter === 'ALL'
-                      ? 'bg-theme-primary-start text-white border-theme-primary-start'
-                      : 'border-border/40 text-muted-foreground hover:bg-accent',
+                    'px-4 py-1.5 rounded-lg text-[15px] font-medium transition-all border shadow-sm',
+                    activeStatuses.length === 0
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
                   )}
                 >
                   Tất cả
                 </button>
-                {ALL_STATUSES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setFilter(activeFilter === s ? 'ALL' : s)}
-                    className={cn(
-                      'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
-                      activeFilter === s
-                        ? 'bg-theme-primary-start text-white border-theme-primary-start'
-                        : 'border-border/40 text-muted-foreground hover:bg-accent',
-                    )}
-                  >
-                    {STATUS_CFG[s].label}
-                  </button>
-                ))}
+                {ALL_STATUSES.map((s) => {
+                  const isActive = activeStatuses.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => toggleStatusFilter(s)}
+                      className={cn(
+                        'px-3.5 py-1.5 rounded-lg text-[15px] font-medium transition-all border shadow-sm',
+                        isActive
+                          ? 'bg-primary/15 text-primary border-primary shadow-sm ring-1 ring-primary/20'
+                          : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
+                      )}
+                    >
+                      {STATUS_CFG[s].label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-muted-foreground mb-2.5">
+
+            {/* Sort Options */}
+            <div className="border-t border-border/40 pt-4 space-y-3">
+              <h3 className="text-[13px] font-semibold text-foreground uppercase tracking-wide">
                 Sắp xếp theo
-              </p>
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {(
                   [
-                    { k: 'created_at', l: 'Ngày tạo' },
-                    { k: 'start_date', l: 'Bắt đầu' },
-                    { k: 'end_date', l: 'Kết thúc' },
+                    { k: 'created_at', l: 'Mới nhất' },
+                    { k: 'start_date', l: 'Bắt đầu sớm' },
+                    { k: 'end_date', l: 'Kết thúc gần' },
                     { k: 'total_rental_fee', l: 'Giá trị' },
                   ] as { k: SortKey; l: string }[]
                 ).map(({ k, l }) => (
@@ -235,45 +282,56 @@ export default function OrdersPage() {
                     key={k}
                     onClick={() => toggleSort(k)}
                     className={cn(
-                      'rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
+                      'px-3.5 py-1.5 rounded-lg text-[15px] font-medium transition-all border shadow-sm flex items-center gap-1.5',
                       sortKey === k
-                        ? 'bg-theme-primary-start text-white border-theme-primary-start'
-                        : 'border-border/40 text-muted-foreground hover:bg-accent',
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
                     )}
                   >
-                    {l} {sortKey === k ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+                    {l}
+                    {sortKey === k && (
+                      <span className="text-xs opacity-70">
+                        {sortDir === 'desc' ? '↓' : '↑'}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* List */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <ShoppingBag className="size-12 text-muted-foreground/30 mb-4" />
-          <p className="text-base text-muted-foreground">
-            Không tìm thấy đơn hàng
-          </p>
-          <button
-            className="mt-3 text-sm font-medium text-theme-primary-start hover:underline"
-            onClick={() => {
-              setSearch('');
-              setFilter('ALL');
-            }}
-          >
-            Xóa bộ lọc
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {filtered.map((order) => (
-            <OrderCard key={order.rental_order_id} order={order} now={now} />
-          ))}
-        </div>
-      )}
+        {/* ===== Orders List ===== */}
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-card rounded-xl border border-dashed border-border/60 shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <ShoppingBag className="w-8 h-8 text-muted-foreground/60" />
+            </div>
+            <p className="text-xl font-bold text-foreground">
+              Không tìm thấy đơn hàng
+            </p>
+            <p className="text-[16px] text-muted-foreground mt-2 mb-6 max-w-sm">
+              Không có đơn hàng nào khớp với tìm kiếm và bộ lọc hiện tại của
+              bạn.
+            </p>
+            <button
+              className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold transition-colors shadow-sm"
+              onClick={() => {
+                setSearch('');
+                toggleStatusFilter('ALL');
+              }}
+            >
+              Xóa tất cả bộ lọc
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:gap-5">
+            {filtered.map((order) => (
+              <OrderCard key={order.rental_order_id} order={order} now={now} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -281,7 +339,6 @@ export default function OrdersPage() {
 function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
   const cfg = STATUS_CFG[order.status];
   const Icon = cfg.icon;
-  const isUrgent = ['OVERDUE', 'RETURNING'].includes(order.status);
   const daysOverdue =
     order.status === 'OVERDUE'
       ? Math.floor((now - new Date(order.end_date).getTime()) / 86400000)
@@ -290,92 +347,148 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
   return (
     <Link
       href={`/staff-dashboard/orders/${order.rental_order_id}`}
-      className={cn(
-        'group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md',
-        isUrgent
-          ? 'border-destructive/25 hover:border-destructive/40'
-          : 'border-border/30 hover:border-border/60',
-      )}
+      className="block group outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
     >
-      {/* Urgent left accent bar */}
-      {isUrgent && (
-        <span className="absolute left-0 inset-y-4 w-0.5 rounded-full bg-destructive" />
-      )}
       <div
         className={cn(
-          'flex size-11 shrink-0 items-center justify-center rounded-xl',
-          cfg.bg,
+          'relative bg-card border rounded-xl transition-all duration-300 overflow-hidden',
+          'hover:shadow-lg hover:-translate-y-0.5',
+          'border-border/60 hover:border-primary/30',
         )}
       >
-        <Icon className={cn('size-5', cfg.color)} />
-      </div>
-
-      <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-bold text-foreground">
-              {order.order_code}
-            </p>
-            {daysOverdue > 0 && (
-              <span className="text-[11px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded-md border border-destructive/20">
-                Quá {daysOverdue}d
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
-            <User className="size-3.5 shrink-0" />
-            <span className="truncate font-medium text-foreground/80">
-              {order.renter.full_name}
-            </span>
-            <span className="text-border">·</span>
-            <span className="shrink-0 tabular-nums">
-              {order.renter.phone_number}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:w-44 text-sm text-muted-foreground">
-          <Package className="size-3.5 shrink-0" />
-          <span className="truncate">
-            {order.items.map((i) => i.product_name).join(', ')}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:w-36 text-sm text-muted-foreground">
-          <Calendar className="size-3.5 shrink-0" />
-          <span className="tabular-nums">
-            {fmtDateShort(order.start_date)} → {fmtDateShort(order.end_date)}
-          </span>
-        </div>
-
-        <div className="sm:w-28 sm:text-right">
-          <p className="text-sm font-bold text-foreground tabular-nums">
-            {fmt(order.total_rental_fee)}
-          </p>
-          {order.total_penalty_amount ? (
-            <p className="text-xs text-destructive font-semibold tabular-nums mt-0.5">
-              +{fmt(order.total_penalty_amount)} phạt
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="flex sm:flex-col items-center sm:items-end gap-2 shrink-0">
-        <span
+        {/* ===== Left Indicator (Bám sát viền trái) ===== */}
+        <div
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
-            cfg.color,
-            cfg.bg,
-            cfg.border,
+            'absolute left-0 top-0 bottom-0 w-1.5 transition-colors',
+            cfg.dot,
           )}
-        >
-          <span className={cn('size-1.5 rounded-full', cfg.dot)} />
-          {cfg.label}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {fmtRelative(order.created_at, now)}
-        </span>
-        <ArrowRight className="size-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all sm:ml-0 ml-auto" />
+        />
+
+        {/* Bọc nội dung và lùi vào 1.5 (để nhường chỗ cho left indicator) */}
+        <div className="pl-1.5">
+          {/* ===== Header Section ===== */}
+          <div className="px-5 py-4 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/10">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div
+                className={cn(
+                  'flex items-center justify-center w-11 h-11 rounded-xl shrink-0 shadow-sm border border-black/5 dark:border-white/5',
+                  cfg.bg,
+                )}
+              >
+                <Icon className={cn('w-5.5 h-5.5', cfg.color)} />
+              </div>
+              <div className="min-w-0 flex flex-col justify-center gap-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-[17px] font-bold text-foreground tracking-tight truncate">
+                    {order.order_code}
+                  </h3>
+                  {daysOverdue > 0 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold text-destructive bg-destructive/10 uppercase tracking-wider border border-destructive/20">
+                      Quá {daysOverdue} ngày
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground font-medium">
+                  <Clock className="w-3.5 h-3.5 opacity-70" />
+                  <span>Tạo {fmtRelative(order.created_at, now)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="shrink-0 self-start sm:self-center mt-1 sm:mt-0">
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] uppercase tracking-wide font-bold shadow-sm',
+                  cfg.color,
+                  cfg.bg,
+                  cfg.border || 'border border-transparent',
+                )}
+              >
+                <span className={cn('w-1.5 h-1.5 rounded-full', cfg.dot)} />
+                {cfg.label}
+              </span>
+            </div>
+          </div>
+
+          {/* ===== Main Content Grid ===== */}
+          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* 1. Customer Info */}
+            <div className="space-y-1.5 min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                <User className="w-3.5 h-3.5" />
+                Khách hàng
+              </p>
+              <p className="text-[15px] font-bold text-foreground truncate">
+                {order.renter.full_name}
+              </p>
+              <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground font-mono font-medium">
+                <Phone className="w-3.5 h-3.5" />
+                {order.renter.phone_number}
+              </div>
+            </div>
+
+            {/* 2. Products */}
+            <div className="space-y-1.5 min-w-0">
+              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                <Package className="w-3.5 h-3.5" />
+                Sản phẩm
+              </p>
+              <p className="text-[15px] font-medium text-foreground line-clamp-2 leading-relaxed">
+                {order.items.map((i) => i.product_name).join(', ')}
+              </p>
+            </div>
+
+            {/* 3. Dates */}
+            <div className="space-y-1.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                <Calendar className="w-3.5 h-3.5" />
+                Lịch trình
+              </p>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-[15px] text-foreground font-semibold">
+                  {fmtDateShort(order.start_date)}
+                </p>
+                <p className="text-[13px] text-muted-foreground font-medium flex items-center gap-1">
+                  <ArrowRight className="w-3 h-3" />
+                  {fmtDateShort(order.end_date)}
+                </p>
+              </div>
+            </div>
+
+            {/* 4. Price Summary (Nổi bật) */}
+            <div className="space-y-1.5 sm:text-right lg:text-left">
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                Thành tiền
+              </p>
+              <p className="text-[20px] font-black text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight leading-none pt-1">
+                {fmt(order.total_rental_fee)}
+              </p>
+              {order.total_penalty_amount ? (
+                <p className="text-[12px] font-bold text-destructive bg-destructive/10 inline-block px-1.5 py-0.5 rounded border border-destructive/20 mt-1">
+                  +{fmt(order.total_penalty_amount)} phạt
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          {/* ===== Footer: Address & Action ===== */}
+          <div className="px-5 py-4 bg-muted/20 border-t border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5 min-w-0 text-[14px]">
+              <MapPin className="w-4.5 h-4.5 shrink-0 text-muted-foreground" />
+              <span className="text-muted-foreground truncate">
+                Giao đến:{' '}
+                <strong className="text-foreground font-semibold ml-1">
+                  {order.delivery_address || 'Nhận tại cửa hàng'}
+                </strong>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[14px] font-bold text-primary group-hover:text-primary/80 transition-colors self-end sm:self-auto shrink-0">
+              <span>Xem chi tiết</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+            </div>
+          </div>
+        </div>
       </div>
     </Link>
   );
