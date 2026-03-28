@@ -147,12 +147,7 @@ export default function OrderDetailPage({
 
   return (
     <div className="p-3 sm:p-5 lg:p-6 min-h-screen">
-      <div
-        className={cn(
-          'mx-auto',
-          hasMapPanel && mapConfig ? 'max-w-5xl' : 'max-w-3xl',
-        )}
-      >
+      <div className={cn('mx-auto', 'max-w-5xl')}>
         {/* Header */}
         <div className="flex items-start gap-3 mb-5">
           <Link href="/staff-dashboard/orders">

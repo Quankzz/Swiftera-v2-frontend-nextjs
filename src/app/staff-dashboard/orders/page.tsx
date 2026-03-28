@@ -15,11 +15,10 @@ import {
   X,
   MapPin,
   Phone,
-  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CFG } from '@/lib/order-status';
-import { fmt, fmtDateShort, fmtRelative } from '@/lib/formatters';
+import { fmt, fmtDateShort } from '@/lib/formatters';
 import { MOCK_ORDERS, MOCK_CURRENT_STAFF } from '@/data/mockDashboard';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
@@ -388,10 +387,6 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground font-medium">
-                  <Clock className="w-3.5 h-3.5 opacity-70" />
-                  <span>Tạo {fmtRelative(order.created_at, now)}</span>
-                </div>
               </div>
             </div>
 
@@ -444,14 +439,11 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
                 <Calendar className="w-3.5 h-3.5" />
                 Lịch trình
               </p>
-              <div className="flex flex-col gap-0.5">
-                <p className="text-[15px] text-foreground font-semibold">
-                  {fmtDateShort(order.start_date)}
-                </p>
-                <p className="text-[13px] text-muted-foreground font-medium flex items-center gap-1">
-                  <ArrowRight className="w-3 h-3" />
+              <div className="flex items-center gap-1.5 text-[15px] text-foreground font-semibold">
+                <div className="text-[15px] text-foreground font-semibold">
+                  {fmtDateShort(order.start_date)} →{' '}
                   {fmtDateShort(order.end_date)}
-                </p>
+                </div>
               </div>
             </div>
 
