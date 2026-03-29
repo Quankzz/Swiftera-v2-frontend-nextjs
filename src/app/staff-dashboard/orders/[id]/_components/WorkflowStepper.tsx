@@ -57,12 +57,10 @@ export function WorkflowStepper({ status }: { status: OrderStatus }) {
         </div>
       )}
 
-      {/* Container chính: Sử dụng flex, loại bỏ gap */}
       <div className="flex items-start mx-auto w-max min-w-full justify-center">
         {WORKFLOW_STEPS.map((step, idx) => {
           const StepIcon = step.icon;
 
-          // Logic trạng thái của Circle icon
           const isCircleCompleted = idx < currentIdx;
           const isCircleCurrent = idx === currentIdx;
           const isCircleUpcoming = idx > currentIdx;
@@ -70,41 +68,37 @@ export function WorkflowStepper({ status }: { status: OrderStatus }) {
           const isFirst = idx === 0;
 
           return (
-            // Fragment z-10 để icon nằm trên đường line
             <React.Fragment key={step.key}>
-              {/* 1. Đường line nối phía trước (Leading Line) - Không vẽ cho step đầu tiên */}
               {!isFirst && (
                 <div
                   className={cn(
-                    'h-0.5 mt-4.5 rounded-full transition-all duration-300 ease-in-out flex-1 min-w-10 -mx-1',
-                    // Đường line nối ĐẾN step hiện tại hoặc các step đã qua thì màu xanh
+                    'h-0.75 mt-5 rounded-full transition-all duration-300 ease-in-out flex-1 min-w-10 -mx-1',
                     idx <= currentIdx ? 'bg-success' : 'bg-border',
                   )}
                 />
               )}
 
-              {/* 2. Cụm Icon và Label */}
-              <div className="flex flex-col items-center gap-1.5 shrink-0 relative z-10 bg-card px-1">
-                {/* Circle Icon */}
+              <div className="flex flex-col items-center gap-2 shrink-0 relative z-10 bg-card px-1">
+                {/* Circle Icon — larger with glow for active */}
                 <div
                   className={cn(
-                    'flex size-9 items-center justify-center rounded-full border-2 transition-all duration-300',
+                    'flex size-10 items-center justify-center rounded-full border-2 transition-all duration-300',
                     isCircleCompleted && 'border-success bg-success/10',
                     isCircleCurrent &&
                       !isOverdue &&
-                      'border-theme-primary-start bg-theme-primary-start shadow-md',
+                      'border-theme-primary-start bg-theme-primary-start workflow-step-glow',
                     isCircleCurrent &&
                       isOverdue &&
-                      'border-destructive bg-destructive shadow-md',
+                      'border-destructive bg-destructive shadow-md shadow-destructive/30',
                     isCircleUpcoming && 'border-border bg-muted',
                   )}
                 >
                   {isCircleCompleted ? (
-                    <CheckCircle2 className="size-4 text-success" />
+                    <CheckCircle2 className="size-4.5 text-success" />
                   ) : (
                     <StepIcon
                       className={cn(
-                        'size-4',
+                        'size-4.5',
                         isCircleCurrent && 'text-white',
                         isCircleUpcoming && 'text-muted-foreground',
                       )}
@@ -115,10 +109,14 @@ export function WorkflowStepper({ status }: { status: OrderStatus }) {
                 {/* Label */}
                 <p
                   className={cn(
-                    'text-center text-sm font-semibold leading-tight max-w-20',
+                    'text-center text-xs font-semibold leading-tight max-w-20',
                     isCircleCompleted && 'text-success',
-                    isCircleCurrent && !isOverdue && 'text-theme-primary-start',
-                    isCircleCurrent && isOverdue && 'text-destructive',
+                    isCircleCurrent &&
+                      !isOverdue &&
+                      'text-theme-primary-start font-bold',
+                    isCircleCurrent &&
+                      isOverdue &&
+                      'text-destructive font-bold',
                     isCircleUpcoming && 'text-muted-foreground',
                   )}
                 >

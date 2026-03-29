@@ -4,7 +4,6 @@ import {
   BanknoteIcon,
   CheckCircle2,
   AlertTriangle,
-  ChevronDown,
   Landmark,
   Wallet,
   ClipboardList,
@@ -33,7 +32,6 @@ export function CompletedWorkflow({
   const depositAmount = order.total_deposit;
   const isRefunded = order.deposit_refund_status === 'REFUNDED';
 
-  // Calculate scenario
   const hasDamage = damageAmount > 0;
   const extraCharge =
     damageAmount > depositAmount ? damageAmount - depositAmount : 0;
@@ -41,336 +39,306 @@ export function CompletedWorkflow({
     damageAmount < depositAmount ? depositAmount - damageAmount : 0;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      {/* Banner */}
       <WorkflowBanner
         icon={BadgeCheck}
         variant="success"
         title="Đơn hàng đã hoàn thành!"
-        desc="Tất cả sản phẩm đã được thu hồi thành công. Xử lý thanh toán bên dưới."
+        desc="Tất cả sản phẩm đã được thu hồi thành công. Xử lý hoàn cọc / phụ thu bên dưới."
       />
 
-      {/* ── Merged order details + financial summary ── */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        {/* Section header */}
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-          <ClipboardList className="size-4 text-theme-primary-start" />
-          <p className="text-sm font-bold text-foreground">
-            Chi tiết & tóm tắt tài chính
-          </p>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* ==================== CỘT TRÁI: Thông tin khách & đơn hàng ==================== */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 bg-theme-primary-start/10 rounded-2xl">
+                <ClipboardList className="size-5 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-foreground">
+                  Thông tin đơn hàng
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Khách thuê & thời gian
+                </p>
+              </div>
+            </div>
 
-        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Left: customer & order info */}
-          <div className="space-y-3.5">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
-              Thông tin đơn
-            </p>
-            <InfoRow
-              icon={User}
-              label="Khách thuê"
-              value={order.renter.full_name}
-              strong
-            />
-            <InfoRow
-              icon={Phone}
-              label="Điện thoại"
-              value={order.renter.phone_number}
-            />
-            <InfoRow
-              icon={ClipboardList}
-              label="CCCD"
-              value={order.renter.cccd_number}
-              mono
-            />
-            <InfoRow
-              icon={MapPin}
-              label="Địa chỉ giao"
-              value={order.delivery_address ?? order.renter.address}
-            />
-            <InfoRow
-              icon={Calendar}
-              label="Bắt đầu"
-              value={fmtDate(order.start_date)}
-            />
-            <InfoRow
-              icon={Calendar}
-              label="Kết thúc"
-              value={fmtDate(order.end_date)}
-            />
-            {order.actual_return_date && (
+            <div className="space-y-6">
+              <InfoRow
+                icon={User}
+                label="Khách thuê"
+                value={order.renter.full_name}
+              />
+              <InfoRow
+                icon={Phone}
+                label="Điện thoại"
+                value={order.renter.phone_number}
+              />
+              <InfoRow
+                icon={ClipboardList}
+                label="CCCD"
+                value={order.renter.cccd_number}
+                mono
+              />
+              <InfoRow
+                icon={MapPin}
+                label="Địa chỉ giao"
+                value={order.delivery_address ?? order.renter.address}
+              />
               <InfoRow
                 icon={Calendar}
-                label="Ngày trả thực tế"
-                value={fmtDate(order.actual_return_date)}
+                label="Bắt đầu"
+                value={fmtDate(order.start_date)}
               />
-            )}
+              <InfoRow
+                icon={Calendar}
+                label="Kết thúc"
+                value={fmtDate(order.end_date)}
+              />
+              {order.actual_return_date && (
+                <InfoRow
+                  icon={Calendar}
+                  label="Ngày trả thực tế"
+                  value={fmtDate(order.actual_return_date)}
+                />
+              )}
+            </div>
           </div>
 
-          {/* Right: financial breakdown */}
-          <div className="flex flex-col gap-3">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
-              Tài chính
-            </p>
-            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2.5">
-              {/* Rental fee — already paid */}
-              <div className="flex justify-between text-sm">
+          {/* Ghi chú */}
+          {order.notes && (
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+              <p className="text-sm font-semibold text-muted-foreground mb-3">
+                Ghi chú từ khách
+              </p>
+              <p className="text-sm text-foreground leading-relaxed">
+                {order.notes}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ==================== CỘT PHẢI: Tài chính & Xử lý hoàn tiền ==================== */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          {/* Tóm tắt tài chính */}
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 bg-emerald-100 dark:bg-emerald-950 rounded-2xl">
+                <BanknoteIcon className="size-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <p className="text-lg font-semibold text-foreground">
+                Tóm tắt tài chính
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Phí thuê */}
+              <div className="flex justify-between items-center py-2">
                 <span className="text-muted-foreground">Phí thuê</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold px-2.5 py-0.5 bg-success-muted text-success border border-success-border rounded-lg">
                     {fmt(order.total_rental_fee)}
-                  </span>
-                  <span className="text-[10px] font-semibold text-success bg-success-muted border border-success-border px-1.5 py-0.5 rounded-md">
-                    Đã TT
                   </span>
                 </div>
               </div>
 
-              {/* Deposit held */}
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tiền cọc giữ</span>
-                <span className="font-bold">{fmt(depositAmount)}</span>
+              {/* Tiền cọc */}
+              <div className="flex justify-between items-center py-2">
+                <span className="text-muted-foreground">Tiền cọc</span>
+                <span className="font-semibold">{fmt(depositAmount)}</span>
               </div>
 
-              {/* Penalty — charged against deposit */}
+              {/* Phí phạt */}
               {hasDamage && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-center py-2 border-t border-border pt-4">
                   <span className="text-destructive font-semibold">
                     Phí phạt hư hại
                   </span>
-                  <span className="font-bold text-destructive">
+                  <span className="font-semibold text-destructive">
                     −{fmt(damageAmount)}
                   </span>
                 </div>
               )}
 
-              <div className="border-t border-border pt-2.5 space-y-1.5">
-                {/* Deposit result line */}
-                {!hasDamage && (
-                  <div className="flex justify-between">
-                    <span className="text-sm font-bold text-foreground">
-                      Hoàn cọc cho khách
+              {/* Kết quả cuối cùng */}
+              <div className="border-t border-border pt-4 mt-2">
+                {hasDamage && damageAmount > depositAmount ? (
+                  <div className="flex justify-between items-center">
+                    <span className="text-destructive font-semibold">
+                      Phụ thu thêm
                     </span>
-                    <span className="text-base font-bold text-success">
+                    <span className="text-xl font-bold text-destructive">
+                      +{fmt(extraCharge)}
+                    </span>
+                  </div>
+                ) : hasDamage && damageAmount < depositAmount ? (
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-foreground">
+                      Hoàn lại cho khách
+                    </span>
+                    <span className="text-xl font-bold text-theme-primary-start">
+                      {fmt(refundRemaining)}
+                    </span>
+                  </div>
+                ) : !hasDamage ? (
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-foreground">
+                      Hoàn cọc đầy đủ
+                    </span>
+                    <span className="text-xl font-bold text-success">
                       {fmt(depositAmount)}
                     </span>
                   </div>
-                )}
-                {hasDamage && damageAmount < depositAmount && (
-                  <>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>
-                        Cọc – Phạt ({fmt(depositAmount)} − {fmt(damageAmount)})
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-bold text-foreground">
-                        Hoàn lại cho khách
-                      </span>
-                      <span className="text-base font-bold text-theme-primary-start">
-                        {fmt(refundRemaining)}
-                      </span>
-                    </div>
-                  </>
-                )}
-                {hasDamage && damageAmount === depositAmount && (
-                  <div className="flex justify-between">
-                    <span className="text-sm font-bold text-muted-foreground">
-                      Phạt = Cọc — không hoàn / không phụ thu
+                ) : (
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-muted-foreground">
+                      Không hoàn / không thu thêm
                     </span>
-                    <span className="text-base font-bold text-muted-foreground">
-                      {fmt(0)}
+                    <span className="text-xl font-bold text-muted-foreground">
+                      0
                     </span>
                   </div>
                 )}
-                {hasDamage && damageAmount > depositAmount && (
-                  <>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>
-                        Phạt – Cọc ({fmt(damageAmount)} − {fmt(depositAmount)})
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-bold text-destructive">
-                        Phụ thu thêm từ khách
-                      </span>
-                      <span className="text-base font-bold text-destructive">
-                        +{fmt(extraCharge)}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Status badges */}
-              <div className="pt-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Thanh toán phí thuê
-                  </span>
-                  <span
-                    className={cn(
-                      'text-xs font-bold px-2 py-0.5 rounded-lg border',
-                      order.payment_status === 'PAID'
-                        ? 'text-success bg-success-muted border-success-border'
-                        : 'text-muted-foreground bg-muted border-border',
-                    )}
-                  >
-                    {order.payment_status === 'PAID'
-                      ? 'Đã thanh toán'
-                      : 'Chưa thanh toán'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Hoàn cọc
-                  </span>
-                  <span className="text-xs font-semibold text-foreground">
-                    {order.deposit_refund_status === 'REFUNDED'
-                      ? '✓ Đã hoàn cọc'
-                      : order.deposit_refund_status === 'PARTIAL_REFUNDED'
-                        ? 'Hoàn một phần'
-                        : 'Chưa hoàn cọc'}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Notes */}
-        {order.notes && (
-          <div className="mx-5 mb-5 rounded-xl border border-border bg-muted/30 px-4 py-3">
-            <p className="text-xs font-bold text-muted-foreground mb-1">
-              Ghi chú
-            </p>
-            <p className="text-sm text-foreground">{order.notes}</p>
-          </div>
-        )}
-      </div>
-
-      {/* ── Refund / charge action ── */}
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <BanknoteIcon className="size-4 text-theme-primary-start" />
-          <p className="text-sm font-bold text-foreground">
-            {damageAmount > depositAmount
-              ? 'Thu phụ thu từ khách'
-              : 'Hoàn tiền cọc'}
-          </p>
-        </div>
-
-        {isRefunded ? (
-          <div className="flex items-center gap-2 rounded-xl border border-success-border bg-success-muted px-4 py-3">
-            <CheckCircle2 className="size-4 text-success" />
-            <span className="text-sm font-bold text-success">
-              {damageAmount > depositAmount
-                ? 'Đã thu phụ thu thành công'
-                : 'Đã hoàn cọc thành công'}
-            </span>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {/* Scenario description */}
-            {!hasDamage && (
-              <p className="text-sm text-muted-foreground">
-                Hoàn toàn bộ cọc{' '}
-                <span className="font-bold text-foreground">
-                  {fmt(depositAmount)}
-                </span>{' '}
-                cho{' '}
-                <span className="font-bold text-foreground">
-                  {order.renter.full_name}
-                </span>
-                .
-              </p>
-            )}
-            {hasDamage && damageAmount > depositAmount && (
-              <div className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3.5 py-3">
-                <AlertTriangle className="size-4 text-destructive shrink-0 mt-0.5" />
-                <p className="text-sm text-destructive">
-                  Hư hại vượt cọc. Thu thêm{' '}
-                  <span className="font-bold">{fmt(extraCharge)}</span> từ khách{' '}
-                  <span className="font-bold">{order.renter.full_name}</span>.
+          {/* Xử lý hoàn cọc / phụ thu */}
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm flex-1 flex flex-col">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-theme-primary-start/10 rounded-2xl">
+                <BanknoteIcon className="size-5 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-foreground">
+                  {damageAmount > depositAmount
+                    ? 'Thu phụ thu từ khách'
+                    : 'Hoàn tiền cọc'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isRefunded
+                    ? 'Đã xử lý xong'
+                    : 'Chọn phương thức và xác nhận'}
                 </p>
               </div>
-            )}
-            {hasDamage && damageAmount < depositAmount && (
-              <p className="text-sm text-muted-foreground">
-                Hoàn lại{' '}
-                <span className="font-bold text-foreground">
-                  {fmt(refundRemaining)}
-                </span>{' '}
-                (sau khi trừ hư hại) cho{' '}
-                <span className="font-bold text-foreground">
-                  {order.renter.full_name}
-                </span>
-                .
-              </p>
-            )}
+            </div>
 
-            {damageAmount !== depositAmount && (
-              <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold text-foreground">
-                  {damageAmount > depositAmount
-                    ? 'Phương thức thu phụ thu'
-                    : 'Phương thức hoàn tiền'}
-                </p>
-                <div className="relative">
-                  <select
-                    value={refundMethod}
-                    onChange={(e) =>
-                      setRefundMethod(e.target.value as 'cash' | 'bank')
-                    }
-                    className="w-full h-10 pl-9 pr-8 text-sm rounded-xl border border-border bg-background appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-theme-primary-start/40"
-                  >
-                    <option value="cash">Tiền mặt</option>
-                    <option value="bank">Chuyển khoản ngân hàng</option>
-                  </select>
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-                    {refundMethod === 'cash' ? (
-                      <Wallet className="size-4 text-muted-foreground" />
-                    ) : (
-                      <Landmark className="size-4 text-muted-foreground" />
-                    )}
+            {isRefunded ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex items-center gap-3 rounded-2xl border border-success-border bg-success-muted px-6 py-5">
+                  <CheckCircle2 className="size-6 text-success" />
+                  <span className="font-semibold text-success">
+                    {damageAmount > depositAmount
+                      ? 'Đã thu phụ thu thành công'
+                      : 'Đã hoàn cọc thành công'}
                   </span>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 </div>
               </div>
-            )}
+            ) : (
+              <div className="flex-1 flex flex-col gap-6">
+                {/* Mô tả tình huống */}
+                <div>
+                  {!hasDamage && (
+                    <p className="text-sm text-muted-foreground">
+                      Hoàn toàn bộ tiền cọc{' '}
+                      <span className="font-bold text-foreground">
+                        {fmt(depositAmount)}
+                      </span>{' '}
+                      cho khách.
+                    </p>
+                  )}
+                  {hasDamage && damageAmount > depositAmount && (
+                    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex gap-3">
+                      <AlertTriangle className="size-5 text-destructive shrink-0 mt-0.5" />
+                      <p className="text-sm text-destructive">
+                        Hư hại vượt quá tiền cọc. Cần thu thêm{' '}
+                        <span className="font-bold">{fmt(extraCharge)}</span> từ
+                        khách.
+                      </p>
+                    </div>
+                  )}
+                  {hasDamage && damageAmount < depositAmount && (
+                    <p className="text-sm text-muted-foreground">
+                      Hoàn lại{' '}
+                      <span className="font-bold text-foreground">
+                        {fmt(refundRemaining)}
+                      </span>{' '}
+                      sau khi trừ phí hư hại.
+                    </p>
+                  )}
+                </div>
 
-            {/* Submit button */}
-            <Button
-              size="default"
-              variant={damageAmount > depositAmount ? 'destructive' : 'default'}
-              onClick={() => onDepositRefund(refundMethod)}
-              className="w-full h-11 gap-2 text-sm font-semibold"
-            >
-              {damageAmount > depositAmount ? (
-                <>
-                  {refundMethod === 'bank' ? (
-                    <Landmark className="size-5" />
-                  ) : (
-                    <BanknoteIcon className="size-5" />
+                {/* Chọn phương thức */}
+                {damageAmount !== depositAmount && (
+                  <div>
+                    <p className="text-xs font-semibold text-foreground mb-2">
+                      Phương thức{' '}
+                      {damageAmount > depositAmount ? 'thu tiền' : 'hoàn tiền'}
+                    </p>
+                    <div className="relative">
+                      <select
+                        value={refundMethod}
+                        onChange={(e) =>
+                          setRefundMethod(e.target.value as 'cash' | 'bank')
+                        }
+                        className="w-full h-12 px-11 rounded-lg border border-border bg-background focus:ring-2 focus:ring-theme-primary-start/30 text-sm"
+                      >
+                        <option value="cash">Tiền mặt</option>
+                        <option value="bank">Chuyển khoản ngân hàng</option>
+                      </select>
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                        {refundMethod === 'cash' ? (
+                          <Wallet className="size-5 text-muted-foreground" />
+                        ) : (
+                          <Landmark className="size-5 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Nút xác nhận */}
+                <Button
+                  size="default"
+                  variant={
+                    damageAmount > depositAmount ? 'destructive' : 'default'
+                  }
+                  onClick={() => onDepositRefund(refundMethod)}
+                  className={cn(
+                    'w-full h-12 gap-3 text-base font-semibold p-2',
+                    damageAmount <= depositAmount &&
+                      'bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-105 text-white shadow-md',
                   )}
-                  {refundMethod === 'bank'
-                    ? 'Xác nhận đã nhận chuyển khoản phụ thu'
-                    : 'Xác nhận đã thu tiền mặt phụ thu'}
-                </>
-              ) : (
-                <>
-                  {refundMethod === 'bank' ? (
-                    <Landmark className="size-5" />
+                >
+                  {damageAmount > depositAmount ? (
+                    <>
+                      {refundMethod === 'bank' ? (
+                        <Landmark className="size-5" />
+                      ) : (
+                        <BanknoteIcon className="size-5" />
+                      )}
+                      Xác nhận thu phụ thu{' '}
+                      {refundMethod === 'bank' ? 'chuyển khoản' : 'tiền mặt'}
+                    </>
                   ) : (
-                    <Wallet className="size-5" />
+                    <>
+                      {refundMethod === 'bank' ? (
+                        <Landmark className="size-5" />
+                      ) : (
+                        <Wallet className="size-5" />
+                      )}
+                      Xác nhận hoàn tiền{' '}
+                      {refundMethod === 'bank' ? 'chuyển khoản' : 'tiền mặt'}
+                    </>
                   )}
-                  {refundMethod === 'bank'
-                    ? 'Xác nhận đã chuyển khoản'
-                    : 'Xác nhận đã hoàn tiền mặt'}
-                </>
-              )}
-            </Button>
+                </Button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

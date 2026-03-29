@@ -1,6 +1,12 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Clock, ExternalLink, LocateFixed, Navigation, Truck } from 'lucide-react';
+import {
+  Clock,
+  ExternalLink,
+  LocateFixed,
+  Navigation,
+  Truck,
+} from 'lucide-react';
 import type {
   Map as GoongMapInstance,
   Marker as GoongMarker,
@@ -265,11 +271,11 @@ export function DeliveryMiniMap({
   }, [mapReady, staffLat, staffLng, destLat, destLng]);
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-border shadow-sm">
+    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-border shadow-sm">
       <div
         ref={mapContainerRef}
         className={cn(
-          'w-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150',
+          'w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150',
           mapHeightClass,
         )}
       />

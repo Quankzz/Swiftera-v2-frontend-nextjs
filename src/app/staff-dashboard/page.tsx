@@ -66,14 +66,14 @@ const URGENT_CFG: Record<
     color: 'text-destructive',
     bg: 'bg-destructive/5',
     border: 'border-destructive/25',
-    dot: 'bg-destructive animate-pulse',
+    dot: 'bg-destructive animate-pulse-gentle',
   },
   OVERDUE: {
     label: 'Quá hạn',
     color: 'text-destructive',
     bg: 'bg-destructive/10',
     border: 'border-destructive/30',
-    dot: 'bg-destructive animate-pulse',
+    dot: 'bg-destructive animate-pulse-gentle',
   },
 };
 
@@ -153,6 +153,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-black text-foreground tracking-tight leading-none">
             {staffName}
           </h1>
+          <div className="h-0.5 w-16 rounded-full bg-gradient-to-r from-theme-primary-start to-theme-primary-end mt-1" />
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span>
               {new Date().toLocaleDateString('vi-VN', {
@@ -173,7 +174,7 @@ export default function DashboardPage() {
             href="/staff-dashboard/orders"
             className="inline-flex items-center gap-2 self-start sm:self-auto rounded-2xl border border-destructive/30 bg-destructive/8 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/15 transition-all duration-200 shrink-0 shadow-sm shadow-destructive/10 hover:shadow-md hover:shadow-destructive/15 active:scale-95"
           >
-            <AlertCircle className="size-4 animate-pulse" />
+            <AlertCircle className="size-4 animate-pulse-gentle" />
             {urgentTotal} đơn cần xử lý ngay
             <ArrowRight className="size-3.5 opacity-70" />
           </Link>
@@ -181,7 +182,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-3 gap-3 lg:gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <KpiCard
           label="Hôm nay"
           value={todayCount}
@@ -189,6 +190,7 @@ export default function DashboardPage() {
           icon={Target}
           color="text-theme-primary-start"
           bg="bg-theme-primary-start/10"
+          accentColor="from-theme-primary-start to-theme-primary-end"
           trend={todayDiff}
           trendLabel="vs hôm qua"
         />
@@ -199,6 +201,7 @@ export default function DashboardPage() {
           icon={Activity}
           color="text-info"
           bg="bg-info-muted"
+          accentColor="from-info to-info"
         />
         <KpiCard
           label="Tháng này"
@@ -207,11 +210,12 @@ export default function DashboardPage() {
           icon={Award}
           color="text-success"
           bg="bg-success-muted"
+          accentColor="from-success to-success"
         />
       </div>
 
       {/* ── Status Pills ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatusPill
           label="Chờ xác nhận"
           count={counts.pending}
@@ -226,7 +230,7 @@ export default function DashboardPage() {
         <StatusPill
           label="Đang giao"
           count={counts.delivering}
-          dotClass="bg-info animate-pulse"
+          dotClass="bg-info animate-pulse-gentle"
           colorClass="text-info"
           bgClass="bg-info-muted"
           borderClass="border-info-border"
@@ -246,7 +250,7 @@ export default function DashboardPage() {
         <StatusPill
           label="Cần thu hồi"
           count={counts.returning + counts.overdue}
-          dotClass="bg-destructive animate-pulse"
+          dotClass="bg-destructive animate-pulse-gentle"
           colorClass="text-destructive"
           bgClass="bg-destructive/8"
           borderClass="border-destructive/25"
@@ -257,10 +261,10 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Chart + Breakdown ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-4">
         {/* 7-day bar chart */}
-        <section className="lg:col-span-3 rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-start justify-between mb-6 flex-wrap gap-3">
+        <section className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+          <div className="flex items-start justify-between mb-6">
             <div>
               <h2 className="text-base font-bold text-foreground">
                 Hoạt động 7 ngày
@@ -269,7 +273,7 @@ export default function DashboardPage() {
                 Số đơn hoàn thành mỗi ngày
               </p>
             </div>
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-5 shrink-0">
               <div className="text-right">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
                   Hôm nay
@@ -290,8 +294,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Bars */}
-          <div className="flex items-end gap-2 h-32">
+          {/* Bars — taller */}
+          <div className="flex items-end gap-2.5 h-40">
             {WEEK_DATA.map((d, i) => {
               const pct = maxBar > 0 ? (d.count / maxBar) * 100 : 0;
               return (
@@ -303,10 +307,10 @@ export default function DashboardPage() {
                     <div
                       style={{ height: `${pct}%` }}
                       className={cn(
-                        'w-full rounded-t-lg min-h-1 transition-all duration-300',
+                        'w-full rounded-lg min-h-1 transition-all duration-300',
                         d.isToday
-                          ? 'bg-theme-primary-start shadow-md shadow-theme-primary-start/30'
-                          : 'bg-muted-foreground/15 group-hover:bg-theme-primary-start/40',
+                          ? 'staff-gradient-bar shadow-md shadow-theme-primary-start/25'
+                          : 'staff-gradient-bar-muted group-hover:bg-theme-primary-start/30',
                       )}
                     />
                   </div>
@@ -322,7 +326,7 @@ export default function DashboardPage() {
                   </span>
                   {/* Hover badge */}
                   <div className="absolute bottom-full -translate-y-1 left-1/2 -translate-x-1/2 hidden group-hover:flex pointer-events-none z-10 animate-in fade-in zoom-in-75 duration-150">
-                    <div className="rounded-lg bg-foreground/90 px-2 py-1 text-[11px] font-bold text-background shadow-lg whitespace-nowrap">
+                    <div className="rounded-lg bg-foreground/90 px-2.5 py-1.5 text-[11px] font-bold text-background shadow-lg whitespace-nowrap">
                       {d.count} đơn
                     </div>
                   </div>
@@ -338,7 +342,7 @@ export default function DashboardPage() {
             ) : (
               <TrendingDown className="size-3.5 text-destructive shrink-0" />
             )}
-            Hôm nay{' '}
+            <span>Hôm nay</span>
             <span
               className={cn(
                 'font-bold',
@@ -347,51 +351,67 @@ export default function DashboardPage() {
             >
               {todayDiff >= 0 ? '+' : ''}
               {todayDiff} đơn
-            </span>{' '}
-            so với hôm qua
+            </span>
+            <span>so với hôm qua</span>
           </div>
         </section>
 
         {/* Right panel: breakdown */}
-        <section className="lg:col-span-2 rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
-          <div className="mb-5">
-            <h2 className="text-base font-bold text-foreground">
-              Phân bổ đơn hàng
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {myOrders.length} đơn được phân công
-            </p>
+        <section className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200 flex flex-col">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Phân bổ đơn hàng
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {myOrders.length} đơn được phân công
+              </p>
+            </div>
+            <span className="text-2xl font-black text-foreground tabular-nums">
+              {myOrders.length}
+            </span>
           </div>
-          <div className="space-y-4">
-            {statusBreakdown.map((item) => (
-              <div key={item.label}>
-                <div className="flex justify-between items-baseline mb-2">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {item.label}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-base font-black tabular-nums',
-                      item.textColor,
-                    )}
-                  >
-                    {item.count}
-                  </span>
+          <div className="space-y-4 flex-1">
+            {statusBreakdown.map((item) => {
+              const pct =
+                myOrders.length > 0
+                  ? Math.round((item.count / myOrders.length) * 100)
+                  : 0;
+              return (
+                <div key={item.label}>
+                  <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {item.label}
+                    </span>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {pct}%
+                      </span>
+                      <span
+                        className={cn(
+                          'text-base font-black tabular-nums',
+                          item.textColor,
+                        )}
+                      >
+                        {item.count}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-500',
+                        item.color,
+                      )}
+                      style={{
+                        width: `${pct}%`,
+                        minWidth: item.count > 0 ? '6px' : '0',
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 bg-muted/60 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-all duration-500',
-                      item.color,
-                    )}
-                    style={{
-                      width: `${myOrders.length > 0 ? (item.count / myOrders.length) * 100 : 0}%`,
-                      minWidth: item.count > 0 ? '6px' : '0',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>
@@ -399,10 +419,10 @@ export default function DashboardPage() {
       {/* ── Urgent Action Queue ── */}
       {urgentOrders.length > 0 && (
         <section className="rounded-2xl border border-destructive/20 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border/25 bg-destructive/3">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border/25 bg-gradient-to-r from-destructive/5 to-transparent">
             <div className="flex items-center gap-2.5">
-              <div className="size-7 rounded-lg bg-destructive/10 flex items-center justify-center">
-                <AlertCircle className="size-4 text-destructive" />
+              <div className="size-8 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <AlertCircle className="size-4.5 text-destructive" />
               </div>
               <div>
                 <h2 className="text-sm font-bold text-foreground leading-none">
@@ -442,6 +462,7 @@ function KpiCard({
   icon: Icon,
   color,
   bg,
+  accentColor,
   trend,
   trendLabel,
 }: {
@@ -451,16 +472,17 @@ function KpiCard({
   icon: React.ElementType;
   color: string;
   bg: string;
+  accentColor: string;
   trend?: number;
   trendLabel?: string;
 }) {
   return (
-    <div className="relative rounded-2xl border border-border/40 bg-card p-4 lg:p-5 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group">
-      {/* Top accent bar */}
+    <div className="relative rounded-2xl border border-border/40 bg-card p-4 lg:p-5 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden group">
+      {/* Top accent bar — gradient */}
       <div
         className={cn(
-          'absolute inset-x-0 top-0 h-0.5 rounded-t-2xl transition-opacity duration-200 group-hover:opacity-100 opacity-70',
-          bg.replace('/10', '').replace('-muted', ''),
+          'absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-gradient-to-r opacity-80 group-hover:opacity-100 transition-opacity duration-200',
+          accentColor,
         )}
       />
       <div className="flex items-start justify-between mb-3">
@@ -528,15 +550,17 @@ function StatusPill({
     <Link
       href={href}
       className={cn(
-        'group flex flex-col gap-2 rounded-2xl border px-4 py-3.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0',
+        'group flex flex-col gap-2.5 rounded-2xl border px-4 py-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0',
         bgClass,
         borderClass,
       )}
     >
       <div className="flex items-center justify-between">
-        <Icon className={cn('size-4 shrink-0', colorClass)} />
+        <div className={cn('size-9 rounded-xl flex items-center justify-center', bgClass)}>
+          <Icon className={cn('size-5 shrink-0', colorClass)} />
+        </div>
         {urgent && count > 0 && (
-          <span className="size-2 rounded-full bg-destructive shrink-0 animate-pulse" />
+          <span className="size-2 rounded-full bg-destructive shrink-0 animate-pulse-gentle" />
         )}
       </div>
       <div>
@@ -550,7 +574,7 @@ function StatusPill({
         </p>
         <p
           className={cn(
-            'text-xs font-semibold mt-1 leading-tight',
+            'text-xs font-semibold mt-1.5 leading-tight',
             colorClass,
             'opacity-80',
           )}
@@ -577,13 +601,13 @@ function UrgentRow({ order }: { order: DashboardOrder }) {
     >
       <span className={cn('size-2.5 shrink-0 rounded-full', cfg.dot)} />
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-bold text-foreground">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-foreground whitespace-nowrap">
             {order.order_code}
           </span>
           <span
             className={cn(
-              'text-[10px] font-bold px-1.5 py-0.5 rounded-lg border',
+              'text-[10px] font-bold px-1.5 py-0.5 rounded-lg border whitespace-nowrap',
               cfg.color,
               cfg.bg,
               cfg.border,
@@ -592,19 +616,19 @@ function UrgentRow({ order }: { order: DashboardOrder }) {
             {cfg.label}
           </span>
         </div>
-        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
           <PhoneCall className="size-3 shrink-0" />
-          <span className="font-medium">{order.renter.full_name}</span>
+          <span className="font-medium whitespace-nowrap">{order.renter.full_name}</span>
           <span className="text-border">·</span>
           <CalendarDays className="size-3 shrink-0" />
-          Hết hạn {fmtDate(order.end_date)}
+          <span className="whitespace-nowrap">Hết hạn {fmtDate(order.end_date)}</span>
           {daysLeft <= 0 && (
-            <span className="text-destructive font-bold">(quá hạn!)</span>
+            <span className="text-destructive font-bold whitespace-nowrap">(quá hạn!)</span>
           )}
           {daysLeft > 0 && daysLeft <= 2 && (
-            <span className="text-warning font-bold">(còn {daysLeft}d)</span>
+            <span className="text-warning font-bold whitespace-nowrap">(còn {daysLeft}d)</span>
           )}
-        </p>
+        </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-xs font-semibold text-muted-foreground hidden sm:block bg-muted px-2 py-1 rounded-lg">

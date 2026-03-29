@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -39,6 +39,14 @@ type SortKey = 'created_at' | 'start_date' | 'end_date' | 'total_rental_fee';
 type SortDir = 'asc' | 'desc';
 
 export default function OrdersPage() {
+  return (
+    <Suspense>
+      <OrdersPageInner />
+    </Suspense>
+  );
+}
+
+function OrdersPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [now] = useState(() => Date.now());
@@ -48,7 +56,6 @@ export default function OrdersPage() {
   const activeStatuses = useMemo<OrderStatus[]>(() => {
     const s = searchParams.get('status');
     if (!s) return [];
-    // Cắt chuỗi status từ URL thành mảng, chỉ lấy các trạng thái hợp lệ
     return s
       .split(',')
       .filter((val) =>
@@ -65,10 +72,8 @@ export default function OrdersPage() {
 
       let newStatuses = [...activeStatuses];
       if (newStatuses.includes(status)) {
-        // Nếu đã chọn thì gỡ bỏ
         newStatuses = newStatuses.filter((s) => s !== status);
       } else {
-        // Nếu chưa chọn thì thêm vào
         newStatuses.push(status);
       }
 
@@ -88,7 +93,6 @@ export default function OrdersPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Lọc đơn hàng của Staff hiện tại
   const myOrders = useMemo(
     () =>
       MOCK_ORDERS.filter(
@@ -113,7 +117,6 @@ export default function OrdersPage() {
       );
     }
 
-    // Áp dụng bộ lọc mảng trạng thái
     if (activeStatuses.length > 0) {
       list = list.filter((o) => activeStatuses.includes(o.status));
     }
@@ -148,11 +151,12 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-background text-foreground pb-12">
       <div className="max-w-6xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         {/* ===== Header ===== */}
-        <div className="mb-6 space-y-1">
+        <div className="mb-6 space-y-1.5">
           <h1 className="text-3xl font-bold tracking-tight">
             Đơn hàng của tôi
           </h1>
-          <div className="flex items-center gap-2 text-[16px] text-muted-foreground flex-wrap">
+          <div className="h-0.5 w-14 rounded-full bg-gradient-to-r from-theme-primary-start to-theme-primary-end" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
             <span>
               Hiển thị{' '}
               <strong className="text-foreground font-semibold">
@@ -164,7 +168,7 @@ export default function OrdersPage() {
               <>
                 <span className="text-border">•</span>
                 <span className="inline-flex items-center gap-1.5 text-destructive font-semibold bg-destructive/10 px-2 py-0.5 rounded-md">
-                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse-gentle" />
                   {urgentCount} cần xử lý
                 </span>
               </>
@@ -180,7 +184,7 @@ export default function OrdersPage() {
               placeholder="Tìm mã đơn, tên khách, số điện thoại, sản phẩm..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 h-11 w-full bg-card border-border/60 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-primary/20 transition-all text-[16px]"
+              className="pl-10 pr-4 h-12 w-full bg-card border-border/60 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-theme-primary-start/25 transition-all text-[15px]"
             />
           </div>
 
@@ -235,7 +239,7 @@ export default function OrdersPage() {
                 <button
                   onClick={() => toggleStatusFilter('ALL')}
                   className={cn(
-                    'px-4 py-1.5 rounded-lg text-[15px] font-medium transition-all border shadow-sm',
+                    'px-4 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm',
                     activeStatuses.length === 0
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
@@ -245,18 +249,20 @@ export default function OrdersPage() {
                 </button>
                 {ALL_STATUSES.map((s) => {
                   const isActive = activeStatuses.includes(s);
+                  const sCfg = STATUS_CFG[s];
                   return (
                     <button
                       key={s}
                       onClick={() => toggleStatusFilter(s)}
                       className={cn(
-                        'px-3.5 py-1.5 rounded-lg text-[15px] font-medium transition-all border shadow-sm',
+                        'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm inline-flex items-center gap-1.5',
                         isActive
-                          ? 'bg-primary/15 text-primary border-primary shadow-sm ring-1 ring-primary/20'
+                          ? cn(sCfg.bg, sCfg.color, sCfg.border, 'ring-1 ring-current/20')
                           : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
                       )}
                     >
-                      {STATUS_CFG[s].label}
+                      <span className={cn('size-1.5 rounded-full', isActive ? sCfg.dot : 'bg-muted-foreground/30')} />
+                      {sCfg.label}
                     </button>
                   );
                 })}
@@ -281,7 +287,7 @@ export default function OrdersPage() {
                     key={k}
                     onClick={() => toggleSort(k)}
                     className={cn(
-                      'px-3.5 py-1.5 rounded-lg text-[15px] font-medium transition-all border shadow-sm flex items-center gap-1.5',
+                      'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm flex items-center gap-1.5',
                       sortKey === k
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
@@ -309,7 +315,7 @@ export default function OrdersPage() {
             <p className="text-xl font-bold text-foreground">
               Không tìm thấy đơn hàng
             </p>
-            <p className="text-[16px] text-muted-foreground mt-2 mb-6 max-w-sm">
+            <p className="text-sm text-muted-foreground mt-2 mb-6 max-w-sm">
               Không có đơn hàng nào khớp với tìm kiếm và bộ lọc hiện tại của
               bạn.
             </p>
@@ -324,7 +330,7 @@ export default function OrdersPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 gap-4">
             {filtered.map((order) => (
               <OrderCard key={order.rental_order_id} order={order} now={now} />
             ))}
@@ -352,37 +358,36 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
         className={cn(
           'relative bg-card border rounded-xl transition-all duration-300 overflow-hidden',
           'hover:shadow-lg hover:-translate-y-0.5',
-          'border-border/60 hover:border-primary/30',
+          'border-border/60 hover:border-theme-primary-start/30',
         )}
       >
-        {/* ===== Left Indicator (Bám sát viền trái) ===== */}
+        {/* ===== Left Indicator ===== */}
         <div
           className={cn(
-            'absolute left-0 top-0 bottom-0 w-1.5 transition-colors',
+            'absolute left-0 top-0 bottom-0 w-1 transition-colors',
             cfg.dot,
           )}
         />
 
-        {/* Bọc nội dung và lùi vào 1.5 (để nhường chỗ cho left indicator) */}
-        <div className="pl-1.5">
+        <div className="pl-1">
           {/* ===== Header Section ===== */}
-          <div className="px-5 py-4 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/10">
+          <div className="px-5 py-4 border-b border-border/40 flex items-center justify-between gap-4 bg-muted/10">
             <div className="flex items-center gap-3.5 min-w-0">
               <div
                 className={cn(
-                  'flex items-center justify-center w-11 h-11 rounded-xl shrink-0 shadow-sm border border-black/5 dark:border-white/5',
+                  'flex items-center justify-center w-10 h-10 rounded-xl shrink-0 shadow-sm border border-black/5 dark:border-white/5',
                   cfg.bg,
                 )}
               >
-                <Icon className={cn('w-5.5 h-5.5', cfg.color)} />
+                <Icon className={cn('w-5 h-5', cfg.color)} />
               </div>
               <div className="min-w-0 flex flex-col justify-center gap-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-[17px] font-bold text-foreground tracking-tight truncate">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground tracking-tight font-mono whitespace-nowrap">
                     {order.order_code}
                   </h3>
                   {daysOverdue > 0 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold text-destructive bg-destructive/10 uppercase tracking-wider border border-destructive/20">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold text-destructive bg-destructive/10 uppercase tracking-wider border border-destructive/20 whitespace-nowrap">
                       Quá {daysOverdue} ngày
                     </span>
                   )}
@@ -390,34 +395,34 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
               </div>
             </div>
 
-            <div className="shrink-0 self-start sm:self-center mt-1 sm:mt-0">
+            <div className="shrink-0">
               <span
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] uppercase tracking-wide font-bold shadow-sm',
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] uppercase tracking-wide font-bold shadow-sm whitespace-nowrap',
                   cfg.color,
                   cfg.bg,
                   cfg.border || 'border border-transparent',
                 )}
               >
-                <span className={cn('w-1.5 h-1.5 rounded-full', cfg.dot)} />
+                <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', cfg.dot)} />
                 {cfg.label}
               </span>
             </div>
           </div>
 
           {/* ===== Main Content Grid ===== */}
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.5fr_1fr_0.8fr] gap-5 lg:gap-6">
             {/* 1. Customer Info */}
             <div className="space-y-1.5 min-w-0">
               <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                <User className="w-3.5 h-3.5" />
+                <User className="w-3.5 h-3.5 shrink-0" />
                 Khách hàng
               </p>
-              <p className="text-[15px] font-bold text-foreground truncate">
+              <p className="text-sm font-bold text-foreground truncate">
                 {order.renter.full_name}
               </p>
-              <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground font-mono font-medium">
-                <Phone className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground font-mono font-medium whitespace-nowrap">
+                <Phone className="w-3.5 h-3.5 shrink-0" />
                 {order.renter.phone_number}
               </div>
             </div>
@@ -425,10 +430,10 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
             {/* 2. Products */}
             <div className="space-y-1.5 min-w-0">
               <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                <Package className="w-3.5 h-3.5" />
+                <Package className="w-3.5 h-3.5 shrink-0" />
                 Sản phẩm
               </p>
-              <p className="text-[15px] font-medium text-foreground line-clamp-2 leading-relaxed">
+              <p className="text-sm font-medium text-foreground line-clamp-2 leading-relaxed">
                 {order.items.map((i) => i.product_name).join(', ')}
               </p>
             </div>
@@ -436,27 +441,24 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
             {/* 3. Dates */}
             <div className="space-y-1.5">
               <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                <Calendar className="w-3.5 h-3.5" />
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
                 Lịch trình
               </p>
-              <div className="flex items-center gap-1.5 text-[15px] text-foreground font-semibold">
-                <div className="text-[15px] text-foreground font-semibold">
-                  {fmtDateShort(order.start_date)} →{' '}
-                  {fmtDateShort(order.end_date)}
-                </div>
-              </div>
+              <p className="text-sm text-foreground font-semibold whitespace-nowrap">
+                {fmtDateShort(order.start_date)} → {fmtDateShort(order.end_date)}
+              </p>
             </div>
 
-            {/* 4. Price Summary (Nổi bật) */}
-            <div className="space-y-1.5 sm:text-right lg:text-left">
+            {/* 4. Price Summary */}
+            <div className="space-y-1.5 lg:text-right">
               <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Thành tiền
               </p>
-              <p className="text-[20px] font-black text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight leading-none pt-1">
+              <p className="text-lg font-black text-success tabular-nums tracking-tight leading-none pt-0.5">
                 {fmt(order.total_rental_fee)}
               </p>
               {order.total_penalty_amount ? (
-                <p className="text-[12px] font-bold text-destructive bg-destructive/10 inline-block px-1.5 py-0.5 rounded border border-destructive/20 mt-1">
+                <p className="text-[11px] font-bold text-destructive bg-destructive/10 inline-block px-1.5 py-0.5 rounded border border-destructive/20 whitespace-nowrap">
                   +{fmt(order.total_penalty_amount)} phạt
                 </p>
               ) : null}
@@ -464,10 +466,10 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
           </div>
 
           {/* ===== Footer: Address & Action ===== */}
-          <div className="px-5 py-4 bg-muted/20 border-t border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5 min-w-0 text-[14px]">
-              <MapPin className="w-4.5 h-4.5 shrink-0 text-muted-foreground" />
-              <span className="text-muted-foreground truncate">
+          <div className="px-5 py-3.5 bg-muted/20 border-t border-border/40 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5 min-w-0 text-[13px]">
+              <MapPin className="w-4 h-4 shrink-0 text-muted-foreground" />
+              <span className="text-muted-foreground line-clamp-1">
                 Giao đến:{' '}
                 <strong className="text-foreground font-semibold ml-1">
                   {order.delivery_address || 'Nhận tại cửa hàng'}
@@ -475,7 +477,7 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[14px] font-bold text-primary group-hover:text-primary/80 transition-colors self-end sm:self-auto shrink-0">
+            <div className="flex items-center gap-1.5 text-[13px] font-bold text-theme-primary-start group-hover:text-theme-primary-end transition-colors shrink-0">
               <span>Xem chi tiết</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
             </div>

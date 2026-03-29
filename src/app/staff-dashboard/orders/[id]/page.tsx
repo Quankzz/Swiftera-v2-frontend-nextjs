@@ -202,9 +202,13 @@ export default function OrderDetailPage({
         >
           {/* RIGHT column: Map panel (shown first on mobile) */}
           {hasMapPanel && mapConfig && (
-            <div className="order-first lg:order-2 lg:sticky lg:top-4 flex flex-col gap-3">
-              <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            // 1. Set sticky, top offset (chừa chỗ cho thanh menu trên cùng), và giới hạn chiều cao tối đa của toàn bộ cột
+            // Giả sử Header web của bạn cao khoảng 4rem (h-16), ta set top-20 (5rem) để cách 1 đoạn, và h-[calc(100vh-6rem)] để cách đáy 1 đoạn
+            <div className="order-first lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] flex flex-col z-10 transition-all">
+              {/* 2. Thêm h-full để Card chiếm trọn chiều cao cột, và flex-col để chia layout bên trong */}
+              <div className="rounded-2xl border border-border bg-card shadow-md flex flex-col h-full overflow-hidden">
+                {/* Header của Map (Thêm shrink-0 để không bị bóp méo khi màn hình nhỏ) */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30 shrink-0">
                   <div className="flex items-center gap-2">
                     <Navigation className="size-4 text-theme-primary-start" />
                     <p className="text-sm font-bold text-foreground">
@@ -217,7 +221,9 @@ export default function OrderDetailPage({
                     </p>
                   )}
                 </div>
-                <div className="p-2.5">
+
+                {/* Body của Map: flex-1 min-h-0 giúp nó tự động chiếm toàn bộ không gian còn lại giữa Header và Footer của Card */}
+                <div className="p-2.5 flex-1 min-h-0">
                   <DeliveryMiniMap
                     destLat={mapConfig.destLat}
                     destLng={mapConfig.destLng}
@@ -226,24 +232,26 @@ export default function OrderDetailPage({
                     staffLng={localLng}
                     destPinColor={mapConfig.destPinColor}
                     destLabel={mapConfig.destLabel}
-                    mapHeightClass="h-52 sm:h-60 lg:h-[52vh] lg:max-h-96"
+                    // Trên mobile: vẫn giữ chiều cao cố định (vh). Trên Desktop: chiếm 100% thẻ cha (h-full)
+                    mapHeightClass="h-[55vh] sm:h-[65vh] lg:h-full lg:min-h-0"
                   />
                 </div>
-                {/* GPS live status footer */}
-                <div className="px-4 py-3 border-t border-border flex items-center gap-3">
+
+                {/* GPS live status footer (Thêm shrink-0) */}
+                <div className="px-4 py-3 border-t border-border flex items-center gap-3 bg-card shrink-0">
                   <div
                     className={cn(
-                      'size-2 rounded-full shrink-0 transition-colors',
+                      'size-2.5 rounded-full shrink-0 transition-colors',
                       localLocAt
-                        ? 'bg-green-500 animate-pulse'
+                        ? 'bg-success animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]'
                         : 'bg-muted-foreground/40',
                     )}
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground">
+                    <p className="text-xs font-bold text-foreground">
                       {localLocAt ? 'GPS đang theo dõi' : 'Đang lấy vị trí...'}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                       {localLocAt
                         ? `Cập nhật: ${fmtDatetime(localLocAt)}`
                         : 'Vui lòng cho phép truy cập vị trí'}

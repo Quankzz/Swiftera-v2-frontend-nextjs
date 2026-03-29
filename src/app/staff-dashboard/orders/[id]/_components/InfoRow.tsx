@@ -5,8 +5,6 @@ export function InfoRow({
   icon: Icon,
   label,
   value,
-  strong,
-  mono,
 }: {
   icon: React.ElementType;
   label: string;
@@ -15,17 +13,15 @@ export function InfoRow({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <Icon className="size-4 text-muted-foreground mt-0.5 shrink-0" />
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
-        <p
-          className={cn(
-            'text-sm text-foreground',
-            strong && 'font-bold',
-            mono && 'font-mono',
-          )}
-        >
+    <div className="flex items-start gap-4">
+      <div className="p-2.5 bg-theme-primary-start/10 rounded-2xl">
+        <Icon className="size-5 text-theme-primary-start" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-muted-foreground font-medium mb-1">
+          {label}
+        </p>
+        <p className={cn('text-lg text-foreground leading-snug font-medium')}>
           {value}
         </p>
       </div>

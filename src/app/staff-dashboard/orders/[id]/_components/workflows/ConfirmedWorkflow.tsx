@@ -4,7 +4,6 @@ import {
   MapPin,
   Phone,
   Clock,
-  CheckCircle2,
   Camera,
   Truck,
   Loader2,
@@ -35,11 +34,13 @@ export function ConfirmedWorkflow({
       />
 
       <div className="rounded-2xl border border-border bg-card p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Warehouse className="size-4 text-theme-primary-start" />
+        <div className="flex items-center gap-2 mb-4">
+          <div className="size-7 rounded-lg bg-theme-primary-start/10 flex items-center justify-center">
+            <Warehouse className="size-3.5 text-theme-primary-start" />
+          </div>
           <p className="text-sm font-bold text-foreground">Thông tin Hub</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <InfoRow
             icon={Warehouse}
             label="Tên hub"
@@ -67,20 +68,18 @@ export function ConfirmedWorkflow({
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Camera className="size-4 text-theme-primary-start" />
+            <div className="size-7 rounded-lg bg-theme-primary-start/10 flex items-center justify-center">
+              <Camera className="size-3.5 text-theme-primary-start" />
+            </div>
             <p className="text-sm font-bold text-foreground">
               Chụp ảnh sản phẩm tại hub
             </p>
           </div>
-          <span className="text-xs font-bold bg-theme-primary-start/10 text-theme-primary-start border border-theme-primary-start/25 px-2 py-1 rounded-lg">
+          <span className="text-xs font-bold bg-theme-primary-start/10 text-theme-primary-start border border-theme-primary-start/25 px-2.5 py-1 rounded-lg whitespace-nowrap">
             {order.items.length} sản phẩm
           </span>
         </div>
         <div className="p-5 flex flex-col gap-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Chụp nhiều góc độ để ghi nhận tình trạng ban đầu. Đây là bằng chứng
-            bảo vệ cả nhân viên và khách hàng.
-          </p>
           {order.items.map((item) => (
             <ItemInspectionCard
               key={item.rental_order_item_id}
@@ -89,25 +88,22 @@ export function ConfirmedWorkflow({
             />
           ))}
         </div>
-      </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <Button
-          size="default"
-          onClick={onStartDelivery}
-          disabled={loading}
-          className="w-full h-11 gap-2 text-sm font-semibold"
-        >
-          {loading ? (
-            <Loader2 className="size-4.5 animate-spin" />
-          ) : (
-            <Truck className="size-4.5" />
-          )}
-          Đã lấy hàng — Bắt đầu giao
-        </Button>
-        <p className="text-xs text-muted-foreground text-center mt-2">
-          Nhấn khi bạn đã có đủ sản phẩm và sẵn sàng khởi hành đến địa chỉ khách
-        </p>
+        <div className="relative flex justify-end pb-5 mx-5">
+          <Button
+            size="default"
+            onClick={onStartDelivery}
+            disabled={loading}
+            className="lg:w-[40%] w-full h-16 gap-2 text-xl font-bold bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:opacity-90 text-white shadow-md shadow-theme-primary-start/20 transition-all"
+          >
+            {loading ? (
+              <Loader2 className="size-4.5 animate-spin" />
+            ) : (
+              <Truck className="size-4.5" />
+            )}
+            Đã lấy hàng
+          </Button>
+        </div>
       </div>
     </div>
   );
