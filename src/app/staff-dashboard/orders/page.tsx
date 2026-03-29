@@ -257,11 +257,21 @@ function OrdersPageInner() {
                       className={cn(
                         'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm inline-flex items-center gap-1.5',
                         isActive
-                          ? cn(sCfg.bg, sCfg.color, sCfg.border, 'ring-1 ring-current/20')
+                          ? cn(
+                              sCfg.bg,
+                              sCfg.color,
+                              sCfg.border,
+                              'ring-1 ring-current/20',
+                            )
                           : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
                       )}
                     >
-                      <span className={cn('size-1.5 rounded-full', isActive ? sCfg.dot : 'bg-muted-foreground/30')} />
+                      <span
+                        className={cn(
+                          'size-1.5 rounded-full',
+                          isActive ? sCfg.dot : 'bg-muted-foreground/30',
+                        )}
+                      />
                       {sCfg.label}
                     </button>
                   );
@@ -404,7 +414,9 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
                   cfg.border || 'border border-transparent',
                 )}
               >
-                <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', cfg.dot)} />
+                <span
+                  className={cn('w-1.5 h-1.5 rounded-full shrink-0', cfg.dot)}
+                />
                 {cfg.label}
               </span>
             </div>
@@ -445,7 +457,8 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
                 Lịch trình
               </p>
               <p className="text-sm text-foreground font-semibold whitespace-nowrap">
-                {fmtDateShort(order.start_date)} → {fmtDateShort(order.end_date)}
+                {fmtDateShort(order.start_date)} →{' '}
+                {fmtDateShort(order.end_date)}
               </p>
             </div>
 
