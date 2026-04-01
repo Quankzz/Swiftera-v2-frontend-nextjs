@@ -123,7 +123,16 @@ function buildDeliveryAddress(o: RentalOrderResponse): string {
  * enriched with a subsequent user/product lookup if needed.
  */
 export function adaptOrder(o: RentalOrderResponse): DashboardOrder {
-  const uiStatus = mapApiStatusToUi(o.status);
+  let uiStatus = mapApiStatusToUi(o.status);
+
+  // Derive OVERDUE: backend has no OVERDUE status, but if the order is ACTIVE
+  // and the expected rental end date has already passed, surface it as OVERDUE
+  // so staff can act on it immediately.
+  if (uiStatus === 'ACTIVE' && o.expectedRentalEndDate) {
+    if (new Date(o.expectedRentalEndDate).getTime() < Date.now()) {
+      uiStatus = 'OVERDUE';
+    }
+  }
 
   const items: OrderItem[] = (o.orderLines ?? []).map((line) => ({
     rental_order_item_id: line.rentalOrderLineId,

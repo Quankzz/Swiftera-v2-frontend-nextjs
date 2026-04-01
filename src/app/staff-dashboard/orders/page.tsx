@@ -194,7 +194,7 @@ function OrdersPageInner() {
           <h1 className="text-3xl font-bold tracking-tight">
             Đơn hàng của tôi
           </h1>
-          <div className="h-0.5 w-14 rounded-full bg-gradient-to-r from-theme-primary-start to-theme-primary-end" />
+          <div className="h-0.5 w-14 rounded-full bg-linear-to-r from-theme-primary-start to-theme-primary-end" />
           <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
             <span>
               Hiển thị{' '}
