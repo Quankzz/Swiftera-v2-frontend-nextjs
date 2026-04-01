@@ -17,30 +17,6 @@ export type DepositRefundStatus =
   | 'REFUNDED'
   | 'PARTIAL_REFUNDED';
 
-// ─── Staff & Hub ──────────────────────────────────────────────────────────────
-export interface StaffMember {
-  staff_id: string;
-  full_name: string;
-  email: string;
-  phone_number: string;
-  avatar_url?: string;
-  role: 'STAFF' | 'MANAGER';
-  hub_id: string;
-}
-
-export interface HubInfo {
-  hub_id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  phone_number: string;
-  manager_name: string;
-  open_hours: string;
-  tax_code: string;
-  representative: string;
-}
-
 // ─── Renter ───────────────────────────────────────────────────────────────────
 export interface RenterInfo {
   user_id: string;

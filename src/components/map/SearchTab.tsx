@@ -12,7 +12,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { useMapStore } from '@/stores/use-map-store';
-import { MOCK_HUBS } from '@/data/mockHubs';
+// import { MOCK_HUBS } from '@/data/mockHubs';
 import type { Hub } from '@/types/map.types';
 
 interface SearchTabProps {
@@ -39,7 +39,8 @@ const SearchTab: React.FC<SearchTabProps> = ({
   const hasLocation = !!userLocation;
 
   const results = useMemo(() => {
-    const baseHubs = nearbyHubs.length > 0 ? nearbyHubs : MOCK_HUBS;
+    const baseHubs =
+      nearbyHubs.length > 0 ? nearbyHubs : useMapStore.getState().hubs;
 
     let filtered = baseHubs;
 
@@ -218,21 +219,12 @@ const SearchTab: React.FC<SearchTabProps> = ({
         ) : (
           results.map((hub) => {
             const nearby = nearbyHubs.find((n) => n.hub_id === hub.hub_id);
-            const availabilityRatio =
-              hub.available_products / hub.total_products;
-            const availColor =
-              availabilityRatio > 0.5
-                ? 'bg-success'
-                : availabilityRatio > 0.2
-                  ? 'bg-warning'
-                  : 'bg-destructive';
 
             return (
               <HubCard
                 key={hub.hub_id}
                 hub={hub}
                 nearby={nearby}
-                availColor={availColor}
                 onFly={() => onFlyToHub(hub)}
                 onOpenModal={() => openHubModal(hub)}
                 onNavigate={() => onNavigateToHub(hub)}
@@ -249,7 +241,6 @@ const SearchTab: React.FC<SearchTabProps> = ({
 interface HubCardProps {
   hub: Hub;
   nearby?: { distance: number };
-  availColor: string;
   onFly: () => void;
   onOpenModal: (e: React.MouseEvent) => void;
   onNavigate: (e: React.MouseEvent) => void;

@@ -9,7 +9,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MOCK_HUB_INFO } from '@/data/mockDashboard';
+import type { HubResponse } from '@/api/hubs';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { WorkflowBanner } from '../WorkflowBanner';
 import { InfoRow } from '../InfoRow';
@@ -17,13 +17,23 @@ import { ItemInspectionCard } from '../ItemInspectionCard';
 
 export function ConfirmedWorkflow({
   order,
+  hubInfo,
   onStartDelivery,
   loading,
 }: {
   order: DashboardOrder;
+  hubInfo?: HubResponse | null;
   onStartDelivery: () => void;
   loading: boolean;
 }) {
+  const hubName = hubInfo?.name ?? order.hub_id ?? '—';
+  const hubAddress = hubInfo
+    ? [hubInfo.addressLine, hubInfo.ward, hubInfo.district, hubInfo.city]
+        .filter(Boolean)
+        .join(', ')
+    : '—';
+  const hubPhone = hubInfo?.phone ?? '—';
+  const hubHours = '07:00 – 21:00'; // not in API, default value
   return (
     <div className="flex flex-col gap-4">
       <WorkflowBanner
@@ -41,27 +51,10 @@ export function ConfirmedWorkflow({
           <p className="text-sm font-bold text-foreground">Thông tin Hub</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoRow
-            icon={Warehouse}
-            label="Tên hub"
-            value={MOCK_HUB_INFO.name}
-            strong
-          />
-          <InfoRow
-            icon={MapPin}
-            label="Địa chỉ"
-            value={MOCK_HUB_INFO.address}
-          />
-          <InfoRow
-            icon={Phone}
-            label="Điện thoại"
-            value={MOCK_HUB_INFO.phone_number}
-          />
-          <InfoRow
-            icon={Clock}
-            label="Giờ mở cửa"
-            value={MOCK_HUB_INFO.open_hours}
-          />
+          <InfoRow icon={Warehouse} label="Tên hub" value={hubName} strong />
+          <InfoRow icon={MapPin} label="Địa chỉ" value={hubAddress} />
+          <InfoRow icon={Phone} label="Điện thoại" value={hubPhone} />
+          <InfoRow icon={Clock} label="Giờ mở cửa" value={hubHours} />
         </div>
       </div>
 

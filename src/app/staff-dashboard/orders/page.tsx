@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, Suspense } from 'react';
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -15,11 +15,13 @@ import {
   X,
   MapPin,
   Phone,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CFG } from '@/lib/order-status';
 import { fmt, fmtDateShort } from '@/lib/formatters';
-import { MOCK_ORDERS, MOCK_CURRENT_STAFF } from '@/data/mockDashboard';
+import { getStaffOrders } from '@/api/staff-orders';
+import { useAuthStore } from '@/stores/auth-store';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -51,6 +53,29 @@ function OrdersPageInner() {
   const router = useRouter();
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState('');
+
+  // ─── API data ────────────────────────────────────────────────────
+  const [allOrders, setAllOrders] = useState<DashboardOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    const staffId = user?.userId;
+    if (!staffId) {
+      setAllOrders([]);
+      setLoadError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    setLoadError(null);
+    getStaffOrders(staffId)
+      .then(setAllOrders)
+      .catch((err: Error) => setLoadError(err.message))
+      .finally(() => setIsLoading(false));
+  }, [user?.userId]);
 
   // 1. Logic lọc NHIỀU trạng thái (Multi-select)
   const activeStatuses = useMemo<OrderStatus[]>(() => {
@@ -93,15 +118,8 @@ function OrdersPageInner() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  const myOrders = useMemo(
-    () =>
-      MOCK_ORDERS.filter(
-        (o) =>
-          o.staff_checkin_id === MOCK_CURRENT_STAFF.staff_id ||
-          o.staff_checkout_id === MOCK_CURRENT_STAFF.staff_id,
-      ),
-    [],
-  );
+  // allOrders already filtered by staff ID at API level
+  const myOrders = allOrders;
 
   const filtered = useMemo(() => {
     let list = [...myOrders];
@@ -146,6 +164,27 @@ function OrdersPageInner() {
   const urgentCount = myOrders.filter((o) =>
     ['PENDING', 'OVERDUE', 'RETURNING'].includes(o.status),
   ).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] gap-3 text-muted-foreground">
+        <Loader2 className="size-6 animate-spin" />
+        <span>Đang tải danh sách đơn hàng…</span>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center p-6">
+        <p className="text-destructive font-semibold">Không thể tải dữ liệu</p>
+        <p className="text-sm text-muted-foreground">{loadError}</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-12">

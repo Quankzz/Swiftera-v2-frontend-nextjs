@@ -1,29 +1,18 @@
-// Combines Product + ProductItem for map display (denormalized UI view)
-export interface MapProductItem {
-  product_item_id: string;
-  product_id: string;
-  name: string;
-  category: string;
-  current_daily_price: number;
-  deposit_amount: number;
-  description?: string;
-  image_url?: string;
-  status: 'AVAILABLE' | 'RENTED' | 'MAINTENANCE';
-}
-
+/**
+ * UI model for a hub node.
+ * Maps 1-to-1 to the backend Hub entity fields (see docs/05_DANH_MUC_CHI_TIET_TRUONG_DU_LIEU.md).
+ * `address` is a single computed string (addressLine + ward + district + city)
+ * assembled by the API adapter for display convenience.
+ */
 export interface Hub {
-  hub_id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  radius_km?: number;
-  phone_number?: string;
-  open_hours?: string;
-  total_products: number;
-  available_products: number;
-  image_url?: string;
-  products: MapProductItem[];
+  hub_id: string; // hubId
+  code: string; // code
+  name: string; // name
+  address: string; // computed: addressLine + ward + district + city
+  latitude: number | null; // latitude
+  longitude: number | null; // longitude
+  phone: string | null; // phone
+  is_active: boolean; // isActive
 }
 
 export interface HubWithDistance extends Hub {

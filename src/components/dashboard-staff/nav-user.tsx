@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -26,6 +28,7 @@ import {
 
 export function NavUser({
   user,
+  onLogout,
 }: {
   user: {
     name: string;
@@ -33,14 +36,27 @@ export function NavUser({
     avatar: string;
     role?: string;
   };
+  onLogout?: () => Promise<void> | void;
 }) {
   const { isMobile } = useSidebar();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const initials = user.name
     .split(' ')
     .slice(-2)
     .map((n) => n[0])
     .join('')
     .toUpperCase();
+
+  const handleLogout = async () => {
+    if (!onLogout || isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await onLogout();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -109,9 +125,13 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
               <LogOutIcon className="size-4" />
-              Đăng xuất
+              {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

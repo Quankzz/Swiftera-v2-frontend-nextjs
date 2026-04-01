@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Building2,
+  Loader2,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -35,13 +36,12 @@ import {
   LabelList,
 } from 'recharts';
 import { cn } from '@/lib/utils';
-import {
-  MOCK_ORDERS,
-  MOCK_CURRENT_STAFF,
-  MOCK_HUB_INFO,
-} from '@/data/mockDashboard';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { fmtDateShort as fmtDate } from '@/lib/formatters';
+import { useAuthStore } from '@/stores/auth-store';
+import { getStaffOrders } from '@/api/staff-orders';
+import { getHubById } from '@/api/hubs';
+import type { HubResponse } from '@/api/hubs';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getGreeting = () => {
@@ -183,11 +183,37 @@ function TodayDot(props: any) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const myOrders = MOCK_ORDERS.filter(
-    (o) =>
-      o.staff_checkin_id === MOCK_CURRENT_STAFF.staff_id ||
-      o.staff_checkout_id === MOCK_CURRENT_STAFF.staff_id,
-  );
+  const { user } = useAuthStore();
+  const [myOrders, setMyOrders] = useState<DashboardOrder[]>([]);
+  const [hubInfo, setHubInfo] = useState<HubResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.userId) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+    getStaffOrders(user.userId)
+      .then((orders) => {
+        setMyOrders(orders);
+        // Fetch the hub for the first order found (staff's assigned hub)
+        const hubId = orders[0]?.hub_id ?? user.hubId;
+        if (hubId) {
+          return getHubById(hubId).then((hub) => setHubInfo(hub));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, [user?.userId]);
+
+  const staffName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+    : 'Nhân viên';
+  const staffAvatarUrl =
+    user?.avatarUrl ??
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
+  const hubName = hubInfo ? hubInfo.name : (user?.hubId ?? 'Hub');
 
   const counts = {
     pending: myOrders.filter((o) => o.status === 'PENDING').length,
@@ -251,466 +277,497 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-5 p-4 md:p-6 lg:p-8 max-w-6xl mx-auto w-full">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          {/* Avatar with online dot */}
-          <div className="relative shrink-0">
-            <div className="size-14 rounded-2xl overflow-hidden ring-2 ring-theme-primary-start/25 ring-offset-2 ring-offset-background">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={
-                  MOCK_CURRENT_STAFF.avatar_url ??
-                  `https://ui-avatars.com/api/?name=${MOCK_CURRENT_STAFF.full_name}&background=fe1451&color=fff`
-                }
-                alt={MOCK_CURRENT_STAFF.full_name}
-                className="size-full object-cover"
-              />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-background bg-success" />
-          </div>
-
-          <div>
-            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-              {getGreeting()} 👋
-            </p>
-            <h1 className="text-2xl font-black text-foreground tracking-tight leading-none">
-              {MOCK_CURRENT_STAFF.full_name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-                <Building2 className="size-3 shrink-0" />
-                {MOCK_HUB_INFO.name}
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                <CalendarDays className="size-3 shrink-0" />
-                {new Date().toLocaleDateString('vi-VN', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </span>
-            </div>
-          </div>
+      {isLoading && (
+        <div className="flex items-center justify-center min-h-[30vh] gap-3 text-muted-foreground">
+          <Loader2 className="size-6 animate-spin" />
+          <span>Đang tải dữ liệu…</span>
         </div>
-
-        {urgentTotal > 0 && (
-          <Link
-            href="/staff-dashboard/orders"
-            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-2xl border border-destructive/30 bg-destructive/8 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/15 transition-all duration-200 shrink-0 shadow-sm shadow-destructive/10 active:scale-95"
-          >
-            <AlertCircle className="size-4 animate-pulse" />
-            {urgentTotal} đơn cần xử lý ngay
-            <ArrowRight className="size-3.5 opacity-70" />
-          </Link>
-        )}
-      </div>
-
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          label="Hôm nay"
-          value={todayCount}
-          unit="đơn"
-          icon={Target}
-          accentFrom="#fe1451"
-          accentTo="#ba264d"
-          iconBg="bg-theme-primary-start/10"
-          iconColor="text-theme-primary-start"
-          trend={todayDiff}
-          trendLabel="vs hôm qua"
-        />
-        <KpiCard
-          label="Tuần này"
-          value={weekTotal}
-          unit="đơn"
-          icon={Activity}
-          accentFrom="#0284c7"
-          accentTo="#0ea5e9"
-          iconBg="bg-info/10"
-          iconColor="text-info"
-        />
-        <KpiCard
-          label="Tháng này"
-          value={monthTotal}
-          unit="đơn"
-          icon={Award}
-          accentFrom="#059669"
-          accentTo="#10b981"
-          iconBg="bg-success/10"
-          iconColor="text-success"
-        />
-        <KpiCard
-          label="Hoàn thành"
-          value={counts.completed}
-          unit="đơn"
-          icon={CheckCircle2}
-          accentFrom="#7c3aed"
-          accentTo="#8b5cf6"
-          iconBg="bg-purple-500/10"
-          iconColor="text-purple-500"
-        />
-      </div>
-
-      {/* ── Status Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatusCard
-          label="Chờ xác nhận"
-          count={counts.pending}
-          icon={Clock}
-          colorClass="text-amber-600 dark:text-amber-400"
-          bgClass="bg-amber-50 dark:bg-amber-950/30"
-          borderClass="border-amber-200/80 dark:border-amber-700/30"
-          dotClass="bg-amber-400"
-          urgent={counts.pending > 0}
-          href="/staff-dashboard/orders?status=PENDING"
-        />
-        <StatusCard
-          label="Đang giao"
-          count={counts.delivering}
-          icon={Truck}
-          colorClass="text-info"
-          bgClass="bg-info/8"
-          borderClass="border-info/20"
-          dotClass="bg-info"
-          href="/staff-dashboard/orders?status=DELIVERING"
-        />
-        <StatusCard
-          label="Đang thuê"
-          count={counts.active}
-          icon={Package}
-          colorClass="text-success"
-          bgClass="bg-success/8"
-          borderClass="border-success/20"
-          dotClass="bg-success"
-          href="/staff-dashboard/orders?status=ACTIVE"
-        />
-        <StatusCard
-          label="Cần thu hồi"
-          count={counts.returning + counts.overdue}
-          icon={RotateCcw}
-          colorClass="text-destructive"
-          bgClass="bg-destructive/8"
-          borderClass="border-destructive/25"
-          dotClass="bg-destructive"
-          urgent={counts.returning + counts.overdue > 0}
-          href="/staff-dashboard/orders?status=RETURNING"
-        />
-      </div>
-
-      {/* ── Charts Row ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-4">
-        {/* ─ Area chart: 7-day trend (2 series) ─ */}
-        <section className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-bold text-foreground">
-                Xu hướng 7 ngày
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Đơn hoàn thành &amp; đơn mới theo ngày
-              </p>
-            </div>
-            <div className="flex items-center gap-4 shrink-0">
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                  Hôm nay
-                </p>
-                <p className="text-2xl font-black text-foreground tabular-nums leading-none mt-0.5">
-                  {todayCount}
-                </p>
-              </div>
-              <div className="w-px h-8 bg-border/60" />
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                  Tuần
-                </p>
-                <p
-                  className="text-2xl font-black tabular-nums leading-none mt-0.5"
-                  style={{ color: '#fe1451' }}
-                >
-                  {weekTotal}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <ResponsiveContainer width="100%" height={164}>
-            <AreaChart
-              data={WEEK_DATA}
-              margin={{ top: 10, right: 8, left: -20, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="gradCompleted" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#fe1451" stopOpacity={0.28} />
-                  <stop offset="92%" stopColor="#fe1451" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0284c7" stopOpacity={0.2} />
-                  <stop offset="92%" stopColor="#0284c7" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="currentColor"
-                strokeOpacity={0.07}
-                vertical={false}
-              />
-              <XAxis
-                dataKey="label"
-                axisLine={false}
-                tickLine={false}
-                tick={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  fill: 'currentColor',
-                  fillOpacity: 0.55,
-                }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tickCount={4}
-                tick={{ fontSize: 10, fill: 'currentColor', fillOpacity: 0.45 }}
-              />
-              <RechartsTooltip content={<AreaTooltip />} />
-              <ReferenceLine
-                y={avgCompleted}
-                stroke="#fe1451"
-                strokeDasharray="4 3"
-                strokeOpacity={0.45}
-                strokeWidth={1.5}
-                label={{
-                  value: `TB ${avgCompleted}`,
-                  position: 'insideTopRight',
-                  offset: 6,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  fill: '#fe1451',
-                  fillOpacity: 0.8,
-                }}
-              />
-              {/* newOrders area — behind completed */}
-              <Area
-                type="monotone"
-                dataKey="newOrders"
-                name="Đơn mới"
-                stroke="#0284c7"
-                strokeWidth={1.8}
-                fill="url(#gradNew)"
-                dot={false}
-                activeDot={{
-                  r: 4,
-                  strokeWidth: 2,
-                  stroke: 'white',
-                  fill: '#0284c7',
-                }}
-              />
-              {/* completed area — on top, with custom today dot */}
-              <Area
-                type="monotone"
-                dataKey="completed"
-                name="Hoàn thành"
-                stroke="#fe1451"
-                strokeWidth={2.5}
-                fill="url(#gradCompleted)"
-                dot={<TodayDot />}
-                activeDot={{
-                  r: 5,
-                  strokeWidth: 2,
-                  stroke: 'white',
-                  fill: '#fe1451',
-                }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-
-          {/* Legend + trend footer */}
-          <div className="flex items-center gap-5 mt-3 pt-3 border-t border-border/30">
+      )}
+      {!isLoading && (
+        <>
+          {/* ── Header ── */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-5 h-2 rounded-sm shrink-0"
-                  style={{ backgroundColor: '#fe1451' }}
-                />
-                <span className="text-xs font-semibold text-muted-foreground">
-                  Hoàn thành
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span
-                  className="w-5 h-2 rounded-sm shrink-0"
-                  style={{ backgroundColor: '#0284c7' }}
-                />
-                <span className="text-xs font-semibold text-muted-foreground">
-                  Đơn mới
-                </span>
-              </div>
-            </div>
-            <div className="ml-auto flex items-center gap-1.5 text-xs shrink-0">
-              {todayDiff >= 0 ? (
-                <TrendingUp className="size-3.5 text-success shrink-0" />
-              ) : (
-                <TrendingDown className="size-3.5 text-destructive shrink-0" />
-              )}
-              <span
-                className={cn(
-                  'font-bold',
-                  todayDiff >= 0 ? 'text-success' : 'text-destructive',
-                )}
-              >
-                {todayDiff >= 0 ? '+' : ''}
-                {todayDiff}
-              </span>
-              <span className="text-muted-foreground">vs hôm qua</span>
-            </div>
-          </div>
-        </section>
-
-        {/* ─ Horizontal bar chart: status breakdown ─ */}
-        <section className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200 flex flex-col">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-sm font-bold text-foreground">
-                Trạng thái đơn hàng
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {myOrders.length} đơn được phân công
-              </p>
-            </div>
-            <span className="text-2xl font-black text-foreground tabular-nums">
-              {myOrders.length}
-            </span>
-          </div>
-
-          <div className="flex-1">
-            <ResponsiveContainer width="100%" height={164}>
-              <BarChart
-                data={statusBarData}
-                layout="vertical"
-                margin={{ top: 4, right: 32, left: 4, bottom: 4 }}
-                barCategoryGap="26%"
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  horizontal={false}
-                  stroke="currentColor"
-                  strokeOpacity={0.06}
-                />
-                <XAxis type="number" hide domain={[0, (v: number) => v + 2]} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  width={98}
-                  tick={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fill: 'currentColor',
-                    fillOpacity: 0.65,
-                  }}
-                />
-                <RechartsTooltip
-                  content={<HBarTooltip />}
-                  cursor={{ fill: 'currentColor', fillOpacity: 0.04 }}
-                />
-                <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={22}>
-                  {statusBarData.map((entry, i) => (
-                    <Cell key={i} fill={entry.fill} />
-                  ))}
-                  <LabelList
-                    dataKey="value"
-                    position="right"
-                    content={renderBarLabel}
+              {/* Avatar with online dot */}
+              <div className="relative shrink-0">
+                <div className="size-14 rounded-2xl overflow-hidden ring-2 ring-theme-primary-start/25 ring-offset-2 ring-offset-background">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={staffAvatarUrl}
+                    alt={staffName}
+                    className="size-full object-cover"
                   />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Proportional distribution strip */}
-          <div className="mt-auto pt-4 border-t border-border/30">
-            <div className="flex h-2.5 overflow-hidden rounded-full gap-px">
-              {statusBarData
-                .filter((d) => d.value > 0)
-                .map((entry) => {
-                  const pct =
-                    myOrders.length > 0
-                      ? (entry.value / myOrders.length) * 100
-                      : 0;
-                  return (
-                    <div
-                      key={entry.name}
-                      className="h-full transition-all duration-700 first:rounded-l-full last:rounded-r-full"
-                      style={{ width: `${pct}%`, backgroundColor: entry.fill }}
-                      title={`${entry.name}: ${entry.value} đơn`}
-                    />
-                  );
-                })}
-            </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-              {statusBarData
-                .filter((d) => d.value > 0)
-                .map((entry) => {
-                  const pct =
-                    myOrders.length > 0
-                      ? Math.round((entry.value / myOrders.length) * 100)
-                      : 0;
-                  return (
-                    <div key={entry.name} className="flex items-center gap-1">
-                      <span
-                        className="size-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: entry.fill }}
-                      />
-                      <span className="text-[10px] text-muted-foreground font-medium">
-                        {pct}%
-                      </span>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* ── Urgent Action Queue ── */}
-      {urgentOrders.length > 0 && (
-        <section className="rounded-2xl border border-destructive/20 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border/25 bg-destructive/4">
-            <div className="flex items-center gap-3">
-              <div className="size-8 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
-                <AlertCircle className="size-4 text-destructive" />
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-background bg-success" />
               </div>
+
               <div>
-                <h2 className="text-sm font-bold text-foreground leading-none">
-                  Cần xử lý ngay
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {urgentOrders.length} đơn ưu tiên cao
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+                  {getGreeting()} 👋
                 </p>
+                <h1 className="text-2xl font-black text-foreground tracking-tight leading-none">
+                  {staffName}
+                </h1>
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                    <Building2 className="size-3 shrink-0" />
+                    {hubName}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                    <CalendarDays className="size-3 shrink-0" />
+                    {new Date().toLocaleDateString('vi-VN', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </div>
               </div>
-              <span className="flex min-w-6 h-6 px-1.5 items-center justify-center rounded-full bg-destructive text-[11px] font-black text-white shadow-sm">
-                {urgentOrders.length}
-              </span>
             </div>
-            <Link
-              href="/staff-dashboard/orders"
-              className="text-xs font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors hover:gap-1.5"
-            >
-              Xem tất cả <ChevronRight className="size-3.5" />
-            </Link>
+
+            {urgentTotal > 0 && (
+              <Link
+                href="/staff-dashboard/orders"
+                className="inline-flex items-center gap-2 self-start sm:self-auto rounded-2xl border border-destructive/30 bg-destructive/8 px-4 py-3 text-sm font-bold text-destructive hover:bg-destructive/15 transition-all duration-200 shrink-0 shadow-sm shadow-destructive/10 active:scale-95"
+              >
+                <AlertCircle className="size-4 animate-pulse" />
+                {urgentTotal} đơn cần xử lý ngay
+                <ArrowRight className="size-3.5 opacity-70" />
+              </Link>
+            )}
           </div>
 
-          {/* Rows */}
-          <div className="divide-y divide-border/20">
-            {urgentOrders.map((order) => (
-              <UrgentRow key={order.rental_order_id} order={order} />
-            ))}
+          {/* ── KPI Cards ── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <KpiCard
+              label="Hôm nay"
+              value={todayCount}
+              unit="đơn"
+              icon={Target}
+              accentFrom="#fe1451"
+              accentTo="#ba264d"
+              iconBg="bg-theme-primary-start/10"
+              iconColor="text-theme-primary-start"
+              trend={todayDiff}
+              trendLabel="vs hôm qua"
+            />
+            <KpiCard
+              label="Tuần này"
+              value={weekTotal}
+              unit="đơn"
+              icon={Activity}
+              accentFrom="#0284c7"
+              accentTo="#0ea5e9"
+              iconBg="bg-info/10"
+              iconColor="text-info"
+            />
+            <KpiCard
+              label="Tháng này"
+              value={monthTotal}
+              unit="đơn"
+              icon={Award}
+              accentFrom="#059669"
+              accentTo="#10b981"
+              iconBg="bg-success/10"
+              iconColor="text-success"
+            />
+            <KpiCard
+              label="Hoàn thành"
+              value={counts.completed}
+              unit="đơn"
+              icon={CheckCircle2}
+              accentFrom="#7c3aed"
+              accentTo="#8b5cf6"
+              iconBg="bg-purple-500/10"
+              iconColor="text-purple-500"
+            />
           </div>
-        </section>
+
+          {/* ── Status Cards ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatusCard
+              label="Chờ xác nhận"
+              count={counts.pending}
+              icon={Clock}
+              colorClass="text-amber-600 dark:text-amber-400"
+              bgClass="bg-amber-50 dark:bg-amber-950/30"
+              borderClass="border-amber-200/80 dark:border-amber-700/30"
+              dotClass="bg-amber-400"
+              urgent={counts.pending > 0}
+              href="/staff-dashboard/orders?status=PENDING"
+            />
+            <StatusCard
+              label="Đang giao"
+              count={counts.delivering}
+              icon={Truck}
+              colorClass="text-info"
+              bgClass="bg-info/8"
+              borderClass="border-info/20"
+              dotClass="bg-info"
+              href="/staff-dashboard/orders?status=DELIVERING"
+            />
+            <StatusCard
+              label="Đang thuê"
+              count={counts.active}
+              icon={Package}
+              colorClass="text-success"
+              bgClass="bg-success/8"
+              borderClass="border-success/20"
+              dotClass="bg-success"
+              href="/staff-dashboard/orders?status=ACTIVE"
+            />
+            <StatusCard
+              label="Cần thu hồi"
+              count={counts.returning + counts.overdue}
+              icon={RotateCcw}
+              colorClass="text-destructive"
+              bgClass="bg-destructive/8"
+              borderClass="border-destructive/25"
+              dotClass="bg-destructive"
+              urgent={counts.returning + counts.overdue > 0}
+              href="/staff-dashboard/orders?status=RETURNING"
+            />
+          </div>
+
+          {/* ── Charts Row ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-4">
+            {/* ─ Area chart: 7-day trend (2 series) ─ */}
+            <section className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-bold text-foreground">
+                    Xu hướng 7 ngày
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Đơn hoàn thành &amp; đơn mới theo ngày
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+                      Hôm nay
+                    </p>
+                    <p className="text-2xl font-black text-foreground tabular-nums leading-none mt-0.5">
+                      {todayCount}
+                    </p>
+                  </div>
+                  <div className="w-px h-8 bg-border/60" />
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+                      Tuần
+                    </p>
+                    <p
+                      className="text-2xl font-black tabular-nums leading-none mt-0.5"
+                      style={{ color: '#fe1451' }}
+                    >
+                      {weekTotal}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <ResponsiveContainer width="100%" height={164}>
+                <AreaChart
+                  data={WEEK_DATA}
+                  margin={{ top: 10, right: 8, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient
+                      id="gradCompleted"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="5%"
+                        stopColor="#fe1451"
+                        stopOpacity={0.28}
+                      />
+                      <stop offset="92%" stopColor="#fe1451" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gradNew" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.2} />
+                      <stop offset="92%" stopColor="#0284c7" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="currentColor"
+                    strokeOpacity={0.07}
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      fill: 'currentColor',
+                      fillOpacity: 0.55,
+                    }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tickCount={4}
+                    tick={{
+                      fontSize: 10,
+                      fill: 'currentColor',
+                      fillOpacity: 0.45,
+                    }}
+                  />
+                  <RechartsTooltip content={<AreaTooltip />} />
+                  <ReferenceLine
+                    y={avgCompleted}
+                    stroke="#fe1451"
+                    strokeDasharray="4 3"
+                    strokeOpacity={0.45}
+                    strokeWidth={1.5}
+                    label={{
+                      value: `TB ${avgCompleted}`,
+                      position: 'insideTopRight',
+                      offset: 6,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      fill: '#fe1451',
+                      fillOpacity: 0.8,
+                    }}
+                  />
+                  {/* newOrders area — behind completed */}
+                  <Area
+                    type="monotone"
+                    dataKey="newOrders"
+                    name="Đơn mới"
+                    stroke="#0284c7"
+                    strokeWidth={1.8}
+                    fill="url(#gradNew)"
+                    dot={false}
+                    activeDot={{
+                      r: 4,
+                      strokeWidth: 2,
+                      stroke: 'white',
+                      fill: '#0284c7',
+                    }}
+                  />
+                  {/* completed area — on top, with custom today dot */}
+                  <Area
+                    type="monotone"
+                    dataKey="completed"
+                    name="Hoàn thành"
+                    stroke="#fe1451"
+                    strokeWidth={2.5}
+                    fill="url(#gradCompleted)"
+                    dot={<TodayDot />}
+                    activeDot={{
+                      r: 5,
+                      strokeWidth: 2,
+                      stroke: 'white',
+                      fill: '#fe1451',
+                    }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+
+              {/* Legend + trend footer */}
+              <div className="flex items-center gap-5 mt-3 pt-3 border-t border-border/30">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="w-5 h-2 rounded-sm shrink-0"
+                      style={{ backgroundColor: '#fe1451' }}
+                    />
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Hoàn thành
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="w-5 h-2 rounded-sm shrink-0"
+                      style={{ backgroundColor: '#0284c7' }}
+                    />
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Đơn mới
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-auto flex items-center gap-1.5 text-xs shrink-0">
+                  {todayDiff >= 0 ? (
+                    <TrendingUp className="size-3.5 text-success shrink-0" />
+                  ) : (
+                    <TrendingDown className="size-3.5 text-destructive shrink-0" />
+                  )}
+                  <span
+                    className={cn(
+                      'font-bold',
+                      todayDiff >= 0 ? 'text-success' : 'text-destructive',
+                    )}
+                  >
+                    {todayDiff >= 0 ? '+' : ''}
+                    {todayDiff}
+                  </span>
+                  <span className="text-muted-foreground">vs hôm qua</span>
+                </div>
+              </div>
+            </section>
+
+            {/* ─ Horizontal bar chart: status breakdown ─ */}
+            <section className="rounded-2xl border border-border/50 bg-card shadow-sm p-5 hover:shadow-md transition-shadow duration-200 flex flex-col">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-bold text-foreground">
+                    Trạng thái đơn hàng
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {myOrders.length} đơn được phân công
+                  </p>
+                </div>
+                <span className="text-2xl font-black text-foreground tabular-nums">
+                  {myOrders.length}
+                </span>
+              </div>
+
+              <div className="flex-1">
+                <ResponsiveContainer width="100%" height={164}>
+                  <BarChart
+                    data={statusBarData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 32, left: 4, bottom: 4 }}
+                    barCategoryGap="26%"
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      horizontal={false}
+                      stroke="currentColor"
+                      strokeOpacity={0.06}
+                    />
+                    <XAxis
+                      type="number"
+                      hide
+                      domain={[0, (v: number) => v + 2]}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      width={98}
+                      tick={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        fill: 'currentColor',
+                        fillOpacity: 0.65,
+                      }}
+                    />
+                    <RechartsTooltip
+                      content={<HBarTooltip />}
+                      cursor={{ fill: 'currentColor', fillOpacity: 0.04 }}
+                    />
+                    <Bar dataKey="value" radius={[0, 6, 6, 0]} maxBarSize={22}>
+                      {statusBarData.map((entry, i) => (
+                        <Cell key={i} fill={entry.fill} />
+                      ))}
+                      <LabelList
+                        dataKey="value"
+                        position="right"
+                        content={renderBarLabel}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Proportional distribution strip */}
+              <div className="mt-auto pt-4 border-t border-border/30">
+                <div className="flex h-2.5 overflow-hidden rounded-full gap-px">
+                  {statusBarData
+                    .filter((d) => d.value > 0)
+                    .map((entry) => {
+                      const pct =
+                        myOrders.length > 0
+                          ? (entry.value / myOrders.length) * 100
+                          : 0;
+                      return (
+                        <div
+                          key={entry.name}
+                          className="h-full transition-all duration-700 first:rounded-l-full last:rounded-r-full"
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: entry.fill,
+                          }}
+                          title={`${entry.name}: ${entry.value} đơn`}
+                        />
+                      );
+                    })}
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                  {statusBarData
+                    .filter((d) => d.value > 0)
+                    .map((entry) => {
+                      const pct =
+                        myOrders.length > 0
+                          ? Math.round((entry.value / myOrders.length) * 100)
+                          : 0;
+                      return (
+                        <div
+                          key={entry.name}
+                          className="flex items-center gap-1"
+                        >
+                          <span
+                            className="size-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: entry.fill }}
+                          />
+                          <span className="text-[10px] text-muted-foreground font-medium">
+                            {pct}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* ── Urgent Action Queue ── */}
+          {urgentOrders.length > 0 && (
+            <section className="rounded-2xl border border-destructive/20 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-border/25 bg-destructive/4">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
+                    <AlertCircle className="size-4 text-destructive" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-foreground leading-none">
+                      Cần xử lý ngay
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {urgentOrders.length} đơn ưu tiên cao
+                    </p>
+                  </div>
+                  <span className="flex min-w-6 h-6 px-1.5 items-center justify-center rounded-full bg-destructive text-[11px] font-black text-white shadow-sm">
+                    {urgentOrders.length}
+                  </span>
+                </div>
+                <Link
+                  href="/staff-dashboard/orders"
+                  className="text-xs font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors hover:gap-1.5"
+                >
+                  Xem tất cả <ChevronRight className="size-3.5" />
+                </Link>
+              </div>
+
+              {/* Rows */}
+              <div className="divide-y divide-border/20">
+                {urgentOrders.map((order) => (
+                  <UrgentRow key={order.rental_order_id} order={order} />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

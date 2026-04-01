@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { usePathname, useSearchParams } from 'next/navigation'; // Thêm useSearchParams
 import {
   LayoutDashboard,
@@ -38,11 +39,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { NavUser } from '@/components/dashboard-staff/nav-user';
-import {
-  MOCK_CURRENT_STAFF,
-  MOCK_HUB_INFO,
-  MOCK_ORDERS,
-} from '@/data/mockDashboard';
+import { useAuthStore } from '@/stores/auth-store';
+import { logout as logoutApi } from '@/api/auth';
 import { cn } from '@/lib/utils';
 
 const ORDER_WORKFLOW_TABS = [
@@ -102,9 +100,20 @@ const SECONDARY_ITEMS = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams(); // Lấy query params trên URL
+  const searchParams = useSearchParams();
   const currentStatus = searchParams.get('status');
+  const { user } = useAuthStore();
+
+  const staffName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+    : 'Nhân viên';
+  const staffEmail = user?.email ?? '';
+  const staffAvatar =
+    user?.avatarUrl ??
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
+  const hubDisplayName = 'Swiftera Hub'; // will be enriched once hub API populates store
 
   const isDashboardActive = pathname === '/dashboard';
   const isOrdersActive =
@@ -118,11 +127,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [isOrdersActive]);
 
   const orderCounts = React.useMemo(() => {
-    const counts: Record<string, number> = {};
-    MOCK_ORDERS.forEach((o) => {
-      counts[o.status] = (counts[o.status] ?? 0) + 1;
-    });
-    return counts;
+    // Order counts are derived from the orders API via the page components.
+    // The sidebar shows aggregate counts; these will be populated in a
+    // future iteration via a shared orders context/store.
+    return {} as Record<string, number>;
   }, []);
 
   const urgentTotal =
@@ -131,6 +139,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     (orderCounts['PENDING'] ?? 0);
 
   const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
+
+  const handleLogout = React.useCallback(async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // Clear local auth state even if backend logout fails.
+    } finally {
+      useAuthStore.getState().clearAuth();
+      router.replace('/auth/login');
+    }
+  }, [router]);
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -146,7 +165,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   Swiftera
                 </span>
                 <span className="truncate text-[11px] text-sidebar-foreground/55 font-medium">
-                  {MOCK_HUB_INFO.name}
+                  {hubDisplayName}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -307,11 +326,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <NavUser
           user={{
-            name: MOCK_CURRENT_STAFF.full_name,
-            email: MOCK_CURRENT_STAFF.email,
-            avatar: MOCK_CURRENT_STAFF.avatar_url ?? '',
-            role: MOCK_CURRENT_STAFF.role,
+            name: staffName,
+            email: staffEmail,
+            avatar: staffAvatar,
+            role: 'STAFF',
           }}
+          onLogout={handleLogout}
         />
       </SidebarFooter>
     </Sidebar>

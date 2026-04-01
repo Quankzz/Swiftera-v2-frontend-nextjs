@@ -1,28 +1,49 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { login as loginApi } from '@/api/auth';
+import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SocialIcons } from './SocialIcons';
 
 const inputClassName =
   'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
 
 export function SignInForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const setAuth = useAuthStore((s) => s.setAuth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError('');
+    setIsSubmitting(true);
+
     try {
-      await login(email, password);
-      router.push('/');
-    } catch {
-      setError('Đăng nhập thất bại');
+      const res = await loginApi({
+        email: email.trim(),
+        password,
+      });
+
+      if (!res?.data?.accessToken || !res?.data?.userSecured) {
+        throw new Error('Dữ liệu đăng nhập không hợp lệ');
+      }
+
+      setAuth(res.data.accessToken, res.data.userSecured);
+
+      const roleNames = res.data.userSecured.rolesSecured.map((r) =>
+        r.name.toUpperCase(),
+      );
+      const isStaff = roleNames.some((r) => r.includes('STAFF'));
+      router.push(isStaff ? '/staff-dashboard' : '/');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Đăng nhập thất bại';
+      setError(msg.includes('401') ? 'Sai tài khoản hoặc mật khẩu' : msg);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -31,7 +52,9 @@ export function SignInForm() {
       onSubmit={handleLogin}
       className="flex h-full w-full flex-col items-center justify-center bg-white px-5 py-6 sm:px-10 sm:py-0 dark:bg-zinc-900"
     >
-      <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">Đăng nhập</h1>
+      <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">
+        Đăng nhập
+      </h1>
       {/* <SocialIcons />
       <span className="text-xs text-zinc-500 dark:text-zinc-400">
         hoặc sử dụng email và mật khẩu
@@ -61,9 +84,10 @@ export function SignInForm() {
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       <Button
         type="submit"
+        disabled={isSubmitting}
         className="mt-2.5 h-auto w-full bg-[#fe1451] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#ba264d]"
       >
-        Đăng nhập
+        {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
       </Button>
     </form>
   );

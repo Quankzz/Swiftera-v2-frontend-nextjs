@@ -1,6 +1,4 @@
 import type {
-  StaffMember,
-  HubInfo,
   DashboardOrder,
   DashboardProduct,
   DashboardStats,
@@ -8,7 +6,7 @@ import type {
 } from '@/types/dashboard.types';
 
 // ─── Current Staff ────────────────────────────────────────────────────────────
-export const MOCK_CURRENT_STAFF: StaffMember = {
+export const MOCK_CURRENT_STAFF = {
   staff_id: 'staff-001',
   full_name: 'Nguyễn Minh Khoa',
   email: 'khoa.nguyen@swiftera.vn',
@@ -19,7 +17,7 @@ export const MOCK_CURRENT_STAFF: StaffMember = {
 };
 
 // ─── Hub Info ─────────────────────────────────────────────────────────────────
-export const MOCK_HUB_INFO: HubInfo = {
+export const MOCK_HUB_INFO = {
   hub_id: 'hub-001',
   name: 'Swiftera Hub Quận 1',
   address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM',

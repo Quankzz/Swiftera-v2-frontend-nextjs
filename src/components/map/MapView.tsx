@@ -13,7 +13,8 @@ import '@goongmaps/goong-js/dist/goong-js.css';
 
 import { maptilesKey, apiKey } from '@/configs/goongmapKeys';
 import { useMapStore } from '@/stores/use-map-store';
-import { MOCK_HUBS } from '@/data/mockHubs';
+import { getActiveHubs } from '@/api/hubs';
+import type { HubResponse } from '@/api/hubs';
 import type { Hub, HubWithDistance, RouteInfo } from '@/types/map.types';
 
 import MapSidebar from '@/components/map/MapSidebar';
@@ -78,6 +79,22 @@ function stripHtml(html: string): string {
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/** Adapt a backend HubResponse to the Hub shape used by the map store. */
+function adaptHubForMap(h: HubResponse): Hub {
+  return {
+    hub_id: h.hubId,
+    code: h.code,
+    name: h.name,
+    address: [h.addressLine, h.ward, h.district, h.city]
+      .filter(Boolean)
+      .join(', '),
+    latitude: h.latitude,
+    longitude: h.longitude,
+    phone: h.phone,
+    is_active: h.isActive,
+  };
 }
 
 let notifCounter = 0;
@@ -145,11 +162,15 @@ const MapView: React.FC = () => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
-  // ── Load mock hubs ─────────────────────────────────────────────────────────
+  // ── Load hubs from API ─────────────────────────────────────────────
   useEffect(() => {
-    setHubs(MOCK_HUBS);
+    getActiveHubs()
+      .then((hubResponses: HubResponse[]) => {
+        setHubs(hubResponses.map(adaptHubForMap));
+      })
+      .catch(() => {}); // fail silently
   }, [setHubs]);
-
+  console.log(useMapStore.getState().hubs);
   // ── Silent geolocation on mount ────────────────────────────────────────────
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -191,8 +212,11 @@ const MapView: React.FC = () => {
         resizeObserver.observe(mapContainerRef.current);
       }
 
-      // Hub markers
-      MOCK_HUBS.forEach((hub) => {
+      // Hub markers — skip hubs without GPS coordinates
+      useMapStore.getState().hubs.forEach((hub) => {
+        if (hub.latitude == null || hub.longitude == null) return;
+        const { latitude, longitude } = hub;
+
         const el = document.createElement('div');
         el.title = hub.name;
         el.style.cssText = 'width:40px;height:40px;cursor:pointer;';
@@ -228,14 +252,14 @@ const MapView: React.FC = () => {
         el.addEventListener('click', () => {
           useMapStore.getState().openHubModal(hub);
           map.flyTo({
-            center: [hub.longitude, hub.latitude],
+            center: [longitude, latitude],
             zoom: 16,
             essential: true,
           });
         });
 
         new goongjs.Marker({ element: el })
-          .setLngLat([hub.longitude, hub.latitude])
+          .setLngLat([longitude, latitude])
           .addTo(map);
       });
     });
@@ -790,15 +814,19 @@ const MapView: React.FC = () => {
   // ── Nearby hubs ────────────────────────────────────────────────────────────
   const handleFindNearbyHubs = useCallback((): HubWithDistance[] => {
     if (!userLocation) return [];
-    return MOCK_HUBS.map((hub) => ({
-      ...hub,
-      distance: haversineDistance(
-        userLocation.lat,
-        userLocation.lng,
-        hub.latitude,
-        hub.longitude,
-      ),
-    })).sort((a, b) => a.distance - b.distance);
+    return useMapStore
+      .getState()
+      .hubs.filter((hub) => hub.latitude != null && hub.longitude != null)
+      .map((hub) => ({
+        ...hub,
+        distance: haversineDistance(
+          userLocation.lat,
+          userLocation.lng,
+          hub.latitude!,
+          hub.longitude!,
+        ),
+      }))
+      .sort((a, b) => a.distance - b.distance);
   }, [userLocation]);
 
   useEffect(() => {
@@ -813,6 +841,10 @@ const MapView: React.FC = () => {
           'error',
           'Vui lòng bật định vị để sử dụng tính năng này.',
         );
+        return;
+      }
+      if (hub.latitude == null || hub.longitude == null) {
+        showNotification('error', 'Hub này chưa có tọa độ GPS.');
         return;
       }
       clearAllRoutes();
@@ -886,6 +918,7 @@ const MapView: React.FC = () => {
   );
 
   const handleFlyToHub = useCallback((hub: Hub) => {
+    if (hub.latitude == null || hub.longitude == null) return;
     mapRef.current?.flyTo({
       center: [hub.longitude, hub.latitude],
       zoom: 16,

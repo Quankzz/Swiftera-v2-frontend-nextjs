@@ -17,8 +17,17 @@ import {
 } from 'lucide-react';
 import '@goongmaps/goong-js/dist/goong-js.css';
 import { cn } from '@/lib/utils';
-import { MOCK_ORDERS, MOCK_CURRENT_STAFF } from '@/data/mockDashboard';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
+import {
+  getStaffOrderById,
+  updateOrderStatus,
+  recordDelivery,
+  recordPickup,
+  setPenalty,
+} from '@/api/staff-orders';
+import { getHubById } from '@/api/hubs';
+import type { HubResponse } from '@/api/hubs';
+import { useAuthStore } from '@/stores/auth-store';
 import { Button } from '@/components/ui/button';
 
 import { STATUS_CFG, fmtDate, fmtDatetime, fmt } from './_components/utils';
@@ -39,10 +48,47 @@ export default function OrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [order, setOrder] = useState<DashboardOrder | null>(
-    () => MOCK_ORDERS.find((o) => o.rental_order_id === id) ?? null,
-  );
+  const { user } = useAuthStore();
+  const [order, setOrder] = useState<DashboardOrder | null>(null);
+  const [hubInfo, setHubInfo] = useState<HubResponse | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.userId) {
+      setPageLoading(false);
+      setPageError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+      return;
+    }
+
+    let cancelled = false;
+    setPageLoading(true);
+    setPageError(null);
+    getStaffOrderById(id)
+      .then((o) => {
+        if (!cancelled) {
+          setOrder(o);
+          // Fetch hub info when order is loaded
+          if (o?.hub_id) {
+            getHubById(o.hub_id)
+              .then((hub) => {
+                if (!cancelled) setHubInfo(hub);
+              })
+              .catch(() => {});
+          }
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setPageError(err?.message ?? 'Không thể tải đơn hàng');
+      })
+      .finally(() => {
+        if (!cancelled) setPageLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, user?.userId]);
   // GPS state — lifted so map panel in right column can read and update it
   const [localLat, setLocalLat] = useState<number | undefined>(
     order?.staff_current_latitude,
@@ -87,22 +133,98 @@ export default function OrderDetailPage({
 
   const handleStatusChange = useCallback(
     async (newStatus: OrderStatus, extra?: Partial<DashboardOrder>) => {
+      if (!order) return;
       setStatusLoading(true);
-      await new Promise((r) => setTimeout(r, 700));
-      setOrder((prev) =>
-        prev ? { ...prev, status: newStatus, ...extra } : prev,
-      );
-      setStatusLoading(false);
+      try {
+        let updated: DashboardOrder | null = null;
+        if (newStatus === 'ACTIVE') {
+          // DELIVERING → ACTIVE: use record-delivery endpoint
+          updated = await recordDelivery(order.rental_order_id, {
+            deliveredLatitude: localLat,
+            deliveredLongitude: localLng,
+          });
+        } else if (newStatus === 'COMPLETED') {
+          // RETURNING → COMPLETED: use record-pickup endpoint
+          updated = await recordPickup(order.rental_order_id, {
+            pickedUpLatitude: localLat,
+            pickedUpLongitude: localLng,
+          });
+        } else {
+          // CONFIRMED, DELIVERING, RETURNING: generic status transition
+          const apiStatusMap: Record<OrderStatus, string> = {
+            PENDING: 'PAID',
+            CONFIRMED: 'CONFIRMED',
+            DELIVERING: 'DELIVERING',
+            ACTIVE: 'ACTIVE',
+            RETURNING: 'RETURNING',
+            COMPLETED: 'COMPLETED',
+            CANCELLED: 'CANCELLED',
+            OVERDUE: 'ACTIVE',
+          };
+          updated = await updateOrderStatus(
+            order.rental_order_id,
+            apiStatusMap[newStatus] as Parameters<typeof updateOrderStatus>[1],
+          );
+        }
+        if (updated) {
+          setOrder({ ...updated, ...extra });
+        } else {
+          // Optimistic fallback if API returns null
+          setOrder((prev) =>
+            prev ? { ...prev, status: newStatus, ...extra } : prev,
+          );
+        }
+      } catch {
+        // Keep current state on error; could show a toast here
+      } finally {
+        setStatusLoading(false);
+      }
     },
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [order, localLat, localLng],
   );
 
   const handleDepositRefund = useCallback(async () => {
-    await new Promise((r) => setTimeout(r, 500));
-    setOrder((prev) =>
-      prev ? { ...prev, deposit_refund_status: 'REFUNDED' } : prev,
+    if (!order) return;
+    setStatusLoading(true);
+    try {
+      const updated = await setPenalty(order.rental_order_id, {
+        penaltyTotal: order.total_penalty_amount ?? 0,
+      });
+      setOrder((prev) =>
+        prev
+          ? { ...(updated ?? prev), deposit_refund_status: 'REFUNDED' }
+          : prev,
+      );
+    } catch {
+      // no-op
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [order]);
+
+  if (pageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] gap-3 text-muted-foreground">
+        <Loader2 className="size-6 animate-spin" />
+        <span>Đang tải đơn hàng…</span>
+      </div>
     );
-  }, []);
+  }
+
+  if (pageError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 text-center p-6">
+        <AlertCircle className="size-12 text-destructive/40" />
+        <p className="text-destructive font-semibold">{pageError}</p>
+        <Link href="/staff-dashboard/orders">
+          <Button variant="outline">
+            <ArrowLeft className="size-4 mr-2" /> Quay lại danh sách
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
@@ -273,7 +395,7 @@ export default function OrderDetailPage({
                 order={order}
                 onConfirm={() =>
                   handleStatusChange('CONFIRMED', {
-                    staff_checkin_id: MOCK_CURRENT_STAFF.staff_id,
+                    staff_checkin_id: user?.userId,
                   })
                 }
                 loading={statusLoading}
@@ -283,6 +405,7 @@ export default function OrderDetailPage({
             {order.status === 'CONFIRMED' && (
               <ConfirmedWorkflow
                 order={order}
+                hubInfo={hubInfo}
                 onStartDelivery={() => handleStatusChange('DELIVERING')}
                 loading={statusLoading}
               />
@@ -332,7 +455,7 @@ export default function OrderDetailPage({
                 onCompleteReturn={() =>
                   handleStatusChange('COMPLETED', {
                     actual_return_date: new Date().toISOString().split('T')[0],
-                    staff_checkout_id: MOCK_CURRENT_STAFF.staff_id,
+                    staff_checkout_id: user?.userId,
                   })
                 }
                 loading={statusLoading}
