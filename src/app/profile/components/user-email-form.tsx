@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, CheckCircle2 } from 'lucide-react';
+import { useRequestChangeEmailMutation } from '@/features/users/hooks/use-user-profile';
+import { normalizeError } from '@/api/apiService';
 
 interface UserEmailFormProps {
   email: string;
@@ -11,9 +13,10 @@ interface UserEmailFormProps {
 
 export function UserEmailForm({ email }: UserEmailFormProps) {
   const [newEmail, setNewEmail] = useState('');
-  const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
+
+  const requestChangeEmail = useRequestChangeEmailMutation();
 
   const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail);
 
@@ -23,14 +26,17 @@ export function UserEmailForm({ email }: UserEmailFormProps) {
       setError('Email không hợp lệ');
       return;
     }
-    setSaving(true);
     setError('');
-    // TODO: wire up to real API
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    setDone(true);
-    setNewEmail('');
-    setTimeout(() => setDone(false), 3000);
+
+    try {
+      await requestChangeEmail.mutateAsync({ newEmail: newEmail.trim() });
+      setDone(true);
+      setNewEmail('');
+      setTimeout(() => setDone(false), 3000);
+    } catch (err) {
+      const appErr = normalizeError(err);
+      setError(appErr.message);
+    }
   };
 
   return (
@@ -76,10 +82,12 @@ export function UserEmailForm({ email }: UserEmailFormProps) {
         <div className='pt-2 flex justify-end'>
           <Button
             type='submit'
-            disabled={saving || !newEmail.trim()}
+            disabled={requestChangeEmail.isPending || !newEmail.trim()}
             className='bg-theme-primary-start hover:opacity-90'
           >
-            {saving ? 'Đang gửi...' : 'Gửi yêu cầu đổi email'}
+            {requestChangeEmail.isPending
+              ? 'Đang gửi...'
+              : 'Gửi yêu cầu đổi email'}
           </Button>
         </div>
       </form>

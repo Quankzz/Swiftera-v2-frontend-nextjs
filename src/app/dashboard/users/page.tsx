@@ -8,10 +8,10 @@ import {
 } from '@/components/dashboard/users/users-dialogs';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { User } from '@/types/dashboard';
+import type { UserResponse } from '@/features/users/types';
 
 export default function UsersPage() {
-  const [dialogUser, setDialogUser] = useState<User | null>(null);
+  const [dialogUser, setDialogUser] = useState<UserResponse | null>(null);
   const [isFormOpen, setFormOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
 
@@ -42,11 +42,11 @@ export default function UsersPage() {
 
       <div className='w-full'>
         <UsersTable
-          onEdit={(user: User) => {
+          onEdit={(user: UserResponse) => {
             setDialogUser(user);
             setFormOpen(true);
           }}
-          onDelete={(user: User) => {
+          onDelete={(user: UserResponse) => {
             setDialogUser(user);
             setDeleteOpen(true);
           }}

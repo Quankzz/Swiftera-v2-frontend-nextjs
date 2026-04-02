@@ -6,23 +6,31 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { User } from '@/types/dashboard';
-import { useUsersQuery } from '@/hooks/api/use-users';
-import { Pencil, Trash2, Clock, Shield } from 'lucide-react';
+import type { UserResponse } from '@/features/users/types';
+import { useUsersQuery } from '@/features/users/hooks/use-user-management';
+import { Pencil, Trash2, Shield } from 'lucide-react';
 
 type UsersTableProps = {
-  onEdit?: (user: User) => void;
-  onDelete?: (user: User) => void;
+  onEdit?: (user: UserResponse) => void;
+  onDelete?: (user: UserResponse) => void;
 };
 
-function AvatarCell({ user }: { user: User }) {
+/** Helper: build display name from firstName + lastName */
+function displayName(user: UserResponse): string {
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+  );
+}
+
+function AvatarCell({ user }: { user: UserResponse }) {
+  const name = displayName(user);
   return (
     <div className='flex items-center gap-3'>
       <div className='w-8 h-8 rounded-full bg-gray-100 dark:bg-white/8 flex items-center justify-center overflow-hidden shrink-0 border border-gray-200 dark:border-white/8'>
         {user.avatarUrl ? (
           <Image
             src={user.avatarUrl}
-            alt={user.fullName}
+            alt={name}
             width={32}
             height={32}
             className='w-full h-full object-cover'
@@ -30,13 +38,13 @@ function AvatarCell({ user }: { user: User }) {
           />
         ) : (
           <span className='text-xs font-bold text-theme-primary-start'>
-            {user.fullName.charAt(0).toUpperCase()}
+            {name.charAt(0).toUpperCase()}
           </span>
         )}
       </div>
       <div className='min-w-0'>
         <p className='font-medium text-text-main leading-none truncate'>
-          {user.fullName}
+          {name}
         </p>
       </div>
     </div>
@@ -44,20 +52,22 @@ function AvatarCell({ user }: { user: User }) {
 }
 
 export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [page, setPage] = useState(0); // BE uses 0-based page
+  const [size] = useState(10);
 
-  const { data, isLoading, isError } = useUsersQuery({ page, limit });
+  const { data, isLoading, isError } = useUsersQuery({ page, size });
 
-  const total = data?.total ?? 0;
-  const users = data?.data ?? [];
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const total = data?.meta?.totalElements ?? 0;
+  const users = data?.content ?? [];
+  const totalPages =
+    data?.meta?.totalPages ?? Math.max(1, Math.ceil(total / size));
 
-  const columns = useMemo<ColumnDef<User>[]>(
+  const columns = useMemo<ColumnDef<UserResponse>[]>(
     () => [
       {
-        accessorKey: 'fullName',
+        id: 'displayName',
         header: 'Người dùng',
+        accessorFn: (row) => displayName(row),
         cell: ({ row }) => <AvatarCell user={row.original} />,
       },
       {
@@ -103,12 +113,13 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
           ),
       },
       {
-        accessorKey: 'roles',
+        id: 'roles',
         header: 'Vai trò',
         enableSorting: false,
         cell: ({ row }) => {
-          const roles = row.original.roles;
-          if (!roles || roles.length === 0)
+          // List endpoint trả roles[] (RoleSummary), detail trả rolesSecured[]
+          const roles = row.original.roles ?? row.original.rolesSecured ?? [];
+          if (roles.length === 0)
             return (
               <span className='italic text-text-sub opacity-40 text-sm'>
                 Chưa có
@@ -154,33 +165,6 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
         },
       },
       {
-        accessorKey: 'lastLoginAt',
-        header: 'Đăng nhập lần cuối',
-        enableSorting: false,
-        cell: ({ getValue }) => {
-          const val = getValue() as string | null;
-          if (!val)
-            return (
-              <span className='italic text-text-sub opacity-40 text-sm'>
-                Chưa đăng nhập
-              </span>
-            );
-          const date = new Date(val);
-          return (
-            <span className='inline-flex items-center gap-1 text-sm text-text-sub'>
-              <Clock size={12} className='shrink-0' />
-              {date.toLocaleString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
-          );
-        },
-      },
-      {
         id: 'actions',
         header: () => <div className='text-right pr-1'>Thao tác</div>,
         enableSorting: false,
@@ -216,17 +200,17 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
       columns={columns}
       data={users}
       searchPlaceholder='Tìm theo tên...'
-      searchColumn='fullName'
+      searchColumn='displayName'
       totalLabel='người dùng'
       isLoading={isLoading}
       isError={isError}
       errorMessage='Không thể tải dữ liệu người dùng. Vui lòng thử lại sau.'
       emptyMessage='Không tìm thấy người dùng nào'
       manualPagination
-      pageIndex={page - 1}
+      pageIndex={page}
       pageCount={totalPages}
-      onPageChange={(p) => setPage(p + 1)}
-      pageSize={limit}
+      onPageChange={(p) => setPage(p)}
+      pageSize={size}
       totalRows={total}
     />
   );

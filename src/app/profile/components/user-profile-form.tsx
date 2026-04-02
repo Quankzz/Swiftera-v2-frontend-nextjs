@@ -4,7 +4,13 @@ import { useCallback, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { AlertTriangle, Camera, Save, Trash2, User } from 'lucide-react';
+import { Camera, Save, Trash2, User, CheckCircle2 } from 'lucide-react';
+import { useUpdateProfileMutation } from '@/features/users/hooks/use-user-profile';
+import { normalizeError } from '@/api/apiService';
+import type {
+  UserSecureResponse,
+  UpdateProfileInput,
+} from '@/features/users/types';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -56,32 +62,31 @@ async function getCroppedBlob(
 
 // ─── props ───────────────────────────────────────────────────────────────────
 
+/**
+ * Props bám theo BE spec UserSecureResponse.
+ * Fields theo API-010: firstName, lastName, nickname, avatarUrl, biography, city, nationality
+ *
+ * NOTE: phoneNumber KHÔNG có trong API-010 update-profile. Chỉ hiển thị readonly.
+ */
 interface UserProfileFormProps {
-  userEmail: string;
-  userName: string;
-  phoneNumber?: string;
-  avatarUrl?: string | null;
-  isVerified?: boolean;
+  profile: UserSecureResponse;
 }
 
 // ─── component ───────────────────────────────────────────────────────────────
 
-export function UserProfileForm({
-  userEmail,
-  userName,
-  phoneNumber: initialPhone = '',
-  avatarUrl: initialAvatarUrl = null,
-  isVerified = true,
-}: UserProfileFormProps) {
-  const [name, setName] = useState(userName);
-  const [phone, setPhone] = useState(initialPhone);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+export function UserProfileForm({ profile }: UserProfileFormProps) {
+  // Local form state — initialized từ profile data
+  const [firstName, setFirstName] = useState(profile.firstName ?? '');
+  const [lastName, setLastName] = useState(profile.lastName ?? '');
+  const [nickname, setNickname] = useState(profile.nickname ?? '');
+  const [biography, setBiography] = useState(profile.biography ?? '');
+  const [city, setCity] = useState(profile.city ?? '');
+  const [nationality, setNationality] = useState(profile.nationality ?? '');
 
-  // avatar & crop state
+  // avatar & crop state (local UI state — không nhét vào hook)
   const [avatarFile, setAvatarFile] = useState<FileWithPreview | null>(null);
   const [finalAvatarUrl, setFinalAvatarUrl] = useState<string | null>(
-    initialAvatarUrl ?? null,
+    profile.avatarUrl ?? null,
   );
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -89,8 +94,11 @@ export function UserProfileForm({
     null,
   );
   const [isCropping, setIsCropping] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const updateProfileMutation = useUpdateProfileMutation();
 
   const onCropComplete = useCallback((_: unknown, pixels: CropArea) => {
     setCroppedAreaPixels(pixels);
@@ -130,16 +138,32 @@ export function UserProfileForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    setSaving(true);
-    // TODO: wire up to real API (send name, phone, finalAvatarUrl)
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    if (!firstName.trim() || !lastName.trim()) return;
+    setErrorMsg('');
+
+    // Mapping form values -> API payload (chỉ gửi field đúng spec API-010)
+    const payload: UpdateProfileInput = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      nickname: nickname.trim() || undefined,
+      avatarUrl: finalAvatarUrl,
+      biography: biography.trim() || undefined,
+      city: city.trim() || undefined,
+      nationality: nationality.trim() || undefined,
+    };
+
+    try {
+      await updateProfileMutation.mutateAsync(payload);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (error) {
+      const appErr = normalizeError(error);
+      setErrorMsg(appErr.message);
+    }
   };
 
   const avatarSrc = finalAvatarUrl;
+  const isSaving = updateProfileMutation.isPending;
 
   return (
     <div className='bg-white dark:bg-surface-card rounded-xl border border-gray-200 dark:border-white/8 shadow-sm p-6 space-y-6'>
@@ -158,9 +182,22 @@ export function UserProfileForm({
         </div>
       </div>
 
+      {/* Success message */}
+      {saved && (
+        <div className='flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 px-4 py-3 text-sm text-green-700 dark:text-green-400'>
+          <CheckCircle2 size={16} /> Cập nhật hồ sơ thành công!
+        </div>
+      )}
+
+      {/* Error message */}
+      {errorMsg && (
+        <div className='rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-4 py-3 text-sm text-red-700 dark:text-red-400'>
+          {errorMsg}
+        </div>
+      )}
+
       {/* ── Avatar section ── */}
       <div className='flex flex-col items-center gap-3'>
-        {/* Circle + badges */}
         <div className='relative'>
           <div className='h-24 w-24 rounded-full border-2 border-gray-200 bg-gray-100 overflow-hidden flex items-center justify-center'>
             {avatarSrc ? (
@@ -184,25 +221,7 @@ export function UserProfileForm({
           >
             <Camera size={13} className='text-white' />
           </button>
-
-          {/* Warning badge — bottom-right */}
-          {!isVerified && (
-            <div
-              className='absolute bottom-0 right-0 h-7 w-7 rounded-full bg-orange-50 border-2 border-white flex items-center justify-center shadow-md'
-              title='Tài khoản chưa xác thực'
-            >
-              <AlertTriangle size={13} className='text-orange-500' />
-            </div>
-          )}
         </div>
-
-        {/* Unverified text */}
-        {!isVerified && (
-          <p className='text-xs text-orange-500 font-medium flex items-center gap-1'>
-            <AlertTriangle size={11} />
-            Tài khoản chưa xác thực
-          </p>
-        )}
 
         {/* Remove avatar */}
         {avatarSrc && !isCropping && (
@@ -275,54 +294,130 @@ export function UserProfileForm({
         onChange={handleFileChange}
       />
 
-      {/* ── Form fields ── */}
+      {/* ── Form fields — theo đúng BE spec API-010 ── */}
       <form onSubmit={handleSubmit} className='space-y-4'>
+        {/* Email — readonly, đổi qua tab Email (API-012) */}
         <div className='space-y-1.5'>
           <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
             Email
           </label>
           <Input
-            value={userEmail}
+            value={profile.email}
             disabled
             className='bg-gray-100 opacity-70 cursor-not-allowed'
           />
           <p className='text-[11px] text-text-sub'>
-            Email không thể thay đổi ở đây
+            Email không thể thay đổi ở đây. Dùng tab &quot;Email&quot; để đổi.
           </p>
         </div>
 
+        {/* phoneNumber — readonly, BE spec không cho update qua API-010 */}
+        {profile.phoneNumber && (
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Số điện thoại
+            </label>
+            <Input
+              value={profile.phoneNumber}
+              disabled
+              className='bg-gray-100 opacity-70 cursor-not-allowed'
+            />
+            <p className='text-[11px] text-text-sub'>
+              Số điện thoại không thể thay đổi qua API update-profile.
+            </p>
+          </div>
+        )}
+
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Họ (Last Name)
+            </label>
+            <Input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder='Nguyễn'
+              className='bg-gray-50/50'
+            />
+          </div>
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Tên (First Name)
+            </label>
+            <Input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder='Văn A'
+              className='bg-gray-50/50'
+            />
+          </div>
+        </div>
+
         <div className='space-y-1.5'>
           <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
-            Tên hiển thị
+            Biệt danh (Nickname)
           </label>
           <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder='Nguyễn Văn A'
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder='vana2026'
             className='bg-gray-50/50'
           />
         </div>
 
         <div className='space-y-1.5'>
           <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
-            Số điện thoại
+            Giới thiệu (Biography)
           </label>
-          <Input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder='0912 345 678'
-            type='tel'
-            className='bg-gray-50/50'
+          <textarea
+            value={biography}
+            onChange={(e) => setBiography(e.target.value)}
+            placeholder='Viết vài dòng giới thiệu về bản thân...'
+            rows={3}
+            className='w-full rounded-md border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5 px-3 py-2 text-sm text-text-main placeholder:text-text-sub/50 focus:outline-none focus:ring-2 focus:ring-primary/40'
           />
+        </div>
+
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Thành phố (City)
+            </label>
+            <Input
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder='Hồ Chí Minh'
+              className='bg-gray-50/50'
+            />
+          </div>
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Quốc tịch (Nationality)
+            </label>
+            <Input
+              value={nationality}
+              onChange={(e) => setNationality(e.target.value)}
+              placeholder='Vietnamese'
+              className='bg-gray-50/50'
+            />
+          </div>
         </div>
 
         <div className='pt-2 flex justify-end'>
           <Button
             type='submit'
-            disabled={saving || !name.trim()}
+            disabled={isSaving || !firstName.trim() || !lastName.trim()}
             className='bg-theme-primary-start hover:opacity-90 gap-2 text-white'
           >
-            {saving ? 'Đang lưu...' : saved ? 'Đã lưu!' : 'Lưu thay đổi'}
+            {isSaving ? (
+              'Đang lưu...'
+            ) : saved ? (
+              'Đã lưu!'
+            ) : (
+              <>
+                <Save size={14} /> Lưu thay đổi
+              </>
+            )}
           </Button>
         </div>
       </form>

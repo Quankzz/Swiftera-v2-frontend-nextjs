@@ -9,10 +9,10 @@ import {
 import { RolePermissionsDialog } from '@/components/dashboard/roles/roles-permissions-dialog';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { Role } from '@/types/dashboard';
+import type { RoleResponse } from '@/features/roles/types';
 
 export default function RolesPage() {
-  const [dialogRole, setDialogRole] = useState<Role | null>(null);
+  const [dialogRole, setDialogRole] = useState<RoleResponse | null>(null);
   const [isFormOpen, setFormOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
   const [isPermissionsOpen, setPermissionsOpen] = useState(false);
