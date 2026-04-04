@@ -7,15 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfileForm } from './user-profile-form';
 import { UserEmailForm } from './user-email-form';
 import { UserPasswordForm } from './user-password-form';
-
-// Mock profile — replace with real API call when ready
-const MOCK_PROFILE = {
-  email: 'admin@swiftera.com',
-  fullName: 'Quản trị viên',
-  phoneNumber: '0123456789',
-  avatarUrl: null as string | null,
-  isVerified: false, // set true to hide warning badge
-};
+import { useMyProfileQuery } from '@/features/users/hooks/use-user-profile';
 
 const tabVariants = {
   initial: { opacity: 0, x: -16 },
@@ -25,6 +17,23 @@ const tabVariants = {
 
 export function UserProfileClient() {
   const [activeTab, setActiveTab] = useState('profile');
+  const { data: profile, isLoading, isError } = useMyProfileQuery();
+
+  if (isLoading) {
+    return (
+      <div className='h-64 flex items-center justify-center text-gray-400 text-sm'>
+        Đang tải thông tin cá nhân...
+      </div>
+    );
+  }
+
+  if (isError || !profile) {
+    return (
+      <div className='h-64 flex items-center justify-center text-red-400 text-sm'>
+        Không thể tải thông tin cá nhân. Vui lòng thử lại.
+      </div>
+    );
+  }
 
   return (
     <AnimatePresence mode='wait'>
@@ -72,13 +81,7 @@ export function UserProfileClient() {
                   {...tabVariants}
                   transition={{ duration: 0.25 }}
                 >
-                  <UserProfileForm
-                    userEmail={MOCK_PROFILE.email}
-                    userName={MOCK_PROFILE.fullName}
-                    phoneNumber={MOCK_PROFILE.phoneNumber}
-                    avatarUrl={MOCK_PROFILE.avatarUrl}
-                    isVerified={MOCK_PROFILE.isVerified}
-                  />
+                  <UserProfileForm profile={profile} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -92,7 +95,7 @@ export function UserProfileClient() {
                   {...tabVariants}
                   transition={{ duration: 0.25 }}
                 >
-                  <UserEmailForm email={MOCK_PROFILE.email} />
+                  <UserEmailForm email={profile.email} />
                 </motion.div>
               )}
             </AnimatePresence>

@@ -5,14 +5,14 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Role } from '@/types/dashboard';
-import { useRolesQuery } from '@/hooks/api/use-roles';
+import type { RoleResponse } from '@/features/roles/types';
+import { useRolesListQuery } from '@/features/roles/hooks/use-roles';
 import { Pencil, Trash2, ShieldCheck } from 'lucide-react';
 
 type RolesTableProps = {
-  onEdit?: (role: Role) => void;
-  onDelete?: (role: Role) => void;
-  onAssignPermissions?: (role: Role) => void;
+  onEdit?: (role: RoleResponse) => void;
+  onDelete?: (role: RoleResponse) => void;
+  onAssignPermissions?: (role: RoleResponse) => void;
 };
 
 export function RolesTable({
@@ -20,15 +20,16 @@ export function RolesTable({
   onDelete,
   onAssignPermissions,
 }: RolesTableProps) {
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [page, setPage] = useState(0); // BE uses 0-based page
+  const [size] = useState(10);
 
-  const { data, isLoading, isError } = useRolesQuery({ page, limit });
-  const total = data?.total ?? 0;
-  const roles = data?.data ?? [];
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const { data, isLoading, isError } = useRolesListQuery({ page, size });
+  const total = data?.meta?.totalElements ?? 0;
+  const roles = data?.content ?? [];
+  const totalPages =
+    data?.meta?.totalPages ?? Math.max(1, Math.ceil(total / size));
 
-  const columns = useMemo<ColumnDef<Role>[]>(
+  const columns = useMemo<ColumnDef<RoleResponse>[]>(
     () => [
       {
         accessorKey: 'name',
@@ -55,7 +56,7 @@ export function RolesTable({
         },
       },
       {
-        accessorKey: 'isActive',
+        accessorKey: 'active',
         header: 'Trạng thái',
         cell: ({ getValue }) =>
           getValue() ? (
@@ -126,10 +127,10 @@ export function RolesTable({
       errorMessage='Không thể tải dữ liệu vai trò. Vui lòng thử lại sau.'
       emptyMessage='Không tìm thấy vai trò nào'
       manualPagination
-      pageIndex={page - 1}
+      pageIndex={page}
       pageCount={totalPages}
-      onPageChange={(p) => setPage(p + 1)}
-      pageSize={limit}
+      onPageChange={(p) => setPage(p)}
+      pageSize={size}
       totalRows={total}
     />
   );

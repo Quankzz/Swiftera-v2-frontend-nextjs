@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  ChevronRight,
-  GripVertical,
-  Plus,
-  Pencil,
-  Trash2,
-  Tag,
-} from 'lucide-react';
+import { ChevronRight, GripVertical, Plus, Pencil, Trash2 } from 'lucide-react';
 import {
   SortableContext,
   useSortable,
@@ -17,16 +10,16 @@ import {
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
-import type { CategoryTree } from '@/types/catalog';
+import type { CategoryTreeNode } from '@/features/categories/types';
 
 // ─── Props ───────────────────────────────────────────────────────
 interface CategoryTreeNodeProps {
-  node: CategoryTree;
+  node: CategoryTreeNode;
   depth?: number;
   activeId?: string | null; // ID currently being dragged
-  onEdit: (node: CategoryTree) => void;
-  onAddChild: (node: CategoryTree) => void;
-  onDelete: (node: CategoryTree) => void;
+  onEdit: (node: CategoryTreeNode) => void;
+  onAddChild: (node: CategoryTreeNode) => void;
+  onDelete: (node: CategoryTreeNode) => void;
   searchQuery?: string;
 }
 
@@ -68,8 +61,7 @@ export function CategoryTreeNode({
   const childIds = node.children.map((c) => c.categoryId);
 
   // Each node is individually sortable within its parent's SortableContext.
-  // We store parentId in data so the DragEndEvent can read it from
-  // active.data.current.parentId / over.data.current.parentId.
+  // We store parentId as undefined for tree nodes (parentId is not in the tree shape).
   const {
     attributes,
     listeners,
@@ -80,7 +72,7 @@ export function CategoryTreeNode({
     isOver: isSortableOver,
   } = useSortable({
     id: node.categoryId,
-    data: { parentId: node.parentId },
+    data: {},
   });
 
   // Dedicated droppable zone: "drop B into A to make B a child of A".
@@ -168,19 +160,6 @@ export function CategoryTreeNode({
         <span className='flex-1 truncate text-sm font-medium text-text-main'>
           <Highlight text={node.name} query={searchQuery} />
         </span>
-
-        {/* Slug chip */}
-        <span className='hidden shrink-0 rounded bg-gray-100 dark:bg-white/8 px-1.5 py-0.5 font-mono text-[11px] text-text-sub sm:inline'>
-          {node.slug}
-        </span>
-
-        {/* Brands badge */}
-        {node.brands && node.brands.length > 0 && (
-          <span className='flex shrink-0 items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-600'>
-            <Tag className='size-3' />
-            {node.brands.length}
-          </span>
-        )}
 
         {/* Children count */}
         {hasChildren && (

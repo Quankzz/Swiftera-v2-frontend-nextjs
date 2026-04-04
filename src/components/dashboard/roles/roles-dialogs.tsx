@@ -15,15 +15,19 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   useCreateRoleMutation,
   useDeleteRoleMutation,
-  useRoleQuery,
+  useRoleDetailQuery,
   useUpdateRoleMutation,
-} from '@/hooks/api/use-roles';
-import { CreateRoleInput, UpdateRoleInput, Role } from '@/types/dashboard';
+} from '@/features/roles/hooks/use-roles';
+import type {
+  CreateRoleInput,
+  UpdateRoleInput,
+  RoleResponse,
+} from '@/features/roles/types';
 
 interface RoleFormDialogProps {
   open: boolean;
   onClose: () => void;
-  initialRole?: Role | null;
+  initialRole?: RoleResponse | null;
 }
 
 export function RoleFormDialog({
@@ -32,12 +36,14 @@ export function RoleFormDialog({
   initialRole,
 }: RoleFormDialogProps) {
   const isEdit = !!initialRole;
-  const { data: roleDetail, isFetching } = useRoleQuery(initialRole?.roleId);
+  const { data: roleDetail, isFetching } = useRoleDetailQuery(
+    initialRole?.roleId,
+  );
 
-  const buildState = (role?: Role | null) => ({
+  const buildState = (role?: RoleResponse | null) => ({
     name: role?.name || '',
     description: role?.description || '',
-    isActive: role?.isActive ?? true,
+    active: role?.active ?? true,
   });
 
   const [formState, setFormState] = useState(buildState(initialRole));
@@ -62,7 +68,7 @@ export function RoleFormDialog({
     const payload: CreateRoleInput | UpdateRoleInput = {
       name: formState.name.trim(),
       description: formState.description ? formState.description.trim() : null,
-      isActive: formState.isActive,
+      active: formState.active,
     };
 
     if (isEdit && initialRole) {
@@ -134,9 +140,9 @@ export function RoleFormDialog({
             <input
               type='checkbox'
               className='h-4 w-4'
-              checked={formState.isActive}
+              checked={formState.active}
               onChange={(e) =>
-                setFormState((s) => ({ ...s, isActive: e.target.checked }))
+                setFormState((s) => ({ ...s, active: e.target.checked }))
               }
             />
           </div>
@@ -167,7 +173,7 @@ export function RoleFormDialog({
 interface RoleDeleteDialogProps {
   open: boolean;
   onClose: () => void;
-  role?: Role | null;
+  role?: RoleResponse | null;
 }
 
 export function RoleDeleteDialog({

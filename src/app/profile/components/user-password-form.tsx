@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { useUpdatePasswordMutation } from '@/features/users/hooks/use-user-profile';
+import { normalizeError } from '@/api/apiService';
 
 export function UserPasswordForm() {
   const [current, setCurrent] = useState('');
@@ -12,9 +14,10 @@ export function UserPasswordForm() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNext, setShowNext] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
+
+  const updatePassword = useUpdatePasswordMutation();
 
   const validate = () => {
     if (!current) return 'Vui lòng nhập mật khẩu hiện tại';
@@ -30,16 +33,23 @@ export function UserPasswordForm() {
       setError(msg);
       return;
     }
-    setSaving(true);
     setError('');
-    // TODO: wire up to real API
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    setDone(true);
-    setCurrent('');
-    setNext('');
-    setConfirm('');
-    setTimeout(() => setDone(false), 3000);
+
+    try {
+      await updatePassword.mutateAsync({
+        currentPassword: current,
+        newPassword: next,
+        confirmPassword: confirm,
+      });
+      setDone(true);
+      setCurrent('');
+      setNext('');
+      setConfirm('');
+      setTimeout(() => setDone(false), 3000);
+    } catch (err) {
+      const appErr = normalizeError(err);
+      setError(appErr.message);
+    }
   };
 
   const field = (
@@ -129,10 +139,10 @@ export function UserPasswordForm() {
         <div className='pt-2 flex justify-end'>
           <Button
             type='submit'
-            disabled={saving || !current || !next || !confirm}
+            disabled={updatePassword.isPending || !current || !next || !confirm}
             className='bg-theme-primary-start hover:opacity-90'
           >
-            {saving ? 'Đang đổi...' : 'Đổi mật khẩu'}
+            {updatePassword.isPending ? 'Đang đổi...' : 'Đổi mật khẩu'}
           </Button>
         </div>
       </form>

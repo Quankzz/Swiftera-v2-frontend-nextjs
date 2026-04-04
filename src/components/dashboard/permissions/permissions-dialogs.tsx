@@ -14,25 +14,25 @@ import { Input } from '@/components/ui/input';
 import {
   useCreatePermissionMutation,
   useCreateModuleMutation,
-  useRenameModuleMutation,
   useDeleteModuleMutation,
   useDeletePermissionMutation,
   useModulesQuery,
-  usePermissionQuery,
+  usePermissionDetailQuery,
   useUpdatePermissionMutation,
-} from '@/hooks/api/use-permissions';
-import {
+  usePermissionsListQuery,
+} from '@/features/roles/hooks/use-roles';
+import type {
   CreatePermissionInput,
-  Permission,
+  PermissionResponse,
   UpdatePermissionInput,
-} from '@/types/dashboard';
+} from '@/features/roles/types';
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 interface PermissionFormDialogProps {
   open: boolean;
   onClose: () => void;
-  initialPermission?: Permission | null;
+  initialPermission?: PermissionResponse | null;
   presetModule?: string;
 }
 
@@ -43,7 +43,7 @@ export function PermissionFormDialog({
   presetModule,
 }: PermissionFormDialogProps) {
   const isEdit = !!initialPermission;
-  const { data: permissionDetail, isFetching } = usePermissionQuery(
+  const { data: permissionDetail, isFetching } = usePermissionDetailQuery(
     initialPermission?.permissionId,
   );
   const { data: moduleOptions } = useModulesQuery();
@@ -51,7 +51,7 @@ export function PermissionFormDialog({
   const [formState, setFormState] = useState(() => ({
     name: initialPermission?.name || '',
     apiPath: initialPermission?.apiPath || '',
-    method: initialPermission?.method || 'GET',
+    httpMethod: initialPermission?.httpMethod || 'GET',
     module: initialPermission?.module || presetModule || '',
   }));
 
@@ -62,7 +62,7 @@ export function PermissionFormDialog({
         setFormState({
           name: '',
           apiPath: '',
-          method: 'GET',
+          httpMethod: 'GET',
           module: presetModule || '',
         }),
       );
@@ -73,7 +73,7 @@ export function PermissionFormDialog({
         setFormState({
           name: permissionDetail.name,
           apiPath: permissionDetail.apiPath,
-          method: permissionDetail.method,
+          httpMethod: permissionDetail.httpMethod,
           module: permissionDetail.module,
         }),
       );
@@ -92,20 +92,25 @@ export function PermissionFormDialog({
   const handleSubmit = async () => {
     if (!formState.name.trim() || !formState.apiPath.trim()) return;
 
-    const payload: CreatePermissionInput | UpdatePermissionInput = {
-      name: formState.name.trim(),
-      apiPath: formState.apiPath.trim(),
-      method: formState.method,
-      module: formState.module.trim() || 'Chưa phân loại',
-    };
-
     if (isEdit && initialPermission) {
+      const payload: UpdatePermissionInput = {
+        name: formState.name.trim(),
+        apiPath: formState.apiPath.trim(),
+        httpMethod: formState.httpMethod,
+        module: formState.module.trim() || 'Chưa phân loại',
+      };
       await updateMutation.mutateAsync({
         permissionId: initialPermission.permissionId,
         payload,
       });
     } else {
-      await createMutation.mutateAsync(payload as CreatePermissionInput);
+      const payload: CreatePermissionInput = {
+        name: formState.name.trim(),
+        apiPath: formState.apiPath.trim(),
+        httpMethod: formState.httpMethod,
+        module: formState.module.trim() || 'Chưa phân loại',
+      };
+      await createMutation.mutateAsync(payload);
     }
     onClose();
   };
@@ -155,9 +160,9 @@ export function PermissionFormDialog({
               </label>
               <select
                 className='w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main'
-                value={formState.method}
+                value={formState.httpMethod}
                 onChange={(e) =>
-                  setFormState((s) => ({ ...s, method: e.target.value }))
+                  setFormState((s) => ({ ...s, httpMethod: e.target.value }))
                 }
               >
                 {METHODS.map((m) => (
@@ -238,7 +243,7 @@ export function PermissionFormDialog({
 interface PermissionDeleteDialogProps {
   open: boolean;
   onClose: () => void;
-  permission?: Permission | null;
+  permission?: PermissionResponse | null;
 }
 
 export function PermissionDeleteDialog({
@@ -305,8 +310,12 @@ export function ModuleFormDialog({
   initialModuleName,
 }: ModuleFormDialogProps) {
   const isEdit = !!initialModuleName;
+
+  // For rename: fetch all permissions in the old module so we can re-assign them
+  const { data: allPermsData } = usePermissionsListQuery({ size: 1000 });
   const createModuleMutation = useCreateModuleMutation();
-  const renameModuleMutation = useRenameModuleMutation();
+  const deleteModuleMutation = useDeleteModuleMutation();
+
   const [moduleName, setModuleName] = useState('');
 
   useEffect(() => {
@@ -315,20 +324,31 @@ export function ModuleFormDialog({
 
   const handleSubmit = async () => {
     if (!moduleName.trim()) return;
+
     if (isEdit && initialModuleName) {
-      await renameModuleMutation.mutateAsync({
-        oldName: initialModuleName,
-        newName: moduleName.trim(),
+      // Rename = create new module with all IDs from old module, then delete old module
+      const permsInOldModule = (allPermsData?.content ?? []).filter(
+        (p) => p.module === initialModuleName,
+      );
+      const permissionIds = permsInOldModule.map((p) => p.permissionId);
+      await createModuleMutation.mutateAsync({
+        moduleName: moduleName.trim(),
+        permissionIds,
       });
+      await deleteModuleMutation.mutateAsync(initialModuleName);
     } else {
-      await createModuleMutation.mutateAsync(moduleName.trim());
+      // Create empty module (no permissions assigned yet)
+      await createModuleMutation.mutateAsync({
+        moduleName: moduleName.trim(),
+        permissionIds: [],
+      });
     }
     onClose();
     setModuleName('');
   };
 
   const isSubmitting =
-    createModuleMutation.isPending || renameModuleMutation.isPending;
+    createModuleMutation.isPending || deleteModuleMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
