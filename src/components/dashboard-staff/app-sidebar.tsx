@@ -105,17 +105,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const searchParams = useSearchParams();
   const currentStatus = searchParams.get('status');
   const { user } = useAuthStore();
-
+  console.log(user);
   const staffName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
-    : 'Nhân viên';
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ')
+    : '';
   const staffEmail = user?.email ?? '';
   const staffAvatar =
     user?.avatarUrl ??
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
-  const hubDisplayName = 'Swiftera Hub'; // will be enriched once hub API populates store
+  const hubDisplayName = user?.hubId ?? ''; // will be enriched once hub API populates store
 
-  const isDashboardActive = pathname === '/dashboard';
+  const isDashboardActive = pathname === '/staff-dashboard';
   const isOrdersActive =
     pathname === '/staff-dashboard/orders' ||
     pathname.startsWith('/staff-dashboard/orders/');
@@ -156,13 +156,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="pb-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href="/staff-dashboard" />}
+            >
               <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-linear-to-br from-theme-primary-start to-theme-primary-end text-white shadow-md">
                 <Zap className="size-4" />
               </div>
               <div className="grid flex-1 text-left leading-tight">
                 <span className="truncate text-sm font-bold text-sidebar-foreground tracking-tight">
-                  Swiftera
+                  {staffName}
                 </span>
                 <span className="truncate text-[11px] text-sidebar-foreground/55 font-medium">
                   {hubDisplayName}

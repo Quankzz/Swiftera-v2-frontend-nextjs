@@ -26,16 +26,20 @@ import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
+// Staff only sees orders that have been paid and assigned — PENDING_PAYMENT
+// is a customer-facing status and never appears in the staff dashboard.
 const ALL_STATUSES: OrderStatus[] = [
-  'PENDING_PAYMENT',
   'PAID',
-  'CONFIRMED',
+  'PREPARING',
   'DELIVERING',
-  'ACTIVE',
-  'RETURNING',
+  'DELIVERED',
+  'IN_USE',
   'OVERDUE',
+  'PENDING_PICKUP',
+  'PICKING_UP',
+  'PICKED_UP',
+  'INSPECTING',
   'COMPLETED',
-  'CANCELLED',
 ];
 
 type SortKey = 'created_at' | 'start_date' | 'end_date' | 'total_rental_fee';
@@ -163,7 +167,7 @@ function OrdersPageInner() {
   };
 
   const urgentCount = myOrders.filter((o) =>
-    ['PAID', 'OVERDUE', 'RETURNING'].includes(o.status),
+    ['PAID', 'OVERDUE', 'PENDING_PICKUP'].includes(o.status),
   ).length;
 
   if (isLoading) {

@@ -54,38 +54,42 @@ export interface SetPenaltyRequest {
 // ─── Status mapper ────────────────────────────────────────────────────────────
 
 /**
- * Map backend statuses to the simplified UI status set used by DashboardOrder.
+ * Map backend statuses to UI OrderStatus. Now 1:1 since UI uses actual backend statuses.
  *
  * Backend flow:
- *   PENDING_PAYMENT → PAID → CONFIRMED → DELIVERING → ACTIVE → RETURNING → COMPLETED
+ *   PENDING_PAYMENT → PAID → PREPARING → DELIVERING → DELIVERED
+ *     → IN_USE / PENDING_PICKUP → PICKING_UP → PICKED_UP → INSPECTING → COMPLETED
  *
- * Staff-relevant transitions only (skipping customer-facing payment steps):
- *   PAID           → staff confirms → CONFIRMED
- *   CONFIRMED      → staff picks up from hub, starts delivery → DELIVERING
- *   DELIVERING     → staff delivers, records → ACTIVE
- *   ACTIVE         → customer requests pickup → RETURNING
- *   RETURNING      → staff picks up, inspects → COMPLETED
+ * OVERDUE is derived client-side: IN_USE + past expectedRentalEndDate.
  */
 export function mapApiStatusToUi(apiStatus: RentalOrderApiStatus): OrderStatus {
   switch (apiStatus) {
     case 'PENDING_PAYMENT':
-      return 'PENDING_PAYMENT';
+      return 'PENDING_PAYMENT'; // shouldn't appear in staff view
     case 'PAID':
       return 'PAID';
-    case 'CONFIRMED':
-      return 'CONFIRMED';
+    case 'PREPARING':
+      return 'PREPARING';
     case 'DELIVERING':
       return 'DELIVERING';
-    case 'ACTIVE':
-      return 'ACTIVE';
-    case 'RETURNING':
-      return 'RETURNING';
+    case 'DELIVERED':
+      return 'DELIVERED';
+    case 'IN_USE':
+      return 'IN_USE';
+    case 'PENDING_PICKUP':
+      return 'PENDING_PICKUP';
+    case 'PICKING_UP':
+      return 'PICKING_UP';
+    case 'PICKED_UP':
+      return 'PICKED_UP';
+    case 'INSPECTING':
+      return 'INSPECTING';
     case 'COMPLETED':
       return 'COMPLETED';
     case 'CANCELLED':
       return 'CANCELLED';
     default:
-      return 'PENDING_PAYMENT';
+      return 'CANCELLED';
   }
 }
 
@@ -125,10 +129,10 @@ function buildDeliveryAddress(o: RentalOrderResponse): string {
 export function adaptOrder(o: RentalOrderResponse): DashboardOrder {
   let uiStatus = mapApiStatusToUi(o.status);
 
-  // Derive OVERDUE: backend has no OVERDUE status, but if the order is ACTIVE
+  // Derive OVERDUE: backend has no OVERDUE status. If the order is IN_USE
   // and the expected rental end date has already passed, surface it as OVERDUE
   // so staff can act on it immediately.
-  if (uiStatus === 'ACTIVE' && o.expectedRentalEndDate) {
+  if (uiStatus === 'IN_USE' && o.expectedRentalEndDate) {
     if (new Date(o.expectedRentalEndDate).getTime() < Date.now()) {
       uiStatus = 'OVERDUE';
     }
@@ -207,27 +211,44 @@ export async function getStaffOrders(
 
   const qs = new URLSearchParams();
   qs.set('page', String(params.page ?? 0));
-  qs.set('size', String(params.size ?? 50));
+  qs.set('size', String(params.size ?? 200));
 
-  // NOTE: Previously filtered by deliveryStaffId/pickupStaffId via SpringFilter
-  // DSL, but this caused HTTP 500 because those are entity relationship fields
-  // in the backend (not plain columns), so the filter path must use dot-notation:
-  //   deliveryStaff.userId:'<id>' or pickupStaff.userId:'<id>'
-  // Until the backend team confirms the correct filterable field path, use a
-  // combined filter that at minimum scopes by status when provided.
-  const filterParts: string[] = [
-    `deliveryStaff.userId:'${staffUserId}'`,
-    `pickupStaff.userId:'${staffUserId}'`,
-  ];
-  let filter = `(${filterParts.join(' or ')})`;
-  if (params.status) filter += ` and status:'${params.status}'`;
-  qs.set('filter', filter);
+  // SpringFilter on this endpoint does NOT support filtering by relationship
+  // fields (deliveryStaffId / deliveryStaff.userId both return 500).
+  // Workaround: fetch all orders in the staff-relevant statuses, then filter
+  // client-side by deliveryStaffId / pickupStaffId from the response payload.
+  // Parentheses required by SpringFilter DSL when combining multiple OR terms.
+  const staffStatuses: RentalOrderApiStatus[] = params.status
+    ? [params.status]
+    : [
+        'PAID',
+        'PREPARING',
+        'DELIVERING',
+        'DELIVERED',
+        'IN_USE',
+        'PENDING_PICKUP',
+        'PICKING_UP',
+        'PICKED_UP',
+        'INSPECTING',
+        'COMPLETED',
+      ];
+
+  // Per doc-09 filter format: filter=status:'PAID' — wrap OR list in parens
+  const statusFilter = staffStatuses.map((s) => `status:'${s}'`).join(' or ');
+  qs.set('filter', `(${statusFilter})`);
   qs.set('sort', 'placedAt,desc');
 
   const res = await apiGet<
     ApiResponse<PaginationResponse<RentalOrderResponse>>
   >(`/rental-orders?${qs.toString()}`);
-  return (res.data?.content ?? []).map(adaptOrder);
+
+  const all = (res.data?.content ?? []).map(adaptOrder);
+
+  // Client-side staff filter: only show orders assigned to the logged-in staff.
+  return all.filter(
+    (o) =>
+      o.staff_checkin_id === staffUserId || o.staff_checkout_id === staffUserId,
+  );
 }
 
 /**
@@ -251,11 +272,11 @@ export async function getStaffOrderById(
  * Transition the order to the next status in the state machine.
  *
  * Staff transitions:
- *   PAID → CONFIRMED  (admin/staff confirms after payment)
- *   CONFIRMED → DELIVERING  (staff starts delivery)
- *   DELIVERING → ACTIVE  (recorded via record-delivery, but status can also be set directly)
- *   ACTIVE → RETURNING  (customer initiates return)
- *   RETURNING → COMPLETED  (after record-pickup + inspection)
+ *   PAID → PREPARING  (staff confirms and starts preparing)
+ *   PREPARING → DELIVERING  (staff picks up from hub, starts delivery)
+ *   IN_USE / PENDING_PICKUP → PICKING_UP  (staff starts pickup)
+ *   PICKED_UP → INSPECTING  (staff starts inspection at hub)
+ *   INSPECTING → COMPLETED  (inspection done, order finalized)
  */
 export async function updateOrderStatus(
   orderId: string,
@@ -286,7 +307,7 @@ export async function recordDelivery(
 ): Promise<DashboardOrder | null> {
   if (USE_MOCK) {
     const found = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
-    return found ? { ...found, status: 'ACTIVE' } : null;
+    return found ? { ...found, status: 'DELIVERED' } : null;
   }
   const res = await apiPatch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${orderId}/record-delivery`,
@@ -298,7 +319,7 @@ export async function recordDelivery(
 /**
  * PATCH /rental-orders/{id}/record-pickup
  * Records the physical pickup (return) of goods from the customer.
- * Transitions order: RETURNING → COMPLETED (after inspection)
+ * Transitions order: PICKING_UP → PICKED_UP
  * Inventory: RENTED → AVAILABLE
  */
 export async function recordPickup(
@@ -307,7 +328,7 @@ export async function recordPickup(
 ): Promise<DashboardOrder | null> {
   if (USE_MOCK) {
     const found = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
-    return found ? { ...found, status: 'COMPLETED' } : null;
+    return found ? { ...found, status: 'PICKED_UP' } : null;
   }
   const res = await apiPatch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${orderId}/record-pickup`,

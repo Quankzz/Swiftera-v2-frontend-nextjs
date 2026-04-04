@@ -91,10 +91,10 @@ export default function DashboardPage() {
     pending_payment: myOrders.filter((o) => o.status === 'PENDING_PAYMENT')
       .length,
     paid: myOrders.filter((o) => o.status === 'PAID').length,
-    confirmed: myOrders.filter((o) => o.status === 'CONFIRMED').length,
+    preparing: myOrders.filter((o) => o.status === 'PREPARING').length,
     delivering: myOrders.filter((o) => o.status === 'DELIVERING').length,
-    active: myOrders.filter((o) => o.status === 'ACTIVE').length,
-    returning: myOrders.filter((o) => o.status === 'RETURNING').length,
+    inUse: myOrders.filter((o) => o.status === 'IN_USE').length,
+    pendingPickup: myOrders.filter((o) => o.status === 'PENDING_PICKUP').length,
     overdue: myOrders.filter((o) => o.status === 'OVERDUE').length,
     completed: myOrders.filter((o) => o.status === 'COMPLETED').length,
     cancelled: myOrders.filter((o) => o.status === 'CANCELLED').length,
@@ -102,7 +102,7 @@ export default function DashboardPage() {
 
   const urgentOrders = [
     ...myOrders.filter((o) => o.status === 'OVERDUE'),
-    ...myOrders.filter((o) => o.status === 'RETURNING'),
+    ...myOrders.filter((o) => o.status === 'PENDING_PICKUP'),
     ...myOrders.filter((o) => o.status === 'PAID'),
   ].slice(0, 5);
 
@@ -114,19 +114,19 @@ export default function DashboardPage() {
   const maxBar = Math.max(...WEEK_DATA.map((d) => d.count));
 
   const todayDiff = todayCount - yesterdayCount;
-  const urgentTotal = counts.paid + counts.returning + counts.overdue;
+  const urgentTotal = counts.paid + counts.pendingPickup + counts.overdue;
 
   // Status breakdown (active view)
   const statusBreakdown = [
     {
       label: 'Đang hoạt động',
-      count: counts.confirmed + counts.delivering + counts.active,
+      count: counts.preparing + counts.delivering + counts.inUse,
       color: 'bg-info',
       textColor: 'text-info',
     },
     {
       label: 'Cần xử lý',
-      count: counts.paid + counts.returning + counts.overdue,
+      count: counts.paid + counts.pendingPickup + counts.overdue,
       color: 'bg-destructive',
       textColor: 'text-destructive',
     },
@@ -235,24 +235,24 @@ export default function DashboardPage() {
         />
         <StatusPill
           label="Đang thuê"
-          count={counts.active}
+          count={counts.inUse}
           dotClass="bg-success"
           colorClass="text-success"
           bgClass="bg-success-muted"
           borderClass="border-success-border"
           icon={Package}
-          href="/staff-dashboard/orders?status=ACTIVE"
+          href="/staff-dashboard/orders?status=IN_USE"
         />
         <StatusPill
           label="Cần thu hồi"
-          count={counts.returning + counts.overdue}
+          count={counts.pendingPickup + counts.overdue}
           dotClass="bg-destructive animate-pulse"
           colorClass="text-destructive"
           bgClass="bg-destructive/8"
           borderClass="border-destructive/25"
           icon={RotateCcw}
-          urgent={counts.returning + counts.overdue > 0}
-          href="/staff-dashboard/orders?status=RETURNING"
+          urgent={counts.pendingPickup + counts.overdue > 0}
+          href="/staff-dashboard/orders?status=PENDING_PICKUP"
         />
       </div>
 

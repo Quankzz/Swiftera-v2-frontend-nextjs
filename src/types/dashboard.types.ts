@@ -1,14 +1,23 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 export type OrderStatus =
+  // Customer-facing
   | 'PENDING_PAYMENT'
+  // Delivery staff statuses
   | 'PAID'
-  | 'CONFIRMED'
+  | 'PREPARING'
   | 'DELIVERING'
-  | 'ACTIVE'
-  | 'RETURNING'
+  | 'DELIVERED'
+  // Customer rental period
+  | 'IN_USE'
+  | 'OVERDUE' // derived UI-only: IN_USE + past expectedRentalEndDate
+  // Pickup staff statuses
+  | 'PENDING_PICKUP'
+  | 'PICKING_UP'
+  | 'PICKED_UP'
+  | 'INSPECTING'
+  // Terminal
   | 'COMPLETED'
-  | 'CANCELLED'
-  | 'OVERDUE'; // derived UI-only state (ACTIVE + expired)
+  | 'CANCELLED';
 
 export type ProductCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
 export type ProductStatus = 'AVAILABLE' | 'RENTED' | 'MAINTENANCE';

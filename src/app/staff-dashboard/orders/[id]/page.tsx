@@ -11,7 +11,6 @@ import {
   AlertCircle,
   Navigation,
   ClipboardList,
-  RotateCcw,
   Loader2,
   X,
 } from 'lucide-react';
@@ -38,8 +37,11 @@ import { DeliveryMiniMap } from './_components/DeliveryMiniMap';
 import { PendingWorkflow } from './_components/workflows/PendingWorkflow';
 import { ConfirmedWorkflow } from './_components/workflows/ConfirmedWorkflow';
 import { DeliveringWorkflow } from './_components/workflows/DeliveringWorkflow';
+import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
 import { ActiveWorkflow } from './_components/workflows/ActiveWorkflow';
 import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
+import { PickedUpWorkflow } from './_components/workflows/PickedUpWorkflow';
+import { InspectingWorkflow } from './_components/workflows/InspectingWorkflow';
 import { CompletedWorkflow } from './_components/workflows/CompletedWorkflow';
 
 export default function OrderDetailPage({
@@ -99,11 +101,11 @@ export default function OrderDetailPage({
   const [localLocAt, setLocalLocAt] = useState<string | undefined>(
     order?.staff_location_updated_at,
   );
-  // Auto-watch GPS whenever staff is on the move (DELIVERING or RETURNING)
+  // Auto-watch GPS whenever staff is on the move (DELIVERING or PICKING_UP)
   const gpsWatchRef = useRef<number | null>(null);
   useEffect(() => {
     const needsGps =
-      order?.status === 'DELIVERING' || order?.status === 'RETURNING';
+      order?.status === 'DELIVERING' || order?.status === 'PICKING_UP';
     if (!needsGps || typeof navigator === 'undefined' || !navigator.geolocation)
       return;
     const opts: PositionOptions = {
@@ -137,34 +139,23 @@ export default function OrderDetailPage({
       setStatusLoading(true);
       try {
         let updated: DashboardOrder | null = null;
-        if (newStatus === 'ACTIVE') {
-          // DELIVERING → ACTIVE: use record-delivery endpoint
+        if (newStatus === 'DELIVERED') {
+          // DELIVERING → DELIVERED: use record-delivery endpoint
           updated = await recordDelivery(order.rental_order_id, {
             deliveredLatitude: localLat,
             deliveredLongitude: localLng,
           });
-        } else if (newStatus === 'COMPLETED') {
-          // RETURNING → COMPLETED: use record-pickup endpoint
+        } else if (newStatus === 'PICKED_UP') {
+          // PICKING_UP → PICKED_UP: use record-pickup endpoint
           updated = await recordPickup(order.rental_order_id, {
             pickedUpLatitude: localLat,
             pickedUpLongitude: localLng,
           });
         } else {
-          // CONFIRMED, DELIVERING, RETURNING: generic status transition
-          const apiStatusMap: Record<OrderStatus, string> = {
-            PENDING_PAYMENT: 'PENDING_PAYMENT',
-            PAID: 'PAID',
-            CONFIRMED: 'CONFIRMED',
-            DELIVERING: 'DELIVERING',
-            ACTIVE: 'ACTIVE',
-            RETURNING: 'RETURNING',
-            COMPLETED: 'COMPLETED',
-            CANCELLED: 'CANCELLED',
-            OVERDUE: 'RETURNING',
-          };
+          // All other transitions via PATCH /status
           updated = await updateOrderStatus(
             order.rental_order_id,
-            apiStatusMap[newStatus] as Parameters<typeof updateOrderStatus>[1],
+            newStatus as Parameters<typeof updateOrderStatus>[1],
           );
         }
         if (updated) {
@@ -252,7 +243,7 @@ export default function OrderDetailPage({
 
   // Map shown only while staff is physically moving: delivering or collecting returns
   const hasMapPanel =
-    (order.status === 'DELIVERING' || order.status === 'RETURNING') &&
+    (order.status === 'DELIVERING' || order.status === 'PICKING_UP') &&
     order.delivery_latitude != null;
 
   const mapConfig = (() => {
@@ -267,6 +258,35 @@ export default function OrderDetailPage({
       destLabel: order.status === 'DELIVERING' ? 'Điểm giao' : 'Lấy hàng trả',
     };
   })();
+
+  // Detect which workflow role the current staff has for this order
+  const staffRole: 'delivery' | 'pickup' | 'both' = user?.userId
+    ? order.staff_checkin_id === user.userId &&
+      order.staff_checkout_id === user.userId
+      ? 'both'
+      : order.staff_checkin_id === user.userId
+        ? 'delivery'
+        : 'pickup'
+    : 'pickup';
+
+  // Helper to check if status is in the delivery or pickup half
+  const DELIVERY_STATUSES: OrderStatus[] = [
+    'PAID',
+    'PREPARING',
+    'DELIVERING',
+    'DELIVERED',
+  ];
+  const PICKUP_STATUSES: OrderStatus[] = [
+    'IN_USE',
+    'OVERDUE',
+    'PENDING_PICKUP',
+    'PICKING_UP',
+    'PICKED_UP',
+    'INSPECTING',
+    'COMPLETED',
+  ];
+  const isDeliveryStatus = DELIVERY_STATUSES.includes(order.status);
+  const isPickupStatus = PICKUP_STATUSES.includes(order.status);
 
   return (
     <div className="p-3 sm:p-5 lg:p-6 min-h-screen">
@@ -312,7 +332,7 @@ export default function OrderDetailPage({
         </div>
 
         {/* Workflow stepper — full width */}
-        <WorkflowStepper status={order.status} />
+        <WorkflowStepper status={order.status} staffRole={staffRole} />
 
         {/* Main content grid */}
         <div
@@ -391,20 +411,23 @@ export default function OrderDetailPage({
           {/* LEFT column: Workflow + full details */}
           <div className="flex flex-col gap-4 lg:order-1">
             {/* Status-specific workflow panel */}
-            {(order.status === 'PENDING_PAYMENT' ||
-              order.status === 'PAID') && (
-              <PendingWorkflow
-                order={order}
-                onConfirm={() =>
-                  handleStatusChange('CONFIRMED', {
-                    staff_checkin_id: user?.userId,
-                  })
-                }
-                loading={statusLoading}
-              />
-            )}
+            {/* ── Delivery staff workflows ─── */}
+            {(staffRole === 'delivery' ||
+              staffRole === 'both' ||
+              isDeliveryStatus) &&
+              order.status === 'PAID' && (
+                <PendingWorkflow
+                  order={order}
+                  onConfirm={() =>
+                    handleStatusChange('PREPARING', {
+                      staff_checkin_id: user?.userId,
+                    })
+                  }
+                  loading={statusLoading}
+                />
+              )}
 
-            {order.status === 'CONFIRMED' && (
+            {order.status === 'PREPARING' && (
               <ConfirmedWorkflow
                 order={order}
                 hubInfo={hubInfo}
@@ -416,7 +439,7 @@ export default function OrderDetailPage({
             {order.status === 'DELIVERING' && (
               <DeliveringWorkflow
                 order={order}
-                onConfirmDelivery={() => handleStatusChange('ACTIVE')}
+                onConfirmDelivery={() => handleStatusChange('DELIVERED')}
                 loading={statusLoading}
                 staffLat={localLat}
                 staffLng={localLng}
@@ -424,42 +447,52 @@ export default function OrderDetailPage({
               />
             )}
 
-            {(order.status === 'ACTIVE' || order.status === 'OVERDUE') && (
+            {order.status === 'DELIVERED' && (
+              <DeliveredWorkflow order={order} />
+            )}
+
+            {/* ── Pickup staff workflows ─── */}
+            {(order.status === 'IN_USE' || order.status === 'OVERDUE') && (
               <ActiveWorkflow
                 order={order}
-                onRequestReturnEarly={() => handleStatusChange('RETURNING')}
+                onStartPickup={() => handleStatusChange('PICKING_UP')}
                 loading={statusLoading}
               />
             )}
 
-            {order.status === 'OVERDUE' && (
-              <div className="rounded-2xl border border-destructive/25 bg-card p-5">
-                <Button
-                  size="lg"
-                  variant="destructive"
-                  onClick={() => handleStatusChange('RETURNING')}
-                  disabled={statusLoading}
-                  className="w-full gap-2"
-                >
-                  {statusLoading ? (
-                    <Loader2 className="size-5 animate-spin" />
-                  ) : (
-                    <RotateCcw className="size-5" />
-                  )}
-                  Bắt đầu quy trình thu hồi đơn quá hạn
-                </Button>
-              </div>
+            {order.status === 'PENDING_PICKUP' && (
+              <ActiveWorkflow
+                order={order}
+                onStartPickup={() => handleStatusChange('PICKING_UP')}
+                loading={statusLoading}
+                isPendingPickup
+              />
             )}
 
-            {order.status === 'RETURNING' && (
+            {order.status === 'PICKING_UP' && (
               <ReturningWorkflow
                 order={order}
                 onCompleteReturn={() =>
-                  handleStatusChange('COMPLETED', {
-                    actual_return_date: new Date().toISOString().split('T')[0],
+                  handleStatusChange('PICKED_UP', {
                     staff_checkout_id: user?.userId,
                   })
                 }
+                loading={statusLoading}
+              />
+            )}
+
+            {order.status === 'PICKED_UP' && (
+              <PickedUpWorkflow
+                order={order}
+                onStartInspection={() => handleStatusChange('INSPECTING')}
+                loading={statusLoading}
+              />
+            )}
+
+            {order.status === 'INSPECTING' && (
+              <InspectingWorkflow
+                order={order}
+                onComplete={() => handleStatusChange('COMPLETED')}
                 loading={statusLoading}
               />
             )}

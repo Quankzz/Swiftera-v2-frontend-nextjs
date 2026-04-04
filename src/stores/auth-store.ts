@@ -50,20 +50,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   getAccessToken: () => get().accessToken,
 }));
 
-// ─── Wire token accessors into the API client (runs once at module load) ───
-
-/**
- * This function is intentionally kept separate so the auth owner can call
- * it from their AuthProvider without importing the store directly.
- *
- * Call once at app bootstrap (e.g. inside AuthProvider or app-providers.tsx).
- */
 export function initAuthStore() {
   registerTokenAccessors(
     // getToken
     () => useAuthStore.getState().accessToken,
-    // doRefresh – calls the auth API endpoint; returns new token or null.
-    // refreshAuthToken() uses a raw fetch so this never re-enters apiRequest.
     async () => {
       try {
         const { refreshAuthToken } = await import('@/api/auth/index');
@@ -82,13 +72,6 @@ export function initAuthStore() {
   );
 }
 
-/**
- * Silently restores a previous session using the HttpOnly refresh_token cookie.
- * Call this once on app startup (after initAuthStore) so that staff-dashboard
- * pages receive a populated `user` without waiting for the first API call to fail.
- *
- * Safe to call even when the user is not logged in — returns without changes.
- */
 export async function restoreSession(): Promise<void> {
   try {
     const { refreshAuthToken } = await import('@/api/auth/index');

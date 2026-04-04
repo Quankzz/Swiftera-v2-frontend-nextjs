@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { AlertCircle, Package, Calendar, Phone, Loader2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Package,
+  Calendar,
+  Phone,
+  Loader2,
+  RotateCcw,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
@@ -9,12 +16,15 @@ import { fmtDate } from '../utils';
 
 export function ActiveWorkflow({
   order,
-  onRequestReturnEarly,
+  onStartPickup,
   loading,
+  isPendingPickup,
 }: {
   order: DashboardOrder;
-  onRequestReturnEarly?: () => void;
+  onStartPickup?: () => void;
   loading?: boolean;
+  /** True when order.status === 'PENDING_PICKUP' — shows a stronger CTA */
+  isPendingPickup?: boolean;
 }) {
   const [now] = useState(() => new Date());
   const endDate = new Date(order.end_date);
@@ -24,12 +34,20 @@ export function ActiveWorkflow({
     <div className="flex flex-col gap-4">
       <WorkflowBanner
         icon={isOverdue ? AlertCircle : Package}
-        variant={isOverdue ? 'danger' : 'success'}
-        title={isOverdue ? 'Đơn hàng quá hạn!' : 'Khách đang sử dụng thiết bị'}
+        variant={isOverdue ? 'danger' : isPendingPickup ? 'warning' : 'success'}
+        title={
+          isPendingPickup
+            ? 'Chờ bắt đầu thu hồi'
+            : isOverdue
+              ? 'Đơn hàng quá hạn!'
+              : 'Khách đang sử dụng thiết bị'
+        }
         desc={
-          isOverdue
-            ? 'Khách chưa trả hàng dù đã qua ngày kết thúc. Liên hệ ngay và chuẩn bị thu hồi sản phẩm.'
-            : 'Không cần hành động lúc này. Hệ thống sẽ thông báo khi khách yêu cầu trả hoặc đến ngày hết hạn.'
+          isPendingPickup
+            ? 'Khách đã yêu cầu trả hàng. Bấm bắt đầu thu hồi khi bạn sẵn sàng khởi hành.'
+            : isOverdue
+              ? 'Khách chưa trả hàng dù đã qua ngày kết thúc. Liên hệ ngay và chuẩn bị thu hồi sản phẩm.'
+              : 'Không cần hành động lúc này. Hệ thống sẽ thông báo khi khách yêu cầu trả hoặc đến ngày hết hạn.'
         }
       />
 
@@ -65,7 +83,9 @@ export function ActiveWorkflow({
                 c.cls,
               )}
             >
-              <p className="text-[11px] text-muted-foreground mb-1 font-medium">{c.label}</p>
+              <p className="text-[11px] text-muted-foreground mb-1 font-medium">
+                {c.label}
+              </p>
               <p
                 className={cn(
                   'text-sm font-bold whitespace-nowrap',
@@ -117,7 +137,7 @@ export function ActiveWorkflow({
         </div>
       </div>
 
-      {isOverdue && (
+      {(isOverdue || isPendingPickup) && (
         <div className="rounded-2xl border border-destructive/25 bg-destructive/5 p-5 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-sm font-bold text-destructive mb-0.5">
@@ -139,31 +159,21 @@ export function ActiveWorkflow({
         </div>
       )}
 
-      {/* Mock return early button */}
-      {!isOverdue && onRequestReturnEarly && (
-        <div className="rounded-2xl border border-theme-primary-start/20 bg-theme-primary-start/5 p-5">
-          <p className="text-sm font-bold text-foreground mb-1">
-            Khách yêu cầu trả sớm?
-          </p>
-          <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-            Tính năng mô phỏng: Bấm vào đây nếu khách hàng thông báo muốn chấm
-            dứt hợp đồng sớm và yêu cầu bạn đến lấy thiết bị.
-          </p>
-          <Button
-            size="default"
-            variant="outline"
-            onClick={onRequestReturnEarly}
-            disabled={loading}
-            className="w-full h-12 gap-2 text-sm font-bold border-theme-primary-start text-theme-primary-start hover:bg-theme-primary-start hover:text-white transition-colors"
-          >
-            {loading ? (
-              <Loader2 className="size-4.5 animate-spin" />
-            ) : (
-              <AlertCircle className="size-4.5" />
-            )}
-            (Mô phỏng) Khách trả hàng sớm
-          </Button>
-        </div>
+      {(isOverdue || isPendingPickup) && onStartPickup && (
+        <Button
+          size="lg"
+          variant="destructive"
+          onClick={onStartPickup}
+          disabled={loading}
+          className="w-full gap-2"
+        >
+          {loading ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <RotateCcw className="size-5" />
+          )}
+          {isPendingPickup ? 'Bắt đầu thu hồi' : 'Bắt đầu thu hồi đơn quá hạn'}
+        </Button>
       )}
     </div>
   );

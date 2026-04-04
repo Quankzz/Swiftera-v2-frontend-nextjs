@@ -61,7 +61,7 @@ export interface UserSecuredResponse {
   city: string | null;
   nationality: string | null;
   rolesSecured: RoleSecuredResponse[];
-  hubId?: string | null;
+  hubId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -102,10 +102,14 @@ export interface HubResponse {
 export type RentalOrderApiStatus =
   | 'PENDING_PAYMENT'
   | 'PAID'
-  | 'CONFIRMED'
+  | 'PREPARING'
   | 'DELIVERING'
-  | 'ACTIVE'
-  | 'RETURNING'
+  | 'DELIVERED'
+  | 'IN_USE'
+  | 'PENDING_PICKUP'
+  | 'PICKING_UP'
+  | 'PICKED_UP'
+  | 'INSPECTING'
   | 'COMPLETED'
   | 'CANCELLED';
 

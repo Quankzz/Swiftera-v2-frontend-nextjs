@@ -216,21 +216,22 @@ export default function DashboardPage() {
   const hubName = hubInfo ? hubInfo.name : (user?.hubId ?? 'Hub');
 
   const counts = {
-    pending_payment: myOrders.filter((o) => o.status === 'PENDING_PAYMENT')
-      .length,
     paid: myOrders.filter((o) => o.status === 'PAID').length,
-    confirmed: myOrders.filter((o) => o.status === 'CONFIRMED').length,
+    preparing: myOrders.filter((o) => o.status === 'PREPARING').length,
     delivering: myOrders.filter((o) => o.status === 'DELIVERING').length,
-    active: myOrders.filter((o) => o.status === 'ACTIVE').length,
-    returning: myOrders.filter((o) => o.status === 'RETURNING').length,
+    delivered: myOrders.filter((o) => o.status === 'DELIVERED').length,
+    inUse: myOrders.filter((o) => o.status === 'IN_USE').length,
     overdue: myOrders.filter((o) => o.status === 'OVERDUE').length,
+    pendingPickup: myOrders.filter((o) => o.status === 'PENDING_PICKUP').length,
+    pickingUp: myOrders.filter((o) => o.status === 'PICKING_UP').length,
+    pickedUp: myOrders.filter((o) => o.status === 'PICKED_UP').length,
+    inspecting: myOrders.filter((o) => o.status === 'INSPECTING').length,
     completed: myOrders.filter((o) => o.status === 'COMPLETED').length,
-    cancelled: myOrders.filter((o) => o.status === 'CANCELLED').length,
   };
 
   const urgentOrders = [
     ...myOrders.filter((o) => o.status === 'OVERDUE'),
-    ...myOrders.filter((o) => o.status === 'RETURNING'),
+    ...myOrders.filter((o) => o.status === 'PENDING_PICKUP'),
     ...myOrders.filter((o) => o.status === 'PAID'),
   ].slice(0, 5);
 
@@ -240,21 +241,20 @@ export default function DashboardPage() {
   const monthTotal = weekTotal * 4 + 3;
   const avgCompleted = Math.round(weekTotal / WEEK_DATA.length);
   const todayDiff = todayCount - yesterdayCount;
-  const urgentTotal = counts.paid + counts.returning + counts.overdue;
+  const urgentTotal = counts.paid + counts.pendingPickup + counts.overdue;
 
   const statusBarData = [
     {
       name: 'Đang giao & thuê',
-      value: counts.confirmed + counts.delivering + counts.active,
+      value: counts.preparing + counts.delivering + counts.inUse,
       fill: '#0284c7',
     },
     {
       name: 'Cần xử lý',
-      value: counts.paid + counts.returning + counts.overdue,
+      value: counts.paid + counts.pendingPickup + counts.overdue,
       fill: '#ef4444',
     },
     { name: 'Hoàn thành', value: counts.completed, fill: '#059669' },
-    { name: 'Đã hủy', value: counts.cancelled, fill: '#9ca3af' },
   ];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -411,24 +411,24 @@ export default function DashboardPage() {
             />
             <StatusCard
               label="Đang thuê"
-              count={counts.active}
+              count={counts.inUse}
               icon={Package}
               colorClass="text-success"
               bgClass="bg-success/8"
               borderClass="border-success/20"
               dotClass="bg-success"
-              href="/staff-dashboard/orders?status=ACTIVE"
+              href="/staff-dashboard/orders?status=IN_USE"
             />
             <StatusCard
               label="Cần thu hồi"
-              count={counts.returning + counts.overdue}
+              count={counts.pendingPickup + counts.overdue}
               icon={RotateCcw}
               colorClass="text-destructive"
               bgClass="bg-destructive/8"
               borderClass="border-destructive/25"
               dotClass="bg-destructive"
-              urgent={counts.returning + counts.overdue > 0}
-              href="/staff-dashboard/orders?status=RETURNING"
+              urgent={counts.pendingPickup + counts.overdue > 0}
+              href="/staff-dashboard/orders?status=PENDING_PICKUP"
             />
           </div>
 
