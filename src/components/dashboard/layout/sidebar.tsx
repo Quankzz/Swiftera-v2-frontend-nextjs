@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Ticket,
+  Warehouse,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,11 @@ const NAV_GROUPS = [
         title: 'Voucher',
         href: '/dashboard/vouchers',
         icon: Ticket,
+      },
+      {
+        title: 'Hub',
+        href: '/dashboard/hubs',
+        icon: Warehouse,
       },
       {
         title: 'Phản hồi',
