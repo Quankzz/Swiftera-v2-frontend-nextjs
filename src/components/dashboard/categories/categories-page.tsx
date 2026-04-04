@@ -22,15 +22,23 @@ import {
   ChevronRight,
   Layers,
   GripVertical,
+  Loader2,
 } from 'lucide-react';
-import { useCategoryStore } from '@/stores/use-category-store';
-import type { CategoryTree } from '@/types/catalog';
-import { CategoryTreeNode } from './category-tree-node';
+import {
+  useCategoryTreeQuery,
+  flattenTree,
+} from '@/features/categories/hooks/use-category-tree';
+import { useUpdateCategoryMutation } from '@/features/categories/hooks/use-category-management';
+import type { CategoryTreeNode } from '@/features/categories/types';
+import { CategoryTreeNode as CategoryTreeNodeComponent } from './category-tree-node';
 import { CategoryFormDialog } from './category-form-dialog';
 import { CategoryDeleteDialog } from './category-delete-dialog';
 
-// ─── Filter tree by search query ─────────────────────────────────
-function filterTree(nodes: CategoryTree[], q: string): CategoryTree[] {
+// ─── Filter tree by search query ─────────────────────────────────────────────
+function filterTree(
+  nodes: CategoryTreeNode[],
+  q: string,
+): CategoryTreeNode[] {
   if (!q.trim()) return nodes;
   const lower = q.toLowerCase();
   return nodes
@@ -42,24 +50,24 @@ function filterTree(nodes: CategoryTree[], q: string): CategoryTree[] {
       }
       return null;
     })
-    .filter(Boolean) as CategoryTree[];
+    .filter(Boolean) as CategoryTreeNode[];
 }
 
-// ─── Stats bar ───────────────────────────────────────────────────
+// ─── Stats bar ───────────────────────────────────────────────────────────────
 function StatsBar({ total, roots }: { total: number; roots: number }) {
   return (
     <div className='flex flex-wrap gap-4'>
-      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
+      <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
         <Layers className='size-4 text-theme-primary-start' />
         <span className='text-sm font-medium text-text-main'>{total}</span>
         <span className='text-sm text-text-sub'>danh mục</span>
       </div>
-      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
+      <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
         <ChevronRight className='size-4 text-blue-400' />
         <span className='text-sm font-medium text-text-main'>{roots}</span>
         <span className='text-sm text-text-sub'>danh mục gốc</span>
       </div>
-      <div className='flex items-center gap-2 rounded-sm border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
+      <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
         <ChevronDown className='size-4 text-amber-400' />
         <span className='text-sm font-medium text-text-main'>
           {total - roots}
@@ -70,31 +78,32 @@ function StatsBar({ total, roots }: { total: number; roots: number }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 export function CategoriesPage() {
-  const { tree, categories, reorderCategories, moveCategory } =
-    useCategoryStore();
+  const { data: tree = [], isLoading, isError } = useCategoryTreeQuery();
+  const updateMutation = useUpdateCategoryMutation();
+
+  // Flat list derived from tree (for lookups and count)
+  const allNodes = useMemo(() => flattenTree(tree), [tree]);
 
   // Dialog state
   type DialogState =
     | { type: 'idle' }
     | { type: 'create'; defaultParentId?: string }
-    | { type: 'edit'; node: CategoryTree }
-    | { type: 'delete'; node: CategoryTree };
+    | { type: 'edit'; node: CategoryTreeNode }
+    | { type: 'delete'; node: CategoryTreeNode };
 
   const [dialog, setDialog] = useState<DialogState>({ type: 'idle' });
   const [search, setSearch] = useState('');
-  // ID of the item currently being dragged (for DragOverlay)
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  // Filtered tree
+  // Filtered tree for display
   const filtered = useMemo(() => filterTree(tree, search), [tree, search]);
-  // Only root-level IDs for the outer SortableContext (DnD must be per-sibling-group)
   const rootIds = filtered.map((n) => n.categoryId);
 
-  // Find node by id for DragOverlay label
-  const activeCategory = activeId
-    ? categories.find((c) => c.categoryId === activeId)
+  // Active node for DragOverlay label
+  const activeNode = activeId
+    ? allNodes.find((n) => n.categoryId === activeId)
     : null;
 
   const sensors = useSensors(
@@ -105,85 +114,91 @@ export function CategoriesPage() {
     setActiveId(String(event.active.id));
   };
 
+  // After drag-drop, persist sortOrder changes via PATCH API
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const draggedCat = categories.find((c) => c.categoryId === active.id);
-    if (!draggedCat) return;
-
+    const draggedId = String(active.id);
     const overId = String(over.id);
 
-    // ── Case 1: drop-into zone → make dragged a child of target node ──
+    // ── Case 1: drop-into zone → reparent dragged node ────────────────────
     if (overId.startsWith('drop-into::')) {
       const newParentId = overId.replace('drop-into::', '');
-      // Prevent making a node its own child or moving to its current parent (no-op)
-      if (newParentId === draggedCat.categoryId) return;
-      if (newParentId === draggedCat.parentId) return;
-      moveCategory(draggedCat.categoryId, newParentId);
-      // Append at the end of the new parent's children
-      const newSiblings = categories
-        .filter(
-          (c) =>
-            c.parentId === newParentId &&
-            c.categoryId !== draggedCat.categoryId,
-        )
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-        .map((c) => c.categoryId);
-      reorderCategories(newParentId, [...newSiblings, draggedCat.categoryId]);
+      if (newParentId === draggedId) return;
+
+      // Optimistically persist reparent via PATCH (sortOrder stays, parentId changes)
+      updateMutation.mutate({
+        categoryId: draggedId,
+        payload: { parentId: newParentId },
+      });
       return;
     }
 
-    // ── Case 2: dropped onto a sortable node ──────────────────────────
-    // parentId of the item we dropped onto (from useSortable data)
-    const overParentId =
-      (over.data.current?.parentId as string | null | undefined) ?? null;
-    const draggedParentId = draggedCat.parentId;
+    // ── Case 2: same-level reorder ────────────────────────────────────────
+    // Find siblings (nodes with the same parent as dragged node)
+    const draggedNode = allNodes.find((n) => n.categoryId === draggedId);
+    if (!draggedNode) return;
 
-    if (draggedParentId !== overParentId) {
-      // Cross-parent: move + reorder in new parent
-      moveCategory(draggedCat.categoryId, overParentId);
+    // Find the parent node to get siblings
+    const findParent = (
+      nodes: CategoryTreeNode[],
+      childId: string,
+    ): CategoryTreeNode | null => {
+      for (const n of nodes) {
+        if (n.children.some((c) => c.categoryId === childId)) return n;
+        const found = findParent(n.children, childId);
+        if (found) return found;
+      }
+      return null;
+    };
 
-      const newSiblings = categories
-        .filter(
-          (c) =>
-            c.parentId === overParentId &&
-            c.categoryId !== draggedCat.categoryId,
-        )
-        .sort((a, b) => a.sortOrder - b.sortOrder);
+    const parentNode = findParent(tree, draggedId);
+    const siblings = parentNode ? parentNode.children : tree;
 
-      const overIdx = newSiblings.findIndex((c) => c.categoryId === over.id);
-      const insertAt = overIdx === -1 ? newSiblings.length : overIdx;
-      const newOrder = [
-        ...newSiblings.slice(0, insertAt).map((c) => c.categoryId),
-        draggedCat.categoryId,
-        ...newSiblings.slice(insertAt).map((c) => c.categoryId),
-      ];
-      reorderCategories(overParentId, newOrder);
-    } else {
-      // Same-parent: reorder only
-      const siblings = categories
-        .filter((c) => c.parentId === draggedParentId)
-        .sort((a, b) => a.sortOrder - b.sortOrder);
+    const oldIdx = siblings.findIndex((n) => n.categoryId === draggedId);
+    const newIdx = siblings.findIndex((n) => n.categoryId === overId);
+    if (oldIdx === -1 || newIdx === -1) return;
 
-      const oldIdx = siblings.findIndex((c) => c.categoryId === active.id);
-      const newIdx = siblings.findIndex((c) => c.categoryId === over.id);
-      if (oldIdx === -1 || newIdx === -1) return;
+    // Reassign sortOrder for affected nodes
+    const reordered = [...siblings];
+    const [moved] = reordered.splice(oldIdx, 1);
+    reordered.splice(newIdx, 0, moved);
 
-      const reordered = [...siblings];
-      const [moved] = reordered.splice(oldIdx, 1);
-      reordered.splice(newIdx, 0, moved);
-
-      reorderCategories(
-        draggedParentId,
-        reordered.map((c) => c.categoryId),
-      );
-    }
+    // Persist updated sortOrder for each moved item
+    reordered.forEach((node, idx) => {
+      const newOrder = idx + 1;
+      if (node.sortOrder !== newOrder) {
+        updateMutation.mutate({
+          categoryId: node.categoryId,
+          payload: { sortOrder: newOrder },
+        });
+      }
+    });
   };
 
+  // ── Loading / error states ────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className='flex h-64 items-center justify-center'>
+        <Loader2 className='size-8 animate-spin text-theme-primary-start' />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className='flex h-64 items-center justify-center'>
+        <p className='text-sm text-red-500'>
+          Không thể tải danh mục. Vui lòng thử lại.
+        </p>
+      </div>
+    );
+  }
+
   const rootCount = tree.length;
-  const totalCount = categories.length;
+  const totalCount = allNodes.length;
 
   return (
     <div className='flex flex-col gap-6 p-6 w-full'>
@@ -201,7 +216,7 @@ export function CategoriesPage() {
         <button
           type='button'
           onClick={() => setDialog({ type: 'create' })}
-          className='inline-flex shrink-0 items-center gap-2 rounded-sm bg-theme-primary-start px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition shadow-sm'
+          className='inline-flex shrink-0 items-center gap-2 rounded-lg bg-theme-primary-start px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition shadow-sm'
         >
           <Plus className='size-4' />
           Thêm danh mục gốc
@@ -218,7 +233,7 @@ export function CategoriesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder='Tìm kiếm danh mục...'
-          className='h-10 w-full rounded-sm border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-9 pr-4 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
+          className='h-10 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-9 pr-4 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
         />
       </div>
 
@@ -236,7 +251,7 @@ export function CategoriesPage() {
               <button
                 type='button'
                 onClick={() => setDialog({ type: 'create' })}
-                className='mt-1 inline-flex items-center gap-1.5 rounded-sm border border-dashed border-gray-300 dark:border-white/15 px-3 py-2 text-sm text-text-sub hover:border-gray-400 dark:hover:border-white/30 hover:text-text-main transition'
+                className='mt-1 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 dark:border-white/15 px-3 py-2 text-sm text-text-sub hover:border-gray-400 dark:hover:border-white/30 hover:text-text-main transition'
               >
                 <Plus className='size-4' />
                 Tạo danh mục đầu tiên
@@ -256,7 +271,7 @@ export function CategoriesPage() {
             >
               <div className='flex flex-col gap-1'>
                 {filtered.map((rootNode) => (
-                  <CategoryTreeNode
+                  <CategoryTreeNodeComponent
                     key={rootNode.categoryId}
                     node={rootNode}
                     depth={0}
@@ -277,14 +292,11 @@ export function CategoriesPage() {
 
             {/* Floating drag preview */}
             <DragOverlay dropAnimation={null}>
-              {activeCategory && (
+              {activeNode && (
                 <div className='flex min-h-11 items-center gap-2 rounded-md border border-theme-primary-start/40 bg-white dark:bg-surface-card px-3 shadow-lg ring-2 ring-theme-primary-start/20 opacity-90'>
                   <GripVertical className='size-4 text-gray-400' />
                   <span className='text-sm font-medium text-text-main'>
-                    {activeCategory.name}
-                  </span>
-                  <span className='ml-auto rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] text-text-sub'>
-                    {activeCategory.slug}
+                    {activeNode.name}
                   </span>
                 </div>
               )}
@@ -295,14 +307,15 @@ export function CategoriesPage() {
 
       {/* Hint */}
       <p className='text-xs text-text-sub'>
-        💡 Kéo icon <span className='font-medium'>⠿</span> để sắp xếp lại thứ tự
-        hoặc chuyển sang danh mục cha khác. Thả lên một node để trở thành con
-        của node đó.
+        💡 Kéo icon <span className='font-medium'>⠿</span> để sắp xếp lại thứ
+        tự hoặc chuyển sang danh mục cha khác. Thả lên một node để trở thành
+        con của node đó.
       </p>
 
-      {/* Dialogs */}
+      {/* Dialogs — use key prop so form state fully resets on each open */}
       {dialog.type === 'create' && (
         <CategoryFormDialog
+          key={`create-${dialog.defaultParentId ?? 'root'}`}
           target={null}
           defaultParentId={dialog.defaultParentId}
           onClose={() => setDialog({ type: 'idle' })}
@@ -310,7 +323,8 @@ export function CategoriesPage() {
       )}
       {dialog.type === 'edit' && (
         <CategoryFormDialog
-          target={dialog.node}
+          key={`edit-${dialog.node.categoryId}`}
+          target={dialog.node as unknown as import('@/features/categories/types').CategoryResponse}
           onClose={() => setDialog({ type: 'idle' })}
         />
       )}

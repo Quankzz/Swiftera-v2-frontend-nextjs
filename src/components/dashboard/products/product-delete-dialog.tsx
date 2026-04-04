@@ -1,13 +1,13 @@
 'use client';
 
 import { Trash2, X, AlertTriangle } from 'lucide-react';
-import type { Product } from '@/types/catalog';
+import type { ProductResponse } from '@/features/products/types';
 
 interface ProductDeleteDialogProps {
-  product: Product | null;
+  product: ProductResponse | null;
   open: boolean;
   onClose: () => void;
-  onConfirm: (product: Product) => void;
+  onConfirm: (product: ProductResponse) => void;
 }
 
 export function ProductDeleteDialog({

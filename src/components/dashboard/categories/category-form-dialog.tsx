@@ -1,123 +1,150 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Plus, Tag } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  generateSlug,
-  useCategoryStore,
-  type CategoryFormData,
-} from '@/stores/use-category-store';
-import type { Category } from '@/types/catalog';
+  useCreateCategoryMutation,
+  useCategoriesQuery,
+  useUpdateCategoryMutation,
+} from '@/features/categories/hooks/use-category-management';
+import type { CategoryResponse } from '@/features/categories/types';
 
-// ─── Props ───────────────────────────────────────────────────────
+// ─── Props ────────────────────────────────────────────────────────────────────
+
 interface CategoryFormDialogProps {
-  /** null = create new | Category = edit existing */
-  target: Category | null;
-  /** Pre-fill parentId (when clicking "Add child") */
+  /** null = create mode; non-null = edit mode */
+  target: CategoryResponse | null;
+  /** pre-selected parentId when adding a child from tree */
   defaultParentId?: string | null;
   onClose: () => void;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────
-function inputCls(error?: boolean) {
-  return cn(
-    'h-10 w-full rounded-sm border bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 transition',
-    error
-      ? 'border-red-400 focus:ring-red-200'
-      : 'border-gray-200 dark:border-white/8 focus:border-theme-primary-start focus:ring-theme-primary-start/20',
-  );
+// ─── Form state ───────────────────────────────────────────────────────────────
+
+interface FormState {
+  name: string;
+  parentId: string; // "" means root (null on submit)
+  sortOrder: string; // string for controlled input; parsed on submit
+  isActive: boolean;
 }
 
-// ─── Component ───────────────────────────────────────────────────
+function initForm(
+  target: CategoryResponse | null,
+  defaultParentId?: string | null,
+): FormState {
+  if (target) {
+    return {
+      name: target.name,
+      parentId: target.parentId ?? '',
+      sortOrder: String(target.sortOrder),
+      isActive: target.isActive,
+    };
+  }
+  return {
+    name: '',
+    parentId: defaultParentId ?? '',
+    sortOrder: '',
+    isActive: true,
+  };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function CategoryFormDialog({
   target,
   defaultParentId,
   onClose,
 }: CategoryFormDialogProps) {
-  const { categories, addCategory, updateCategory } = useCategoryStore();
   const isEdit = target !== null;
 
-  // ── Form state ──
-  const [name, setName] = useState(target?.name ?? '');
-  const [slugOverride, setSlugOverride] = useState(target?.slug ?? '');
-  const [slugManual, setSlugManual] = useState(isEdit);
-  // Derived: auto-slug from name unless manually edited
-  const slug = slugManual ? slugOverride : generateSlug(name);
-  const [parentId, setParentId] = useState<string | null>(
-    target?.parentId ?? defaultParentId ?? null,
+  const [form, setForm] = useState<FormState>(() =>
+    initForm(target, defaultParentId),
   );
-  const [sortOrder, setSortOrder] = useState(target?.sortOrder ?? 1);
-  const [image, setImage] = useState(target?.image ?? '');
-  const [brandInput, setBrandInput] = useState('');
-  const [brands, setBrands] = useState<string[]>(target?.brands ?? []);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({});
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  // Available parent options — exclude self and own descendants
-  const parentOptions = categories.filter((c) => {
-    if (isEdit && c.categoryId === target.categoryId) return false;
-    // Prevent circular: don't allow child as parent
-    let cur: Category | undefined = c;
-    while (cur?.parentId) {
-      if (cur.parentId === target?.categoryId) return false;
-      cur = categories.find((x) => x.categoryId === cur?.parentId);
+  // ── Data ───────────────────────────────────────────────────────────────────
+
+  const { data: categoriesData } = useCategoriesQuery({ page: 0, size: 200 });
+  const allCategories = categoriesData?.content ?? [];
+
+  // Exclude self from parent options (prevent self-parent)
+  const parentOptions = allCategories.filter(
+    (c) => !isEdit || c.categoryId !== target?.categoryId,
+  );
+
+  // ── Mutations ──────────────────────────────────────────────────────────────
+
+  const createMutation = useCreateCategoryMutation();
+  const updateMutation = useUpdateCategoryMutation();
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  // ── Validation ─────────────────────────────────────────────────────────────
+
+  function validate(): boolean {
+    const e: Partial<Record<keyof FormState, string>> = {};
+    if (!form.name.trim()) e.name = 'Tên danh mục là bắt buộc';
+    const so = parseInt(form.sortOrder, 10);
+    if (form.sortOrder !== '' && (isNaN(so) || so < 1)) {
+      e.sortOrder = 'Thứ tự phải là số nguyên >= 1';
     }
-    return true;
-  });
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
 
-  // Group parent options for select
-  const rootOptions = parentOptions.filter((c) => c.parentId === null);
-  const childOptions = (pid: string) =>
-    parentOptions.filter((c) => c.parentId === pid);
+  // ── Submit ─────────────────────────────────────────────────────────────────
 
-  // ── Brand tag helpers ──
-  const addBrand = (val: string) => {
-    const trimmed = val.trim();
-    if (trimmed && !brands.includes(trimmed)) {
-      setBrands((b) => [...b, trimmed]);
-    }
-    setBrandInput('');
-  };
-  const removeBrand = (b: string) =>
-    setBrands((arr) => arr.filter((x) => x !== b));
-
-  // ── Validate ──
-  const validate = (): boolean => {
-    const errs: Record<string, string> = {};
-    if (!name.trim()) errs.name = 'Tên danh mục không được trống';
-    if (!slug.trim()) errs.slug = 'Slug không được trống';
-    if (sortOrder < 1) errs.sortOrder = 'Thứ tự phải ≥ 1';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  // ── Submit ──
-  const handleSubmit = (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setServerError(null);
     if (!validate()) return;
-    const data: CategoryFormData = {
-      name: name.trim(),
-      slug: slug.trim(),
-      parentId,
-      sortOrder,
-      brands,
-      image: image.trim() || undefined,
-    };
-    if (isEdit) {
-      updateCategory(target.categoryId, data);
-    } else {
-      addCategory(data);
+
+    const sortOrderNum =
+      form.sortOrder !== '' ? parseInt(form.sortOrder, 10) : undefined;
+    const parentIdValue = form.parentId === '' ? null : form.parentId;
+
+    try {
+      if (isEdit) {
+        await updateMutation.mutateAsync({
+          categoryId: target.categoryId,
+          payload: {
+            name: form.name.trim(),
+            parentId: parentIdValue,
+            sortOrder: sortOrderNum,
+            isActive: form.isActive,
+          },
+        });
+      } else {
+        await createMutation.mutateAsync({
+          name: form.name.trim(),
+          parentId: parentIdValue ?? undefined,
+          sortOrder: sortOrderNum,
+        });
+      }
+      onClose();
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại';
+      setServerError(msg);
     }
-    onClose();
-  };
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  const inputCls = (hasErr?: boolean) =>
+    cn(
+      'w-full rounded-lg border px-3 py-2 text-sm outline-none transition',
+      'bg-white dark:bg-surface-card text-text-main placeholder:text-text-sub',
+      'focus:ring-2 focus:ring-theme-primary-start/30 focus:border-theme-primary-start',
+      hasErr ? 'border-red-400' : 'border-gray-200 dark:border-white/15',
+    );
 
   return (
-    /* Backdrop */
-    <div
-      className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className='w-full max-w-lg rounded-xl bg-white dark:bg-surface-card shadow-2xl dark:shadow-black/50'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+      <div className='w-full max-w-lg rounded-xl bg-white dark:bg-surface-card shadow-2xl'>
         {/* Header */}
         <div className='flex items-center justify-between border-b border-gray-100 dark:border-white/8 px-6 py-4'>
           <h2 className='text-base font-semibold text-text-main'>
@@ -126,95 +153,77 @@ export function CategoryFormDialog({
           <button
             type='button'
             onClick={onClose}
-            className='rounded-sm p-1 text-text-sub hover:bg-gray-100 dark:hover:bg-white/8 transition'
+            className='flex size-8 items-center justify-center rounded-md text-text-sub hover:bg-gray-100 dark:hover:bg-white/8 hover:text-text-main'
           >
             <X className='size-4' />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className='flex flex-col gap-4 px-6 py-5'>
+        <form onSubmit={handleSubmit} className='space-y-5 px-6 py-5'>
+          {/* Server error */}
+          {serverError && (
+            <p className='rounded-md bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm text-red-600 dark:text-red-400'>
+              {serverError}
+            </p>
+          )}
+
           {/* Name */}
-          <div className='flex flex-col gap-1.5'>
-            <label className='text-sm font-medium text-text-main'>
+          <div className='space-y-1.5'>
+            <label className='block text-sm font-medium text-text-main'>
               Tên danh mục <span className='text-red-500'>*</span>
             </label>
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder='VD: Phones & Tablets'
+              type='text'
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder='Ví dụ: Máy ảnh mirrorless'
               className={inputCls(!!errors.name)}
+              disabled={isPending}
             />
             {errors.name && (
               <p className='text-xs text-red-500'>{errors.name}</p>
             )}
           </div>
 
-          {/* Slug */}
-          <div className='flex flex-col gap-1.5'>
-            <label className='text-sm font-medium text-text-main'>Slug</label>
-            <div className='flex gap-2'>
-              <input
-                value={slug}
-                onChange={(e) => {
-                  setSlugManual(true);
-                  setSlugOverride(e.target.value);
-                }}
-                placeholder='phones-tablets'
-                className={cn(inputCls(!!errors.slug), 'flex-1')}
-              />
-              {slugManual && (
-                <button
-                  type='button'
-                  onClick={() => {
-                    setSlugManual(false);
-                    setSlugOverride(generateSlug(name));
-                  }}
-                  className='rounded-sm border border-gray-200 dark:border-white/8 px-3 text-xs text-text-sub hover:bg-gray-50 dark:hover:bg-white/8 transition'
-                >
-                  Tự động
-                </button>
-              )}
-            </div>
-            {errors.slug && (
-              <p className='text-xs text-red-500'>{errors.slug}</p>
-            )}
-          </div>
-
-          {/* Parent + SortOrder row */}
+          {/* Parent + Sort order */}
           <div className='grid grid-cols-2 gap-4'>
-            <div className='flex flex-col gap-1.5'>
-              <label className='text-sm font-medium text-text-main'>
+            <div className='space-y-1.5'>
+              <label className='block text-sm font-medium text-text-main'>
                 Danh mục cha
               </label>
               <select
-                value={parentId ?? ''}
-                onChange={(e) => setParentId(e.target.value || null)}
+                value={form.parentId}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, parentId: e.target.value }))
+                }
                 className={cn(inputCls(), 'cursor-pointer')}
+                disabled={isPending}
               >
                 <option value=''>— Danh mục gốc —</option>
-                {rootOptions.map((root) => (
-                  <optgroup key={root.categoryId} label={root.name}>
-                    <option value={root.categoryId}>{root.name}</option>
-                    {childOptions(root.categoryId).map((child) => (
-                      <option key={child.categoryId} value={child.categoryId}>
-                        &nbsp;&nbsp;↳ {child.name}
-                      </option>
-                    ))}
-                  </optgroup>
+                {parentOptions.map((c) => (
+                  <option key={c.categoryId} value={c.categoryId}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
-            <div className='flex flex-col gap-1.5'>
-              <label className='text-sm font-medium text-text-main'>
-                Thứ tự
+
+            <div className='space-y-1.5'>
+              <label className='block text-sm font-medium text-text-main'>
+                Thứ tự hiển thị
               </label>
               <input
                 type='number'
                 min={1}
-                value={sortOrder}
-                onChange={(e) => setSortOrder(Number(e.target.value))}
+                step={1}
+                value={form.sortOrder}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, sortOrder: e.target.value }))
+                }
+                placeholder='Tự động'
                 className={inputCls(!!errors.sortOrder)}
+                disabled={isPending}
               />
               {errors.sortOrder && (
                 <p className='text-xs text-red-500'>{errors.sortOrder}</p>
@@ -222,81 +231,66 @@ export function CategoryFormDialog({
             </div>
           </div>
 
-          {/* Image URL */}
-          <div className='flex flex-col gap-1.5'>
-            <label className='text-sm font-medium text-text-main'>
-              URL ảnh đại diện
-            </label>
-            <input
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              placeholder='https://...'
-              className={inputCls()}
-            />
-          </div>
-
-          {/* Brands */}
-          <div className='flex flex-col gap-1.5'>
-            <label className='text-sm font-medium text-text-main flex items-center gap-1.5'>
-              <Tag className='size-3.5' />
-              Thương hiệu
-            </label>
-            <div className='flex gap-2'>
-              <input
-                value={brandInput}
-                onChange={(e) => setBrandInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addBrand(brandInput);
-                  } else if (e.key === ',' || e.key === ';') {
-                    e.preventDefault();
-                    addBrand(brandInput);
-                  }
-                }}
-                placeholder='Nhập tên hãng, nhấn Enter hoặc ,'
-                className={cn(inputCls(), 'flex-1')}
-              />
+          {/* isActive — edit mode only */}
+          {isEdit && (
+            <div className='flex items-center justify-between rounded-lg border border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3 px-4 py-3'>
+              <div>
+                <p className='text-sm font-medium text-text-main'>
+                  Trạng thái hoạt động
+                </p>
+                <p className='text-xs text-text-sub mt-0.5'>
+                  Danh mục ẩn sẽ không hiển thị trên trang khách hàng
+                </p>
+              </div>
               <button
                 type='button'
-                onClick={() => addBrand(brandInput)}
-                className='flex items-center gap-1 rounded-sm border border-gray-200 dark:border-white/8 px-3 text-sm text-text-sub hover:bg-gray-50 dark:hover:bg-white/8 transition'
+                role='switch'
+                aria-checked={form.isActive}
+                onClick={() =>
+                  setForm((f) => ({ ...f, isActive: !f.isActive }))
+                }
+                disabled={isPending}
+                className={cn(
+                  'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent',
+                  'transition-colors duration-200 ease-in-out',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary-start',
+                  form.isActive
+                    ? 'bg-theme-primary-start'
+                    : 'bg-gray-200 dark:bg-white/20',
+                )}
               >
-                <Plus className='size-3.5' />
-                Thêm
+                <span
+                  className={cn(
+                    'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md',
+                    'transform transition duration-200 ease-in-out',
+                    form.isActive ? 'translate-x-5' : 'translate-x-0',
+                  )}
+                />
               </button>
             </div>
-            {brands.length > 0 && (
-              <div className='flex flex-wrap gap-1.5 mt-1'>
-                {brands.map((b) => (
-                  <span
-                    key={b}
-                    className='flex items-center gap-1 rounded-full bg-theme-primary-start/10 px-2.5 py-0.5 text-xs font-medium text-theme-primary-start'
-                  >
-                    {b}
-                    <button type='button' onClick={() => removeBrand(b)}>
-                      <X className='size-3' />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
 
-          {/* Footer actions */}
+          {/* Footer */}
           <div className='flex justify-end gap-3 border-t border-gray-100 dark:border-white/8 pt-4'>
             <button
               type='button'
               onClick={onClose}
-              className='rounded-sm border border-gray-200 dark:border-white/8 px-4 py-2 text-sm font-medium text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition'
+              disabled={isPending}
+              className='rounded-lg border border-gray-200 dark:border-white/15 px-4 py-2 text-sm text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/5'
             >
-              Huỷ
+              Hủy
             </button>
             <button
               type='submit'
-              className='rounded-sm bg-theme-primary-start px-5 py-2 text-sm font-semibold text-white hover:opacity-90 transition'
+              disabled={isPending}
+              className={cn(
+                'flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium text-white transition',
+                'bg-linear-to-r from-theme-primary-start to-theme-primary-end',
+                'hover:opacity-90 disabled:opacity-60',
+              )}
             >
-              {isEdit ? 'Lưu thay đổi' : 'Tạo danh mục'}
+              {isPending && <Loader2 className='size-4 animate-spin' />}
+              {isEdit ? 'Cập nhật' : 'Tạo danh mục'}
             </button>
           </div>
         </form>
