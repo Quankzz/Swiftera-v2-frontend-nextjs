@@ -229,7 +229,7 @@ async function request<T>(
   if (!skipAuth) {
     // const token = getAccessToken();
     const token =
-      'eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJwcml6aXEiLCJzdWIiOiJhODVhMWU1MC0zNGVkLTRkZjItYjM1ZC1hYTE1MmZlZDdiYmMiLCJleHAiOjE3NzUyOTAzMDAsImlhdCI6MTc3NTI4MzEwMCwiZW1haWwiOiJ0ZG1nMTgwOUBnbWFpbC5jb20iLCJqdGkiOiI4OGUyZDVhOC0yOTliLTRmZTYtODA3Ny1iODAyNTQ5YzczNDQifQ.ssCBN50oMIlzDzkiIechEpZSmvxGQwHwnuxQiz0c6NbMi0pxLmQ9so6YpjsN3eWzPNqgr0Xc_t4gXBO8FTDdSA';
+      'eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJwcml6aXEiLCJzdWIiOiJhODVhMWU1MC0zNGVkLTRkZjItYjM1ZC1hYTE1MmZlZDdiYmMiLCJleHAiOjE3NzUyOTc5MjgsImlhdCI6MTc3NTI5MDcyOCwiZW1haWwiOiJ0ZG1nMTgwOUBnbWFpbC5jb20iLCJqdGkiOiJhNDAyOGVmOC00ODI3LTQ1MDEtODJmNy0wY2NhMTBkMmU0NTgifQ.uVDOfuZ326mu38jJQrhIPpiELY0C_HfcQ3-07anwniJl1V78uAjiEl88HnNMvC9jMmpjyW2Ou-GjSgTO9DHkLg';
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
