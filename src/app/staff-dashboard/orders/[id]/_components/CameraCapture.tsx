@@ -1,8 +1,8 @@
+'use client';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Camera, X, SwitchCamera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 export function CameraCapture({
   photos,
@@ -22,37 +22,35 @@ export function CameraCapture({
   );
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // Tracks whether this component instance is still mounted.
+  // Checked after every async getUserMedia call to prevent orphaned streams.
+  const isMountedRef = useRef(true);
+  const intendedToBeOpenRef = useRef(false);
 
+  const setVideoRef = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node;
+    if (node && streamRef.current) {
+      node.srcObject = streamRef.current;
+      node.play().catch(() => {});
+    }
+  }, []);
+
+  // ── Hard-stop all tracks on unmount (direct ref access, no deps) ──────────
   useEffect(() => {
-    if (isCameraOpen && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-    }
-  }, [isCameraOpen]);
+    isMountedRef.current = true;
 
-  const startCamera = async (facing: 'environment' | 'user' = facingMode) => {
-    try {
-      setErrorLine('');
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: facing } },
-        });
-      } catch (e) {
-        // Fallback for devices without an environment camera (like most desktop webcams)
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    return () => {
+      isMountedRef.current = false;
+      intendedToBeOpenRef.current = false;
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
       }
-      streamRef.current = stream;
-      setFacingMode(facing);
-      setIsCameraOpen(true);
-    } catch (err) {
-      console.error('Camera error:', err);
-      setErrorLine(
-        'Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.',
-      );
-    }
-  };
+    };
+  }, []);
 
   const stopCamera = useCallback(() => {
+    intendedToBeOpenRef.current = false;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -63,9 +61,52 @@ export function CameraCapture({
     setIsCameraOpen(false);
   }, []);
 
-  const flipCamera = useCallback(async () => {
+  const startCamera = useCallback(
+    async (requestedFacing?: 'environment' | 'user') => {
+      intendedToBeOpenRef.current = true;
+      const facing = requestedFacing ?? facingMode;
+      try {
+        setErrorLine('');
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: facing } },
+          });
+        } catch {
+          // Fallback for devices without an environment camera (e.g. most desktop webcams)
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        }
+        if (!isMountedRef.current || !intendedToBeOpenRef.current) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((t) => t.stop());
+        }
+        streamRef.current = stream;
+        setFacingMode(facing);
+        setIsCameraOpen(true);
+
+        // Bind stream immediately if video ref is already populated.
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      } catch (err) {
+        console.error('Camera error:', err);
+        if (isMountedRef.current && intendedToBeOpenRef.current) {
+          setErrorLine(
+            'Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.',
+          );
+        }
+      }
+    },
+    [facingMode],
+  );
+
+  const flipCamera = async () => {
     const nextFacing = facingMode === 'environment' ? 'user' : 'environment';
-    // Stop current stream first
+    // Stop current stream before requesting the new one
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -74,13 +115,7 @@ export function CameraCapture({
       videoRef.current.srcObject = null;
     }
     await startCamera(nextFacing);
-  }, [facingMode]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, [stopCamera]);
+  };
 
   const capturePhoto = () => {
     if (!videoRef.current) return;
@@ -105,6 +140,9 @@ export function CameraCapture({
 
   return (
     <div className="flex flex-col gap-3">
+      {label && (
+        <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+      )}
       {/* ── Horizontal row of squares ── */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {/* Existing photo tiles */}
@@ -157,7 +195,7 @@ export function CameraCapture({
         <div className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/20 p-4">
           <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
             <video
-              ref={videoRef}
+              ref={setVideoRef}
               autoPlay
               playsInline
               className="h-full w-full object-cover"
@@ -167,16 +205,16 @@ export function CameraCapture({
               type="button"
               onClick={flipCamera}
               title="Đổi camera trước/sau"
-              className="absolute top-2 right-2 size-9 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
+              className="absolute top-2 right-2 size-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
             >
               <SwitchCamera className="size-4 text-white" />
             </button>
           </div>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-2.5">
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              className="h-10 text-sm font-semibold"
               onClick={stopCamera}
             >
               Đóng
@@ -184,7 +222,7 @@ export function CameraCapture({
             <Button
               type="button"
               variant="outline"
-              className="gap-1.5 px-3"
+              className="h-10 gap-1.5 px-2"
               onClick={flipCamera}
               title="Đổi camera"
             >
@@ -192,10 +230,10 @@ export function CameraCapture({
             </Button>
             <Button
               type="button"
-              className="flex-1 gap-2 bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
+              className="h-10 gap-1.5 text-sm font-semibold bg-theme-primary-start hover:bg-theme-primary-start/90 text-white"
               onClick={capturePhoto}
             >
-              <Camera className="size-4" /> Chụp ảnh
+              <Camera className="size-4" /> Chụp
             </Button>
           </div>
         </div>

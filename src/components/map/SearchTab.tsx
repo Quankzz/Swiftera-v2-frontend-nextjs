@@ -9,15 +9,18 @@ import {
   MapPin,
   RadioTower,
   X,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useMapStore } from '@/stores/use-map-store';
-import { MOCK_HUBS } from '@/data/mockHubs';
+// import { MOCK_HUBS } from '@/data/mockHubs';
 import type { Hub } from '@/types/map.types';
 
 interface SearchTabProps {
   onFlyToHub: (hub: Hub) => void;
   onNavigateToHub: (hub: Hub) => void;
 }
+
+const RADIUS_MARKS = [5, 10, 20, 30, 50];
 
 const SearchTab: React.FC<SearchTabProps> = ({
   onFlyToHub,
@@ -31,18 +34,22 @@ const SearchTab: React.FC<SearchTabProps> = ({
     userLocation,
   } = useMapStore();
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
+  const [nearbyRadius, setNearbyRadius] = useState(10);
 
   const hasLocation = !!userLocation;
 
   const results = useMemo(() => {
-    const baseHubs = nearbyHubs.length > 0 ? nearbyHubs : MOCK_HUBS;
-    
+    const baseHubs =
+      nearbyHubs.length > 0 ? nearbyHubs : useMapStore.getState().hubs;
+
     let filtered = baseHubs;
 
     if (showNearbyOnly) {
       filtered = filtered.filter((h) => {
-        const distance = nearbyHubs.find((n) => n.hub_id === h.hub_id)?.distance;
-        return distance !== undefined && distance <= 10;
+        const distance = nearbyHubs.find(
+          (n) => n.hub_id === h.hub_id,
+        )?.distance;
+        return distance !== undefined && distance <= nearbyRadius;
       });
     }
 
@@ -50,19 +57,20 @@ const SearchTab: React.FC<SearchTabProps> = ({
     if (q) {
       filtered = filtered.filter(
         (h) =>
-          h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q),
+          h.name.toLowerCase().includes(q) ||
+          h.address.toLowerCase().includes(q),
       );
     }
 
     return filtered;
-  }, [searchQuery, showNearbyOnly, nearbyHubs]);
+  }, [searchQuery, showNearbyOnly, nearbyRadius, nearbyHubs]);
 
   const handleClearQuery = () => setSearchQuery('');
 
   return (
     <div className="flex flex-col h-full">
       {/* Search bar */}
-      <div className="px-5 pt-5 pb-3 shrink-0 space-y-4">
+      <div className="px-5 pt-5 pb-3 shrink-0 space-y-3">
         <div className="flex items-center gap-3">
           <div className="relative flex-1 group">
             <Search
@@ -96,7 +104,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
           {hasLocation && (
             <button
               onClick={() => setShowNearbyOnly((v) => !v)}
-              title={showNearbyOnly ? 'Hiển thị tất cả hub' : 'Chỉ hub gần đây'}
+              title={showNearbyOnly ? 'Hiện tất cả hub' : 'Lọc hub gần đây'}
               className={`
                 shrink-0 flex items-center justify-center w-12 h-12 rounded-2xl border
                 transition-all duration-300 active:scale-90
@@ -112,12 +120,71 @@ const SearchTab: React.FC<SearchTabProps> = ({
           )}
         </div>
 
+        {/* Radius slider — shown only when "nearby" filter is active */}
+        {showNearbyOnly && hasLocation && (
+          <div className="rounded-2xl border border-theme-primary-start/20 bg-theme-primary-start/5 px-4 py-3 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-theme-primary-start">
+                <SlidersHorizontal size={12} />
+                Bán kính tìm kiếm
+              </div>
+              <span className="text-sm font-black text-theme-primary-start tabular-nums">
+                {nearbyRadius} km
+              </span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={50}
+              step={1}
+              value={nearbyRadius}
+              onChange={(e) => setNearbyRadius(Number(e.target.value))}
+              className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                bg-theme-primary-start/20
+                [&::-webkit-slider-thumb]:appearance-none
+                [&::-webkit-slider-thumb]:size-4
+                [&::-webkit-slider-thumb]:rounded-full
+                [&::-webkit-slider-thumb]:bg-theme-primary-start
+                [&::-webkit-slider-thumb]:border-2
+                [&::-webkit-slider-thumb]:border-white
+                [&::-webkit-slider-thumb]:shadow-md
+                [&::-webkit-slider-thumb]:transition-transform
+                [&::-webkit-slider-thumb]:hover:scale-125
+                [&::-moz-range-thumb]:size-4
+                [&::-moz-range-thumb]:rounded-full
+                [&::-moz-range-thumb]:bg-theme-primary-start
+                [&::-moz-range-thumb]:border-2
+                [&::-moz-range-thumb]:border-white
+                [&::-moz-range-thumb]:shadow-md"
+              style={{
+                background: `linear-gradient(to right, var(--theme-primary-start, #6366f1) ${((nearbyRadius - 1) / 49) * 100}%, rgba(99,102,241,0.2) ${((nearbyRadius - 1) / 49) * 100}%)`,
+              }}
+            />
+            {/* Quick-pick marks */}
+            <div className="flex justify-between">
+              {RADIUS_MARKS.map((mark) => (
+                <button
+                  key={mark}
+                  onClick={() => setNearbyRadius(mark)}
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all ${
+                    nearbyRadius === mark
+                      ? 'bg-theme-primary-start text-white'
+                      : 'text-muted-foreground hover:text-theme-primary-start'
+                  }`}
+                >
+                  {mark}km
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Status row */}
         <div className="flex items-center justify-between px-0.5">
           {showNearbyOnly ? (
             <span className="flex items-center gap-1.5 text-xs text-theme-primary-start font-semibold">
               <MapPin size={11} />
-              {results.length} hub gần bạn
+              {results.length} hub trong {nearbyRadius} km
             </span>
           ) : (
             <span className="text-xs text-muted-foreground">
@@ -152,21 +219,12 @@ const SearchTab: React.FC<SearchTabProps> = ({
         ) : (
           results.map((hub) => {
             const nearby = nearbyHubs.find((n) => n.hub_id === hub.hub_id);
-            const availabilityRatio =
-              hub.available_products / hub.total_products;
-            const availColor =
-              availabilityRatio > 0.5
-                ? 'bg-success'
-                : availabilityRatio > 0.2
-                  ? 'bg-warning'
-                  : 'bg-destructive';
 
             return (
               <HubCard
                 key={hub.hub_id}
                 hub={hub}
                 nearby={nearby}
-                availColor={availColor}
                 onFly={() => onFlyToHub(hub)}
                 onOpenModal={() => openHubModal(hub)}
                 onNavigate={() => onNavigateToHub(hub)}
@@ -183,7 +241,6 @@ const SearchTab: React.FC<SearchTabProps> = ({
 interface HubCardProps {
   hub: Hub;
   nearby?: { distance: number };
-  availColor: string;
   onFly: () => void;
   onOpenModal: (e: React.MouseEvent) => void;
   onNavigate: (e: React.MouseEvent) => void;

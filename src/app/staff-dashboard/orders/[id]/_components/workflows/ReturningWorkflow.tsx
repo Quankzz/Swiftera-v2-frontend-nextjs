@@ -35,12 +35,14 @@ export function ReturningWorkflow({
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Camera className="size-4 text-destructive" />
+            <div className="size-7 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <Camera className="size-3.5 text-destructive" />
+            </div>
             <p className="text-sm font-bold text-foreground">
               Kiểm tra & chụp ảnh từng sản phẩm
             </p>
           </div>
-          <span className="text-xs font-bold bg-destructive/10 text-destructive border border-destructive/25 px-2 py-1 rounded-lg">
+          <span className="text-xs font-bold bg-destructive/10 text-destructive border border-destructive/25 px-2.5 py-1 rounded-lg whitespace-nowrap">
             {order.items.length} sản phẩm
           </span>
         </div>
@@ -61,7 +63,9 @@ export function ReturningWorkflow({
 
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-          <ShieldCheck className="size-4 text-theme-primary-start" />
+          <div className="size-7 rounded-lg bg-theme-primary-start/10 flex items-center justify-center">
+            <ShieldCheck className="size-3.5 text-theme-primary-start" />
+          </div>
           <p className="text-sm font-bold text-foreground">
             Ảnh đóng gói & niêm phong
           </p>
@@ -82,15 +86,15 @@ export function ReturningWorkflow({
 
       <div className="rounded-2xl border border-border bg-card p-5">
         <Button
-          size="lg"
+          size="default"
           onClick={() => onCompleteReturn()}
           disabled={loading}
-          className="w-full gap-2 text-base"
+          className="w-full h-12 gap-2 text-sm font-bold bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:opacity-90 text-white shadow-md shadow-theme-primary-start/20 transition-all"
         >
           {loading ? (
-            <Loader2 className="size-5 animate-spin" />
+            <Loader2 className="size-4.5 animate-spin" />
           ) : (
-            <CheckCircle2 className="size-5" />
+            <CheckCircle2 className="size-4.5" />
           )}
           Hoàn thành thu hồi
         </Button>

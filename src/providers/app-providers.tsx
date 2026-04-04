@@ -1,10 +1,24 @@
 'use client';
 
+import { useEffect } from 'react';
 import { QueryProvider } from './query-provider';
 import { ThemeProvider } from '@/context/theme-context';
 import { AppProvider } from '@/context/AppContext';
 import { AuthProvider } from '@/context/AuthContext';
-import { Toaster } from 'sonner';
+import { initAuthStore, restoreSession } from '@/stores/auth-store';
+
+/**
+ * Registers token accessors and silently restores the previous session from the
+ * HttpOnly refresh_token cookie. This runs once on app mount so staff-dashboard
+ * pages get a populated `user` before they make their first API call.
+ */
+function AuthStoreBootstrap() {
+  useEffect(() => {
+    initAuthStore();
+    restoreSession();
+  }, []);
+  return null;
+}
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -12,8 +26,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <AppProvider>
         <AuthProvider>
           <ThemeProvider>
+            <AuthStoreBootstrap />
             {children}
-            <Toaster richColors position='top-right' closeButton />
           </ThemeProvider>
         </AuthProvider>
       </AppProvider>

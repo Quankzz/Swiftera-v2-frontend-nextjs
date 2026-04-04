@@ -24,13 +24,6 @@ import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { fmt, fmtDate } from './utils';
 
-const CONDITION_LABEL: Record<string, string> = {
-  EXCELLENT: 'Xuất sắc',
-  GOOD: 'Tốt',
-  FAIR: 'Khá',
-  POOR: 'Kém',
-};
-
 const CONDITION_COLOR: Record<string, string> = {
   EXCELLENT:
     'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800',
@@ -57,16 +50,33 @@ export function QrScanner({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
+  const isMountedRef = useRef(true);
+  const intendedToBeOpenRef = useRef(false);
+
   const [error, setError] = useState('');
   const [cameraFailed, setCameraFailed] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [lastDetected, setLastDetected] = useState('');
   const [scanConfirmed, setScanConfirmed] = useState(false);
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      intendedToBeOpenRef.current = false;
+    };
+  }, []);
+
   const stopAll = useCallback(() => {
+    intendedToBeOpenRef.current = false;
     cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   }, []);
 
   const scanFrame = useCallback(
@@ -106,6 +116,7 @@ export function QrScanner({
   );
 
   const startScanner = useCallback(async () => {
+    intendedToBeOpenRef.current = true;
     setError('');
     setLastDetected('');
     setCameraFailed(false);
@@ -121,15 +132,27 @@ export function QrScanner({
       } catch {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
       }
+
+      if (!isMountedRef.current || !intendedToBeOpenRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
       streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        videoRef.current.play().catch(() => {});
       }
       setScanning(true);
       rafRef.current = requestAnimationFrame(scanFrame);
     } catch {
-      setCameraFailed(true);
+      if (isMountedRef.current && intendedToBeOpenRef.current) {
+        setCameraFailed(true);
+      }
     }
   }, [scanFrame]);
 
@@ -294,18 +317,6 @@ export function QrScanner({
                         <p className="text-sm font-bold text-foreground leading-snug">
                           {item.product_name}
                         </p>
-                        {item.checkin_condition && (
-                          <span
-                            className={cn(
-                              'shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md border',
-                              CONDITION_COLOR[item.checkin_condition] ??
-                                'text-muted-foreground bg-muted border-border',
-                            )}
-                          >
-                            {CONDITION_LABEL[item.checkin_condition] ??
-                              item.checkin_condition}
-                          </span>
-                        )}
                       </div>
 
                       {/* Category badge */}

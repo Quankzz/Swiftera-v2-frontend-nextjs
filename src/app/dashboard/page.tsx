@@ -54,7 +54,7 @@ const URGENT_CFG: Record<
   string,
   { label: string; color: string; bg: string; border: string; dot: string }
 > = {
-  PENDING: {
+  PAID: {
     label: 'Chờ xác nhận',
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-950/40',
@@ -88,11 +88,13 @@ export default function DashboardPage() {
   );
 
   const counts = {
-    pending: myOrders.filter((o) => o.status === 'PENDING').length,
-    confirmed: myOrders.filter((o) => o.status === 'CONFIRMED').length,
+    pending_payment: myOrders.filter((o) => o.status === 'PENDING_PAYMENT')
+      .length,
+    paid: myOrders.filter((o) => o.status === 'PAID').length,
+    preparing: myOrders.filter((o) => o.status === 'PREPARING').length,
     delivering: myOrders.filter((o) => o.status === 'DELIVERING').length,
-    active: myOrders.filter((o) => o.status === 'ACTIVE').length,
-    returning: myOrders.filter((o) => o.status === 'RETURNING').length,
+    inUse: myOrders.filter((o) => o.status === 'IN_USE').length,
+    pendingPickup: myOrders.filter((o) => o.status === 'PENDING_PICKUP').length,
     overdue: myOrders.filter((o) => o.status === 'OVERDUE').length,
     completed: myOrders.filter((o) => o.status === 'COMPLETED').length,
     cancelled: myOrders.filter((o) => o.status === 'CANCELLED').length,
@@ -100,8 +102,8 @@ export default function DashboardPage() {
 
   const urgentOrders = [
     ...myOrders.filter((o) => o.status === 'OVERDUE'),
-    ...myOrders.filter((o) => o.status === 'RETURNING'),
-    ...myOrders.filter((o) => o.status === 'PENDING'),
+    ...myOrders.filter((o) => o.status === 'PENDING_PICKUP'),
+    ...myOrders.filter((o) => o.status === 'PAID'),
   ].slice(0, 5);
 
   // Chart metrics
@@ -112,19 +114,19 @@ export default function DashboardPage() {
   const maxBar = Math.max(...WEEK_DATA.map((d) => d.count));
 
   const todayDiff = todayCount - yesterdayCount;
-  const urgentTotal = counts.pending + counts.returning + counts.overdue;
+  const urgentTotal = counts.paid + counts.pendingPickup + counts.overdue;
 
   // Status breakdown (active view)
   const statusBreakdown = [
     {
       label: 'Đang hoạt động',
-      count: counts.confirmed + counts.delivering + counts.active,
+      count: counts.preparing + counts.delivering + counts.inUse,
       color: 'bg-info',
       textColor: 'text-info',
     },
     {
       label: 'Cần xử lý',
-      count: counts.pending + counts.returning + counts.overdue,
+      count: counts.paid + counts.pendingPickup + counts.overdue,
       color: 'bg-destructive',
       textColor: 'text-destructive',
     },
@@ -168,7 +170,7 @@ export default function DashboardPage() {
         </div>
         {urgentTotal > 0 && (
           <Link
-            href="/dashboard/orders"
+            href="/staff-dashboard/orders"
             className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/14 transition-colors shrink-0 shadow-sm shadow-destructive/10"
           >
             <AlertCircle className="size-4" />
@@ -212,14 +214,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         <StatusPill
           label="Chờ xác nhận"
-          count={counts.pending}
+          count={counts.paid}
           dotClass="bg-amber-400"
           colorClass="text-amber-600 dark:text-amber-400"
           bgClass="bg-amber-50 dark:bg-amber-950/30"
           borderClass="border-amber-200/80 dark:border-amber-700/30"
           icon={Clock}
-          urgent={counts.pending > 0}
-          href="/dashboard/orders?status=PENDING"
+          urgent={counts.paid > 0}
+          href="/staff-dashboard/orders?status=PAID"
         />
         <StatusPill
           label="Đang giao"
@@ -229,28 +231,28 @@ export default function DashboardPage() {
           bgClass="bg-info-muted"
           borderClass="border-info-border"
           icon={Truck}
-          href="/dashboard/orders?status=DELIVERING"
+          href="/staff-dashboard/orders?status=DELIVERING"
         />
         <StatusPill
           label="Đang thuê"
-          count={counts.active}
+          count={counts.inUse}
           dotClass="bg-success"
           colorClass="text-success"
           bgClass="bg-success-muted"
           borderClass="border-success-border"
           icon={Package}
-          href="/dashboard/orders?status=ACTIVE"
+          href="/staff-dashboard/orders?status=IN_USE"
         />
         <StatusPill
           label="Cần thu hồi"
-          count={counts.returning + counts.overdue}
+          count={counts.pendingPickup + counts.overdue}
           dotClass="bg-destructive animate-pulse"
           colorClass="text-destructive"
           bgClass="bg-destructive/8"
           borderClass="border-destructive/25"
           icon={RotateCcw}
-          urgent={counts.returning + counts.overdue > 0}
-          href="/dashboard/orders?status=RETURNING"
+          urgent={counts.pendingPickup + counts.overdue > 0}
+          href="/staff-dashboard/orders?status=PENDING_PICKUP"
         />
       </div>
 
@@ -401,7 +403,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <Link
-              href="/dashboard/orders"
+              href="/staff-dashboard/orders"
               className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
             >
               Tất cả <ArrowRight className="size-3" />
@@ -542,14 +544,14 @@ function StatusPill({
 // ─── Urgent Row ───────────────────────────────────────────────────────────────
 function UrgentRow({ order }: { order: DashboardOrder }) {
   const [now] = useState(() => Date.now());
-  const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PENDING'];
+  const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PAID'];
   const daysLeft = Math.ceil(
     (new Date(order.end_date).getTime() - now) / 86_400_000,
   );
 
   return (
     <Link
-      href={`/dashboard/orders/${order.rental_order_id}`}
+      href={`/staff-dashboard/orders/${order.rental_order_id}`}
       className="flex items-center gap-3 px-5 py-3.5 hover:bg-accent/50 transition-colors group"
     >
       <span className={cn('size-2 shrink-0 rounded-full', cfg.dot)} />
