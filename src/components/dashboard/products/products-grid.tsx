@@ -1,51 +1,42 @@
 'use client';
 
-import { useMemo, useState, useCallback } from 'react';
-import { categories } from '@/data/categories';
-import { products as allProducts } from '@/data/products';
-import type { Product } from '@/types/catalog';
+import { useState, useCallback, useMemo } from 'react';
+import type { ProductResponse } from '@/features/products/types';
+import { useProductsQuery } from '@/features/products/hooks/use-product-management';
+import { useCategoriesQuery } from '@/features/categories/hooks/use-category-management';
 import { ProductCardDashboard } from './product-card-dashboard';
 import { ProductsToolbar, type SortOption } from './products-toolbar';
 
 const PAGE_SIZE = 12;
 
-// Top-level categories only (parentId === null) for filter options
-const categoryOptions = categories
-  .filter((c) => c.parentId === null)
-  .map((c) => ({ id: c.categoryId, name: c.name }));
-
-function getSalePercent(daily: number, oldDaily: number) {
-  return Math.round(((oldDaily - daily) / oldDaily) * 100);
+// Map FE sort option → BE sort param
+function toBESort(sort: SortOption): string {
+  switch (sort) {
+    case 'name-asc':
+      return 'name,asc';
+    case 'name-desc':
+      return 'name,desc';
+    case 'price-asc':
+      return 'dailyPrice,asc';
+    case 'price-desc':
+      return 'dailyPrice,desc';
+    case 'sale-desc':
+      return 'oldDailyPrice,desc';
+  }
 }
 
-function applySort(list: Product[], sort: SortOption): Product[] {
-  return [...list].sort((a, b) => {
-    switch (sort) {
-      case 'name-asc':
-        return a.name.localeCompare(b.name, 'vi');
-      case 'name-desc':
-        return b.name.localeCompare(a.name, 'vi');
-      case 'price-asc':
-        return a.dailyPrice - b.dailyPrice;
-      case 'price-desc':
-        return b.dailyPrice - a.dailyPrice;
-      case 'sale-desc': {
-        const aSale = a.oldDailyPrice
-          ? getSalePercent(a.dailyPrice, a.oldDailyPrice)
-          : 0;
-        const bSale = b.oldDailyPrice
-          ? getSalePercent(b.dailyPrice, b.oldDailyPrice)
-          : 0;
-        return bSale - aSale;
-      }
-    }
-  });
+// Build RSQL filter string
+function toFilter(search: string, categoryId: string): string | undefined {
+  const parts: string[] = [];
+  if (search.trim()) parts.push(`name=="${search.trim()}*"`);
+  if (categoryId) parts.push(`categoryId=="${categoryId}"`);
+  return parts.length > 0 ? parts.join(';') : undefined;
 }
 
 interface ProductsGridProps {
-  onView?: (product: Product) => void;
-  onEdit?: (product: Product) => void;
-  onDelete?: (product: Product) => void;
+  onView?: (product: ProductResponse) => void;
+  onEdit?: (product: ProductResponse) => void;
+  onDelete?: (product: ProductResponse) => void;
   onDeleteMany?: (ids: string[]) => void;
 }
 
@@ -58,54 +49,50 @@ export function ProductsGrid({
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sort, setSort] = useState<SortOption>('name-asc');
-  const [page, setPage] = useState(1);
+  // BE uses 0-based page index
+  const [page, setPage] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Derived: filtered + sorted list
-  const filtered = useMemo(() => {
-    let list = allProducts;
+  // ── Fetch categories for filter dropdown ──
+  const { data: categoriesData } = useCategoriesQuery({
+    page: 0,
+    size: 100,
+  });
+  const categoryOptions = (categoriesData?.content ?? []).map((c) => ({
+    id: c.categoryId,
+    name: c.name,
+  }));
 
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q),
-      );
-    }
+  // ── Fetch products from BE ──
+  const { data, isLoading, isError } = useProductsQuery({
+    page,
+    size: PAGE_SIZE,
+    sort: toBESort(sort),
+    filter: toFilter(search, categoryFilter),
+  });
 
-    if (categoryFilter) {
-      list = list.filter((p) => p.categoryId === categoryFilter);
-    }
+  const products = useMemo(() => data?.content ?? [], [data?.content]);
+  const meta = data?.meta;
+  const totalPages = meta?.totalPages ?? 1;
+  const totalElements = meta?.totalElements ?? 0;
 
-    return applySort(list, sort);
-  }, [search, categoryFilter, sort]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
-  // Reset page when filter changes
+  // ── Toolbar handlers (reset page + selection on filter change) ──
   const safeSetSearch = useCallback((v: string) => {
     setSearch(v);
-    setPage(1);
+    setPage(0);
     setSelectedIds(new Set());
   }, []);
   const safeSetCategory = useCallback((v: string) => {
     setCategoryFilter(v);
-    setPage(1);
+    setPage(0);
     setSelectedIds(new Set());
   }, []);
   const safeSetSort = useCallback((v: SortOption) => {
     setSort(v);
-    setPage(1);
+    setPage(0);
   }, []);
 
-  // Current page slice
-  const paginated = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
-
-  // Selection helpers
+  // ── Selection helpers ──
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -116,16 +103,15 @@ export function ProductsGrid({
   }, []);
 
   const allSelected =
-    paginated.length > 0 &&
-    paginated.every((p) => selectedIds.has(p.productId));
+    products.length > 0 && products.every((p) => selectedIds.has(p.productId));
 
   const handleSelectAll = useCallback(() => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      paginated.forEach((p) => next.add(p.productId));
+      products.forEach((p) => next.add(p.productId));
       return next;
     });
-  }, [paginated]);
+  }, [products]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -135,6 +121,10 @@ export function ProductsGrid({
     onDeleteMany?.(Array.from(selectedIds));
     setSelectedIds(new Set());
   }, [selectedIds, onDeleteMany]);
+
+  // ── Toolbar uses 1-based page display ──
+  const displayPage = page + 1;
+  const handlePageChange = useCallback((p: number) => setPage(p - 1), []);
 
   return (
     <div className='flex flex-col gap-6'>
@@ -148,49 +138,76 @@ export function ProductsGrid({
         sort={sort}
         onSortChange={safeSetSort}
         selectedCount={selectedIds.size}
-        totalCount={filtered.length}
+        totalCount={totalElements}
         allSelected={allSelected}
         onSelectAll={handleSelectAll}
         onClearSelection={handleClearSelection}
         onDeleteSelected={handleDeleteSelected}
-        page={page}
+        page={displayPage}
         totalPages={totalPages}
-        onPageChange={setPage}
+        onPageChange={handlePageChange}
       />
 
       {/* Results count */}
       <p className='text-sm text-text-sub'>
         Hiển thị{' '}
-        <span className='font-semibold text-text-main'>{paginated.length}</span>{' '}
-        /{' '}
-        <span className='font-semibold text-text-main'>{filtered.length}</span>{' '}
+        <span className='font-semibold text-text-main'>{products.length}</span>{' '}
+        / <span className='font-semibold text-text-main'>{totalElements}</span>{' '}
         sản phẩm
       </p>
 
-      {/* Grid */}
-      {paginated.length > 0 ? (
+      {/* Loading skeleton */}
+      {isLoading && (
         <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-          {paginated.map((product) => (
-            <ProductCardDashboard
-              key={product.productId}
-              product={product}
-              selected={selectedIds.has(product.productId)}
-              onSelect={toggleSelect}
-              onView={onView}
-              onEdit={onEdit}
-              onDelete={onDelete}
+          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+            <div
+              key={i}
+              className='h-96 rounded-2xl border border-gray-100 dark:border-white/8 bg-gray-100 dark:bg-white/5 animate-pulse'
             />
           ))}
         </div>
-      ) : (
-        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white dark:bg-surface-card py-24 text-center'>
-          <p className='text-base font-medium text-text-main'>
-            Không tìm thấy sản phẩm
+      )}
+
+      {/* Error state */}
+      {isError && !isLoading && (
+        <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-900/10 py-24 text-center'>
+          <p className='text-base font-medium text-red-600 dark:text-red-400'>
+            Không thể tải danh sách sản phẩm
           </p>
           <p className='mt-1 text-sm text-text-sub'>
-            Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+            Vui lòng kiểm tra kết nối và thử lại
           </p>
         </div>
+      )}
+
+      {/* Grid */}
+      {!isLoading && !isError && (
+        <>
+          {products.length > 0 ? (
+            <div className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+              {products.map((product) => (
+                <ProductCardDashboard
+                  key={product.productId}
+                  product={product}
+                  selected={selectedIds.has(product.productId)}
+                  onSelect={toggleSelect}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 dark:border-white/10 bg-white dark:bg-surface-card py-24 text-center'>
+              <p className='text-base font-medium text-text-main'>
+                Không tìm thấy sản phẩm
+              </p>
+              <p className='mt-1 text-sm text-text-sub'>
+                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

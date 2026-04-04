@@ -1,10 +1,10 @@
 import { Layout } from '@/components/Layout';
 import { HeroBanner } from '@/components/home/hero-banner';
-import { CategoryCarousel } from '@/components/home/category-carousel';
-import { ProductCard } from '@/components/home/product-card';
-import { categories } from '@/data/categories';
-import { products } from '@/data/products';
-import { Button } from '@/components/ui/button';
+import { HomeCategories } from '@/components/home/home-categories';
+import {
+  HomeFeaturedProducts,
+  HomeBudgetProducts,
+} from '@/components/home/home-products';
 import { CalendarRange, ShieldCheck, Smile, WalletCards } from 'lucide-react';
 
 const heroSlides = [
@@ -45,14 +45,10 @@ const highlightStats = [
 ];
 
 // Sản phẩm nổi bật: giá cao nhất trước
-const featuredProducts = [...products].sort(
-  (a, b) => b.dailyPrice - a.dailyPrice,
-);
+// (moved to HomeFeaturedProducts — API driven)
 
 // Có thể bạn thích: giá thấp nhất trước (entry-level)
-const budgetProducts = [...products].sort(
-  (a, b) => a.dailyPrice - b.dailyPrice,
-);
+// (moved to HomeBudgetProducts — API driven)
 
 export default function Home() {
   return (
@@ -87,52 +83,12 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <CategoryCarousel items={categories} />
+            <HomeCategories />
           </section>
 
-          {/* Sản phẩm nổi bật */}
-          <section className='mt-16 space-y-6'>
-            <div className='flex items-end justify-between'>
-              <div>
-                <h2 className='text-3xl font-extrabold text-text-main'>
-                  Sản phẩm nổi bật
-                </h2>
-                <p className='text-text-sub'>
-                  Những lựa chọn được thuê nhiều nhất tuần này.
-                </p>
-              </div>
-              <Button variant='link' className='text-rose-600'>
-                Xem tất cả
-              </Button>
-            </div>
-            <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-4'>
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.productId} product={product} />
-              ))}
-            </div>
-          </section>
-
-          {/* Có thể bạn thích */}
-          <section className='mt-16 space-y-6'>
-            <div className='flex items-end justify-between'>
-              <div>
-                <h2 className='text-3xl font-extrabold text-text-main'>
-                  Có thể bạn thích
-                </h2>
-                <p className='text-text-sub'>
-                  Lựa chọn phù hợp túi tiền, chất lượng vẫn đảm bảo.
-                </p>
-              </div>
-              <Button variant='link' className='text-rose-600'>
-                Xem tất cả
-              </Button>
-            </div>
-            <div className='grid gap-6 md:grid-cols-2 xl:grid-cols-4'>
-              {budgetProducts.map((product) => (
-                <ProductCard key={product.productId} product={product} />
-              ))}
-            </div>
-          </section>
+          {/* Sản phẩm nổi bật + Có thể bạn thích — API-driven client components */}
+          <HomeFeaturedProducts />
+          <HomeBudgetProducts />
         </div>
       </div>
     </Layout>

@@ -1,15 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import type { ProductResponse } from '@/features/products/types';
 import type {
-  Product,
-  ProductImage,
-  ProductColor,
-  InventoryItem,
+  InventoryItemConditionGrade,
   InventoryItemStatus,
-} from '@/types/catalog';
+} from '@/features/products/types';
 
-/** Dạng draft của một ảnh trong form (chưa có productImageId) */
+/** Dạng draft của một ảnh trong form (chưa có productImageId từ BE) */
 export interface DraftImage {
   /** id tạm thời dùng trong UI */
   draftId: string;
@@ -18,25 +16,43 @@ export interface DraftImage {
   sortOrder: number;
 }
 
-/** Dạng draft của một inventory item trong form */
+/**
+ * DraftInventoryItem — đại diện cho một thiết bị vật lý đang được soạn trong UI.
+ * Dùng trong edit mode (productId đã tồn tại).
+ * Khi submit sẽ gọi createInventoryItem / updateInventoryItem.
+ */
 export interface DraftInventoryItem {
-  /** id tạm thời dùng trong UI */
+  /** id tạm thời cho react key, nếu đã có từ BE thì là inventoryItemId */
   draftId: string;
+  /** inventoryItemId thực từ BE (nếu đã create rồi) */
+  inventoryItemId?: string;
   serialNumber: string;
-  status: InventoryItemStatus;
-  conditionGrade: string;
+  hubId: string;
+  conditionGrade: InventoryItemConditionGrade;
   staffNote: string;
+  /** status chỉ dùng trong edit/display, không gửi khi create */
+  status: InventoryItemStatus;
 }
 
+/**
+ * ProductFormData — ánh xạ 1-1 với CreateProductInput / UpdateProductInput.
+ * Giá trị số lưu dạng string vì input HTML luôn trả về string.
+ */
 export interface ProductFormData {
+  /** Trống khi tạo mới */
   productId: string;
   categoryId: string;
   name: string;
   description: string;
-  dailyPrice: string; // string vì input text
+  brand: string;
+  /** Màu sắc — single string (không phải mảng), e.g. "Đen", "Bạc" */
+  color: string;
+  dailyPrice: string;
   oldDailyPrice: string;
   depositAmount: string;
   minRentalDays: string;
+  /** Chỉ có trong edit mode */
+  isActive: boolean;
 }
 
 const EMPTY_FORM: ProductFormData = {
@@ -44,26 +60,34 @@ const EMPTY_FORM: ProductFormData = {
   categoryId: '',
   name: '',
   description: '',
+  brand: '',
+  color: '',
   dailyPrice: '',
   oldDailyPrice: '',
   depositAmount: '',
   minRentalDays: '1',
+  isActive: true,
 };
 
-function productToForm(p: Product): ProductFormData {
+/** Chuyển ProductResponse (từ BE) về ProductFormData để fill vào form edit */
+function productToForm(p: ProductResponse): ProductFormData {
   return {
     productId: p.productId,
     categoryId: p.categoryId,
     name: p.name,
-    description: p.description,
+    description: p.description ?? '',
+    brand: p.brand ?? '',
+    color: p.color ?? '',
     dailyPrice: String(p.dailyPrice),
-    oldDailyPrice: p.oldDailyPrice ? String(p.oldDailyPrice) : '',
-    depositAmount: p.depositAmount ? String(p.depositAmount) : '',
+    oldDailyPrice: p.oldDailyPrice != null ? String(p.oldDailyPrice) : '',
+    depositAmount: p.depositAmount != null ? String(p.depositAmount) : '',
     minRentalDays: String(p.minRentalDays),
+    isActive: p.isActive,
   };
 }
 
-function imagesToDrafts(images: ProductImage[]): DraftImage[] {
+/** Chuyển images array từ ProductResponse về DraftImage[] */
+function imagesToDrafts(images: ProductResponse['images']): DraftImage[] {
   return images.map((img, i) => ({
     draftId: img.productImageId ?? `draft-${Date.now()}-${i}`,
     imageUrl: img.imageUrl,
@@ -72,66 +96,51 @@ function imagesToDrafts(images: ProductImage[]): DraftImage[] {
   }));
 }
 
-function inventoryToDrafts(items: InventoryItem[]): DraftInventoryItem[] {
-  return items.map((item) => ({
-    draftId: item.inventoryItemId,
-    serialNumber: item.serialNumber,
-    status: item.status,
-    conditionGrade: item.conditionGrade,
-    staffNote: item.staffNote,
-  }));
-}
-
-/** Chuyển DraftImage[] + colors[] về Product shape để hiển thị live preview */
-export function draftToProduct(
+/**
+ * Chuyển DraftImage[] + form về dạng gần với ProductResponse
+ * để truyền cho live preview card.
+ */
+export function draftToProductPreview(
   form: ProductFormData,
   images: DraftImage[],
-  colors: ProductColor[],
-  inventoryItems: DraftInventoryItem[],
-): Product {
+  categoryName?: string,
+): ProductResponse {
   return {
     productId: form.productId || 'preview',
     categoryId: form.categoryId,
+    categoryName: categoryName ?? '',
+    brand: form.brand || null,
+    color: form.color || null,
     name: form.name,
-    description: form.description,
+    description: form.description || null,
     dailyPrice: parseFloat(form.dailyPrice) || 0,
-    oldDailyPrice: form.oldDailyPrice
-      ? parseFloat(form.oldDailyPrice)
-      : undefined,
-    depositAmount: form.depositAmount
-      ? parseFloat(form.depositAmount)
-      : undefined,
+    oldDailyPrice: form.oldDailyPrice ? parseFloat(form.oldDailyPrice) : null,
+    depositAmount: form.depositAmount ? parseFloat(form.depositAmount) : null,
     minRentalDays: parseInt(form.minRentalDays) || 1,
-    productImages: images.map((img) => ({
-      productId: form.productId || 'preview',
+    isActive: form.isActive,
+    images: images.map((img) => ({
+      productImageId: img.draftId,
       imageUrl: img.imageUrl,
       sortOrder: img.sortOrder,
       isPrimary: img.isPrimary,
-      productImageId: img.draftId,
     })),
-    colors: colors.length > 0 ? colors : undefined,
-    inventoryItems: inventoryItems.map((item) => ({
-      inventoryItemId: item.draftId,
-      productId: form.productId || 'preview',
-      serialNumber: item.serialNumber,
-      status: item.status,
-      conditionGrade: item.conditionGrade,
-      staffNote: item.staffNote,
-    })),
+    availableStock: 0,
+    averageRating: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
 
-export function useProductForm(initial?: Product) {
+export function useProductForm(initial?: ProductResponse) {
   const [form, setForm] = useState<ProductFormData>(
     initial ? productToForm(initial) : EMPTY_FORM,
   );
   const [images, setImages] = useState<DraftImage[]>(
-    initial ? imagesToDrafts(initial.productImages) : [],
+    initial ? imagesToDrafts(initial.images) : [],
   );
-  const [colors, setColors] = useState<ProductColor[]>(initial?.colors ?? []);
-  const [inventoryItems, setInventoryItems] = useState<DraftInventoryItem[]>(
-    initial?.inventoryItems ? inventoryToDrafts(initial.inventoryItems) : [],
-  );
+  const [draftInventoryItems, setDraftInventoryItems] = useState<
+    DraftInventoryItem[]
+  >([]);
 
   /* ─── Form field handler ─── */
   const setField = useCallback(
@@ -182,45 +191,24 @@ export function useProductForm(initial?: Product) {
     );
   }, []);
 
-  /* ─── Color handlers ─── */
-  const addColor = useCallback((color: ProductColor) => {
-    setColors((prev) => {
-      if (prev.some((c) => c.value === color.value)) return prev;
-      return [...prev, color];
-    });
-  }, []);
-
-  const removeColor = useCallback((value: string) => {
-    setColors((prev) => prev.filter((c) => c.value !== value));
-  }, []);
-
-  const updateColor = useCallback((index: number, updated: ProductColor) => {
-    setColors((prev) => prev.map((c, i) => (i === index ? updated : c)));
-  }, []);
-
-  /* ─── Inventory Item handlers ─── */
-  const addInventoryItem = useCallback(() => {
-    setInventoryItems((prev) => [
+  /* ─── Inventory Item handlers (edit mode only) ─── */
+  const addDraftInventoryItem = useCallback(() => {
+    setDraftInventoryItems((prev) => [
       ...prev,
       {
         draftId: `inv-draft-${Date.now()}`,
         serialNumber: '',
-        status: 'AVAILABLE' as InventoryItemStatus,
-        conditionGrade: 'A',
+        hubId: '',
+        conditionGrade: 'NEW' as InventoryItemConditionGrade,
         staffNote: '',
+        status: 'AVAILABLE' as InventoryItemStatus,
       },
     ]);
   }, []);
 
-  const removeInventoryItem = useCallback((draftId: string) => {
-    setInventoryItems((prev) =>
-      prev.filter((item) => item.draftId !== draftId),
-    );
-  }, []);
-
-  const updateInventoryItem = useCallback(
+  const updateDraftInventoryItem = useCallback(
     (draftId: string, patch: Partial<Omit<DraftInventoryItem, 'draftId'>>) => {
-      setInventoryItems((prev) =>
+      setDraftInventoryItems((prev) =>
         prev.map((item) =>
           item.draftId === draftId ? { ...item, ...patch } : item,
         ),
@@ -229,8 +217,11 @@ export function useProductForm(initial?: Product) {
     [],
   );
 
-  /* ─── Derived live preview product ─── */
-  const previewProduct = draftToProduct(form, images, colors, inventoryItems);
+  const removeDraftInventoryItem = useCallback((draftId: string) => {
+    setDraftInventoryItems((prev) =>
+      prev.filter((item) => item.draftId !== draftId),
+    );
+  }, []);
 
   /* ─── Validation ─── */
   const errors: Partial<Record<keyof ProductFormData, string>> = {};
@@ -240,11 +231,25 @@ export function useProductForm(initial?: Product) {
     !form.dailyPrice ||
     isNaN(parseFloat(form.dailyPrice)) ||
     parseFloat(form.dailyPrice) <= 0
-  )
+  ) {
     errors.dailyPrice = 'Giá thuê phải lớn hơn 0';
-  if (!form.description.trim()) errors.description = 'Vui lòng nhập mô tả';
-  if (!form.minRentalDays || parseInt(form.minRentalDays) < 1)
+  }
+  if (
+    form.oldDailyPrice &&
+    parseFloat(form.oldDailyPrice) < parseFloat(form.dailyPrice)
+  ) {
+    errors.oldDailyPrice = 'Giá gốc phải >= giá thuê hiện tại';
+  }
+  if (
+    form.depositAmount !== '' &&
+    !isNaN(parseFloat(form.depositAmount)) &&
+    parseFloat(form.depositAmount) < 0
+  ) {
+    errors.depositAmount = 'Tiền đặt cọc phải >= 0';
+  }
+  if (!form.minRentalDays || parseInt(form.minRentalDays) < 1) {
     errors.minRentalDays = 'Tối thiểu 1 ngày';
+  }
 
   const isValid = Object.keys(errors).length === 0;
 
@@ -256,15 +261,10 @@ export function useProductForm(initial?: Product) {
     removeImage,
     setPrimary,
     updateImageUrl,
-    colors,
-    addColor,
-    removeColor,
-    updateColor,
-    inventoryItems,
-    addInventoryItem,
-    removeInventoryItem,
-    updateInventoryItem,
-    previewProduct,
+    draftInventoryItems,
+    addDraftInventoryItem,
+    updateDraftInventoryItem,
+    removeDraftInventoryItem,
     errors,
     isValid,
   };

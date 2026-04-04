@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { MoreHorizontal, Eye, Pencil, Trash2, Package } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import type { Product } from '@/types/catalog';
+import type { ProductResponse } from '@/features/products/types';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -17,12 +17,12 @@ function getSalePercent(daily: number, oldDaily: number): number {
 }
 
 interface ProductCardDashboardProps {
-  product: Product;
+  product: ProductResponse;
   selected: boolean;
   onSelect: (id: string) => void;
-  onView?: (product: Product) => void;
-  onEdit?: (product: Product) => void;
-  onDelete?: (product: Product) => void;
+  onView?: (product: ProductResponse) => void;
+  onEdit?: (product: ProductResponse) => void;
+  onDelete?: (product: ProductResponse) => void;
 }
 
 export function ProductCardDashboard({
@@ -48,25 +48,19 @@ export function ProductCardDashboard({
     return () => document.removeEventListener('mousedown', handler);
   }, [menuOpen]);
 
+  // BE field is `images` (not `productImages`)
   const primaryImage =
-    product.productImages.find((img) => img.isPrimary) ??
-    product.productImages[0];
+    product.images.find((img) => img.isPrimary) ?? product.images[0];
 
   const salePercent =
     product.oldDailyPrice && product.oldDailyPrice > product.dailyPrice
       ? getSalePercent(product.dailyPrice, product.oldDailyPrice)
       : null;
 
-  const displayColors = product.colors ?? [];
-  const hasColors = displayColors.length > 0;
-
-  // Inventory stats
-  const inventoryItems = product.inventoryItems ?? [];
-  const totalUnits = inventoryItems.length;
-  const availableUnits = inventoryItems.filter(
-    (i) => i.status === 'AVAILABLE',
-  ).length;
-  const plainDescription = product.description.replace(/<[^>]*>/g, '').trim();
+  // `availableStock` comes directly from BE (not computed from inventoryItems)
+  const plainDescription = product.description
+    ? product.description.replace(/<[^>]*>/g, '').trim()
+    : '';
 
   return (
     <article
@@ -97,12 +91,19 @@ export function ProductCardDashboard({
         </span>
       )}
 
+      {/* Inactive badge */}
+      {!product.isActive && (
+        <span className='absolute left-3 top-3 z-10 rounded-full bg-gray-400 px-2 py-0.5 text-xs font-semibold text-white'>
+          Tạm ngưng
+        </span>
+      )}
+
       {/* Sale badge */}
       {salePercent !== null && (
         <span
           className={cn(
             'btn-gradient-accent absolute top-3 z-10 rounded-full px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm',
-            selected ? 'left-10' : 'left-3',
+            selected || !product.isActive ? 'left-18' : 'left-3',
           )}
         >
           -{salePercent}%
@@ -175,7 +176,7 @@ export function ProductCardDashboard({
 
       {/* SLOT 2: Image */}
       <div className='relative h-56 w-full'>
-        {primaryImage ? (
+        {primaryImage?.imageUrl ? (
           <Image
             src={primaryImage.imageUrl}
             alt={product.name}
@@ -190,60 +191,38 @@ export function ProductCardDashboard({
         )}
       </div>
 
-      {/* SLOT 3: Inventory count */}
-      {totalUnits > 0 && (
-        <div className='mt-2.5 flex items-center justify-center gap-2'>
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
-              availableUnits > 0
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400'
-                : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400',
-            )}
-          >
-            <Package size={11} />
-            {availableUnits}/{totalUnits} sẵn sàng
-          </span>
-        </div>
-      )}
-
-      {/* SLOT 4: Colors + Price */}
-      <div className='flex flex-1 flex-col pt-2'>
-        <div className='flex h-10 items-center justify-center'>
-          {hasColors ? (
-            <div className='flex w-full flex-wrap items-center justify-center gap-2'>
-              {displayColors.slice(0, 5).map((c) => (
-                <span
-                  key={`${product.productId}-${c.name}`}
-                  aria-label={c.name}
-                  title={c.name}
-                  className='size-3.5 rounded-full border border-white shadow ring-1 ring-black/10'
-                  style={{ backgroundColor: c.value }}
-                />
-              ))}
-              {displayColors.length > 5 && (
-                <span className='text-xs text-text-sub'>
-                  +{displayColors.length - 5}
-                </span>
-              )}
-            </div>
-          ) : (
-            <span className='invisible text-xs'>no-colors</span>
+      {/* SLOT 3: Available stock badge */}
+      <div className='mt-2.5 flex items-center justify-center gap-2'>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
+            product.availableStock > 0
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-500/30 text-green-700 dark:text-green-400'
+              : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/8 text-gray-500 dark:text-gray-400',
           )}
-        </div>
+        >
+          <Package size={11} />
+          {product.availableStock} sẵn sàng
+        </span>
+        {product.color && (
+          <span className='inline-flex items-center rounded-full border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 px-2.5 py-0.5 text-xs text-text-sub'>
+            {product.color}
+          </span>
+        )}
+      </div>
 
-        <div className='mt-auto text-center'>
-          <div className='flex items-baseline justify-center gap-2 text-theme-accent-start'>
-            <span className='text-sm font-medium text-text-sub'>Từ</span>
-            <span className='text-xl font-bold'>
-              {formatter.format(product.dailyPrice)}
+      {/* SLOT 4: Price */}
+      <div className='mt-auto pt-3 text-center'>
+        <div className='flex items-baseline justify-center gap-2 text-theme-accent-start'>
+          <span className='text-sm font-medium text-text-sub'>Từ</span>
+          <span className='text-xl font-bold'>
+            {formatter.format(product.dailyPrice)}
+          </span>
+          {product.oldDailyPrice != null && (
+            <span className='text-sm text-text-sub line-through'>
+              {formatter.format(product.oldDailyPrice)}
             </span>
-            {product.oldDailyPrice && (
-              <span className='text-sm text-text-sub line-through'>
-                {formatter.format(product.oldDailyPrice)}
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </article>

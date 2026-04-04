@@ -1,7 +1,10 @@
+'use client';
+
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { login as loginApi } from '@/api/auth';
-import { useAuthStore } from '@/stores/auth-store';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -10,7 +13,7 @@ const inputClassName =
 
 export function SignInForm() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,28 +23,14 @@ export function SignInForm() {
     e.preventDefault();
     if (isSubmitting) return;
     setError('');
-    setIsSubmitting(true);
 
     try {
-      const res = await loginApi({
-        email: email.trim(),
-        password,
-      });
-
-      if (!res?.data?.accessToken || !res?.data?.userSecured) {
-        throw new Error('Dữ liệu đăng nhập không hợp lệ');
-      }
-
-      setAuth(res.data.accessToken, res.data.userSecured);
-
-      const roleNames = res.data.userSecured.rolesSecured.map((r) =>
-        r.name.toUpperCase(),
-      );
-      const isStaff = roleNames.some((r) => r.includes('STAFF'));
-      router.push(isStaff ? '/staff-dashboard' : '/');
+      setIsSubmitting(true);
+      await login({ email, password });
+      router.push('/');
+      router.refresh();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Đăng nhập thất bại';
-      setError(msg.includes('401') ? 'Sai tài khoản hoặc mật khẩu' : msg);
+      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại');
     } finally {
       setIsSubmitting(false);
     }
@@ -52,13 +41,7 @@ export function SignInForm() {
       onSubmit={handleLogin}
       className="flex h-full w-full flex-col items-center justify-center bg-white px-5 py-6 sm:px-10 sm:py-0 dark:bg-zinc-900"
     >
-      <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">
-        Đăng nhập
-      </h1>
-      {/* <SocialIcons />
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-        hoặc sử dụng email và mật khẩu
-      </span> */}
+      <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">Đăng nhập</h1>
       <Input
         type="email"
         placeholder="Email"
@@ -75,19 +58,32 @@ export function SignInForm() {
         required
         className={inputClassName}
       />
-      <a
-        href="#"
+      <Link
+        href="/auth/forgot-password"
         className="my-3 text-[13px] text-zinc-600 no-underline hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
       >
         Quên mật khẩu?
-      </a>
+      </Link>
+      <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400">
+        Chưa xác thực email?{' '}
+        <Link href="/auth/resend-verification" className="text-[#fe1451] hover:underline">
+          Gửi lại mã xác thực
+        </Link>
+      </p>
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       <Button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isLoading}
         className="mt-2.5 h-auto w-full bg-[#fe1451] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#ba264d]"
       >
-        {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Đang đăng nhập
+          </>
+        ) : (
+          'Đăng nhập'
+        )}
       </Button>
     </form>
   );

@@ -12,21 +12,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Role } from '@/types/dashboard';
+import type { RoleResponse } from '@/features/roles/types';
 import {
-  usePermissionsQuery,
+  usePermissionsListQuery,
   useModulesQuery,
-} from '@/hooks/api/use-permissions';
-import {
-  useRolePermissionsQuery,
-  useAssignRolePermissionsMutation,
-} from '@/hooks/api/use-roles';
+  useUpdateRoleMutation,
+  useRoleDetailQuery,
+} from '@/features/roles/hooks/use-roles';
 import { Search, ShieldCheck, ShieldOff } from 'lucide-react';
 
 interface RolePermissionsDialogProps {
   open: boolean;
   onClose: () => void;
-  role?: Role | null;
+  role?: RoleResponse | null;
 }
 
 const METHOD_COLORS: Record<string, string> = {
@@ -40,17 +38,16 @@ const METHOD_COLORS: Record<string, string> = {
 // ─── Inner component — re-mounts when role changes, so state init is safe ───
 
 interface InnerProps {
-  role: Role;
+  role: RoleResponse;
   initialSelected: string[];
   onClose: () => void;
 }
 
 function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
-  const { data: allPermsData, isLoading: isLoadingPerms } = usePermissionsQuery(
-    { limit: 1000 },
-  );
+  const { data: allPermsData, isLoading: isLoadingPerms } =
+    usePermissionsListQuery({ size: 1000 });
   const { data: modules } = useModulesQuery();
-  const assignMutation = useAssignRolePermissionsMutation();
+  const updateRoleMutation = useUpdateRoleMutation();
 
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(initialSelected),
@@ -58,7 +55,7 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
   const [search, setSearch] = useState('');
   const [activeModule, setActiveModule] = useState<string>('');
 
-  const allPerms = useMemo(() => allPermsData?.data ?? [], [allPermsData]);
+  const allPerms = useMemo(() => allPermsData?.content ?? [], [allPermsData]);
 
   const filteredPerms = useMemo(
     () =>
@@ -74,8 +71,8 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
   );
 
   const allModules = useMemo(() => {
-    const fromPerms = [...new Set(allPerms.map((p) => p.module))];
-    return modules ?? fromPerms;
+    const fromPerms = [...new Set(allPerms.map((p) => p.module))] as string[];
+    return (modules as string[] | undefined) ?? fromPerms;
   }, [allPerms, modules]);
 
   const togglePermission = (permId: string) => {
@@ -101,15 +98,15 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
   };
 
   const handleSave = async () => {
-    await assignMutation.mutateAsync({
+    await updateRoleMutation.mutateAsync({
       roleId: role.roleId,
-      permissionIds: Array.from(selected),
+      payload: { permissionIds: Array.from(selected) },
     });
     onClose();
   };
 
   const isLoading = isLoadingPerms;
-  const isSubmitting = assignMutation.isPending;
+  const isSubmitting = updateRoleMutation.isPending;
   const selectedCount = selected.size;
   const totalCount = allPerms.length;
 
@@ -268,11 +265,11 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
                           <div className='flex items-center gap-2 mt-0.5'>
                             <span
                               className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                METHOD_COLORS[perm.method] ??
+                                METHOD_COLORS[perm.httpMethod] ??
                                 'bg-gray-100 text-gray-600'
                               }`}
                             >
-                              {perm.method}
+                              {perm.httpMethod}
                             </span>
                             <span className='text-xs text-text-sub font-mono truncate'>
                               {perm.apiPath}
@@ -317,15 +314,18 @@ function PermissionsInner({ role, initialSelected, onClose }: InnerProps) {
   );
 }
 
-// ─── Outer wrapper — only fetches assignedIds, then renders inner with key ───
+// ─── Outer wrapper — fetches role detail to get assigned permissionIds ───
 
 export function RolePermissionsDialog({
   open,
   onClose,
   role,
 }: RolePermissionsDialogProps) {
-  const { data: assignedIds, isLoading: isLoadingAssigned } =
-    useRolePermissionsQuery(role?.roleId);
+  const { data: roleDetail, isLoading: isLoadingDetail } = useRoleDetailQuery(
+    open ? role?.roleId : undefined,
+  );
+
+  const assignedIds = roleDetail?.permissions?.map((p) => p.permissionId) ?? [];
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
@@ -341,15 +341,15 @@ export function RolePermissionsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoadingAssigned || !role ? (
+        {isLoadingDetail || !role ? (
           <div className='flex items-center justify-center py-12'>
             <div className='h-5 w-5 rounded-full border-2 border-theme-primary-start border-t-transparent animate-spin' />
           </div>
         ) : (
           <PermissionsInner
-            key={`${role.roleId}-${(assignedIds ?? []).join(',')}`}
+            key={`${role.roleId}-${assignedIds.join(',')}`}
             role={role}
-            initialSelected={assignedIds ?? []}
+            initialSelected={assignedIds}
             onClose={onClose}
           />
         )}

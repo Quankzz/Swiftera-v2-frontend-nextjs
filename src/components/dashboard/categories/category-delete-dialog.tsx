@@ -1,15 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
-import {
-  countDescendants,
-  useCategoryStore,
-} from '@/stores/use-category-store';
-import type { Category } from '@/types/catalog';
+import { AlertTriangle, Loader2, X } from 'lucide-react';
+import { useDeleteCategoryMutation } from '@/features/categories/hooks/use-category-management';
+import type { CategoryTreeNode } from '@/features/categories/types';
 
 interface CategoryDeleteDialogProps {
-  category: Category;
+  category: CategoryTreeNode;
   onClose: () => void;
 }
 
@@ -17,23 +14,38 @@ export function CategoryDeleteDialog({
   category,
   onClose,
 }: CategoryDeleteDialogProps) {
-  const { categories, deleteCategory } = useCategoryStore();
-  const [cascade, setCascade] = useState(true);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const deleteMutation = useDeleteCategoryMutation();
+  const isPending = deleteMutation.isPending;
 
-  const descendantCount = countDescendants(categories, category.categoryId);
-  const hasChildren = descendantCount > 0;
+  const hasChildren = category.children.length > 0;
+  const childCount = category.children.length;
 
-  const handleDelete = () => {
-    deleteCategory(category.categoryId, cascade);
-    onClose();
-  };
+  async function handleDelete() {
+    setServerError(null);
+    try {
+      await deleteMutation.mutateAsync(category.categoryId);
+      onClose();
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại';
+      // Surface friendly message for known BE errors
+      if (
+        typeof msg === 'string' &&
+        msg.toUpperCase().includes('CATEGORY_HAS_PRODUCTS')
+      ) {
+        setServerError(
+          'Không thể xoá: danh mục này đang chứa sản phẩm. Hãy chuyển hoặc xoá các sản phẩm trước.',
+        );
+      } else {
+        setServerError(msg);
+      }
+    }
+  }
 
   return (
-    <div
-      className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4'
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className='w-full max-w-md rounded-xl bg-white dark:bg-surface-card shadow-2xl dark:shadow-black/50'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+      <div className='w-full max-w-md rounded-xl bg-white dark:bg-surface-card shadow-2xl'>
         {/* Header */}
         <div className='flex items-center justify-between border-b border-gray-100 dark:border-white/8 px-6 py-4'>
           <div className='flex items-center gap-2 text-red-500'>
@@ -43,53 +55,37 @@ export function CategoryDeleteDialog({
           <button
             type='button'
             onClick={onClose}
-            className='rounded-sm p-1 text-text-sub hover:bg-gray-100 dark:hover:bg-white/8 transition'
+            className='flex size-8 items-center justify-center rounded-md text-text-sub hover:bg-gray-100 dark:hover:bg-white/8 hover:text-text-main'
           >
             <X className='size-4' />
           </button>
         </div>
 
         {/* Body */}
-        <div className='px-6 py-5 flex flex-col gap-4'>
+        <div className='flex flex-col gap-4 px-6 py-5'>
+          {/* Server error */}
+          {serverError && (
+            <p className='rounded-md bg-red-50 dark:bg-red-900/20 px-4 py-2.5 text-sm text-red-600 dark:text-red-400'>
+              {serverError}
+            </p>
+          )}
+
           <p className='text-sm text-text-main'>
             Bạn có chắc muốn xoá danh mục{' '}
             <span className='font-semibold'>&ldquo;{category.name}&rdquo;</span>
             ?
           </p>
 
+          {/* Children promotion notice */}
           {hasChildren && (
-            <div className='rounded-sm border border-amber-200 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-300'>
-              <p className='font-medium mb-2'>
-                Danh mục này có {descendantCount} danh mục con.
+            <div className='rounded-lg border border-amber-200 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-800 dark:text-amber-300'>
+              <p className='font-medium'>
+                Danh mục này có {childCount} danh mục con.
               </p>
-              <div className='flex flex-col gap-2'>
-                <label className='flex items-start gap-2.5 cursor-pointer'>
-                  <input
-                    type='radio'
-                    name='deleteMode'
-                    checked={cascade}
-                    onChange={() => setCascade(true)}
-                    className='mt-0.5 accent-red-500'
-                  />
-                  <span>
-                    <span className='font-medium text-red-700'>Xoá tất cả</span>{' '}
-                    — xoá danh mục này và {descendantCount} danh mục con.
-                  </span>
-                </label>
-                <label className='flex items-start gap-2.5 cursor-pointer'>
-                  <input
-                    type='radio'
-                    name='deleteMode'
-                    checked={!cascade}
-                    onChange={() => setCascade(false)}
-                    className='mt-0.5 accent-amber-600'
-                  />
-                  <span>
-                    <span className='font-medium'>Chỉ xoá danh mục này</span> —
-                    các danh mục con sẽ được chuyển lên cấp cha.
-                  </span>
-                </label>
-              </div>
+              <p className='mt-1'>
+                Khi xoá, các danh mục con sẽ được tự động chuyển lên cấp cha của
+                danh mục này (không xoá theo).
+              </p>
             </div>
           )}
 
@@ -103,21 +99,19 @@ export function CategoryDeleteDialog({
           <button
             type='button'
             onClick={onClose}
-            className='rounded-sm border border-gray-200 dark:border-white/8 px-4 py-2 text-sm font-medium text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition'
+            disabled={isPending}
+            className='rounded-lg border border-gray-200 dark:border-white/15 px-4 py-2 text-sm text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/5'
           >
-            Huỷ
+            Hủy
           </button>
           <button
             type='button'
             onClick={handleDelete}
-            className='rounded-sm bg-red-500 px-5 py-2 text-sm font-semibold text-white hover:bg-red-600 transition'
+            disabled={isPending}
+            className='flex items-center gap-2 rounded-lg bg-red-500 px-5 py-2 text-sm font-medium text-white transition hover:bg-red-600 disabled:opacity-60'
           >
-            Xoá
-            {hasChildren && !cascade
-              ? ' danh mục này'
-              : cascade && hasChildren
-                ? ' tất cả'
-                : ''}
+            {isPending && <Loader2 className='size-4 animate-spin' />}
+            Xoá danh mục
           </button>
         </div>
       </div>

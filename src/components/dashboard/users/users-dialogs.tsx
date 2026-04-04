@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import NextImage from 'next/image';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -19,14 +20,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  useCreateUserMutation,
   useDeleteUserMutation,
   useUpdateUserMutation,
   useUserQuery,
-  useAssignUserRolesMutation,
-} from '@/hooks/api/use-users';
+} from '@/features/users/hooks/use-user-management';
 import { useRolesQuery } from '@/hooks/api/use-roles';
-import { CreateUserInput, UpdateUserInput, User } from '@/types/dashboard';
+import type { UserResponse, UpdateUserInput } from '@/features/users/types';
+import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import { normalizeError } from '@/api/apiService';
 import Cropper from 'react-easy-crop';
 import {
   Camera,
@@ -37,9 +38,9 @@ import {
   XCircle,
   Trash2,
   Shield,
-  Clock,
   ChevronDown,
   X,
+  Loader2,
 } from 'lucide-react';
 
 type CropArea = { width: number; height: number; x: number; y: number };
@@ -94,10 +95,24 @@ async function getCroppedBlob(
   }
 }
 
+/**
+ * Convert data URL (base64) → File object để upload qua Files API.
+ */
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return new File([bytes], filename, { type: mime });
+}
+
 interface UserFormDialogProps {
   open: boolean;
   onClose: () => void;
-  initialUser?: User | null;
+  initialUser?: UserResponse | null;
 }
 
 export function UserFormDialog({
@@ -108,16 +123,17 @@ export function UserFormDialog({
   const isEdit = !!initialUser;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const buildState = (user?: User | null) => ({
+  const buildState = (user?: UserResponse | null) => ({
     email: user?.email || '',
-    fullName: user?.fullName || '',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
     phoneNumber: user?.phoneNumber || '',
+    nickname: user?.nickname || '',
     isVerified: user?.isVerified ?? false,
   });
 
-  const createMutation = useCreateUserMutation();
   const updateMutation = useUpdateUserMutation();
-  const assignRolesMutation = useAssignUserRolesMutation();
+  const uploadMutation = useUploadFileMutation();
   const { data: userDetail, isFetching: isDetailLoading } = useUserQuery(
     initialUser?.userId,
   );
@@ -153,7 +169,7 @@ export function UserFormDialog({
     if (userDetail) {
       startTransition(() => {
         setFormState(buildState(userDetail));
-        setSelectedRoleIds(userDetail.roles.map((r) => r.roleId));
+        setSelectedRoleIds(userDetail.rolesSecured?.map((r) => r.roleId) ?? []);
         setFinalAvatarUrl(userDetail.avatarUrl || null);
         setAvatarFile(null);
         setIsCropping(false);
@@ -196,34 +212,87 @@ export function UserFormDialog({
   };
 
   const handleSubmit = async () => {
-    if (!formState.fullName.trim() || !formState.email.trim()) return;
+    if (!formState.firstName.trim() || !formState.email.trim()) return;
 
-    const payload: CreateUserInput | UpdateUserInput = {
-      email: formState.email.trim(),
-      fullName: formState.fullName.trim(),
-      phoneNumber: formState.phoneNumber ? formState.phoneNumber.trim() : null,
-      avatarUrl: finalAvatarUrl,
-      isVerified: formState.isVerified,
-      roleIds: selectedRoleIds,
-    };
+    try {
+      if (isEdit && initialUser && userDetail) {
+        // Chỉ gửi các trường thực sự thay đổi so với dữ liệu BE
+        const payload: UpdateUserInput = {};
 
-    if (isEdit && initialUser) {
-      await updateMutation.mutateAsync({ userId: initialUser.userId, payload });
-    } else {
-      await createMutation.mutateAsync(payload as CreateUserInput);
+        const trimmed = {
+          firstName: formState.firstName.trim(),
+          lastName: formState.lastName.trim(),
+          email: formState.email.trim(),
+          phoneNumber: formState.phoneNumber
+            ? formState.phoneNumber.trim()
+            : undefined,
+          nickname: formState.nickname ? formState.nickname.trim() : undefined,
+          isVerified: formState.isVerified,
+        };
+
+        if (trimmed.firstName !== (userDetail.firstName ?? ''))
+          payload.firstName = trimmed.firstName;
+        if (trimmed.lastName !== (userDetail.lastName ?? ''))
+          payload.lastName = trimmed.lastName;
+        if (trimmed.email !== (userDetail.email ?? ''))
+          payload.email = trimmed.email;
+        if ((trimmed.phoneNumber ?? '') !== (userDetail.phoneNumber ?? ''))
+          payload.phoneNumber = trimmed.phoneNumber;
+        if ((trimmed.nickname ?? '') !== (userDetail.nickname ?? ''))
+          payload.nickname = trimmed.nickname;
+        if (trimmed.isVerified !== (userDetail.isVerified ?? false))
+          payload.isVerified = trimmed.isVerified;
+
+        // Roles: so sánh set roleIds
+        const prevRoleIds = [
+          ...(userDetail.rolesSecured?.map((r) => r.roleId) ?? []),
+        ].sort();
+        const nextRoleIds = [...selectedRoleIds].sort();
+        if (JSON.stringify(prevRoleIds) !== JSON.stringify(nextRoleIds))
+          payload.roleIds = selectedRoleIds;
+
+        // Avatar: nếu user chọn ảnh mới (finalAvatarUrl là data URL) → upload → lấy URL
+        if (
+          avatarFile &&
+          finalAvatarUrl &&
+          finalAvatarUrl.startsWith('data:')
+        ) {
+          const file = dataUrlToFile(
+            finalAvatarUrl,
+            `avatar-${initialUser.userId}.jpg`,
+          );
+          const uploadResult = await uploadMutation.mutateAsync({
+            file,
+            folder: 'avatars',
+          });
+          payload.avatarUrl = uploadResult.fileUrl;
+        }
+
+        // Nếu không có gì thay đổi → đóng dialog luôn
+        if (Object.keys(payload).length === 0) {
+          onClose();
+          return;
+        }
+
+        await updateMutation.mutateAsync({
+          userId: initialUser.userId,
+          payload,
+        });
+        toast.success('Cập nhật người dùng thành công');
+      }
+      onClose();
+      setAvatarFile(null);
+      setFinalAvatarUrl(null);
+    } catch (err) {
+      const appErr = normalizeError(err);
+      toast.error(appErr.message);
     }
-    onClose();
-    setAvatarFile(null);
-    setFinalAvatarUrl(null);
   };
 
-  const isSubmitting =
-    createMutation.isPending ||
-    updateMutation.isPending ||
-    assignRolesMutation.isPending;
+  const isSubmitting = updateMutation.isPending;
 
-  const avatarInitial = formState.fullName
-    ? formState.fullName.charAt(0).toUpperCase()
+  const avatarInitial = formState.firstName
+    ? formState.firstName.charAt(0).toUpperCase()
     : '?';
 
   return (
@@ -246,9 +315,16 @@ export function UserFormDialog({
         </DialogHeader>
 
         {isEdit && isDetailLoading && (
-          <div className='flex items-center gap-2 text-sm text-text-sub py-2'>
-            <div className='h-4 w-4 rounded-full border-2 border-theme-primary-start border-t-transparent animate-spin' />
-            Đang tải thông tin chi tiết...
+          <div className='absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-black/40 backdrop-blur-[2px] rounded-xl'>
+            <div className='flex flex-col items-center gap-3'>
+              <Loader2
+                size={32}
+                className='animate-spin text-theme-primary-start'
+              />
+              <span className='text-sm font-medium text-text-sub'>
+                Đang tải thông tin chi tiết…
+              </span>
+            </div>
           </div>
         )}
 
@@ -309,20 +385,35 @@ export function UserFormDialog({
               />
             </div>
 
-            {/* Fields: name + email */}
+            {/* Fields: firstName, lastName + email */}
             <div className='flex-1 space-y-3 min-w-0'>
-              <div className='space-y-1.5'>
-                <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
-                  <UserIcon size={11} /> Họ tên *
-                </label>
-                <Input
-                  value={formState.fullName}
-                  onChange={(e) =>
-                    setFormState((s) => ({ ...s, fullName: e.target.value }))
-                  }
-                  placeholder='Nguyễn Văn A'
-                  className='bg-gray-50/50'
-                />
+              <div className='grid grid-cols-2 gap-3'>
+                <div className='space-y-1.5'>
+                  <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
+                    <UserIcon size={11} /> Họ *
+                  </label>
+                  <Input
+                    value={formState.firstName}
+                    onChange={(e) =>
+                      setFormState((s) => ({ ...s, firstName: e.target.value }))
+                    }
+                    placeholder='Nguyễn'
+                    className='bg-gray-50/50'
+                  />
+                </div>
+                <div className='space-y-1.5'>
+                  <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+                    Tên *
+                  </label>
+                  <Input
+                    value={formState.lastName}
+                    onChange={(e) =>
+                      setFormState((s) => ({ ...s, lastName: e.target.value }))
+                    }
+                    placeholder='Văn A'
+                    className='bg-gray-50/50'
+                  />
+                </div>
               </div>
               <div className='space-y-1.5'>
                 <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
@@ -605,30 +696,19 @@ export function UserFormDialog({
             </div>
           </div>
 
-          {/* Last login — read-only */}
+          {/* Nickname — below role select */}
           <div className='space-y-1.5'>
-            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
-              <Clock size={11} /> Đăng nhập lần cuối
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Nickname
             </label>
-            <div className='min-h-10 rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 px-3 py-2.5 flex items-center'>
-              {(userDetail?.lastLoginAt ?? initialUser?.lastLoginAt) ? (
-                <span className='text-sm text-text-sub'>
-                  {new Date(
-                    (userDetail?.lastLoginAt ?? initialUser?.lastLoginAt)!,
-                  ).toLocaleString('vi-VN', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              ) : (
-                <span className='text-xs italic text-text-sub opacity-50'>
-                  Chưa đăng nhập
-                </span>
-              )}
-            </div>
+            <Input
+              value={formState.nickname}
+              onChange={(e) =>
+                setFormState((s) => ({ ...s, nickname: e.target.value }))
+              }
+              placeholder='Biệt danh'
+              className='bg-gray-50/50'
+            />
           </div>
         </div>
 
@@ -646,15 +726,11 @@ export function UserFormDialog({
             className='bg-theme-primary-start hover:opacity-90 min-w-28'
             disabled={
               isSubmitting ||
-              !formState.fullName.trim() ||
+              !formState.firstName.trim() ||
               !formState.email.trim()
             }
           >
-            {isSubmitting
-              ? 'Đang lưu...'
-              : isEdit
-                ? 'Lưu thay đổi'
-                : 'Tạo người dùng'}
+            {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -665,7 +741,7 @@ export function UserFormDialog({
 interface UserDeleteDialogProps {
   open: boolean;
   onClose: () => void;
-  user?: User | null;
+  user?: UserResponse | null;
 }
 
 export function UserDeleteDialog({
@@ -676,11 +752,20 @@ export function UserDeleteDialog({
   const deleteMutation = useDeleteUserMutation();
   const handleDelete = async () => {
     if (!user) return;
-    await deleteMutation.mutateAsync(user.userId);
-    onClose();
+    try {
+      await deleteMutation.mutateAsync(user.userId);
+      toast.success('Xóa người dùng thành công');
+      onClose();
+    } catch (err) {
+      const appErr = normalizeError(err);
+      toast.error(appErr.message);
+    }
   };
 
   const isSubmitting = deleteMutation.isPending;
+  const userName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+    : '';
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
@@ -689,10 +774,8 @@ export function UserDeleteDialog({
           <DialogTitle className='text-text-main'>Xóa người dùng</DialogTitle>
           <DialogDescription>
             Bạn có chắc chắn muốn xóa người dùng{' '}
-            <span className='font-semibold text-text-main'>
-              {user?.fullName}
-            </span>
-            ? Hành động này không thể hoàn tác.
+            <span className='font-semibold text-text-main'>{userName}</span>?
+            Hành động này không thể hoàn tác.
           </DialogDescription>
         </DialogHeader>
 
@@ -700,13 +783,11 @@ export function UserDeleteDialog({
           <div className='flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3 border border-gray-200 dark:border-white/8'>
             <div className='h-9 w-9 rounded-full bg-theme-primary-start/10 flex items-center justify-center shrink-0'>
               <span className='text-sm font-bold text-theme-primary-start'>
-                {user.fullName.charAt(0).toUpperCase()}
+                {userName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <p className='text-sm font-medium text-text-main'>
-                {user.fullName}
-              </p>
+              <p className='text-sm font-medium text-text-main'>{userName}</p>
               <p className='text-xs text-text-sub'>{user.email}</p>
             </div>
           </div>

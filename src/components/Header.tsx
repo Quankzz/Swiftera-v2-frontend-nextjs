@@ -2,7 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   ChevronRight,
@@ -21,12 +27,15 @@ import {
 } from 'lucide-react';
 import { topLevelCategories } from '@/data/categories';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/theme-context';
 import logo from '../../public/logo.png';
 
 export function Header() {
   const HOVER_BRIDGE_HEIGHT = 10;
+  const router = useRouter();
   const { resolvedTheme, toggleTheme } = useTheme();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const sortedCategories = useMemo(
     () => [...topLevelCategories].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -44,6 +53,38 @@ export function Header() {
     () => sortedCategories.find((c) => c.categoryId === hoveredCategoryId),
     [hoveredCategoryId, sortedCategories],
   );
+
+  const avatarUrl = useMemo(() => {
+    if (!user) {
+      return '';
+    }
+
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      user.firstName || '',
+    )}+${encodeURIComponent(user.lastName || '')}&background=random`;
+  }, [user]);
+
+  const userDisplayName = useMemo(() => {
+    if (!user) {
+      return 'Khách hàng';
+    }
+
+    return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Khách hàng';
+  }, [user]);
+
+  const isAdminUser = useMemo(
+    () => user?.rolesSecured?.some((role) => role.name === 'ADMIN') ?? false,
+    [user],
+  );
+
+  const userInitials = useMemo(() => {
+    if (!user) {
+      return 'KH';
+    }
+
+    const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim();
+    return initials || 'KH';
+  }, [user]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -67,6 +108,13 @@ export function Header() {
       document.removeEventListener('mousedown', onClickOutside);
     };
   }, []);
+
+  const handleLogout = useCallback(async () => {
+    setIsUserMenuOpen(false);
+    await logout();
+    router.push('/');
+    router.refresh();
+  }, [logout, router]);
 
   return (
     <>
@@ -204,81 +252,7 @@ export function Header() {
                 <Heart className='size-5 text-text-main' />
               </Button>
 
-              {/* User dropdown */}
-              <div ref={userMenuRef} className='relative'>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  aria-label='Tài khoản'
-                  onClick={() => setIsUserMenuOpen((v) => !v)}
-                  className={cn(
-                    'dark:hover:bg-white/10',
-                    isUserMenuOpen ? 'bg-gray-100 dark:bg-white/10' : '',
-                  )}
-                >
-                  <UserRound className='size-5 text-text-main' />
-                </Button>
-
-                {isUserMenuOpen && (
-                  <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1'>
-                    {/* User info header */}
-                    <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
-                      <p className='text-sm font-semibold text-text-main'>
-                        Khách hàng
-                      </p>
-                      <p className='text-xs text-text-sub truncate'>
-                        khach@swiftera.com
-                      </p>
-                    </div>
-
-                    <div className='py-1'>
-                      <Link
-                        href='/profile'
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
-                      >
-                        <UserRound
-                          size={15}
-                          className='text-text-sub shrink-0'
-                        />
-                        Thông tin cá nhân
-                      </Link>
-                      <Link
-                        href='/orders'
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
-                      >
-                        <FileText
-                          size={15}
-                          className='text-text-sub shrink-0'
-                        />
-                        Đơn thuê của tôi
-                      </Link>
-                      <Link
-                        href='/dashboard'
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
-                      >
-                        <LayoutDashboard
-                          size={15}
-                          className='text-text-sub shrink-0'
-                        />
-                        Trang quản trị
-                      </Link>
-                    </div>
-
-                    <div className='border-t border-gray-100 dark:border-white/8 py-1'>
-                      <button
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className='flex w-full items-center gap-3 px-4 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-theme-primary-start/10 transition-colors'
-                      >
-                        <LogOut size={15} className='shrink-0' />
-                        Đăng xuất
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              
 
               {/* Dark / Light mode toggle */}
               <Button
@@ -305,24 +279,132 @@ export function Header() {
                   <ShoppingCart className='size-5 text-text-main' />
                 </Button>
               </Link>
-              <Link href='/auth/login'>
+              {!isAuthenticated && (
+                <Link href='/auth/login'>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    aria-label='Đi tới trang đăng nhập'
+                    className='dark:hover:bg-white/10'
+                  >
+                    <LogIn className='size-5 text-text-main' />
+                  </Button>
+                </Link>
+              )}
+{/* User dropdown */}
+<div ref={userMenuRef} className='relative'>
                 <Button
                   variant='ghost'
                   size='icon'
-                  aria-label='Đi tới trang đăng nhập'
-                  className='dark:hover:bg-white/10'
+                  aria-label='Tài khoản'
+                  onClick={() => setIsUserMenuOpen((v) => !v)}
+                  className={cn(
+                    'dark:hover:bg-white/10',
+                    isUserMenuOpen ? 'bg-gray-100 dark:bg-white/10' : '',
+                  )}
                 >
-                  <LogIn className='size-5 text-text-main' />
+                  {isAuthenticated && avatarUrl ? (
+                    <Avatar size='default' className='size-8'>
+                      <AvatarImage src={avatarUrl} alt={userDisplayName} />
+                      <AvatarFallback>{userInitials}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <UserRound className='size-5 text-text-main' />
+                  )}
                 </Button>
-              </Link>
-              <Button
-                variant='secondary'
-                size='icon'
-                className='hidden rounded-full bg-foreground text-white hover:bg-foreground/90 dark:bg-white/15 dark:hover:bg-white/25 lg:inline-flex'
-                aria-label='More actions'
-              >
-                <Menu className='size-5' />
-              </Button>
+
+                {isUserMenuOpen && (
+                  <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1'>
+                    {/* User info header */}
+                    <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
+                      <p className='text-sm font-semibold text-text-main'>
+                        {userDisplayName}
+                      </p>
+                      <p className='text-xs text-text-sub truncate'>
+                        {user?.email || 'guest@swiftera.com'}
+                      </p>
+                    </div>
+
+                    <div className='py-1'>
+                      {isAuthenticated ? (
+                        <>
+                          <Link
+                            href='/profile'
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
+                          >
+                            <UserRound
+                              size={15}
+                              className='text-text-sub shrink-0'
+                            />
+                            Thông tin cá nhân
+                          </Link>
+                          <Link
+                            href='/orders'
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
+                          >
+                            <FileText
+                              size={15}
+                              className='text-text-sub shrink-0'
+                            />
+                            Đơn thuê của tôi
+                          </Link>
+                          {isAdminUser && (
+                            <Link
+                              href='/dashboard'
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
+                            >
+                              <LayoutDashboard
+                                size={15}
+                                className='text-text-sub shrink-0'
+                              />
+                              Trang quản trị
+                            </Link>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Link
+                            href='/auth/login'
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
+                          >
+                            <LogIn size={15} className='text-text-sub shrink-0' />
+                            Đăng nhập
+                          </Link>
+                          <Link
+                            href='/auth/register'
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
+                          >
+                            <Settings
+                              size={15}
+                              className='text-text-sub shrink-0'
+                            />
+                            Tạo tài khoản
+                          </Link>
+                        </>
+                      )}
+                    </div>
+
+                    {isAuthenticated && (
+                      <div className='border-t border-gray-100 dark:border-white/8 py-1'>
+                        <button
+                          onClick={() => {
+                            void handleLogout();
+                          }}
+                          className='flex w-full items-center gap-3 px-4 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-theme-primary-start/10 transition-colors'
+                        >
+                          <LogOut size={15} className='shrink-0' />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
