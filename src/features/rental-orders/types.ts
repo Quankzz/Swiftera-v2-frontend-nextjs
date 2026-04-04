@@ -1,0 +1,276 @@
+/**
+ * Rental Orders module types
+ * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 12: RENTAL ORDERS
+ *
+ * Tất cả field dùng camelCase đúng theo JSON trả về từ BE.
+ * Không tự suy đoán field — chỉ model field có trong spec.
+ */
+
+import type { PaginatedData } from '@/api/apiService';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Status
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Luồng trạng thái đơn thuê theo BE spec:
+ * PENDING_PAYMENT → PAID → CONFIRMED → DELIVERING → ACTIVE → RETURNING → COMPLETED
+ * hoặc hủy: PENDING_PAYMENT → CANCELLED
+ */
+export type RentalOrderStatus =
+  | 'PENDING_PAYMENT'
+  | 'PAID'
+  | 'CONFIRMED'
+  | 'DELIVERING'
+  | 'ACTIVE'
+  | 'RETURNING'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+/** Chuyển đổi trạng thái được phép (theo API-077) */
+export const ALLOWED_STATUS_TRANSITIONS: Partial<
+  Record<RentalOrderStatus, RentalOrderStatus>
+> = {
+  PENDING_PAYMENT: 'PAID',
+  PAID: 'CONFIRMED',
+  CONFIRMED: 'DELIVERING',
+  DELIVERING: 'ACTIVE',
+  ACTIVE: 'RETURNING',
+  RETURNING: 'COMPLETED',
+};
+
+export const STATUS_LABELS: Record<RentalOrderStatus, string> = {
+  PENDING_PAYMENT: 'Chờ thanh toán',
+  PAID: 'Đã thanh toán',
+  CONFIRMED: 'Đã xác nhận',
+  DELIVERING: 'Đang giao hàng',
+  ACTIVE: 'Đang thuê',
+  RETURNING: 'Đang thu hồi',
+  COMPLETED: 'Hoàn thành',
+  CANCELLED: 'Đã hủy',
+};
+
+export const STATUS_ORDER: RentalOrderStatus[] = [
+  'PENDING_PAYMENT',
+  'PAID',
+  'CONFIRMED',
+  'DELIVERING',
+  'ACTIVE',
+  'RETURNING',
+  'COMPLETED',
+  'CANCELLED',
+];
+
+export const STATUS_STYLES: Record<
+  RentalOrderStatus,
+  { dot: string; cls: string }
+> = {
+  PENDING_PAYMENT: {
+    dot: 'bg-amber-400',
+    cls: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-900/20 dark:border-amber-500/30',
+  },
+  PAID: {
+    dot: 'bg-cyan-400',
+    cls: 'text-cyan-700 bg-cyan-50 border-cyan-200 dark:text-cyan-400 dark:bg-cyan-900/20 dark:border-cyan-500/30',
+  },
+  CONFIRMED: {
+    dot: 'bg-blue-400',
+    cls: 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-500/30',
+  },
+  DELIVERING: {
+    dot: 'bg-indigo-400',
+    cls: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-400 dark:bg-indigo-900/20 dark:border-indigo-500/30',
+  },
+  ACTIVE: {
+    dot: 'bg-green-400',
+    cls: 'text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-900/20 dark:border-green-500/30',
+  },
+  RETURNING: {
+    dot: 'bg-orange-400',
+    cls: 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-500/30',
+  },
+  COMPLETED: {
+    dot: 'bg-gray-400',
+    cls: 'text-gray-600 bg-gray-100 border-gray-200 dark:text-gray-400 dark:bg-white/5 dark:border-white/10',
+  },
+  CANCELLED: {
+    dot: 'bg-red-400',
+    cls: 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-500/30',
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rental Order Line (per product)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RentalOrderLine {
+  rentalOrderLineId: string;
+  productId: string;
+  productNameSnapshot: string;
+  inventoryItemId: string | null;
+  inventorySerialNumber: string | null;
+  dailyPriceSnapshot: number;
+  depositAmountSnapshot: number;
+  rentalDurationDays: number;
+  checkoutConditionNote: string | null;
+  checkinConditionNote: string | null;
+  itemPenaltyAmount: number;
+  photos: string[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rental Order Response (full — API-073 / API-074 / API-075)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RentalOrderResponse {
+  rentalOrderId: string;
+  userId: string | null;
+
+  // Hub assignment
+  hubId: string | null;
+  hubName: string | null;
+
+  // Staff assignment
+  deliveryStaffId: string | null;
+  pickupStaffId: string | null;
+
+  // Delivery info
+  deliveryRecipientName: string;
+  deliveryPhone: string;
+  deliveryAddressLine: string | null;
+  deliveryWard: string | null;
+  deliveryDistrict: string | null;
+  deliveryCity: string | null;
+  deliveryLatitude: number | null;
+  deliveryLongitude: number | null;
+
+  // Dates
+  expectedDeliveryDate: string | null; // YYYY-MM-DD
+  expectedRentalEndDate: string | null; // YYYY-MM-DD
+  plannedDeliveryAt: string | null; // ISO datetime
+  actualDeliveryAt: string | null;
+  actualRentalStartAt: string | null;
+  deliveredLatitude: number | null;
+  deliveredLongitude: number | null;
+  plannedPickupAt: string | null;
+  actualRentalEndAt: string | null;
+  pickedUpAt: string | null;
+  pickedUpLatitude: number | null;
+  pickedUpLongitude: number | null;
+
+  // Status
+  status: RentalOrderStatus;
+
+  // Financials
+  rentalSubtotalAmount: number;
+  voucherCodeSnapshot: string | null;
+  voucherDiscountAmount: number;
+  rentalFeeAmount: number;
+  depositHoldAmount: number;
+  totalPayableAmount: number;
+  penaltyChargeAmount: number | null;
+  depositRefundAmount: number | null;
+  totalPaidAmount: number;
+
+  // Timestamps
+  placedAt: string; // ISO datetime
+  createdAt: string;
+  updatedAt: string;
+
+  // Order lines
+  rentalOrderLines: RentalOrderLine[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Paginated Response
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type PaginatedRentalOrdersResponse = PaginatedData<RentalOrderResponse>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// List Params (API-075)
+// SpringFilter DSL: filter=status:'PENDING_PAYMENT'
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RentalOrderListParams {
+  page?: number;
+  size?: number;
+  sort?: string; // e.g. "placedAt,desc"
+  filter?: string; // SpringFilter DSL
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mutation Inputs
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** API-077: Cập nhật trạng thái đơn thuê */
+export interface UpdateOrderStatusInput {
+  status: RentalOrderStatus;
+}
+
+/** API-078: Hủy đơn thuê — POST /rental-orders/{id}/cancel (no body) */
+
+/** API-079: Gia hạn đơn thuê */
+export interface ExtendOrderInput {
+  additionalRentalDays: number;
+}
+
+/** API-080: Gán hub cho đơn thuê */
+export interface AssignHubInput {
+  hubId: string;
+}
+
+/** API-081: Gán nhân viên cho đơn thuê (tất cả tùy chọn) */
+export interface AssignStaffInput {
+  deliveryStaffId?: string | null;
+  pickupStaffId?: string | null;
+}
+
+/** API-082: Ghi nhận giao hàng */
+export interface RecordDeliveryInput {
+  deliveredAt?: string | null;
+  deliveredLatitude?: number | null;
+  deliveredLongitude?: number | null;
+}
+
+/** API-083: Ghi nhận thu hồi */
+export interface RecordPickupInput {
+  pickedUpAt?: string | null;
+  pickedUpLatitude?: number | null;
+  pickedUpLongitude?: number | null;
+}
+
+/** API-084: Cập nhật phí phạt */
+export interface SetPenaltyInput {
+  penaltyTotal: number;
+  note?: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Staff types (dùng trong assign-staff-dialog — lấy từ GET /users)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Staff option hiển thị trong dialog chọn nhân viên */
+export interface StaffOption {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  nickname: string | null;
+  phoneNumber: string | null;
+  avatarUrl: string | null;
+  rolesSecured?: Array<{ roleId: string; name: string; active: boolean }>;
+}
+
+/** Hub option hiển thị trong dialog chọn hub */
+export interface HubOption {
+  hubId: string;
+  code: string;
+  name: string;
+  addressLine: string | null;
+  ward: string | null;
+  district: string | null;
+  city: string | null;
+  phone: string | null;
+  isActive: boolean;
+}

@@ -18,6 +18,8 @@ export function UserPasswordForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
 
+  const updatePassword = useUpdatePasswordMutation();
+
   const validate = () => {
     if (!current) return 'Vui lòng nhập mật khẩu hiện tại';
     if (next.length < 8) return 'Mật khẩu mới phải có ít nhất 8 ký tự';
@@ -32,7 +34,6 @@ export function UserPasswordForm() {
       setError(msg);
       return;
     }
-    setSaving(true);
     setError('');
     setSuccessMessage('');
     try {
@@ -143,10 +144,10 @@ export function UserPasswordForm() {
         <div className='pt-2 flex justify-end'>
           <Button
             type='submit'
-            disabled={saving || !current || !next || !confirm}
+            disabled={updatePassword.isPending || !current || !next || !confirm}
             className='bg-theme-primary-start hover:opacity-90'
           >
-            {saving ? 'Đang đổi...' : 'Đổi mật khẩu'}
+            {updatePassword.isPending ? 'Đang đổi...' : 'Đổi mật khẩu'}
           </Button>
         </div>
       </form>

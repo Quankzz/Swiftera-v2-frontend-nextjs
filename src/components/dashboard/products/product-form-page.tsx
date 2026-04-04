@@ -11,35 +11,30 @@ import {
   Star,
   Upload,
   Link as LinkIcon,
-  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ProductCard } from '@/components/home/product-card';
 import { ImageCropModal } from './image-crop-modal';
-import { useProductForm, type DraftImage } from './use-product-form';
-import { InventorySection } from './inventory-section';
-import { categories } from '@/data/categories';
-import type { Product, ProductColor } from '@/types/catalog';
+import {
+  useProductForm,
+  draftToProductPreview,
+  type DraftImage,
+} from './use-product-form';
+import {
+  useCreateProductMutation,
+  useUpdateProductMutation,
+} from '@/features/products/hooks/use-product-management';
+import { useCategoriesQuery } from '@/features/categories/hooks/use-category-management';
+import type { ProductResponse } from '@/features/products/types';
 import RichEditor from '@/components/feedback/rich-editor';
-
-// Top-level danh mục
-const topCategories = categories.filter((c) => c.parentId === null);
-
-// ─── Màu thường gặp ───────────────────────────────────────────────
-const PRESET_COLORS: ProductColor[] = [
-  { name: 'Trắng', value: '#FFFFFF' },
-  { name: 'Bạc', value: '#C0C0C0' },
-  { name: 'Xám', value: '#6B7280' },
-  { name: 'Đen', value: '#111111' },
-  { name: 'Đỏ', value: '#EF4444' },
-  { name: 'Cam', value: '#F97316' },
-  { name: 'Vàng', value: '#EAB308' },
-  { name: 'Xanh lá', value: '#22C55E' },
-  { name: 'Xanh dương', value: '#3B82F6' },
-  { name: 'Tím', value: '#A855F7' },
-  { name: 'Hồng', value: '#EC4899' },
-  { name: 'Vàng gold', value: '#D4AF37' },
-];
+import { ColorPickerList } from './color-picker-list';
+import {
+  VoucherPriceCalculator,
+  type PriceValues,
+} from './voucher-price-calculator';
+import { InventorySection } from './inventory-section';
+import { useCreateInventoryItemMutation } from '@/features/products/hooks/use-inventory-items';
+import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import { toast } from 'sonner';
 
 // ─── Helper format VND ────────────────────────────────────────────
 function formatVND(val: string) {
@@ -124,6 +119,15 @@ function TextInput({
 }
 
 // ─── Image item inside Section 3 ──────────────────────────────────
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
+}
+
 function ImageItem({
   img,
   onSetPrimary,
@@ -137,7 +141,9 @@ function ImageItem({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [urlMode, setUrlMode] = useState(!img.imageUrl.startsWith('data:'));
+  const [urlMode, setUrlMode] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadMutation = useUploadFileMutation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,10 +161,25 @@ function ImageItem({
         <ImageCropModal
           imageSrc={cropSrc}
           onCancel={() => setCropSrc(null)}
-          onComplete={(dataUrl) => {
-            onUpdateUrl(dataUrl);
+          onComplete={async (dataUrl) => {
             setCropSrc(null);
-            setUrlMode(false);
+            setIsUploading(true);
+            try {
+              const file = dataUrlToFile(
+                dataUrl,
+                `product-image-${Date.now()}.jpg`,
+              );
+              const result = await uploadMutation.mutateAsync({
+                file,
+                folder: 'products',
+              });
+              onUpdateUrl(result.fileUrl);
+              setUrlMode(false);
+            } catch {
+              toast.error('Tải ảnh lên thất bại. Vui lòng thử lại.');
+            } finally {
+              setIsUploading(false);
+            }
           }}
         />
       )}
@@ -166,7 +187,12 @@ function ImageItem({
       <div className='flex gap-3 rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 p-3'>
         {/* Preview thumbnail */}
         <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8'>
-          {img.imageUrl ? (
+          {isUploading ? (
+            <div className='flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-text-sub'>
+              <span className='animate-spin text-base'>⏳</span>
+              <span>Đang tải...</span>
+            </div>
+          ) : img.imageUrl ? (
             <Image
               src={img.imageUrl}
               alt='preview'
@@ -179,7 +205,7 @@ function ImageItem({
               Chưa có
             </div>
           )}
-          {img.isPrimary && (
+          {img.isPrimary && !isUploading && (
             <span className='absolute bottom-0 left-0 right-0 bg-theme-primary-start/80 py-0.5 text-center text-[10px] text-white'>
               Chính
             </span>
@@ -228,7 +254,7 @@ function ImageItem({
           {urlMode && (
             <input
               type='url'
-              value={img.imageUrl.startsWith('data:') ? '' : img.imageUrl}
+              value={img.imageUrl}
               onChange={(e) => onUpdateUrl(e.target.value)}
               placeholder='https://example.com/image.jpg'
               className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
@@ -274,7 +300,7 @@ function ImageItem({
 // ─── Main shared form component ───────────────────────────────────
 interface ProductFormPageProps {
   mode: 'new' | 'edit';
-  initialProduct?: Product;
+  initialProduct?: ProductResponse;
 }
 
 export function ProductFormPage({
@@ -290,34 +316,162 @@ export function ProductFormPage({
     removeImage,
     setPrimary,
     updateImageUrl,
-    colors,
-    addColor,
-    removeColor,
-    inventoryItems,
-    addInventoryItem,
-    removeInventoryItem,
-    updateInventoryItem,
-    previewProduct,
+    draftInventoryItems,
+    addDraftInventoryItem,
+    updateDraftInventoryItem,
+    removeDraftInventoryItem,
     errors,
     isValid,
   } = useProductForm(initialProduct);
 
-  const [customColor, setCustomColor] = useState<{
-    name: string;
-    value: string;
-  }>({
-    name: '',
-    value: '#000000',
-  });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = () => {
+  // ── Color picker state (multi-color UI, BE only needs first/joined string) ──
+  // Initialize from initialProduct.color (comma-split if stored as comma-joined)
+  const [colors, setColors] = useState<string[]>(() => {
+    if (!initialProduct?.color) return [];
+    return initialProduct.color
+      .split(',')
+      .map((c) => c.trim())
+      .filter(Boolean);
+  });
+
+  // ── Voucher price state (tracks computed dailyPrice from calculator) ──
+  const [priceValues, setPriceValues] = useState<PriceValues>({
+    dailyPrice: initialProduct ? initialProduct.dailyPrice : 0,
+    oldDailyPrice: initialProduct?.oldDailyPrice ?? undefined,
+    selectedVoucherId: undefined,
+  });
+
+  const createMutation = useCreateProductMutation();
+  const updateMutation = useUpdateProductMutation();
+  const createInventoryItemMutation = useCreateInventoryItemMutation(
+    form.productId || '',
+  );
+
+  // Fetch categories for dropdown
+  const { data: categoriesData, isLoading: loadingCategories } =
+    useCategoriesQuery({ page: 0, size: 100 });
+  const categoryList = categoriesData?.content ?? [];
+
+  // Find categoryName for preview
+  const selectedCategory = categoryList.find(
+    (c) => c.categoryId === form.categoryId,
+  );
+  const previewProduct = draftToProductPreview(
+    form,
+    images,
+    selectedCategory?.name,
+  );
+
+  const handleSubmit = async () => {
     setSubmitted(true);
     if (!isValid) return;
-    // TODO: gọi API tạo / cập nhật
-    console.log('Submit:', form, images, colors, inventoryItems);
-    router.push('/dashboard/products');
+
+    const imageUrls = images
+      .filter((img) => img.imageUrl)
+      .map((img) => img.imageUrl);
+
+    // Màu: join nhiều màu thành 1 string (BE nhận single string)
+    const colorString = colors.length > 0 ? colors.join(',') : undefined;
+
+    // Giá: lấy từ VoucherPriceCalculator
+    const dailyPrice =
+      priceValues.dailyPrice > 0
+        ? priceValues.dailyPrice
+        : parseFloat(form.dailyPrice) || 0;
+    const oldDailyPrice = priceValues.oldDailyPrice;
+
+    if (mode === 'new') {
+      createMutation.mutate(
+        {
+          categoryId: form.categoryId,
+          name: form.name,
+          dailyPrice,
+          depositAmount: form.depositAmount
+            ? parseFloat(form.depositAmount)
+            : 0,
+          brand: form.brand || undefined,
+          color: colorString,
+          description: form.description || undefined,
+          oldDailyPrice,
+          minRentalDays: parseInt(form.minRentalDays) || 1,
+          imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+        },
+        {
+          onSuccess: (newProduct) => {
+            // Tạo inventory items cho product mới nếu có draft items
+            const pendingItems = draftInventoryItems.filter(
+              (item) => item.serialNumber && item.hubId,
+            );
+            if (pendingItems.length > 0) {
+              Promise.all(
+                pendingItems.map((item) =>
+                  createInventoryItemMutation.mutateAsync({
+                    productId: newProduct.productId,
+                    hubId: item.hubId,
+                    serialNumber: item.serialNumber,
+                    conditionGrade: item.conditionGrade,
+                    staffNote: item.staffNote || undefined,
+                  }),
+                ),
+              ).finally(() => router.push('/dashboard/products'));
+            } else {
+              router.push('/dashboard/products');
+            }
+          },
+        },
+      );
+    } else {
+      if (!form.productId) return;
+      updateMutation.mutate(
+        {
+          productId: form.productId,
+          payload: {
+            categoryId: form.categoryId,
+            name: form.name,
+            dailyPrice,
+            depositAmount: form.depositAmount
+              ? parseFloat(form.depositAmount)
+              : 0,
+            brand: form.brand || undefined,
+            color: colorString,
+            description: form.description || undefined,
+            oldDailyPrice,
+            minRentalDays: parseInt(form.minRentalDays) || 1,
+            imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+            isActive: form.isActive,
+          },
+        },
+        {
+          onSuccess: () => {
+            // Tạo các inventory item draft mới (chưa có inventoryItemId)
+            const newDraftItems = draftInventoryItems.filter(
+              (item) =>
+                !item.inventoryItemId && item.serialNumber && item.hubId,
+            );
+            if (newDraftItems.length > 0) {
+              Promise.all(
+                newDraftItems.map((item) =>
+                  createInventoryItemMutation.mutateAsync({
+                    productId: form.productId,
+                    hubId: item.hubId,
+                    serialNumber: item.serialNumber,
+                    conditionGrade: item.conditionGrade,
+                    staffNote: item.staffNote || undefined,
+                  }),
+                ),
+              ).finally(() => router.push('/dashboard/products'));
+            } else {
+              router.push('/dashboard/products');
+            }
+          },
+        },
+      );
+    }
   };
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const showError = (key: keyof typeof errors) =>
     submitted ? errors[key] : undefined;
@@ -350,10 +504,13 @@ export function ProductFormPage({
               <select
                 value={form.categoryId}
                 onChange={(e) => setField('categoryId', e.target.value)}
-                className='h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+                disabled={loadingCategories}
+                className='h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 disabled:opacity-60'
               >
-                <option value=''>— Chọn danh mục —</option>
-                {topCategories.map((c) => (
+                <option value=''>
+                  {loadingCategories ? 'Đang tải...' : '— Chọn danh mục —'}
+                </option>
+                {categoryList.map((c) => (
                   <option key={c.categoryId} value={c.categoryId}>
                     {c.name}
                   </option>
@@ -366,12 +523,33 @@ export function ProductFormPage({
               <TextInput
                 value={form.name}
                 onChange={(v) => setField('name', v)}
-                placeholder='VD: iPhone 15 Pro Max'
+                placeholder='VD: Canon EOS R50'
               />
             </Field>
 
+            {/* Thương hiệu + Màu sắc (2 cột) */}
+            <div className='grid grid-cols-2 gap-4'>
+              <Field label='Thương hiệu' hint='VD: Canon, Sony, Fujifilm'>
+                <TextInput
+                  value={form.brand}
+                  onChange={(v) => setField('brand', v)}
+                  placeholder='VD: Canon'
+                />
+              </Field>
+              <Field
+                label='Màu sắc'
+                hint='Chọn 1 hoặc nhiều màu (BE nhận màu đầu tiên / các màu join bằng dấu phẩy)'
+              >
+                <ColorPickerList
+                  colors={colors}
+                  onChange={setColors}
+                  maxColors={5}
+                />
+              </Field>
+            </div>
+
             {/* Mô tả */}
-            <Field label='Mô tả' required error={showError('description')}>
+            <Field label='Mô tả'>
               <RichEditor
                 placeholder='Mô tả ngắn gọn về sản phẩm...'
                 minHeight='160px'
@@ -381,42 +559,37 @@ export function ProductFormPage({
               />
             </Field>
 
-            {/* Giá thuê + Giá gốc (2 cột) */}
-            <div className='grid grid-cols-2 gap-4'>
-              <Field
-                label='Giá thuê / ngày'
-                required
-                error={showError('dailyPrice')}
-                hint='Đơn vị: VNĐ'
-              >
-                <div className='relative'>
-                  <TextInput
-                    value={formatVND(form.dailyPrice)}
-                    onChange={(v) => setField('dailyPrice', parseVND(v))}
-                    placeholder='350.000'
-                  />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-sub'>
-                    ₫
-                  </span>
-                </div>
-              </Field>
-              <Field label='Giá gốc (tuỳ chọn)' hint='Để hiển thị % giảm giá'>
-                <div className='relative'>
-                  <TextInput
-                    value={formatVND(form.oldDailyPrice)}
-                    onChange={(v) => setField('oldDailyPrice', parseVND(v))}
-                    placeholder='450.000'
-                  />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-sub'>
-                    ₫
-                  </span>
-                </div>
-              </Field>
-            </div>
+            {/* Giá thuê — dùng VoucherPriceCalculator thay cho 2 input thủ công */}
+            <Field
+              label='Giá thuê & Voucher giảm giá'
+              required
+              error={showError('dailyPrice')}
+              hint='Nhập giá gốc rồi chọn voucher để tự động tính giá thuê cuối'
+            >
+              <VoucherPriceCalculator
+                oldDailyPrice={form.oldDailyPrice || form.dailyPrice}
+                onOldDailyPriceChange={(v) => {
+                  setField('oldDailyPrice', v);
+                  setField('dailyPrice', v); // sync để validation
+                }}
+                selectedVoucherId={priceValues.selectedVoucherId}
+                onVoucherChange={(id) =>
+                  setPriceValues((prev) => ({
+                    ...prev,
+                    selectedVoucherId: id,
+                  }))
+                }
+                onValueChange={setPriceValues}
+              />
+            </Field>
 
             {/* Đặt cọc + Thuê tối thiểu (2 cột) */}
             <div className='grid grid-cols-2 gap-4'>
-              <Field label='Tiền đặt cọc (tuỳ chọn)' hint='Đơn vị: VNĐ'>
+              <Field
+                label='Tiền đặt cọc'
+                error={showError('depositAmount')}
+                hint='Đơn vị: VNĐ'
+              >
                 <div className='relative'>
                   <TextInput
                     value={formatVND(form.depositAmount)}
@@ -486,132 +659,46 @@ export function ProductFormPage({
                 </div>
               </Field>
             </div>
-          </div>
-        </FormSection>
 
-        {/* ── SECTION 2: Màu sắc ── */}
-        <FormSection title='Màu sắc (tuỳ chọn)'>
-          <div className='flex flex-col gap-4'>
-            {/* Màu đã chọn */}
-            {colors.length > 0 && (
-              <div className='flex flex-wrap gap-2'>
-                {colors.map((c) => (
-                  <div
-                    key={c.value}
-                    className='flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 pl-1.5 pr-2.5 py-1'
-                  >
-                    <span
-                      className='size-4 rounded-full border border-white shadow ring-1 ring-black/10 shrink-0'
-                      style={{ backgroundColor: c.value }}
-                    />
-                    <span className='text-xs text-text-main'>{c.name}</span>
-                    <button
-                      type='button'
-                      onClick={() => removeColor(c.value)}
-                      className='ml-0.5 text-text-sub hover:text-red-500 transition'
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Preset colors */}
-            <div>
-              <p className='mb-2 text-xs font-medium text-text-sub'>
-                Màu thường gặp
-              </p>
-              <div className='flex flex-wrap gap-2'>
-                {PRESET_COLORS.map((c) => {
-                  const selected = colors.some((col) => col.value === c.value);
-                  return (
-                    <button
-                      key={c.value}
-                      type='button'
-                      title={c.name}
-                      onClick={() =>
-                        selected ? removeColor(c.value) : addColor(c)
-                      }
-                      className={cn(
-                        'size-8 rounded-full border-2 shadow transition hover:scale-110',
-                        selected
-                          ? 'border-theme-primary-start ring-2 ring-theme-primary-start/40'
-                          : 'border-white ring-1 ring-black/10',
-                      )}
-                      style={{ backgroundColor: c.value }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Custom color */}
-            <div className='rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 p-3'>
-              <p className='mb-2.5 text-xs font-medium text-text-sub'>
-                Thêm màu tùy chỉnh
-              </p>
-              <div className='flex items-end gap-3'>
-                <div className='flex flex-1 flex-col gap-1.5'>
-                  <label className='text-xs text-text-sub'>Tên màu</label>
-                  <input
-                    type='text'
-                    value={customColor.name}
-                    onChange={(e) =>
-                      setCustomColor((p) => ({ ...p, name: e.target.value }))
-                    }
-                    placeholder='VD: Blue Titanium'
-                    className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
-                  />
-                </div>
-                {/* Styled color picker */}
-                <div className='flex flex-col gap-1.5'>
-                  <label className='text-xs text-text-sub'>Chọn màu</label>
-                  <label
-                    title='Bấm để chọn màu'
-                    className='relative flex h-10 w-28 cursor-pointer items-center gap-2 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-2.5 transition hover:border-gray-300 dark:hover:border-white/20'
-                  >
-                    {/* Color swatch */}
-                    <span
-                      className='size-5 shrink-0 rounded-full border border-white shadow ring-1 ring-black/15'
-                      style={{ backgroundColor: customColor.value }}
-                    />
-                    {/* Hex label */}
-                    <span className='flex-1 text-center font-mono text-xs text-text-main uppercase'>
-                      {customColor.value.toUpperCase()}
-                    </span>
-                    {/* Hidden native input */}
+            {/* Trạng thái hoạt động — chỉ hiển thị trong edit mode */}
+            {mode === 'edit' && (
+              <Field
+                label='Trạng thái'
+                hint='Tắt sẽ ẩn sản phẩm khỏi danh sách cho thuê'
+              >
+                <label className='flex cursor-pointer items-center gap-3'>
+                  <div className='relative'>
                     <input
-                      type='color'
-                      value={customColor.value}
-                      onChange={(e) =>
-                        setCustomColor((p) => ({ ...p, value: e.target.value }))
-                      }
-                      className='absolute inset-0 h-full w-full cursor-pointer opacity-0'
+                      type='checkbox'
+                      checked={form.isActive}
+                      onChange={(e) => setField('isActive', e.target.checked)}
+                      className='sr-only'
                     />
-                  </label>
-                </div>
-                <button
-                  type='button'
-                  onClick={() => {
-                    if (!customColor.name.trim()) return;
-                    addColor({
-                      name: customColor.name.trim(),
-                      value: customColor.value,
-                    });
-                    setCustomColor({ name: '', value: '#000000' });
-                  }}
-                  className='flex h-10 items-center gap-1.5 rounded-md bg-theme-primary-start px-4 text-sm font-medium text-white transition hover:opacity-90'
-                >
-                  <Plus size={14} />
-                  Thêm
-                </button>
-              </div>
-            </div>
+                    <div
+                      className={cn(
+                        'h-6 w-11 rounded-full transition-colors',
+                        form.isActive
+                          ? 'bg-theme-primary-start'
+                          : 'bg-gray-300 dark:bg-white/20',
+                      )}
+                    />
+                    <div
+                      className={cn(
+                        'absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform',
+                        form.isActive ? 'translate-x-5' : 'translate-x-0.5',
+                      )}
+                    />
+                  </div>
+                  <span className='text-sm text-text-main'>
+                    {form.isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
+                  </span>
+                </label>
+              </Field>
+            )}
           </div>
         </FormSection>
 
-        {/* ── SECTION 3: Hình ảnh ── */}
+        {/* ── SECTION 2: Hình ảnh ── */}
         <FormSection title='Hình ảnh sản phẩm'>
           <div className='flex flex-col gap-3'>
             {images.length === 0 && (
@@ -641,15 +728,22 @@ export function ProductFormPage({
           </div>
         </FormSection>
 
-        {/* ── SECTION 4: Kho thiết bị (Inventory) ── */}
-        <FormSection title='Kho thiết bị vật lý'>
-          <InventorySection
-            items={inventoryItems}
-            onAdd={addInventoryItem}
-            onRemove={removeInventoryItem}
-            onUpdate={updateInventoryItem}
-          />
-        </FormSection>
+        {/* ── SECTION 3: Inventory Items (chỉ hiện ở edit mode) ── */}
+        {mode === 'edit' && (
+          <FormSection title='Thiết bị vật lý (Inventory Items)'>
+            <p className='mb-4 text-xs text-text-sub'>
+              Thêm từng thiết bị vật lý theo số serial. Mỗi thiết bị cần có Hub
+              ID và Serial Number. Nhấn &quot;Lưu thay đổi&quot; để gửi các
+              thiết bị mới lên server.
+            </p>
+            <InventorySection
+              items={draftInventoryItems}
+              onAdd={addDraftInventoryItem}
+              onRemove={removeDraftInventoryItem}
+              onUpdate={updateDraftInventoryItem}
+            />
+          </FormSection>
+        )}
 
         {/* ── Submit ── */}
         <div className='flex items-center justify-end gap-3 pt-2'>
@@ -663,10 +757,15 @@ export function ProductFormPage({
           <button
             type='button'
             onClick={handleSubmit}
-            className='flex items-center gap-2 rounded-md bg-theme-primary-start px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90'
+            disabled={isSaving}
+            className='flex items-center gap-2 rounded-md bg-theme-primary-start px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed'
           >
             <Save size={16} />
-            {mode === 'new' ? 'Tạo sản phẩm' : 'Lưu thay đổi'}
+            {isSaving
+              ? 'Đang lưu...'
+              : mode === 'new'
+                ? 'Tạo sản phẩm'
+                : 'Lưu thay đổi'}
           </button>
         </div>
       </div>
@@ -677,12 +776,94 @@ export function ProductFormPage({
           <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-text-sub'>
             Xem trước
           </p>
-          <ProductCard product={previewProduct} variant='preview' />
+          <ProductPreviewCard product={previewProduct} />
           <p className='mt-2 text-center text-xs text-text-sub'>
             Card hiển thị ngoài trang chủ
           </p>
         </div>
       </aside>
     </div>
+  );
+}
+
+// ─── Inline preview card (dashboard-only) ─────────────────────────
+const vndFormatter = new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND',
+  maximumFractionDigits: 0,
+});
+
+function ProductPreviewCard({ product }: { product: ProductResponse }) {
+  const primaryImage =
+    product.images.find((img) => img.isPrimary) ?? product.images[0];
+  const salePercent =
+    product.oldDailyPrice && product.oldDailyPrice > product.dailyPrice
+      ? Math.round(
+          ((product.oldDailyPrice - product.dailyPrice) /
+            product.oldDailyPrice) *
+            100,
+        )
+      : null;
+
+  return (
+    <article className='relative flex flex-col overflow-hidden rounded-xl border border-border/75 dark:border-white/6 bg-white dark:bg-surface-card p-5 shadow-sm dark:shadow-black/30'>
+      {salePercent !== null && (
+        <span className='btn-gradient-accent absolute left-3 top-3 z-10 text-xs font-semibold text-white shadow-sm px-2 py-0.5 rounded-full'>
+          -{salePercent}%
+        </span>
+      )}
+
+      <header className='mt-2 mb-3 text-center'>
+        <h3 className='line-clamp-2 text-base font-semibold text-text-main'>
+          {product.name || (
+            <span className='italic text-text-sub opacity-50'>
+              Tên sản phẩm
+            </span>
+          )}
+        </h3>
+        {product.brand && (
+          <p className='mt-0.5 text-xs text-text-sub'>{product.brand}</p>
+        )}
+      </header>
+
+      <div className='relative h-44 w-full'>
+        {primaryImage?.imageUrl ? (
+          <Image
+            src={primaryImage.imageUrl}
+            alt={product.name}
+            fill
+            sizes='280px'
+            className='object-contain'
+          />
+        ) : (
+          <div className='flex h-full w-full items-center justify-center rounded-md bg-gray-100 dark:bg-white/8 text-xs text-text-sub'>
+            Chưa có ảnh
+          </div>
+        )}
+      </div>
+
+      <div className='mt-3 flex flex-col gap-1'>
+        {product.color && (
+          <p className='text-center text-xs text-text-sub'>
+            Màu: {product.color}
+          </p>
+        )}
+        <div className='text-center'>
+          <span className='text-lg font-bold text-theme-accent-start'>
+            {product.dailyPrice ? (
+              vndFormatter.format(product.dailyPrice)
+            ) : (
+              <span className='text-text-sub italic text-sm'>—</span>
+            )}
+          </span>
+          {product.oldDailyPrice != null && (
+            <span className='ml-2 text-sm text-text-sub line-through'>
+              {vndFormatter.format(product.oldDailyPrice)}
+            </span>
+          )}
+          <p className='text-xs text-text-sub'>/ngày</p>
+        </div>
+      </div>
+    </article>
   );
 }

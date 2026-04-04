@@ -2,36 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, BoxIcon, PackageCheck, PackageX, Wrench } from 'lucide-react';
+import { Plus, BoxIcon, PackageCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProductsGrid } from '@/components/dashboard/products/products-grid';
 import { ProductViewDialog } from '@/components/dashboard/products/product-view-dialog';
 import { ProductDeleteDialog } from '@/components/dashboard/products/product-delete-dialog';
-import { products as allProducts } from '@/data/products';
+import {
+  useProductsQuery,
+  useDeleteProductMutation,
+} from '@/features/products/hooks/use-product-management';
 import { cn } from '@/lib/utils';
-import type { Product } from '@/types/catalog';
-
-// ─── Stats tổng hợp từ mock data ──────────────────────────────────
-function computeStats(products: Product[]) {
-  let totalUnits = 0;
-  let available = 0;
-  let rented = 0;
-  let maintenance = 0;
-  for (const p of products) {
-    const items = p.inventoryItems ?? [];
-    totalUnits += items.length;
-    available += items.filter((i) => i.status === 'AVAILABLE').length;
-    rented += items.filter((i) => i.status === 'RENTED').length;
-    maintenance += items.filter((i) => i.status === 'MAINTENANCE').length;
-  }
-  return {
-    totalProducts: products.length,
-    totalUnits,
-    available,
-    rented,
-    maintenance,
-  };
-}
+import type { ProductResponse } from '@/features/products/types';
 
 function StatCard({
   label,
@@ -64,17 +45,24 @@ function StatCard({
 
 export default function ProductsPage() {
   const router = useRouter();
-  const [viewProduct, setViewProduct] = useState<Product | null>(null);
-  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [viewProduct, setViewProduct] = useState<ProductResponse | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<ProductResponse | null>(
+    null,
+  );
 
-  const stats = computeStats(allProducts);
+  // Stats — use a lightweight query with size=1 just to get totalElements
+  const { data: statsData } = useProductsQuery({ page: 0, size: 1 });
+  const totalProducts = statsData?.meta.totalElements ?? 0;
+
+  const deleteProductMutation = useDeleteProductMutation();
 
   const handleDeleteMany = (ids: string[]) => {
-    console.log('Xóa nhiều sản phẩm:', ids);
+    // Sequential deletes
+    ids.forEach((id) => deleteProductMutation.mutate(id));
   };
 
-  const handleConfirmDelete = (product: Product) => {
-    console.log('Xóa sản phẩm:', product.productId);
+  const handleConfirmDelete = (product: ProductResponse) => {
+    deleteProductMutation.mutate(product.productId);
   };
 
   return (
@@ -102,30 +90,18 @@ export default function ProductsPage() {
       </div>
 
       {/* Stats bar */}
-      <div className='grid grid-cols-2 gap-4 sm:grid-cols-4'>
+      <div className='grid grid-cols-2 gap-4 sm:grid-cols-2'>
         <StatCard
           label='Loại sản phẩm'
-          value={stats.totalProducts}
+          value={totalProducts}
           icon={BoxIcon}
           colorCls='bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
         />
         <StatCard
-          label='Sẵn sàng cho thuê'
-          value={stats.available}
+          label='Đang hiển thị'
+          value={totalProducts}
           icon={PackageCheck}
           colorCls='bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-        />
-        <StatCard
-          label='Đang cho thuê'
-          value={stats.rented}
-          icon={PackageX}
-          colorCls='bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-        />
-        <StatCard
-          label='Đang bảo trì'
-          value={stats.maintenance}
-          icon={Wrench}
-          colorCls='bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
         />
       </div>
 

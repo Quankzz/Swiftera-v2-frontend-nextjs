@@ -11,12 +11,22 @@ import {
   CheckCircle2,
   Wrench,
   XCircle,
+  Clock,
+  ShieldAlert,
+  Warehouse,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { InventoryItemStatus } from '@/types/catalog';
+import type {
+  InventoryItemStatus,
+  InventoryItemConditionGrade,
+} from '@/features/products/types';
 import type { DraftInventoryItem } from './use-product-form';
+import { HubPickerDialog } from './hub-picker-dialog';
 
 // ─── Status meta ──────────────────────────────────────────────────
+// Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 9
+// Status enum: AVAILABLE | RESERVED | RENTED | MAINTENANCE | DAMAGED | RETIRED
 const STATUS_OPTIONS: {
   value: InventoryItemStatus;
   label: string;
@@ -32,6 +42,14 @@ const STATUS_OPTIONS: {
     color: 'text-green-600 dark:text-green-400',
     bg: 'bg-green-50 dark:bg-green-900/20',
     border: 'border-green-200 dark:border-green-500/30',
+  },
+  {
+    value: 'RESERVED',
+    label: 'Đã đặt trước',
+    icon: Clock,
+    color: 'text-violet-600 dark:text-violet-400',
+    bg: 'bg-violet-50 dark:bg-violet-900/20',
+    border: 'border-violet-200 dark:border-violet-500/30',
   },
   {
     value: 'RENTED',
@@ -50,6 +68,14 @@ const STATUS_OPTIONS: {
     border: 'border-amber-200 dark:border-amber-500/30',
   },
   {
+    value: 'DAMAGED',
+    label: 'Hỏng / Hư',
+    icon: ShieldAlert,
+    color: 'text-red-600 dark:text-red-400',
+    bg: 'bg-red-50 dark:bg-red-900/20',
+    border: 'border-red-200 dark:border-red-500/30',
+  },
+  {
     value: 'RETIRED',
     label: 'Ngừng sử dụng',
     icon: XCircle,
@@ -59,11 +85,14 @@ const STATUS_OPTIONS: {
   },
 ];
 
-const CONDITION_GRADES = [
-  { value: 'A', label: 'A — Như mới' },
-  { value: 'B', label: 'B — Tốt' },
-  { value: 'C', label: 'C — Trung bình' },
-  { value: 'D', label: 'D — Đã cũ' },
+const CONDITION_GRADES: {
+  value: InventoryItemConditionGrade;
+  label: string;
+}[] = [
+  { value: 'NEW', label: 'Mới — Như hộp' },
+  { value: 'GOOD', label: 'Tốt — Vài vết nhỏ' },
+  { value: 'FAIR', label: 'Trung bình — Dùng nhiều' },
+  { value: 'POOR', label: 'Kém — Cần kiểm tra' },
 ];
 
 function StatusBadge({ status }: { status: InventoryItemStatus }) {
@@ -97,6 +126,9 @@ function InventoryItemRow({
   onRemove: () => void;
 }) {
   const [expanded, setExpanded] = useState(!item.serialNumber);
+  const [hubDialogOpen, setHubDialogOpen] = useState(false);
+  // Local hubName for display — synced when hub is picked
+  const [hubName, setHubName] = useState<string>('');
 
   const inputCls =
     'h-9 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20';
@@ -171,6 +203,52 @@ function InventoryItemRow({
             />
           </div>
 
+          {/* Hub Picker */}
+          <div className='flex flex-col gap-1.5 sm:col-span-2'>
+            <label className='text-xs font-medium text-text-sub'>
+              Kho Hub lưu trữ <span className='text-red-500'>*</span>
+            </label>
+            <button
+              type='button'
+              onClick={() => setHubDialogOpen(true)}
+              className={cn(
+                'flex h-10 w-full items-center gap-2.5 rounded-md border px-3 text-sm transition text-left',
+                item.hubId
+                  ? 'border-theme-primary-start/40 bg-theme-primary-start/5 dark:bg-theme-primary-start/10 text-text-main hover:border-theme-primary-start'
+                  : 'border-dashed border-gray-300 dark:border-white/15 text-text-sub hover:border-theme-primary-start hover:bg-theme-primary-start/5',
+              )}
+            >
+              <Warehouse
+                size={14}
+                className={
+                  item.hubId ? 'text-theme-primary-start' : 'text-text-sub'
+                }
+              />
+              <span className='flex-1 truncate'>
+                {item.hubId
+                  ? hubName || item.hubId
+                  : 'Nhấn để chọn hub lưu trữ...'}
+              </span>
+              <ChevronRight size={14} className='shrink-0 text-text-sub' />
+            </button>
+            {item.hubId && (
+              <p className='text-[11px] text-text-sub font-mono'>
+                ID: {item.hubId}
+              </p>
+            )}
+          </div>
+
+          {/* Hub picker dialog */}
+          <HubPickerDialog
+            open={hubDialogOpen}
+            onClose={() => setHubDialogOpen(false)}
+            selectedHubId={item.hubId || undefined}
+            onSelect={({ hubId, hubName: name }) => {
+              onUpdate({ hubId });
+              setHubName(name);
+            }}
+          />
+
           {/* Status */}
           <div className='flex flex-col gap-1.5'>
             <label className='text-xs font-medium text-text-sub'>
@@ -207,7 +285,11 @@ function InventoryItemRow({
             </label>
             <select
               value={item.conditionGrade}
-              onChange={(e) => onUpdate({ conditionGrade: e.target.value })}
+              onChange={(e) =>
+                onUpdate({
+                  conditionGrade: e.target.value as InventoryItemConditionGrade,
+                })
+              }
               className={cn(inputCls, 'cursor-pointer')}
             >
               {CONDITION_GRADES.map((g) => (
@@ -243,11 +325,12 @@ function InventorySummary({ items }: { items: DraftInventoryItem[] }) {
   const available = items.filter((i) => i.status === 'AVAILABLE').length;
   const rented = items.filter((i) => i.status === 'RENTED').length;
   const maintenance = items.filter((i) => i.status === 'MAINTENANCE').length;
+  const damaged = items.filter((i) => i.status === 'DAMAGED').length;
 
   if (total === 0) return null;
 
   return (
-    <div className='flex flex-wrap gap-3'>
+    <div className='flex flex-wrap gap-2'>
       <Chip
         label='Tổng'
         value={total}
@@ -270,6 +353,13 @@ function InventorySummary({ items }: { items: DraftInventoryItem[] }) {
           label='Bảo trì'
           value={maintenance}
           className='text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-500/30'
+        />
+      )}
+      {damaged > 0 && (
+        <Chip
+          label='Hỏng'
+          value={damaged}
+          className='text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-500/30'
         />
       )}
     </div>

@@ -89,6 +89,12 @@ function extractBlobPathFromUrl(url: string): string | null {
   }
 }
 
+/**
+ * Props bám theo BE spec UserSecureResponse.
+ * Fields theo API-010: firstName, lastName, nickname, avatarUrl, biography, city, nationality
+ *
+ * NOTE: phoneNumber KHÔNG có trong API-010 update-profile. Chỉ hiển thị readonly.
+ */
 interface UserProfileFormProps {
   profile: UserSecure;
   onUpdated: (next: UserSecure) => void;
@@ -121,6 +127,8 @@ export function UserProfileForm({
     null,
   );
   const [isCropping, setIsCropping] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -129,6 +137,7 @@ export function UserProfileForm({
   const [avatarBroken, setAvatarBroken] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const updateProfileMutation = useUpdateProfileMutation();
 
   useEffect(() => {
     setFirstName(profile.firstName ?? '');
@@ -495,6 +504,48 @@ export function UserProfileForm({
             className='bg-gray-100 dark:bg-white/10 opacity-70 cursor-not-allowed'
           />
         </div> */}
+
+        {/* phoneNumber — readonly, BE spec không cho update qua API-010 */}
+        {profile.phoneNumber && (
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Số điện thoại
+            </label>
+            <Input
+              value={profile.phoneNumber}
+              disabled
+              className='bg-gray-100 opacity-70 cursor-not-allowed'
+            />
+            <p className='text-[11px] text-text-sub'>
+              Số điện thoại không thể thay đổi qua API update-profile.
+            </p>
+          </div>
+        )}
+
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Họ (Last Name)
+            </label>
+            <Input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder='Nguyễn'
+              className='bg-gray-50/50'
+            />
+          </div>
+          <div className='space-y-1.5'>
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
+              Tên (First Name)
+            </label>
+            <Input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder='Văn A'
+              className='bg-gray-50/50'
+            />
+          </div>
+        </div>
 
         <div className='space-y-1.5'>
           <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>

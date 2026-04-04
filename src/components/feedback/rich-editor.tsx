@@ -19,6 +19,7 @@ import {
   Quote,
 } from 'lucide-react';
 import { buildVideoEmbed } from '@/utils/embed';
+import { uploadSingleFile } from '@/features/files/api/file.service';
 import ColorPicker from './color-picker';
 import VideoModal from './video-modal';
 
@@ -152,7 +153,7 @@ export default function RichEditor({
     if (!imageUrl.trim()) return;
     const img = document.createElement('img');
     img.src = imageUrl.trim();
-    img.className = 'max-w-full h-auto block mx-auto my-3 rounded-lg';
+    img.className = 'rich-media block my-3 rounded-lg';
     img.alt = 'Hình ảnh';
     placeBlock(img);
     setImageUrl('');
@@ -160,20 +161,30 @@ export default function RichEditor({
     handleChange();
   };
 
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = document.createElement('img');
-      img.src = reader.result as string;
-      img.className = 'max-w-full h-auto block mx-auto my-3 rounded-lg';
-      img.alt = file.name;
-      placeBlock(img);
-      handleChange();
-    };
-    reader.readAsDataURL(file);
     e.target.value = '';
+
+    // Insert loading placeholder at cursor position
+    const placeholder = document.createElement('span');
+    placeholder.textContent = 'Đang tải ảnh lên...';
+    placeholder.className = 'text-xs text-text-sub italic animate-pulse';
+    placeBlock(placeholder);
+    handleChange();
+
+    try {
+      const result = await uploadSingleFile(file, 'products');
+      const img = document.createElement('img');
+      img.src = result.fileUrl;
+      img.className = 'rich-media block my-3 rounded-lg';
+      img.alt = file.name;
+      placeholder.replaceWith(img);
+      handleChange();
+    } catch {
+      placeholder.replaceWith(document.createTextNode('❌ Tải ảnh thất bại'));
+      handleChange();
+    }
   };
 
   const handleColorChange = (color: string) => {
@@ -388,8 +399,8 @@ export default function RichEditor({
             [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1
             [&_blockquote]:border-l-4 [&_blockquote]:border-theme-primary-start/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-text-sub [&_blockquote]:my-2
             [&_a]:text-theme-primary-start [&_a]:underline
-            [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-3
-            [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-xl [&_iframe]:my-3
+            [&_.rich-media]:block [&_.rich-media]:max-w-sm [&_.rich-media]:h-auto [&_.rich-media]:rounded-lg [&_.rich-media]:my-3
+            [&_iframe.rich-media]:w-full [&_iframe.rich-media]:max-w-sm [&_iframe.rich-media]:aspect-video
             [&_hr]:border-border/50 [&_hr]:dark:border-white/10 [&_hr]:my-3'
           style={{ minHeight: minHeight }}
         />
