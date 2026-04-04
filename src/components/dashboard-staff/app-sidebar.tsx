@@ -46,8 +46,8 @@ import { cn } from '@/lib/utils';
 const ORDER_WORKFLOW_TABS = [
   {
     title: 'Chờ xác nhận',
-    url: '/staff-dashboard/orders?status=PENDING',
-    statuses: ['PENDING'] as const,
+    url: '/staff-dashboard/orders?status=PAID',
+    statuses: ['PAID'] as const,
     dotClass: 'bg-amber-400',
     urgency: true,
     icon: Clock,
@@ -136,7 +136,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const urgentTotal =
     (orderCounts['RETURNING'] ?? 0) +
     (orderCounts['OVERDUE'] ?? 0) +
-    (orderCounts['PENDING'] ?? 0);
+    (orderCounts['PAID'] ?? 0);
 
   const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
 

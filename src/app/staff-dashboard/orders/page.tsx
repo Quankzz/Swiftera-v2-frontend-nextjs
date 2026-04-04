@@ -27,7 +27,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 const ALL_STATUSES: OrderStatus[] = [
-  'PENDING',
+  'PENDING_PAYMENT',
+  'PAID',
   'CONFIRMED',
   'DELIVERING',
   'ACTIVE',
@@ -162,7 +163,7 @@ function OrdersPageInner() {
   };
 
   const urgentCount = myOrders.filter((o) =>
-    ['PENDING', 'OVERDUE', 'RETURNING'].includes(o.status),
+    ['PAID', 'OVERDUE', 'RETURNING'].includes(o.status),
   ).length;
 
   if (isLoading) {
@@ -356,7 +357,20 @@ function OrdersPageInner() {
         )}
 
         {/* ===== Orders List ===== */}
-        {filtered.length === 0 ? (
+        {myOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-card rounded-xl border border-dashed border-border/60 shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Package className="w-8 h-8 text-muted-foreground/60" />
+            </div>
+            <p className="text-xl font-bold text-foreground">
+              Chưa có đơn hàng nào
+            </p>
+            <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+              Bạn chưa được phân công đơn hàng nào. Hãy liên hệ quản lý để nhận
+              lịch giao hàng.
+            </p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center bg-card rounded-xl border border-dashed border-border/60 shadow-sm">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <ShoppingBag className="w-8 h-8 text-muted-foreground/60" />

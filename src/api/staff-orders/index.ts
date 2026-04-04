@@ -69,10 +69,9 @@ export interface SetPenaltyRequest {
 export function mapApiStatusToUi(apiStatus: RentalOrderApiStatus): OrderStatus {
   switch (apiStatus) {
     case 'PENDING_PAYMENT':
-      return 'PENDING';
+      return 'PENDING_PAYMENT';
     case 'PAID':
-      // Paid-but-unconfirmed orders show in staff list as PENDING (needs confirmation)
-      return 'PENDING';
+      return 'PAID';
     case 'CONFIRMED':
       return 'CONFIRMED';
     case 'DELIVERING':
@@ -86,7 +85,7 @@ export function mapApiStatusToUi(apiStatus: RentalOrderApiStatus): OrderStatus {
     case 'CANCELLED':
       return 'CANCELLED';
     default:
-      return 'PENDING';
+      return 'PENDING_PAYMENT';
   }
 }
 
@@ -100,8 +99,9 @@ function derivePaymentStatus(o: RentalOrderResponse): PaymentStatus {
 function deriveDepositRefundStatus(
   o: RentalOrderResponse,
 ): DepositRefundStatus {
-  if (o.depositRefundAmount <= 0) return 'NOT_REFUNDED';
-  if (o.depositRefundAmount >= o.depositHoldAmount) return 'REFUNDED';
+  const refund = o.depositRefundAmount ?? 0;
+  if (refund <= 0) return 'NOT_REFUNDED';
+  if (refund >= o.depositHoldAmount) return 'REFUNDED';
   return 'PARTIAL_REFUNDED';
 }
 
@@ -134,15 +134,16 @@ export function adaptOrder(o: RentalOrderResponse): DashboardOrder {
     }
   }
 
-  const items: OrderItem[] = (o.orderLines ?? []).map((line) => ({
+  const items: OrderItem[] = (o.rentalOrderLines ?? []).map((line) => ({
     rental_order_item_id: line.rentalOrderLineId,
     product_item_id: line.inventoryItemId ?? '',
-    product_name: line.productName,
-    serial_number: line.serialNumber ?? '',
+    product_name: line.productNameSnapshot,
+    serial_number: line.inventorySerialNumber ?? '',
     category: '',
     daily_price: line.dailyPriceSnapshot,
     deposit_amount: line.depositAmountSnapshot,
-    image_url: line.productImageUrl ?? '',
+    image_url: '',
+    item_penalty_amount: line.itemPenaltyAmount,
   }));
 
   return {
@@ -164,7 +165,7 @@ export function adaptOrder(o: RentalOrderResponse): DashboardOrder {
     actual_return_date: o.actualRentalEndAt ?? undefined,
     total_rental_fee: o.rentalFeeAmount,
     total_deposit: o.depositHoldAmount,
-    total_penalty_amount: o.penaltyTotal,
+    total_penalty_amount: o.penaltyChargeAmount ?? 0,
     status: uiStatus,
     created_at: o.placedAt,
     payment_status: derivePaymentStatus(o),
@@ -208,10 +209,15 @@ export async function getStaffOrders(
   qs.set('page', String(params.page ?? 0));
   qs.set('size', String(params.size ?? 50));
 
-  // SpringFilter DSL: filter orders where this staff is delivery OR pickup staff
-  const filterParts = [
-    `deliveryStaffId:'${staffUserId}'`,
-    `pickupStaffId:'${staffUserId}'`,
+  // NOTE: Previously filtered by deliveryStaffId/pickupStaffId via SpringFilter
+  // DSL, but this caused HTTP 500 because those are entity relationship fields
+  // in the backend (not plain columns), so the filter path must use dot-notation:
+  //   deliveryStaff.userId:'<id>' or pickupStaff.userId:'<id>'
+  // Until the backend team confirms the correct filterable field path, use a
+  // combined filter that at minimum scopes by status when provided.
+  const filterParts: string[] = [
+    `deliveryStaff.userId:'${staffUserId}'`,
+    `pickupStaff.userId:'${staffUserId}'`,
   ];
   let filter = `(${filterParts.join(' or ')})`;
   if (params.status) filter += ` and status:'${params.status}'`;

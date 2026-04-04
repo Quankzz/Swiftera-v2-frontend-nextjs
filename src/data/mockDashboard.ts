@@ -65,7 +65,7 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     end_date: '2026-03-23',
     total_rental_fee: 1050000,
     total_deposit: 5000000,
-    status: 'PENDING',
+    status: 'PAID',
     payment_status: 'PAID',
     deposit_refund_status: 'NOT_REFUNDED',
     created_at: '2026-03-18T08:30:00',

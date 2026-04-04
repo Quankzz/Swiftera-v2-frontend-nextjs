@@ -17,7 +17,8 @@ export const WORKFLOW_STEPS: {
   label: string;
   icon: React.ElementType;
 }[] = [
-  { key: 'PENDING', label: 'Xác nhận', icon: ClipboardList },
+  { key: 'PENDING_PAYMENT', label: 'Chờ TT', icon: ClipboardList },
+  { key: 'PAID', label: 'Xác nhận', icon: ClipboardList },
   { key: 'CONFIRMED', label: 'Lấy hàng', icon: Warehouse },
   { key: 'DELIVERING', label: 'Giao hàng', icon: Truck },
   { key: 'ACTIVE', label: 'Đang thuê', icon: Package },
@@ -26,7 +27,7 @@ export const WORKFLOW_STEPS: {
 ];
 
 export function getStepIndex(status: OrderStatus): number {
-  if (status === 'OVERDUE') return 3;
+  if (status === 'OVERDUE') return 4; // same as ACTIVE index
   const idx = WORKFLOW_STEPS.findIndex((s) => s.key === status);
   return idx === -1 ? 0 : idx;
 }

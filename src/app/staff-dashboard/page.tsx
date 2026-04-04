@@ -74,7 +74,7 @@ const URGENT_CFG: Record<
   string,
   { label: string; color: string; bg: string; border: string; dot: string }
 > = {
-  PENDING: {
+  PAID: {
     label: 'Chờ xác nhận',
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-950/40',
@@ -216,7 +216,9 @@ export default function DashboardPage() {
   const hubName = hubInfo ? hubInfo.name : (user?.hubId ?? 'Hub');
 
   const counts = {
-    pending: myOrders.filter((o) => o.status === 'PENDING').length,
+    pending_payment: myOrders.filter((o) => o.status === 'PENDING_PAYMENT')
+      .length,
+    paid: myOrders.filter((o) => o.status === 'PAID').length,
     confirmed: myOrders.filter((o) => o.status === 'CONFIRMED').length,
     delivering: myOrders.filter((o) => o.status === 'DELIVERING').length,
     active: myOrders.filter((o) => o.status === 'ACTIVE').length,
@@ -229,7 +231,7 @@ export default function DashboardPage() {
   const urgentOrders = [
     ...myOrders.filter((o) => o.status === 'OVERDUE'),
     ...myOrders.filter((o) => o.status === 'RETURNING'),
-    ...myOrders.filter((o) => o.status === 'PENDING'),
+    ...myOrders.filter((o) => o.status === 'PAID'),
   ].slice(0, 5);
 
   const todayCount = WEEK_DATA[6].completed;
@@ -238,7 +240,7 @@ export default function DashboardPage() {
   const monthTotal = weekTotal * 4 + 3;
   const avgCompleted = Math.round(weekTotal / WEEK_DATA.length);
   const todayDiff = todayCount - yesterdayCount;
-  const urgentTotal = counts.pending + counts.returning + counts.overdue;
+  const urgentTotal = counts.paid + counts.returning + counts.overdue;
 
   const statusBarData = [
     {
@@ -248,7 +250,7 @@ export default function DashboardPage() {
     },
     {
       name: 'Cần xử lý',
-      value: counts.pending + counts.returning + counts.overdue,
+      value: counts.paid + counts.returning + counts.overdue,
       fill: '#ef4444',
     },
     { name: 'Hoàn thành', value: counts.completed, fill: '#059669' },
@@ -388,14 +390,14 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <StatusCard
               label="Chờ xác nhận"
-              count={counts.pending}
+              count={counts.paid}
               icon={Clock}
               colorClass="text-amber-600 dark:text-amber-400"
               bgClass="bg-amber-50 dark:bg-amber-950/30"
               borderClass="border-amber-200/80 dark:border-amber-700/30"
               dotClass="bg-amber-400"
-              urgent={counts.pending > 0}
-              href="/staff-dashboard/orders?status=PENDING"
+              urgent={counts.paid > 0}
+              href="/staff-dashboard/orders?status=PAID"
             />
             <StatusCard
               label="Đang giao"
@@ -921,7 +923,7 @@ function StatusCard({
 // ─── Urgent Row ───────────────────────────────────────────────────────────────
 function UrgentRow({ order }: { order: DashboardOrder }) {
   const [now] = useState(() => Date.now());
-  const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PENDING'];
+  const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PAID'];
   const daysLeft = Math.ceil(
     (new Date(order.end_date).getTime() - now) / 86_400_000,
   );

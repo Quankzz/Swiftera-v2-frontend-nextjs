@@ -1,13 +1,14 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 export type OrderStatus =
-  | 'PENDING'
+  | 'PENDING_PAYMENT'
+  | 'PAID'
   | 'CONFIRMED'
   | 'DELIVERING'
   | 'ACTIVE'
   | 'RETURNING'
   | 'COMPLETED'
   | 'CANCELLED'
-  | 'OVERDUE';
+  | 'OVERDUE'; // derived UI-only state (ACTIVE + expired)
 
 export type ProductCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
 export type ProductStatus = 'AVAILABLE' | 'RENTED' | 'MAINTENANCE';

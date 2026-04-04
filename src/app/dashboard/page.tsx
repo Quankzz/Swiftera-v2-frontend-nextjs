@@ -54,7 +54,7 @@ const URGENT_CFG: Record<
   string,
   { label: string; color: string; bg: string; border: string; dot: string }
 > = {
-  PENDING: {
+  PAID: {
     label: 'Chờ xác nhận',
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-950/40',
@@ -88,7 +88,9 @@ export default function DashboardPage() {
   );
 
   const counts = {
-    pending: myOrders.filter((o) => o.status === 'PENDING').length,
+    pending_payment: myOrders.filter((o) => o.status === 'PENDING_PAYMENT')
+      .length,
+    paid: myOrders.filter((o) => o.status === 'PAID').length,
     confirmed: myOrders.filter((o) => o.status === 'CONFIRMED').length,
     delivering: myOrders.filter((o) => o.status === 'DELIVERING').length,
     active: myOrders.filter((o) => o.status === 'ACTIVE').length,
@@ -101,7 +103,7 @@ export default function DashboardPage() {
   const urgentOrders = [
     ...myOrders.filter((o) => o.status === 'OVERDUE'),
     ...myOrders.filter((o) => o.status === 'RETURNING'),
-    ...myOrders.filter((o) => o.status === 'PENDING'),
+    ...myOrders.filter((o) => o.status === 'PAID'),
   ].slice(0, 5);
 
   // Chart metrics
@@ -112,7 +114,7 @@ export default function DashboardPage() {
   const maxBar = Math.max(...WEEK_DATA.map((d) => d.count));
 
   const todayDiff = todayCount - yesterdayCount;
-  const urgentTotal = counts.pending + counts.returning + counts.overdue;
+  const urgentTotal = counts.paid + counts.returning + counts.overdue;
 
   // Status breakdown (active view)
   const statusBreakdown = [
@@ -124,7 +126,7 @@ export default function DashboardPage() {
     },
     {
       label: 'Cần xử lý',
-      count: counts.pending + counts.returning + counts.overdue,
+      count: counts.paid + counts.returning + counts.overdue,
       color: 'bg-destructive',
       textColor: 'text-destructive',
     },
@@ -212,14 +214,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         <StatusPill
           label="Chờ xác nhận"
-          count={counts.pending}
+          count={counts.paid}
           dotClass="bg-amber-400"
           colorClass="text-amber-600 dark:text-amber-400"
           bgClass="bg-amber-50 dark:bg-amber-950/30"
           borderClass="border-amber-200/80 dark:border-amber-700/30"
           icon={Clock}
-          urgent={counts.pending > 0}
-          href="/staff-dashboard/orders?status=PENDING"
+          urgent={counts.paid > 0}
+          href="/staff-dashboard/orders?status=PAID"
         />
         <StatusPill
           label="Đang giao"
@@ -542,7 +544,7 @@ function StatusPill({
 // ─── Urgent Row ───────────────────────────────────────────────────────────────
 function UrgentRow({ order }: { order: DashboardOrder }) {
   const [now] = useState(() => Date.now());
-  const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PENDING'];
+  const cfg = URGENT_CFG[order.status] ?? URGENT_CFG['PAID'];
   const daysLeft = Math.ceil(
     (new Date(order.end_date).getTime() - now) / 86_400_000,
   );

@@ -112,14 +112,17 @@ export type RentalOrderApiStatus =
 export interface RentalOrderLineResponse {
   rentalOrderLineId: string;
   productId: string;
-  productName: string;
-  productImageUrl: string | null;
+  /** Backend returns 'productNameSnapshot', not 'productName' */
+  productNameSnapshot: string;
   inventoryItemId: string | null;
-  serialNumber: string | null;
+  /** Backend returns 'inventorySerialNumber', not 'serialNumber' */
+  inventorySerialNumber: string | null;
   dailyPriceSnapshot: number;
   depositAmountSnapshot: number;
   rentalDurationDays: number;
-  lineRentalFee: number;
+  itemPenaltyAmount: number;
+  checkoutConditionNote: string | null;
+  checkinConditionNote: string | null;
 }
 
 export interface RentalOrderResponse {
@@ -128,6 +131,7 @@ export interface RentalOrderResponse {
   deliveryStaffId: string | null;
   pickupStaffId: string | null;
   hubId: string | null;
+  hubName: string | null;
   // Delivery snapshot
   deliveryRecipientName: string;
   deliveryPhone: string;
@@ -146,9 +150,11 @@ export interface RentalOrderResponse {
   // Dates
   expectedDeliveryDate: string | null;
   expectedRentalEndDate: string | null;
+  plannedDeliveryAt: string | null;
   actualDeliveryAt: string | null;
   actualRentalStartAt: string | null;
   actualRentalEndAt: string | null;
+  plannedPickupAt: string | null;
   pickedUpAt: string | null;
   placedAt: string;
   // Status & financials
@@ -160,10 +166,11 @@ export interface RentalOrderResponse {
   depositHoldAmount: number;
   totalPayableAmount: number;
   totalPaidAmount: number;
-  penaltyTotal: number;
-  depositRefundAmount: number;
-  // Lines
-  orderLines: RentalOrderLineResponse[];
+  /** Backend returns 'penaltyChargeAmount' (nullable), not 'penaltyTotal' */
+  penaltyChargeAmount: number | null;
+  depositRefundAmount: number | null;
+  // Lines — backend key is 'rentalOrderLines', not 'orderLines'
+  rentalOrderLines: RentalOrderLineResponse[];
   // Enriched by backend (if included)
   userEmail?: string | null;
   userFullName?: string | null;

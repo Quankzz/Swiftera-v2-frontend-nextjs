@@ -152,14 +152,15 @@ export default function OrderDetailPage({
         } else {
           // CONFIRMED, DELIVERING, RETURNING: generic status transition
           const apiStatusMap: Record<OrderStatus, string> = {
-            PENDING: 'PAID',
+            PENDING_PAYMENT: 'PENDING_PAYMENT',
+            PAID: 'PAID',
             CONFIRMED: 'CONFIRMED',
             DELIVERING: 'DELIVERING',
             ACTIVE: 'ACTIVE',
             RETURNING: 'RETURNING',
             COMPLETED: 'COMPLETED',
             CANCELLED: 'CANCELLED',
-            OVERDUE: 'ACTIVE',
+            OVERDUE: 'RETURNING',
           };
           updated = await updateOrderStatus(
             order.rental_order_id,
@@ -390,7 +391,8 @@ export default function OrderDetailPage({
           {/* LEFT column: Workflow + full details */}
           <div className="flex flex-col gap-4 lg:order-1">
             {/* Status-specific workflow panel */}
-            {order.status === 'PENDING' && (
+            {(order.status === 'PENDING_PAYMENT' ||
+              order.status === 'PAID') && (
               <PendingWorkflow
                 order={order}
                 onConfirm={() =>

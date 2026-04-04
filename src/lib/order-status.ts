@@ -24,7 +24,15 @@ export interface StatusConfig {
 }
 
 export const STATUS_CFG: Record<OrderStatus, StatusConfig> = {
-  PENDING: {
+  PENDING_PAYMENT: {
+    label: 'Chờ thanh toán',
+    color: 'text-orange-600 dark:text-orange-400',
+    bg: 'bg-orange-50 dark:bg-orange-950/30',
+    border: 'border-orange-200 dark:border-orange-700/30',
+    dot: 'bg-orange-500 animate-pulse',
+    icon: Clock,
+  },
+  PAID: {
     label: 'Chờ xác nhận',
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-950/30',
@@ -91,7 +99,8 @@ export const STATUS_CFG: Record<OrderStatus, StatusConfig> = {
 };
 
 export const ALL_ORDER_STATUSES: OrderStatus[] = [
-  'PENDING',
+  'PENDING_PAYMENT',
+  'PAID',
   'CONFIRMED',
   'DELIVERING',
   'ACTIVE',
