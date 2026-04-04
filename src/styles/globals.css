@@ -475,6 +475,36 @@
 .rich-content p:last-child {
   margin-bottom: 0;
 }
+
+/*
+ * .rich-media: ảnh/video được chèn vào rich editor.
+ * - Trong editor (soạn thảo): max-w-sm → compact, dễ nhìn, không chiếm cả màn hình.
+ * - Khi nằm trong .rich-content (trang detail render): w-full → fill theo content.
+ */
+.rich-media {
+  display: block;
+  max-width: 24rem; /* compact trong editor */
+  height: auto;
+  border-radius: 0.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+iframe.rich-media {
+  width: 100%;
+  max-width: 24rem;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.75rem;
+}
+
+/* Khi nằm trong trang render (rich-content) → fill full width */
+.rich-content .rich-media {
+  max-width: 100%;
+  width: 100%;
+}
+.rich-content iframe.rich-media {
+  max-width: 100%;
+  width: 100%;
+}
 .rich-content h1,
 .rich-content h2,
 .rich-content h3 {
@@ -534,35 +564,39 @@
 }
 .dark .rich-content hr {
   border-top-color: rgba(255, 255, 255, 0.1);
-
 }
 
 /* Scanner scan-line animation */
 @keyframes scan-line {
-  0% { top: 8px; }
-  50% { top: calc(100% - 8px); }
-  100% { top: 8px; }
+  0% {
+    top: 8px;
+  }
+  50% {
+    top: calc(100% - 8px);
+  }
+  100% {
+    top: 8px;
+  }
 }
 
 .animate-react-bits-shimmer {
-    animation: react-bits-shimmer 4s linear infinite;
-    background-image: linear-gradient(
-      105deg,
-      oklch(0.55 0 0) 0%,
-      oklch(0.55 0 0) 35%,
-      oklch(0.75 0.12 180) 50%,
-      oklch(0.55 0 0) 65%,
-      oklch(0.55 0 0) 100%
-    );
-  }
-  .dark .animate-react-bits-shimmer {
-    background-image: linear-gradient(
-      105deg,
-      oklch(0.65 0 0) 0%,
-      oklch(0.65 0 0) 35%,
-      oklch(0.85 0.14 180) 50%,
-      oklch(0.65 0 0) 65%,
-      oklch(0.65 0 0) 100%
-    );
-  }
-
+  animation: react-bits-shimmer 4s linear infinite;
+  background-image: linear-gradient(
+    105deg,
+    oklch(0.55 0 0) 0%,
+    oklch(0.55 0 0) 35%,
+    oklch(0.75 0.12 180) 50%,
+    oklch(0.55 0 0) 65%,
+    oklch(0.55 0 0) 100%
+  );
+}
+.dark .animate-react-bits-shimmer {
+  background-image: linear-gradient(
+    105deg,
+    oklch(0.65 0 0) 0%,
+    oklch(0.65 0 0) 35%,
+    oklch(0.85 0.14 180) 50%,
+    oklch(0.65 0 0) 65%,
+    oklch(0.65 0 0) 100%
+  );
+}

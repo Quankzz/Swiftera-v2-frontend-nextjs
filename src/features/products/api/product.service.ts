@@ -10,10 +10,15 @@
 
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/api/apiService';
 import type {
+  CreateInventoryItemInput,
   CreateProductInput,
+  InventoryItemListParams,
+  InventoryItemResponse,
+  PaginatedInventoryItemsResponse,
   PaginatedProductsResponse,
   ProductListParams,
   ProductResponse,
+  UpdateInventoryItemInput,
   UpdateProductInput,
 } from '../types';
 
@@ -92,4 +97,66 @@ export function updateProduct(
  */
 export function deleteProduct(productId: string): Promise<null> {
   return apiDelete<null>(`/products/${productId}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Module 9: INVENTORY ITEMS (API-056 → API-060)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-058: GET /api/v1/inventory-items
+ * Paginated list of inventory items. Filter by productId via RSQL:
+ *   filter = "productId:'<uuid>'"
+ */
+export function getInventoryItems(
+  params?: InventoryItemListParams,
+): Promise<PaginatedInventoryItemsResponse> {
+  return apiGet<PaginatedInventoryItemsResponse>('/inventory-items', {
+    params: params as Record<
+      string,
+      string | number | boolean | undefined | null
+    >,
+  });
+}
+
+/**
+ * API-057: GET /api/v1/inventory-items/{inventoryItemId}
+ * Get a single inventory item by ID.
+ */
+export function getInventoryItemById(
+  inventoryItemId: string,
+): Promise<InventoryItemResponse> {
+  return apiGet<InventoryItemResponse>(`/inventory-items/${inventoryItemId}`);
+}
+
+/**
+ * API-056: POST /api/v1/inventory-items
+ * Create a new inventory item. productId and hubId are required.
+ */
+export function createInventoryItem(
+  payload: CreateInventoryItemInput,
+): Promise<InventoryItemResponse> {
+  return apiPost<InventoryItemResponse>('/inventory-items', payload);
+}
+
+/**
+ * API-059: PATCH /api/v1/inventory-items/{inventoryItemId}
+ * Partial update of an inventory item.
+ */
+export function updateInventoryItem(
+  inventoryItemId: string,
+  payload: UpdateInventoryItemInput,
+): Promise<InventoryItemResponse> {
+  return apiPatch<InventoryItemResponse>(
+    `/inventory-items/${inventoryItemId}`,
+    payload,
+  );
+}
+
+/**
+ * API-060: DELETE /api/v1/inventory-items/{inventoryItemId}
+ * Delete an inventory item. Returns void/null.
+ */
+export function deleteInventoryItem(inventoryItemId: string): Promise<null> {
+  return apiDelete<null>(`/inventory-items/${inventoryItemId}`);
 }

@@ -96,3 +96,62 @@ export interface ProductListParams {
   sort?: string;
   filter?: string;
 }
+
+// ── Inventory Item Types (Module 9: INVENTORY ITEMS — API-056 to API-060) ──
+// Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
+
+export type InventoryItemStatus =
+  | 'AVAILABLE'
+  | 'RESERVED'
+  | 'RENTED'
+  | 'MAINTENANCE'
+  | 'DAMAGED'
+  | 'RETIRED';
+
+export type InventoryItemConditionGrade = 'NEW' | 'GOOD' | 'FAIR' | 'POOR';
+
+/** Response shape from API-056 / API-057 / API-058 / API-059 */
+export interface InventoryItemResponse {
+  inventoryItemId: string;
+  productId: string;
+  productName: string;
+  hubId: string;
+  hubName: string;
+  serialNumber: string;
+  status: InventoryItemStatus;
+  conditionGrade: InventoryItemConditionGrade | null;
+  staffNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PaginatedInventoryItemsResponse =
+  PaginatedResponse<InventoryItemResponse>;
+
+/** Body for API-056: POST /api/v1/inventory-items */
+export interface CreateInventoryItemInput {
+  /** required */
+  productId: string;
+  /** required */
+  hubId: string;
+  /** required */
+  serialNumber: string;
+  conditionGrade?: InventoryItemConditionGrade;
+  staffNote?: string;
+}
+
+/** Body for API-059: PATCH /api/v1/inventory-items/{inventoryItemId} */
+export interface UpdateInventoryItemInput {
+  hubId?: string;
+  status?: InventoryItemStatus;
+  conditionGrade?: InventoryItemConditionGrade;
+  staffNote?: string;
+}
+
+/** Query params for API-058: GET /api/v1/inventory-items */
+export interface InventoryItemListParams {
+  page?: number;
+  size?: number;
+  /** RSQL filter, e.g. "productId:'uuid'" */
+  filter?: string;
+}

@@ -2,6 +2,10 @@
 
 import { useState, useCallback } from 'react';
 import type { ProductResponse } from '@/features/products/types';
+import type {
+  InventoryItemConditionGrade,
+  InventoryItemStatus,
+} from '@/features/products/types';
 
 /** Dạng draft của một ảnh trong form (chưa có productImageId từ BE) */
 export interface DraftImage {
@@ -10,6 +14,24 @@ export interface DraftImage {
   imageUrl: string;
   isPrimary: boolean;
   sortOrder: number;
+}
+
+/**
+ * DraftInventoryItem — đại diện cho một thiết bị vật lý đang được soạn trong UI.
+ * Dùng trong edit mode (productId đã tồn tại).
+ * Khi submit sẽ gọi createInventoryItem / updateInventoryItem.
+ */
+export interface DraftInventoryItem {
+  /** id tạm thời cho react key, nếu đã có từ BE thì là inventoryItemId */
+  draftId: string;
+  /** inventoryItemId thực từ BE (nếu đã create rồi) */
+  inventoryItemId?: string;
+  serialNumber: string;
+  hubId: string;
+  conditionGrade: InventoryItemConditionGrade;
+  staffNote: string;
+  /** status chỉ dùng trong edit/display, không gửi khi create */
+  status: InventoryItemStatus;
 }
 
 /**
@@ -116,6 +138,9 @@ export function useProductForm(initial?: ProductResponse) {
   const [images, setImages] = useState<DraftImage[]>(
     initial ? imagesToDrafts(initial.images) : [],
   );
+  const [draftInventoryItems, setDraftInventoryItems] = useState<
+    DraftInventoryItem[]
+  >([]);
 
   /* ─── Form field handler ─── */
   const setField = useCallback(
@@ -166,6 +191,38 @@ export function useProductForm(initial?: ProductResponse) {
     );
   }, []);
 
+  /* ─── Inventory Item handlers (edit mode only) ─── */
+  const addDraftInventoryItem = useCallback(() => {
+    setDraftInventoryItems((prev) => [
+      ...prev,
+      {
+        draftId: `inv-draft-${Date.now()}`,
+        serialNumber: '',
+        hubId: '',
+        conditionGrade: 'NEW' as InventoryItemConditionGrade,
+        staffNote: '',
+        status: 'AVAILABLE' as InventoryItemStatus,
+      },
+    ]);
+  }, []);
+
+  const updateDraftInventoryItem = useCallback(
+    (draftId: string, patch: Partial<Omit<DraftInventoryItem, 'draftId'>>) => {
+      setDraftInventoryItems((prev) =>
+        prev.map((item) =>
+          item.draftId === draftId ? { ...item, ...patch } : item,
+        ),
+      );
+    },
+    [],
+  );
+
+  const removeDraftInventoryItem = useCallback((draftId: string) => {
+    setDraftInventoryItems((prev) =>
+      prev.filter((item) => item.draftId !== draftId),
+    );
+  }, []);
+
   /* ─── Validation ─── */
   const errors: Partial<Record<keyof ProductFormData, string>> = {};
   if (!form.categoryId) errors.categoryId = 'Vui lòng chọn danh mục';
@@ -204,6 +261,10 @@ export function useProductForm(initial?: ProductResponse) {
     removeImage,
     setPrimary,
     updateImageUrl,
+    draftInventoryItems,
+    addDraftInventoryItem,
+    updateDraftInventoryItem,
+    removeDraftInventoryItem,
     errors,
     isValid,
   };

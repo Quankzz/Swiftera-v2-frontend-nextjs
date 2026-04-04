@@ -13,12 +13,22 @@ import {
   ChevronRight,
   FileText,
   LayoutGrid,
+  Boxes,
+  CheckCircle2,
+  CircleDot,
+  Wrench,
+  ShieldAlert,
+  Archive,
+  BookmarkCheck,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type {
   ProductResponse,
   ProductImageResponse,
+  InventoryItemResponse,
 } from '@/features/products/types';
+import { useInventoryItemsQuery } from '@/features/products/hooks/use-inventory-items';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -30,7 +40,7 @@ function getSalePercent(daily: number, oldDaily: number) {
   return Math.round(((oldDaily - daily) / oldDaily) * 100);
 }
 
-type Tab = 'overview' | 'description';
+type Tab = 'overview' | 'description' | 'inventory';
 
 interface ProductViewDialogProps {
   product: ProductResponse | null;
@@ -261,6 +271,207 @@ function DescriptionTab({ description }: { description: string | null }) {
   );
 }
 
+// ─── Inventory helpers ────────────────────────────────────────────
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; className: string; icon: React.ElementType }
+> = {
+  AVAILABLE: {
+    label: 'Sẵn sàng',
+    className:
+      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    icon: CheckCircle2,
+  },
+  RESERVED: {
+    label: 'Đã đặt trước',
+    className:
+      'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+    icon: BookmarkCheck,
+  },
+  RENTED: {
+    label: 'Đang cho thuê',
+    className:
+      'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    icon: CircleDot,
+  },
+  MAINTENANCE: {
+    label: 'Bảo trì',
+    className:
+      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    icon: Wrench,
+  },
+  DAMAGED: {
+    label: 'Hỏng',
+    className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    icon: ShieldAlert,
+  },
+  RETIRED: {
+    label: 'Ngừng sử dụng',
+    className: 'bg-gray-100 text-gray-500 dark:bg-white/8 dark:text-gray-400',
+    icon: Archive,
+  },
+};
+
+const CONDITION_LABEL: Record<string, string> = {
+  NEW: 'Mới — Như hộp',
+  GOOD: 'Tốt — Vài vết nhỏ',
+  FAIR: 'Trung bình — Dùng nhiều',
+  POOR: 'Kém — Cần kiểm tra',
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? {
+    label: status,
+    className: 'bg-gray-100 text-gray-500',
+    icon: AlertCircle,
+  };
+  const Icon = cfg.icon;
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+        cfg.className,
+      )}
+    >
+      <Icon size={11} />
+      {cfg.label}
+    </span>
+  );
+}
+
+function InventoryCard({ item }: { item: InventoryItemResponse }) {
+  return (
+    <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-white/3 p-4 flex flex-col gap-2'>
+      {/* Top row: serial + status */}
+      <div className='flex items-center justify-between gap-2 flex-wrap'>
+        <span className='font-mono text-sm font-semibold text-text-main tracking-wide'>
+          {item.serialNumber}
+        </span>
+        <StatusBadge status={item.status} />
+      </div>
+      {/* Mid row: hub + condition */}
+      <div className='flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-sub'>
+        <span>
+          📦{' '}
+          <span className='font-medium text-text-main'>
+            {item.hubName ?? item.hubId}
+          </span>
+        </span>
+        {item.conditionGrade && (
+          <span>
+            🔖 {CONDITION_LABEL[item.conditionGrade] ?? item.conditionGrade}
+          </span>
+        )}
+      </div>
+      {/* Staff note */}
+      {item.staffNote && (
+        <p className='text-xs text-text-sub italic border-t border-gray-100 dark:border-white/8 pt-2'>
+          {item.staffNote}
+        </p>
+      )}
+      {/* Timestamps */}
+      <p className='text-[11px] text-text-sub/60 border-t border-gray-100 dark:border-white/8 pt-1.5'>
+        Thêm vào:{' '}
+        {new Intl.DateTimeFormat('vi-VN', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        }).format(new Date(item.createdAt))}
+      </p>
+    </div>
+  );
+}
+
+// Counts per status
+function InventorySummaryBar({ items }: { items: InventoryItemResponse[] }) {
+  const counts = items.reduce<Record<string, number>>((acc, it) => {
+    acc[it.status] = (acc[it.status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const chips = Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({
+    key,
+    label: cfg.label,
+    className: cfg.className,
+    count: counts[key] ?? 0,
+  }));
+
+  return (
+    <div className='flex flex-wrap gap-2 pb-1'>
+      {chips
+        .filter((c) => c.count > 0)
+        .map((c) => (
+          <span
+            key={c.key}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+              c.className,
+            )}
+          >
+            {c.label}
+            <span className='font-bold'>{c.count}</span>
+          </span>
+        ))}
+    </div>
+  );
+}
+
+// ─── Tab: Thiết bị ────────────────────────────────────────────────
+function InventoryTab({ productId }: { productId: string }) {
+  const { data, isLoading, isError } = useInventoryItemsQuery(productId);
+  const items: InventoryItemResponse[] = data?.content ?? [];
+
+  if (isLoading) {
+    return (
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className='h-28 animate-pulse rounded-xl bg-gray-100 dark:bg-white/5'
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className='flex flex-col items-center gap-2 py-12 text-text-sub'>
+        <AlertCircle size={32} className='text-red-400 opacity-60' />
+        <p className='text-sm'>Không thể tải danh sách thiết bị.</p>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className='flex flex-col items-center gap-3 py-16 text-text-sub'>
+        <Boxes size={40} className='opacity-20' />
+        <p className='text-sm'>Chưa có thiết bị nào được thêm.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex flex-col gap-5'>
+      <div className='flex items-center justify-between flex-wrap gap-2'>
+        <p className='text-sm font-medium text-text-main'>
+          Tổng cộng{' '}
+          <span className='font-bold text-theme-primary-start'>
+            {items.length}
+          </span>{' '}
+          thiết bị
+        </p>
+        <InventorySummaryBar items={items} />
+      </div>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+        {items.map((item) => (
+          <InventoryCard key={item.inventoryItemId} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main dialog ──────────────────────────────────────────────────
 export function ProductViewDialog({
   product,
@@ -311,6 +522,7 @@ function ProductViewContent({
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'overview', label: 'Tổng quan', icon: LayoutGrid },
     { id: 'description', label: 'Mô tả chi tiết', icon: FileText },
+    { id: 'inventory', label: 'Thiết bị', icon: Boxes },
   ];
 
   return (
@@ -380,6 +592,9 @@ function ProductViewContent({
           {activeTab === 'overview' && <OverviewTab product={product} />}
           {activeTab === 'description' && (
             <DescriptionTab description={product.description} />
+          )}
+          {activeTab === 'inventory' && (
+            <InventoryTab productId={product.productId} />
           )}
         </div>
 

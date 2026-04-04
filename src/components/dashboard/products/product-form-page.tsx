@@ -26,6 +26,15 @@ import {
 import { useCategoriesQuery } from '@/features/categories/hooks/use-category-management';
 import type { ProductResponse } from '@/features/products/types';
 import RichEditor from '@/components/feedback/rich-editor';
+import { ColorPickerList } from './color-picker-list';
+import {
+  VoucherPriceCalculator,
+  type PriceValues,
+} from './voucher-price-calculator';
+import { InventorySection } from './inventory-section';
+import { useCreateInventoryItemMutation } from '@/features/products/hooks/use-inventory-items';
+import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import { toast } from 'sonner';
 
 // ─── Helper format VND ────────────────────────────────────────────
 function formatVND(val: string) {
@@ -110,6 +119,15 @@ function TextInput({
 }
 
 // ─── Image item inside Section 3 ──────────────────────────────────
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
+}
+
 function ImageItem({
   img,
   onSetPrimary,
@@ -123,7 +141,9 @@ function ImageItem({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [urlMode, setUrlMode] = useState(!img.imageUrl.startsWith('data:'));
+  const [urlMode, setUrlMode] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadMutation = useUploadFileMutation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -141,10 +161,25 @@ function ImageItem({
         <ImageCropModal
           imageSrc={cropSrc}
           onCancel={() => setCropSrc(null)}
-          onComplete={(dataUrl) => {
-            onUpdateUrl(dataUrl);
+          onComplete={async (dataUrl) => {
             setCropSrc(null);
-            setUrlMode(false);
+            setIsUploading(true);
+            try {
+              const file = dataUrlToFile(
+                dataUrl,
+                `product-image-${Date.now()}.jpg`,
+              );
+              const result = await uploadMutation.mutateAsync({
+                file,
+                folder: 'products',
+              });
+              onUpdateUrl(result.fileUrl);
+              setUrlMode(false);
+            } catch {
+              toast.error('Tải ảnh lên thất bại. Vui lòng thử lại.');
+            } finally {
+              setIsUploading(false);
+            }
           }}
         />
       )}
@@ -152,7 +187,12 @@ function ImageItem({
       <div className='flex gap-3 rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 p-3'>
         {/* Preview thumbnail */}
         <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8'>
-          {img.imageUrl ? (
+          {isUploading ? (
+            <div className='flex h-full w-full flex-col items-center justify-center gap-1 text-xs text-text-sub'>
+              <span className='animate-spin text-base'>⏳</span>
+              <span>Đang tải...</span>
+            </div>
+          ) : img.imageUrl ? (
             <Image
               src={img.imageUrl}
               alt='preview'
@@ -165,7 +205,7 @@ function ImageItem({
               Chưa có
             </div>
           )}
-          {img.isPrimary && (
+          {img.isPrimary && !isUploading && (
             <span className='absolute bottom-0 left-0 right-0 bg-theme-primary-start/80 py-0.5 text-center text-[10px] text-white'>
               Chính
             </span>
@@ -214,7 +254,7 @@ function ImageItem({
           {urlMode && (
             <input
               type='url'
-              value={img.imageUrl.startsWith('data:') ? '' : img.imageUrl}
+              value={img.imageUrl}
               onChange={(e) => onUpdateUrl(e.target.value)}
               placeholder='https://example.com/image.jpg'
               className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
@@ -276,14 +316,38 @@ export function ProductFormPage({
     removeImage,
     setPrimary,
     updateImageUrl,
+    draftInventoryItems,
+    addDraftInventoryItem,
+    updateDraftInventoryItem,
+    removeDraftInventoryItem,
     errors,
     isValid,
   } = useProductForm(initialProduct);
 
   const [submitted, setSubmitted] = useState(false);
 
+  // ── Color picker state (multi-color UI, BE only needs first/joined string) ──
+  // Initialize from initialProduct.color (comma-split if stored as comma-joined)
+  const [colors, setColors] = useState<string[]>(() => {
+    if (!initialProduct?.color) return [];
+    return initialProduct.color
+      .split(',')
+      .map((c) => c.trim())
+      .filter(Boolean);
+  });
+
+  // ── Voucher price state (tracks computed dailyPrice from calculator) ──
+  const [priceValues, setPriceValues] = useState<PriceValues>({
+    dailyPrice: initialProduct ? initialProduct.dailyPrice : 0,
+    oldDailyPrice: initialProduct?.oldDailyPrice ?? undefined,
+    selectedVoucherId: undefined,
+  });
+
   const createMutation = useCreateProductMutation();
   const updateMutation = useUpdateProductMutation();
+  const createInventoryItemMutation = useCreateInventoryItemMutation(
+    form.productId || '',
+  );
 
   // Fetch categories for dropdown
   const { data: categoriesData, isLoading: loadingCategories } =
@@ -308,25 +372,55 @@ export function ProductFormPage({
       .filter((img) => img.imageUrl)
       .map((img) => img.imageUrl);
 
+    // Màu: join nhiều màu thành 1 string (BE nhận single string)
+    const colorString = colors.length > 0 ? colors.join(',') : undefined;
+
+    // Giá: lấy từ VoucherPriceCalculator
+    const dailyPrice =
+      priceValues.dailyPrice > 0
+        ? priceValues.dailyPrice
+        : parseFloat(form.dailyPrice) || 0;
+    const oldDailyPrice = priceValues.oldDailyPrice;
+
     if (mode === 'new') {
       createMutation.mutate(
         {
           categoryId: form.categoryId,
           name: form.name,
-          dailyPrice: parseFloat(form.dailyPrice),
+          dailyPrice,
           depositAmount: form.depositAmount
             ? parseFloat(form.depositAmount)
             : 0,
           brand: form.brand || undefined,
-          color: form.color || undefined,
+          color: colorString,
           description: form.description || undefined,
-          oldDailyPrice: form.oldDailyPrice
-            ? parseFloat(form.oldDailyPrice)
-            : undefined,
+          oldDailyPrice,
           minRentalDays: parseInt(form.minRentalDays) || 1,
           imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
         },
-        { onSuccess: () => router.push('/dashboard/products') },
+        {
+          onSuccess: (newProduct) => {
+            // Tạo inventory items cho product mới nếu có draft items
+            const pendingItems = draftInventoryItems.filter(
+              (item) => item.serialNumber && item.hubId,
+            );
+            if (pendingItems.length > 0) {
+              Promise.all(
+                pendingItems.map((item) =>
+                  createInventoryItemMutation.mutateAsync({
+                    productId: newProduct.productId,
+                    hubId: item.hubId,
+                    serialNumber: item.serialNumber,
+                    conditionGrade: item.conditionGrade,
+                    staffNote: item.staffNote || undefined,
+                  }),
+                ),
+              ).finally(() => router.push('/dashboard/products'));
+            } else {
+              router.push('/dashboard/products');
+            }
+          },
+        },
       );
     } else {
       if (!form.productId) return;
@@ -336,22 +430,43 @@ export function ProductFormPage({
           payload: {
             categoryId: form.categoryId,
             name: form.name,
-            dailyPrice: parseFloat(form.dailyPrice),
+            dailyPrice,
             depositAmount: form.depositAmount
               ? parseFloat(form.depositAmount)
               : 0,
             brand: form.brand || undefined,
-            color: form.color || undefined,
+            color: colorString,
             description: form.description || undefined,
-            oldDailyPrice: form.oldDailyPrice
-              ? parseFloat(form.oldDailyPrice)
-              : undefined,
+            oldDailyPrice,
             minRentalDays: parseInt(form.minRentalDays) || 1,
             imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
             isActive: form.isActive,
           },
         },
-        { onSuccess: () => router.push('/dashboard/products') },
+        {
+          onSuccess: () => {
+            // Tạo các inventory item draft mới (chưa có inventoryItemId)
+            const newDraftItems = draftInventoryItems.filter(
+              (item) =>
+                !item.inventoryItemId && item.serialNumber && item.hubId,
+            );
+            if (newDraftItems.length > 0) {
+              Promise.all(
+                newDraftItems.map((item) =>
+                  createInventoryItemMutation.mutateAsync({
+                    productId: form.productId,
+                    hubId: item.hubId,
+                    serialNumber: item.serialNumber,
+                    conditionGrade: item.conditionGrade,
+                    staffNote: item.staffNote || undefined,
+                  }),
+                ),
+              ).finally(() => router.push('/dashboard/products'));
+            } else {
+              router.push('/dashboard/products');
+            }
+          },
+        },
       );
     }
   };
@@ -421,11 +536,14 @@ export function ProductFormPage({
                   placeholder='VD: Canon'
                 />
               </Field>
-              <Field label='Màu sắc' hint='VD: Đen, Bạc, Blue Titanium'>
-                <TextInput
-                  value={form.color}
-                  onChange={(v) => setField('color', v)}
-                  placeholder='VD: Đen'
+              <Field
+                label='Màu sắc'
+                hint='Chọn 1 hoặc nhiều màu (BE nhận màu đầu tiên / các màu join bằng dấu phẩy)'
+              >
+                <ColorPickerList
+                  colors={colors}
+                  onChange={setColors}
+                  maxColors={5}
                 />
               </Field>
             </div>
@@ -441,42 +559,29 @@ export function ProductFormPage({
               />
             </Field>
 
-            {/* Giá thuê + Giá gốc (2 cột) */}
-            <div className='grid grid-cols-2 gap-4'>
-              <Field
-                label='Giá thuê / ngày'
-                required
-                error={showError('dailyPrice')}
-                hint='Đơn vị: VNĐ'
-              >
-                <div className='relative'>
-                  <TextInput
-                    value={formatVND(form.dailyPrice)}
-                    onChange={(v) => setField('dailyPrice', parseVND(v))}
-                    placeholder='350.000'
-                  />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-sub'>
-                    ₫
-                  </span>
-                </div>
-              </Field>
-              <Field
-                label='Giá gốc (tuỳ chọn)'
-                error={showError('oldDailyPrice')}
-                hint='Để hiển thị % giảm giá'
-              >
-                <div className='relative'>
-                  <TextInput
-                    value={formatVND(form.oldDailyPrice)}
-                    onChange={(v) => setField('oldDailyPrice', parseVND(v))}
-                    placeholder='450.000'
-                  />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-sub'>
-                    ₫
-                  </span>
-                </div>
-              </Field>
-            </div>
+            {/* Giá thuê — dùng VoucherPriceCalculator thay cho 2 input thủ công */}
+            <Field
+              label='Giá thuê & Voucher giảm giá'
+              required
+              error={showError('dailyPrice')}
+              hint='Nhập giá gốc rồi chọn voucher để tự động tính giá thuê cuối'
+            >
+              <VoucherPriceCalculator
+                oldDailyPrice={form.oldDailyPrice || form.dailyPrice}
+                onOldDailyPriceChange={(v) => {
+                  setField('oldDailyPrice', v);
+                  setField('dailyPrice', v); // sync để validation
+                }}
+                selectedVoucherId={priceValues.selectedVoucherId}
+                onVoucherChange={(id) =>
+                  setPriceValues((prev) => ({
+                    ...prev,
+                    selectedVoucherId: id,
+                  }))
+                }
+                onValueChange={setPriceValues}
+              />
+            </Field>
 
             {/* Đặt cọc + Thuê tối thiểu (2 cột) */}
             <div className='grid grid-cols-2 gap-4'>
@@ -622,6 +727,23 @@ export function ProductFormPage({
             </button>
           </div>
         </FormSection>
+
+        {/* ── SECTION 3: Inventory Items (chỉ hiện ở edit mode) ── */}
+        {mode === 'edit' && (
+          <FormSection title='Thiết bị vật lý (Inventory Items)'>
+            <p className='mb-4 text-xs text-text-sub'>
+              Thêm từng thiết bị vật lý theo số serial. Mỗi thiết bị cần có Hub
+              ID và Serial Number. Nhấn &quot;Lưu thay đổi&quot; để gửi các
+              thiết bị mới lên server.
+            </p>
+            <InventorySection
+              items={draftInventoryItems}
+              onAdd={addDraftInventoryItem}
+              onRemove={removeDraftInventoryItem}
+              onUpdate={updateDraftInventoryItem}
+            />
+          </FormSection>
+        )}
 
         {/* ── Submit ── */}
         <div className='flex items-center justify-end gap-3 pt-2'>
