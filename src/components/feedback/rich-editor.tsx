@@ -168,7 +168,7 @@ export default function RichEditor({
 
     // Insert loading placeholder at cursor position
     const placeholder = document.createElement('span');
-    placeholder.textContent = '⏳ Đang tải ảnh lên...';
+    placeholder.textContent = 'Đang tải ảnh lên...';
     placeholder.className = 'text-xs text-text-sub italic animate-pulse';
     placeBlock(placeholder);
     handleChange();
