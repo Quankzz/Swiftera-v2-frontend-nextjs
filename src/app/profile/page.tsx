@@ -47,7 +47,7 @@ export default function ProfilePage() {
               </h3>
             </div>
             <p className='text-sm text-gray-600 dark:text-text-sub'>
-              Cập nhật tên và thông tin hiển thị
+              Họ tên, biệt danh, ảnh đại diện, giới thiệu, thành phố
             </p>
           </div>
 
