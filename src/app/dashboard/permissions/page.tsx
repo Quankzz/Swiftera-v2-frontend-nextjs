@@ -10,7 +10,7 @@ import {
 } from '@/components/dashboard/permissions/permissions-dialogs';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { Permission } from '@/types/dashboard';
+import type { PermissionResponse } from '@/features/roles/types';
 
 export default function PermissionsPage() {
   const [formOpen, setFormOpen] = useState(false);
@@ -19,7 +19,7 @@ export default function PermissionsPage() {
   const [moduleDeleteOpen, setModuleDeleteOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedPermission, setSelectedPermission] =
-    useState<Permission | null>(null);
+    useState<PermissionResponse | null>(null);
   const [presetModule, setPresetModule] = useState<string | undefined>(
     undefined,
   );
@@ -30,13 +30,13 @@ export default function PermissionsPage() {
     setFormOpen(true);
   };
 
-  const handleEditPermission = (permission: Permission) => {
+  const handleEditPermission = (permission: PermissionResponse) => {
     setSelectedPermission(permission);
     setPresetModule(permission.module);
     setFormOpen(true);
   };
 
-  const handleDeletePermission = (permission: Permission) => {
+  const handleDeletePermission = (permission: PermissionResponse) => {
     setSelectedPermission(permission);
     setDeleteOpen(true);
   };

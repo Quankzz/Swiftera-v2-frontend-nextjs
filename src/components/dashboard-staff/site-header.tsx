@@ -22,11 +22,11 @@ const PAGE_TITLES: Record<
   string,
   { label: string; parent?: string; parentUrl?: string }
 > = {
-  '/dashboard': { label: 'Tổng quan' },
-  '/dashboard/orders': {
+  '/staff-dashboard': { label: 'Tổng quan' },
+  '/staff-dashboard/orders': {
     label: 'Đơn hàng',
-    parent: 'Dashboard',
-    parentUrl: '/dashboard',
+    parent: 'Tổng quan',
+    parentUrl: '/staff-dashboard',
   },
 };
 
@@ -73,15 +73,15 @@ export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const pathname = usePathname();
 
-  // Match dynamic routes like /dashboard/orders/[id]
+  // Match dynamic routes like /staff-dashboard/orders/[id]
   const orderDetailMatch = pathname.match(/^\/dashboard\/orders\/(.+)$/);
   const pageInfo = orderDetailMatch
     ? {
         label: `Đơn #${orderDetailMatch[1].toUpperCase().slice(0, 10)}`,
         parent: 'Đơn hàng',
-        parentUrl: '/dashboard/orders',
+        parentUrl: '/staff-dashboard/orders',
       }
-    : (PAGE_TITLES[pathname] ?? { label: 'Dashboard' });
+    : (PAGE_TITLES[pathname] ?? { label: 'Tổng quan' });
 
   return (
     <header className="sticky top-0 z-50 flex w-full h-16 shrink-0 items-center justify-between border-b border-border/40 bg-background/70 px-2 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] transition-all">

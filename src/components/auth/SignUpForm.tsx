@@ -1,9 +1,12 @@
+'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { SocialIcons } from './SocialIcons';
 import { PasswordStrength } from './PasswordStrength';
 
 const inputClassName =
@@ -11,6 +14,7 @@ const inputClassName =
 
 export function SignUpForm() {
   const router = useRouter();
+  const { register, isLoading } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,6 +22,7 @@ export function SignUpForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +39,20 @@ export function SignUpForm() {
     }
 
     try {
-      // TODO: Gọi API đăng ký với payload:
-      // { email, phoneNumber, password, confirmPassword, firstName, lastName }
-      router.push('/auth/login');
-    } catch {
-      setError('Đăng ký thất bại');
+      setIsSubmitting(true);
+      await register({
+        email,
+        phoneNumber,
+        password,
+        confirmPassword,
+        firstName,
+        lastName,
+      });
+      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Đăng ký thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -110,9 +124,17 @@ export function SignUpForm() {
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       <Button
         type="submit"
+        disabled={isSubmitting || isLoading}
         className="mt-2 h-auto w-full bg-[#fe1451] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#ba264d]"
       >
-        Đăng ký
+        {isSubmitting ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Đang đăng ký
+          </>
+        ) : (
+          'Đăng ký'
+        )}
       </Button>
     </form>
   );

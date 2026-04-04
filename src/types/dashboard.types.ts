@@ -1,13 +1,23 @@
 // ─── Enums ────────────────────────────────────────────────────────────────────
 export type OrderStatus =
-  | 'PENDING'
-  | 'CONFIRMED'
+  // Customer-facing
+  | 'PENDING_PAYMENT'
+  // Delivery staff statuses
+  | 'PAID'
+  | 'PREPARING'
   | 'DELIVERING'
-  | 'ACTIVE'
-  | 'RETURNING'
+  | 'DELIVERED'
+  // Customer rental period
+  | 'IN_USE'
+  | 'OVERDUE' // derived UI-only: IN_USE + past expectedRentalEndDate
+  // Pickup staff statuses
+  | 'PENDING_PICKUP'
+  | 'PICKING_UP'
+  | 'PICKED_UP'
+  | 'INSPECTING'
+  // Terminal
   | 'COMPLETED'
-  | 'CANCELLED'
-  | 'OVERDUE';
+  | 'CANCELLED';
 
 export type ProductCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
 export type ProductStatus = 'AVAILABLE' | 'RENTED' | 'MAINTENANCE';
@@ -16,30 +26,6 @@ export type DepositRefundStatus =
   | 'NOT_REFUNDED'
   | 'REFUNDED'
   | 'PARTIAL_REFUNDED';
-
-// ─── Staff & Hub ──────────────────────────────────────────────────────────────
-export interface StaffMember {
-  staff_id: string;
-  full_name: string;
-  email: string;
-  phone_number: string;
-  avatar_url?: string;
-  role: 'STAFF' | 'MANAGER';
-  hub_id: string;
-}
-
-export interface HubInfo {
-  hub_id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  phone_number: string;
-  manager_name: string;
-  open_hours: string;
-  tax_code: string;
-  representative: string;
-}
 
 // ─── Renter ───────────────────────────────────────────────────────────────────
 export interface RenterInfo {

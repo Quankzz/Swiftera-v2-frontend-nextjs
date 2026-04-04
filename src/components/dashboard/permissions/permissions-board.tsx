@@ -28,17 +28,21 @@ import {
 } from '@tabler/icons-react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Permission } from '@/types/dashboard';
+import type {
+  PermissionResponse,
+  PaginatedPermissionsResponse,
+} from '@/features/roles/types';
+import { permissionKeys } from '@/features/roles/api/role.keys';
 import {
   useModulesQuery,
-  usePermissionsQuery,
-  useUpdatePermissionModuleMutation,
-} from '@/hooks/api/use-permissions';
+  usePermissionsListQuery,
+  useUpdatePermissionMutation,
+} from '@/features/roles/hooks/use-roles';
 
 type PermissionTreeProps = {
   onAddPermission?: (module?: string) => void;
-  onEditPermission?: (permission: Permission) => void;
-  onDeletePermission?: (permission: Permission) => void;
+  onEditPermission?: (permission: PermissionResponse) => void;
+  onDeletePermission?: (permission: PermissionResponse) => void;
   onAddModule?: () => void;
   onEditModule?: (moduleName: string) => void;
   onDeleteModule?: (moduleName: string) => void;
@@ -58,9 +62,9 @@ function PermissionRow({
   onDelete,
   isDraggingContext,
 }: {
-  permission: Permission;
-  onEdit?: (permission: Permission) => void;
-  onDelete?: (permission: Permission) => void;
+  permission: PermissionResponse;
+  onEdit?: (permission: PermissionResponse) => void;
+  onDelete?: (permission: PermissionResponse) => void;
   isDraggingContext?: boolean;
 }) {
   const {
@@ -103,10 +107,11 @@ function PermissionRow({
           <div className='flex items-center gap-2 text-xs text-text-sub'>
             <span
               className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                methodStyles[permission.method] || 'bg-gray-100 text-text-main'
+                methodStyles[permission.httpMethod] ||
+                'bg-gray-100 text-text-main'
               }`}
             >
-              {permission.method}
+              {permission.httpMethod}
             </span>
             <span className='truncate max-w-60' title={permission.apiPath}>
               {permission.apiPath}
@@ -148,12 +153,12 @@ function ModuleNode({
   onDeleteModule,
 }: {
   moduleName: string;
-  permissions: Permission[];
+  permissions: PermissionResponse[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   onAddPermission?: () => void;
-  onEditPermission?: (permission: Permission) => void;
-  onDeletePermission?: (permission: Permission) => void;
+  onEditPermission?: (permission: PermissionResponse) => void;
+  onDeletePermission?: (permission: PermissionResponse) => void;
   onEditModule?: (moduleName: string) => void;
   onDeleteModule?: (moduleName: string) => void;
 }) {
@@ -294,17 +299,20 @@ export function PermissionsBoard({
   onEditModule,
   onDeleteModule,
 }: PermissionTreeProps) {
-  const params = { page: 1, limit: 1000 } as const;
-  const { data, isLoading } = usePermissionsQuery(params);
+  const params = { page: 0, size: 1000 } as const;
+  const { data, isLoading } = usePermissionsListQuery(params);
   const { data: modulesData } = useModulesQuery();
   const queryClient = useQueryClient();
-  const updateModuleMutation = useUpdatePermissionModuleMutation();
+  const updatePermissionMutation = useUpdatePermissionMutation();
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const permissions = useMemo(() => data?.data || [], [data]);
+  const permissions = useMemo<PermissionResponse[]>(
+    () => data?.content ?? [],
+    [data],
+  );
   const modules = useMemo(() => {
     const set = new Set<string>();
-    (modulesData || []).forEach((m) => set.add(m));
+    ((modulesData as string[] | undefined) ?? []).forEach((m) => set.add(m));
     permissions.forEach((p) => set.add(p.module || 'Chưa phân loại'));
     return Array.from(set);
   }, [modulesData, permissions]);
@@ -352,16 +360,16 @@ export function PermissionsBoard({
     }
 
     if (targetModule && targetModule !== draggedPermission.module) {
-      const queryKey = ['permissions', 'list', params];
+      const queryKey = permissionKeys.list(params);
       const previous = queryClient.getQueryData(queryKey);
 
       queryClient.setQueryData(
         queryKey,
-        (old: { data: Permission[]; total: number } | undefined) => {
-          if (!old?.data) return old;
+        (old: PaginatedPermissionsResponse | undefined) => {
+          if (!old?.content) return old;
           return {
             ...old,
-            data: old.data.map((p: Permission) =>
+            content: old.content.map((p: PermissionResponse) =>
               p.permissionId === draggedPermission.permissionId
                 ? { ...p, module: targetModule as string }
                 : p,
@@ -371,9 +379,9 @@ export function PermissionsBoard({
       );
 
       try {
-        await updateModuleMutation.mutateAsync({
+        await updatePermissionMutation.mutateAsync({
           permissionId: draggedPermission.permissionId,
-          module: targetModule,
+          payload: { module: targetModule },
         });
         queryClient.invalidateQueries({ queryKey: ['permissions'] });
       } catch (error) {

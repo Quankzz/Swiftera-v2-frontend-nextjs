@@ -1,6 +1,4 @@
 import type {
-  StaffMember,
-  HubInfo,
   DashboardOrder,
   DashboardProduct,
   DashboardStats,
@@ -8,7 +6,7 @@ import type {
 } from '@/types/dashboard.types';
 
 // ─── Current Staff ────────────────────────────────────────────────────────────
-export const MOCK_CURRENT_STAFF: StaffMember = {
+export const MOCK_CURRENT_STAFF = {
   staff_id: 'staff-001',
   full_name: 'Nguyễn Minh Khoa',
   email: 'khoa.nguyen@swiftera.vn',
@@ -19,7 +17,7 @@ export const MOCK_CURRENT_STAFF: StaffMember = {
 };
 
 // ─── Hub Info ─────────────────────────────────────────────────────────────────
-export const MOCK_HUB_INFO: HubInfo = {
+export const MOCK_HUB_INFO = {
   hub_id: 'hub-001',
   name: 'Swiftera Hub Quận 1',
   address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM',
@@ -67,7 +65,7 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     end_date: '2026-03-23',
     total_rental_fee: 1050000,
     total_deposit: 5000000,
-    status: 'PENDING',
+    status: 'PAID',
     payment_status: 'PAID',
     deposit_refund_status: 'NOT_REFUNDED',
     created_at: '2026-03-18T08:30:00',
@@ -169,8 +167,8 @@ export const MOCK_ORDERS: DashboardOrder[] = [
         checkout_condition: 'FAIR',
         checkout_photo_url:
           'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=600',
-        item_penalty_amount: 500000,
-        staff_note: 'Vỡ 1 cánh quạt, đã áp dụng phạt 500.000đ',
+        item_penalty_amount: 50000000,
+        staff_note: 'Vỡ 1 cánh quạt, đã áp dụng phạt 50.000.000đ',
       },
     ],
     start_date: '2026-03-15',
@@ -178,7 +176,7 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     actual_return_date: '2026-03-19',
     total_rental_fee: 1600000,
     total_deposit: 12000000,
-    total_penalty_amount: 500000,
+    total_penalty_amount: 50000000,
     status: 'OVERDUE',
     payment_status: 'PAID',
     deposit_refund_status: 'NOT_REFUNDED',
@@ -220,7 +218,7 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     end_date: '2026-03-25',
     total_rental_fee: 1000000,
     total_deposit: 3000000,
-    status: 'CONFIRMED',
+    status: 'PREPARING',
     payment_status: 'PENDING',
     deposit_refund_status: 'NOT_REFUNDED',
     created_at: '2026-03-17T16:45:00',
@@ -313,7 +311,7 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     end_date: '2026-03-24',
     total_rental_fee: 1800000,
     total_deposit: 10000000,
-    status: 'ACTIVE',
+    status: 'IN_USE',
     payment_status: 'PAID',
     deposit_refund_status: 'NOT_REFUNDED',
     created_at: '2026-03-18T09:15:00',
@@ -376,7 +374,7 @@ export const MOCK_ORDERS: DashboardOrder[] = [
     end_date: '2026-03-23',
     total_rental_fee: 800000,
     total_deposit: 6000000,
-    status: 'RETURNING',
+    status: 'PICKING_UP',
     payment_status: 'PAID',
     deposit_refund_status: 'NOT_REFUNDED',
     created_at: '2026-03-21T07:30:00',

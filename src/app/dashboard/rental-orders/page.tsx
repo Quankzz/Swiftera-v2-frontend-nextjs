@@ -7,11 +7,12 @@ import {
   Truck,
   PackageCheck,
   CheckCircle2,
+  CreditCard,
 } from 'lucide-react';
-import { RentalOrder } from '@/types/dashboard';
-import { useRentalOrdersQuery } from '@/hooks/api/use-rental-orders';
-import { RentalOrdersTable } from '@/components/dashboard/rental-orders/orders-table';
-import { AssignDialog } from '@/components/dashboard/rental-orders/assign-dialog';
+import { useRentalOrdersQuery } from '@/features/rental-orders/hooks/use-rental-order-management';
+import { RentalOrdersTable } from '@/components/dashboard/rental-orders/rental-order-table';
+import { RentalOrderAssignDialog } from '@/features/rental-orders/components/rental-order-assign-dialog';
+import type { RentalOrderResponse } from '@/features/rental-orders/types';
 import { cn } from '@/lib/utils';
 
 function StatCard({
@@ -50,17 +51,21 @@ function StatCard({
 }
 
 export default function RentalOrdersPage() {
-  const [selectedOrder, setSelectedOrder] = useState<RentalOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] =
+    useState<RentalOrderResponse | null>(null);
 
-  // Load all orders for stats (no status filter, high limit)
+  // Load orders for stats (high page size, no filter)
   const { data: allData, isLoading: statsLoading } = useRentalOrdersQuery({
-    limit: 100,
+    page: 0,
+    size: 200,
   });
-  const allOrders = allData?.data ?? [];
+  const allOrders = allData?.content ?? [];
 
   const stats = {
-    total: allData?.total ?? 0,
-    pending: allOrders.filter((o) => o.status === 'PENDING').length,
+    total: allData?.meta?.totalElements ?? 0,
+    pendingPayment: allOrders.filter((o) => o.status === 'PENDING_PAYMENT')
+      .length,
+    paid: allOrders.filter((o) => o.status === 'PAID').length,
     delivering: allOrders.filter((o) => o.status === 'DELIVERING').length,
     active: allOrders.filter((o) => o.status === 'ACTIVE').length,
     completed: allOrders.filter((o) => o.status === 'COMPLETED').length,
@@ -87,7 +92,7 @@ export default function RentalOrdersPage() {
       </div>
 
       {/* Stats */}
-      <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
         <StatCard
           label='Tổng đơn'
           value={stats.total}
@@ -96,10 +101,17 @@ export default function RentalOrdersPage() {
           isLoading={statsLoading}
         />
         <StatCard
-          label='Chờ xác nhận'
-          value={stats.pending}
+          label='Chờ thanh toán'
+          value={stats.pendingPayment}
           icon={Clock}
           colorCls='bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+          isLoading={statsLoading}
+        />
+        <StatCard
+          label='Đã thanh toán'
+          value={stats.paid}
+          icon={CreditCard}
+          colorCls='bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400'
           isLoading={statsLoading}
         />
         <StatCard
@@ -130,12 +142,14 @@ export default function RentalOrdersPage() {
         <RentalOrdersTable onAssign={setSelectedOrder} />
       </div>
 
-      {/* Assign Dialog */}
-      <AssignDialog
-        order={selectedOrder}
-        isOpen={!!selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-      />
+      {/* Order assign dialog (chi tiết đơn + chọn nhân viên) */}
+      {selectedOrder && (
+        <RentalOrderAssignDialog
+          order={selectedOrder}
+          isOpen={!!selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
+      )}
     </div>
   );
 }

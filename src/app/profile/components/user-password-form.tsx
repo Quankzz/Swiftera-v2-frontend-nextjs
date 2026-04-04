@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { userApi } from '@/api/userProfileApi';
+import { getApiErrorMessage, getApiSuccessMessage } from '../utils';
 
 export function UserPasswordForm() {
   const [current, setCurrent] = useState('');
@@ -13,8 +15,10 @@ export function UserPasswordForm() {
   const [showNext, setShowNext] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
+
+  const updatePassword = useUpdatePasswordMutation();
 
   const validate = () => {
     if (!current) return 'Vui lòng nhập mật khẩu hiện tại';
@@ -30,16 +34,26 @@ export function UserPasswordForm() {
       setError(msg);
       return;
     }
-    setSaving(true);
     setError('');
-    // TODO: wire up to real API
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    setDone(true);
-    setCurrent('');
-    setNext('');
-    setConfirm('');
-    setTimeout(() => setDone(false), 3000);
+    setSuccessMessage('');
+    try {
+      const res = await userApi.updatePassword({
+        currentPassword: current,
+        newPassword: next,
+        confirmPassword: confirm,
+      });
+      setSuccessMessage(
+        getApiSuccessMessage(res.data, 'Mật khẩu đã được đổi thành công.'),
+      );
+      setCurrent('');
+      setNext('');
+      setConfirm('');
+      setTimeout(() => setSuccessMessage(''), 6000);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Đổi mật khẩu thất bại'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const field = (
@@ -63,7 +77,7 @@ export function UserPasswordForm() {
             setError('');
           }}
           placeholder={placeholder}
-          className='bg-gray-50/50 pr-10'
+          className='bg-gray-50/50 dark:bg-white/5 pr-10'
         />
         <button
           type='button'
@@ -92,9 +106,10 @@ export function UserPasswordForm() {
         </div>
       </div>
 
-      {done && (
-        <div className='flex items-center gap-2 rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 px-4 py-3 text-sm text-green-700 dark:text-green-400'>
-          <CheckCircle2 size={16} /> Mật khẩu đã được đổi thành công.
+      {successMessage && (
+        <div className='flex items-start gap-2 rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 px-4 py-3 text-sm text-green-700 dark:text-green-400'>
+          <CheckCircle2 size={16} className='shrink-0 mt-0.5' />
+          <span>{successMessage}</span>
         </div>
       )}
 
@@ -129,10 +144,10 @@ export function UserPasswordForm() {
         <div className='pt-2 flex justify-end'>
           <Button
             type='submit'
-            disabled={saving || !current || !next || !confirm}
+            disabled={updatePassword.isPending || !current || !next || !confirm}
             className='bg-theme-primary-start hover:opacity-90'
           >
-            {saving ? 'Đang đổi...' : 'Đổi mật khẩu'}
+            {updatePassword.isPending ? 'Đang đổi...' : 'Đổi mật khẩu'}
           </Button>
         </div>
       </form>

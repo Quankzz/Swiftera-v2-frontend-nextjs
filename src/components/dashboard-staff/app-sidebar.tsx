@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { usePathname, useSearchParams } from 'next/navigation'; // Thêm useSearchParams
 import {
   LayoutDashboard,
@@ -38,26 +39,22 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { NavUser } from '@/components/dashboard-staff/nav-user';
-import {
-  MOCK_CURRENT_STAFF,
-  MOCK_HUB_INFO,
-  MOCK_ORDERS,
-} from '@/data/mockDashboard';
+import { useAuthStore } from '@/stores/auth-store';
+import { logout as logoutApi } from '@/api/auth';
 import { cn } from '@/lib/utils';
 
-// ─── Workflow sub-tabs ────────────────────────────────────────────────────────
 const ORDER_WORKFLOW_TABS = [
   {
     title: 'Chờ xác nhận',
-    url: '/dashboard/orders?status=PENDING',
-    statuses: ['PENDING'] as const,
+    url: '/staff-dashboard/orders?status=PAID',
+    statuses: ['PAID'] as const,
     dotClass: 'bg-amber-400',
     urgency: true,
     icon: Clock,
   },
   {
     title: 'Đang giao hàng',
-    url: '/dashboard/orders?status=DELIVERING',
+    url: '/staff-dashboard/orders?status=DELIVERING',
     statuses: ['DELIVERING'] as const,
     dotClass: 'bg-info animate-pulse',
     urgency: false,
@@ -65,7 +62,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Đang thuê',
-    url: '/dashboard/orders?status=ACTIVE',
+    url: '/staff-dashboard/orders?status=ACTIVE',
     statuses: ['ACTIVE'] as const,
     dotClass: 'bg-success',
     urgency: false,
@@ -73,7 +70,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Cần thu hồi',
-    url: '/dashboard/orders?status=RETURNING',
+    url: '/staff-dashboard/orders?status=RETURNING',
     statuses: ['RETURNING'] as const,
     dotClass: 'bg-destructive animate-pulse',
     urgency: true,
@@ -81,7 +78,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Đã quá hạn',
-    url: '/dashboard/orders?status=OVERDUE',
+    url: '/staff-dashboard/orders?status=OVERDUE',
     statuses: ['OVERDUE'] as const,
     dotClass: 'bg-destructive animate-pulse',
     urgency: true,
@@ -89,7 +86,7 @@ const ORDER_WORKFLOW_TABS = [
   },
   {
     title: 'Đã hoàn thành',
-    url: '/dashboard/orders?status=COMPLETED',
+    url: '/staff-dashboard/orders?status=COMPLETED',
     statuses: ['COMPLETED'] as const,
     dotClass: 'bg-success',
     urgency: false,
@@ -103,14 +100,25 @@ const SECONDARY_ITEMS = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams(); // Lấy query params trên URL
+  const searchParams = useSearchParams();
   const currentStatus = searchParams.get('status');
+  const { user } = useAuthStore();
+  console.log(user);
+  const staffName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ')
+    : '';
+  const staffEmail = user?.email ?? '';
+  const staffAvatar =
+    user?.avatarUrl ??
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
+  const hubDisplayName = user?.hubId ?? ''; // will be enriched once hub API populates store
 
-  const isDashboardActive = pathname === '/dashboard';
+  const isDashboardActive = pathname === '/staff-dashboard';
   const isOrdersActive =
-    pathname === '/dashboard/orders' ||
-    pathname.startsWith('/dashboard/orders/');
+    pathname === '/staff-dashboard/orders' ||
+    pathname.startsWith('/staff-dashboard/orders/');
 
   // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
@@ -119,35 +127,48 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [isOrdersActive]);
 
   const orderCounts = React.useMemo(() => {
-    const counts: Record<string, number> = {};
-    MOCK_ORDERS.forEach((o) => {
-      counts[o.status] = (counts[o.status] ?? 0) + 1;
-    });
-    return counts;
+    // Order counts are derived from the orders API via the page components.
+    // The sidebar shows aggregate counts; these will be populated in a
+    // future iteration via a shared orders context/store.
+    return {} as Record<string, number>;
   }, []);
 
   const urgentTotal =
     (orderCounts['RETURNING'] ?? 0) +
     (orderCounts['OVERDUE'] ?? 0) +
-    (orderCounts['PENDING'] ?? 0);
+    (orderCounts['PAID'] ?? 0);
 
   const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
+
+  const handleLogout = React.useCallback(async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // Clear local auth state even if backend logout fails.
+    } finally {
+      useAuthStore.getState().clearAuth();
+      router.replace('/auth/login');
+    }
+  }, [router]);
 
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader className="pb-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href="/staff-dashboard" />}
+            >
               <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-linear-to-br from-theme-primary-start to-theme-primary-end text-white shadow-md">
                 <Zap className="size-4" />
               </div>
               <div className="grid flex-1 text-left leading-tight">
                 <span className="truncate text-sm font-bold text-sidebar-foreground tracking-tight">
-                  Swiftera
+                  {staffName}
                 </span>
                 <span className="truncate text-[11px] text-sidebar-foreground/55 font-medium">
-                  {MOCK_HUB_INFO.name}
+                  {hubDisplayName}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -164,7 +185,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {/* Tổng quan */}
             <SidebarMenuItem>
               <SidebarMenuButton
-                render={<Link href="/dashboard" />}
+                render={<Link href="/staff-dashboard" />}
                 isActive={isDashboardActive}
                 tooltip="Tổng quan"
                 className={cn(
@@ -185,7 +206,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               render={<SidebarMenuItem />}
             >
               <SidebarMenuButton
-                render={<Link href="/dashboard/orders" />}
+                render={<Link href="/staff-dashboard/orders" />}
                 isActive={isOrdersActive && !currentStatus}
                 tooltip="Đơn hàng"
                 className={cn(
@@ -222,7 +243,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     );
                     // Check xem sub-tab này có phải là tab đang xem không
                     const isTabActive =
-                      pathname === '/dashboard/orders' &&
+                      pathname === '/staff-dashboard/orders' &&
                       currentStatus === tab.statuses[0];
 
                     return (
@@ -308,11 +329,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <NavUser
           user={{
-            name: MOCK_CURRENT_STAFF.full_name,
-            email: MOCK_CURRENT_STAFF.email,
-            avatar: MOCK_CURRENT_STAFF.avatar_url ?? '',
-            role: MOCK_CURRENT_STAFF.role,
+            name: staffName,
+            email: staffEmail,
+            avatar: staffAvatar,
+            role: 'STAFF',
           }}
+          onLogout={handleLogout}
         />
       </SidebarFooter>
     </Sidebar>
