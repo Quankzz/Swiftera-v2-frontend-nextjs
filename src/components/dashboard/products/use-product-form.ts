@@ -5,6 +5,7 @@ import type { ProductResponse } from '@/features/products/types';
 import type {
   InventoryItemConditionGrade,
   InventoryItemStatus,
+  InventoryItemInProduct,
 } from '@/features/products/types';
 
 /** Dạng draft của một ảnh trong form (chưa có productImageId từ BE) */
@@ -28,10 +29,30 @@ export interface DraftInventoryItem {
   inventoryItemId?: string;
   serialNumber: string;
   hubId: string;
+  /** Tên hub để hiển thị trong UI — không gửi lên BE */
+  hubName: string;
+  hubCode?: string;
   conditionGrade: InventoryItemConditionGrade;
   staffNote: string;
   /** status chỉ dùng trong edit/display, không gửi khi create */
   status: InventoryItemStatus;
+}
+
+/** Map một InventoryItemInProduct (từ product detail response) về DraftInventoryItem */
+function inventoryItemToDraft(
+  item: InventoryItemInProduct,
+): DraftInventoryItem {
+  return {
+    draftId: item.inventoryItemId,
+    inventoryItemId: item.inventoryItemId,
+    serialNumber: item.serialNumber,
+    hubId: item.hubId,
+    hubName: item.hubName,
+    hubCode: item.hubCode,
+    conditionGrade: item.conditionGrade ?? 'NEW',
+    staffNote: item.staffNote ?? '',
+    status: item.status,
+  };
 }
 
 /**
@@ -44,6 +65,7 @@ export interface ProductFormData {
   categoryId: string;
   name: string;
   description: string;
+  shortDescription: string;
   brand: string;
   /** Màu sắc — single string (không phải mảng), e.g. "Đen", "Bạc" */
   color: string;
@@ -60,6 +82,7 @@ const EMPTY_FORM: ProductFormData = {
   categoryId: '',
   name: '',
   description: '',
+  shortDescription: '',
   brand: '',
   color: '',
   dailyPrice: '',
@@ -76,6 +99,7 @@ function productToForm(p: ProductResponse): ProductFormData {
     categoryId: p.categoryId,
     name: p.name,
     description: p.description ?? '',
+    shortDescription: p.shortDescription,
     brand: p.brand ?? '',
     color: p.color ?? '',
     dailyPrice: String(p.dailyPrice),
@@ -113,6 +137,7 @@ export function draftToProductPreview(
     color: form.color || null,
     name: form.name,
     description: form.description || null,
+    shortDescription: form.shortDescription,
     dailyPrice: parseFloat(form.dailyPrice) || 0,
     oldDailyPrice: form.oldDailyPrice ? parseFloat(form.oldDailyPrice) : null,
     depositAmount: form.depositAmount ? parseFloat(form.depositAmount) : null,
@@ -140,7 +165,12 @@ export function useProductForm(initial?: ProductResponse) {
   );
   const [draftInventoryItems, setDraftInventoryItems] = useState<
     DraftInventoryItem[]
-  >([]);
+  >(
+    // Pre-populate from product detail response if inventoryItems are embedded
+    initial?.inventoryItems
+      ? initial.inventoryItems.map(inventoryItemToDraft)
+      : [],
+  );
 
   /* ─── Form field handler ─── */
   const setField = useCallback(
@@ -199,6 +229,7 @@ export function useProductForm(initial?: ProductResponse) {
         draftId: `inv-draft-${Date.now()}`,
         serialNumber: '',
         hubId: '',
+        hubName: '',
         conditionGrade: 'NEW' as InventoryItemConditionGrade,
         staffNote: '',
         status: 'AVAILABLE' as InventoryItemStatus,

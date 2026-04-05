@@ -42,6 +42,7 @@ function toLocalProduct(p: ProductResponse): Product {
     oldDailyPrice: p.oldDailyPrice ?? undefined,
     depositAmount: p.depositAmount ?? undefined,
     description: p.description ?? '',
+    shortDescription: p.shortDescription ?? '',
     minRentalDays: p.minRentalDays,
     // BE field is `images`, local type expects `productImages`
     productImages: (p.images ?? []).map((img) => ({

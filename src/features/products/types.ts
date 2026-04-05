@@ -30,7 +30,31 @@ export interface ProductImageResponse {
   isPrimary: boolean;
 }
 
+/**
+ * Inventory item as embedded in a product detail response (API-052).
+ * Subset of InventoryItemResponse — productId/productName are omitted
+ * because they're implicit (you're already in the product context).
+ * The full InventoryItemResponse (with productId/productName) is used
+ * by the standalone inventory-items API (API-056..060).
+ */
+export interface InventoryItemInProduct {
+  inventoryItemId: string;
+  serialNumber: string;
+  status: InventoryItemStatus;
+  conditionGrade: InventoryItemConditionGrade | null;
+  staffNote: string | null;
+  hubId: string;
+  hubCode: string;
+  hubName: string;
+}
+
+// InventoryItemStatus / InventoryItemConditionGrade are declared later in
+// the Inventory Item Types section — forward references are fine in TS.
+
 // ── Product response (API-051 / API-052 / API-053 / API-054) ────────────────
+//
+// API-052 (GET /api/v1/products/{productId}) returns inventoryItems embedded
+// in the product detail response — no separate inventory API call needed.
 
 export interface ProductResponse {
   productId: string;
@@ -42,6 +66,7 @@ export interface ProductResponse {
   color: string | null;
   name: string;
   description: string | null;
+  shortDescription: string;
   dailyPrice: number;
   oldDailyPrice: number | null;
   depositAmount: number | null;
@@ -49,10 +74,17 @@ export interface ProductResponse {
   isActive: boolean;
   /** BE field name is `images` (not `productImages`) */
   images: ProductImageResponse[];
+  /**
+   * Embedded inventory items — only present in detail responses (API-052).
+   * List responses (API-053) do NOT include inventoryItems.
+   */
+  inventoryItems?: InventoryItemInProduct[];
   availableStock: number;
   averageRating: number | null;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export type PaginatedProductsResponse = PaginatedResponse<ProductResponse>;
@@ -72,6 +104,7 @@ export interface CreateProductInput {
   /** single color string, e.g. "Black" */
   color?: string;
   description?: string;
+  shortDescription?: string;
   /** optional, must be >= dailyPrice if provided */
   oldDailyPrice?: number;
   minRentalDays?: number;
@@ -116,6 +149,7 @@ export interface InventoryItemResponse {
   productId: string;
   productName: string;
   hubId: string;
+  hubCode: string;
   hubName: string;
   serialNumber: string;
   status: InventoryItemStatus;

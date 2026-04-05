@@ -259,22 +259,20 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
               Loại giảm giá <span className='text-red-500'>*</span>
             </label>
             <div className='flex gap-3'>
-              {(['PERCENTAGE', 'FIXED_AMOUNT'] as DiscountType[]).map(
-                (type) => (
-                  <button
-                    key={type}
-                    type='button'
-                    onClick={() => set('discountType', type)}
-                    className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
-                      form.discountType === type
-                        ? 'border-theme-primary-start bg-theme-primary-start/10 text-theme-primary-start dark:bg-theme-primary-start/20'
-                        : 'border-gray-200 dark:border-white/8 text-text-sub hover:border-gray-300 dark:hover:border-white/15'
-                    }`}
-                  >
-                    {type === 'PERCENTAGE' ? '% Phần trăm' : '₫ Cố định'}
-                  </button>
-                ),
-              )}
+              {(['PERCENTAGE', 'FIXED'] as DiscountType[]).map((type) => (
+                <button
+                  key={type}
+                  type='button'
+                  onClick={() => set('discountType', type)}
+                  className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+                    form.discountType === type
+                      ? 'border-theme-primary-start bg-theme-primary-start/10 text-theme-primary-start dark:bg-theme-primary-start/20'
+                      : 'border-gray-200 dark:border-white/8 text-text-sub hover:border-gray-300 dark:hover:border-white/15'
+                  }`}
+                >
+                  {type === 'PERCENTAGE' ? '% Phần trăm' : '₫ Cố định'}
+                </button>
+              ))}
             </div>
           </div>
 

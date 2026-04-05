@@ -12,8 +12,8 @@ import type { PaginatedData } from '@/api/apiService';
 // Enums / Union Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Loại giảm giá — BE spec: PERCENTAGE | FIXED_AMOUNT */
-export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+/** Loại giảm giá — BE spec: PERCENTAGE | FIXED */
+export type DiscountType = 'PERCENTAGE' | 'FIXED';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Response Types (API-066, API-067, API-068, API-070, API-071)
@@ -26,7 +26,7 @@ export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
  * NOTE:
  *  - `expiresAt` BE trả string dạng "2026-12-31 11:59:59 PM" hoặc ISO (format UI khi render)
  *  - `createdAt` / `updatedAt` cũng là string từ BE
- *  - `maxDiscountAmount` có thể null (FIXED_AMOUNT không cần)
+ *  - `maxDiscountAmount` có thể null (FIXED không cần)
  *  - `minRentalDays` có thể null (không giới hạn số ngày)
  *  - `usageLimit` có thể null (không giới hạn số lần dùng)
  *  - `expiresAt` có thể null (không hết hạn)

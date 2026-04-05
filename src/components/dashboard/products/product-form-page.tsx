@@ -394,6 +394,7 @@ export function ProductFormPage({
           brand: form.brand || undefined,
           color: colorString,
           description: form.description || undefined,
+          shortDescription: form.shortDescription || undefined,
           oldDailyPrice,
           minRentalDays: parseInt(form.minRentalDays) || 1,
           imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
@@ -437,6 +438,7 @@ export function ProductFormPage({
             brand: form.brand || undefined,
             color: colorString,
             description: form.description || undefined,
+            shortDescription: form.shortDescription || undefined,
             oldDailyPrice,
             minRentalDays: parseInt(form.minRentalDays) || 1,
             imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
@@ -524,6 +526,18 @@ export function ProductFormPage({
                 value={form.name}
                 onChange={(v) => setField('name', v)}
                 placeholder='VD: Canon EOS R50'
+              />
+            </Field>
+
+            {/* Mô tả ngắn */}
+            <Field
+              label='Mô tả ngắn (shortDescription)'
+              hint='Dòng giới thiệu ngắn hiển thị trên card sản phẩm, VD: "Mã MACBOOK-05 - MacBook Air cho công việc sáng tạo"'
+            >
+              <TextInput
+                value={form.shortDescription}
+                onChange={(v) => setField('shortDescription', v)}
+                placeholder='VD: Mã CAM-001 - Canon EOS R50 dành cho người mới bắt đầu'
               />
             </Field>
 

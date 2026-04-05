@@ -127,8 +127,8 @@ function InventoryItemRow({
 }) {
   const [expanded, setExpanded] = useState(!item.serialNumber);
   const [hubDialogOpen, setHubDialogOpen] = useState(false);
-  // Local hubName for display — synced when hub is picked
-  const [hubName, setHubName] = useState<string>('');
+  // Local hubName for display — initialized from item data (pre-loaded from product detail)
+  const [hubName, setHubName] = useState<string>(item.hubName ?? '');
 
   const inputCls =
     'h-9 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20';

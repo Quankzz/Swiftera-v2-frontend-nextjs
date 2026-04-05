@@ -58,9 +58,6 @@ export function ProductCardDashboard({
       : null;
 
   // `availableStock` comes directly from BE (not computed from inventoryItems)
-  const plainDescription = product.description
-    ? product.description.replace(/<[^>]*>/g, '').trim()
-    : '';
 
   return (
     <article
@@ -170,7 +167,7 @@ export function ProductCardDashboard({
           {product.name}
         </h3>
         <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
-          {plainDescription}
+          {product.shortDescription}
         </p>
       </header>
 

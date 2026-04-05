@@ -27,6 +27,7 @@ export interface CategoryResponse {
   categoryId: string;
   parentId: string | null;
   name: string;
+  imageUrl: string;
   sortOrder: number;
   isActive: boolean;
   children: CategoryResponse[];
@@ -45,6 +46,7 @@ export interface CategoryTreeNode {
   sortOrder: number;
   isActive: boolean;
   children: CategoryTreeNode[];
+  imageUrl: string;
 }
 
 // ── Create input (API-045 POST /api/v1/categories) ──────────────────────────

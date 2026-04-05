@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Heart } from 'lucide-react';
+import { CloudCog, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/types/catalog';
 
@@ -40,7 +40,6 @@ export function ProductCard({
 
   const displayColors = product.colors ?? [];
   const hasColors = displayColors.length > 0;
-
   return (
     <article
       className={cn(
@@ -70,11 +69,9 @@ export function ProductCard({
             </span>
           )}
         </h3>
-        {/* <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
-          {product.description || (
-            <span className='italic opacity-50'>Mô tả sản phẩm</span>
-          )}
-        </p> */}
+        <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
+          {product.shortDescription}
+        </p>
       </header>
 
       {/* SLOT 2: Image area (fixed height) */}

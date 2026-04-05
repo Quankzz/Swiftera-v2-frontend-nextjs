@@ -394,7 +394,7 @@ export function VoucherPickerDialog({
                 >
                   <option value=''>Tất cả loại</option>
                   <option value='PERCENTAGE'>% Phần trăm</option>
-                  <option value='FIXED_AMOUNT'>₫ Cố định</option>
+                  <option value='FIXED'>₫ Cố định</option>
                 </select>
               </div>
 

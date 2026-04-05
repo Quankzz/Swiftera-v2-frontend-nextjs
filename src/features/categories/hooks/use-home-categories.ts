@@ -30,7 +30,7 @@ function treeNodeToCategory(node: CategoryTreeNode): Category {
     name: node.name,
     sortOrder: node.sortOrder,
     slug: node.categoryId, // BE has no slug; use categoryId as fallback
-    image: undefined, // BE has no image field on categories
+    imageUrl: node.imageUrl,
   };
 }
 

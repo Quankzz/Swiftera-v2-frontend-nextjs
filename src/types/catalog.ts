@@ -4,7 +4,7 @@ export interface Category {
   name: string;
   slug: string;
   sortOrder: number;
-  image?: string;
+  imageUrl?: string;
   brands?: string[]; // For brands under this category
 }
 
@@ -53,6 +53,7 @@ export interface Product {
   oldDailyPrice?: number;
   depositAmount?: number;
   description: string;
+  shortDescription: string;
   productImages: ProductImage[];
   colors?: ProductColor[];
   minRentalDays: number;
