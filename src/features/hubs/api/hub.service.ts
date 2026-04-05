@@ -9,6 +9,7 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/api/apiService';
 import type {
   HubResponse,
+  HubStaffResponse,
   PaginatedHubsResponse,
   CreateHubInput,
   UpdateHubInput,
@@ -82,4 +83,24 @@ export function updateHub(
  */
 export function deleteHub(hubId: string): Promise<null> {
   return apiDelete<null>(`/hubs/${hubId}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Staff
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-043 (staff): GET /hubs/{hubId}/staff?activeOnly=false
+ * Lấy danh sách nhân viên thuộc hub.
+ *
+ * Response: plain array (không paginated).
+ * activeOnly=false → trả về tất cả nhân viên kể cả chưa xác thực.
+ */
+export function getHubStaff(
+  hubId: string,
+  activeOnly = false,
+): Promise<HubStaffResponse[]> {
+  return apiGet<HubStaffResponse[]>(`/hubs/${hubId}/staff`, {
+    params: { activeOnly } as Record<string, boolean>,
+  });
 }

@@ -1,14 +1,10 @@
 /**
  * Hooks cho assign flow — gán hub và gán nhân viên cho đơn thuê.
  *
- *  - useHubsForAssignQuery   → lấy danh sách hub active (GET /hubs)
- *  - useStaffForAssignQuery  → lấy danh sách staff (GET /users filter STAFF_ROLE)
- *  - useAssignHubMutation    → API-080: PATCH /rental-orders/{id}/assign-hub
- *  - useAssignStaffMutation  → API-081: PATCH /rental-orders/{id}/assign-staff
- *
- * NOTE về staff: BE spec không có endpoint riêng "staff by hub".
- * → Dùng GET /users với SpringFilter DSL để lấy users có STAFF_ROLE.
- * → Filter local theo search nếu cần.
+ *  - useHubsForAssignQuery      → lấy danh sách hub active (GET /hubs)
+ *  - useHubStaffForAssignQuery  → lấy nhân viên theo hub (GET /hubs/{hubId}/staff)
+ *  - useAssignHubMutation       → API-080: PATCH /rental-orders/{id}/assign-hub
+ *  - useAssignStaffMutation     → API-081: PATCH /rental-orders/{id}/assign-staff
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,17 +12,18 @@ import { rentalOrderKeys } from '../api/rental-order.keys';
 import {
   assignHubToOrder,
   assignStaffToOrder,
-  getStaffUsers,
 } from '../api/rental-order.service';
 import { apiGet } from '@/api/apiService';
+import { getHubStaff } from '@/features/hubs/api/hub.service';
+import { hubKeys } from '@/features/hubs/api/hub.keys';
 import { toast } from 'sonner';
 import type {
   RentalOrderResponse,
   AssignHubInput,
   AssignStaffInput,
   HubOption,
-  StaffOption,
 } from '../types';
+import type { HubStaffResponse } from '@/features/hubs/types';
 import type { PaginatedData } from '@/api/apiService';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,27 +53,21 @@ export function useHubsForAssignQuery(params?: HubListParams) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Staff query for assignment dialog
+// Staff query for assignment dialog (by hub)
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface StaffQueryParams {
-  page?: number;
-  size?: number;
-  sort?: string;
-  filter?: string;
-}
-
 /**
- * Lấy danh sách staff để gán vào đơn.
- * Dùng GET /users với SpringFilter DSL.
+ * Lấy danh sách nhân viên thuộc hub được chọn.
+ * Dùng GET /hubs/{hubId}/staff?activeOnly=false (API-043 staff endpoint).
  *
- * BE spec không có endpoint "staff by hub" — dùng filter để lấy staff
- * và hiển thị tất cả staff, user tự chọn.
+ * Response là plain array (không paginated).
+ * Chỉ enabled khi có hubId.
  */
-export function useStaffForAssignQuery(params?: StaffQueryParams) {
-  return useQuery<PaginatedData<StaffOption>>({
-    queryKey: ['users', 'staff-assign', params ?? {}],
-    queryFn: () => getStaffUsers(params),
+export function useHubStaffForAssignQuery(hubId: string | undefined) {
+  return useQuery<HubStaffResponse[]>({
+    queryKey: hubKeys.staff(hubId ?? ''),
+    queryFn: () => getHubStaff(hubId!, false),
+    enabled: !!hubId,
     staleTime: 2 * 60 * 1000,
   });
 }

@@ -84,6 +84,30 @@ export interface CreateHubInput {
   phone?: string | null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Staff Response (API-043: GET /hubs/{hubId}/staff)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * HubStaffResponse — một nhân viên thuộc hub.
+ * Trả về từ GET /api/v1/hubs/{hubId}/staff?activeOnly=false
+ *
+ * Response là plain array (không paginated).
+ */
+export interface HubStaffResponse {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  nickname: string | null;
+  phoneNumber: string | null;
+  avatarUrl: string | null;
+  isVerified: boolean;
+  hubId: string;
+  hubCode: string;
+  hubName: string;
+}
+
 /**
  * UpdateHubInput — payload cho API-043 PATCH /hubs/{hubId}
  * Tất cả field đều optional (partial update).

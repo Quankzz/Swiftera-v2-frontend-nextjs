@@ -15,14 +15,14 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
-  useStaffForAssignQuery,
+  useHubStaffForAssignQuery,
   useAssignStaffMutation,
 } from '@/features/rental-orders/hooks/use-rental-order-assignment';
 import type {
   RentalOrderResponse,
-  StaffOption,
   HubOption,
 } from '@/features/rental-orders/types';
+import type { HubStaffResponse } from '@/features/hubs/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -47,14 +47,12 @@ function StaffCard({
   onSelectDelivery,
   onSelectPickup,
 }: {
-  staff: StaffOption;
+  staff: HubStaffResponse;
   selectedLabel: 'delivery' | 'pickup' | 'both' | null;
   onSelectDelivery: () => void;
   onSelectPickup: () => void;
 }) {
   const fullName = `${staff.firstName} ${staff.lastName}`;
-  const roleName =
-    staff.rolesSecured?.find((r) => r.active)?.name ?? 'Nhân viên';
 
   const isDelivery = selectedLabel === 'delivery' || selectedLabel === 'both';
   const isPickup = selectedLabel === 'pickup' || selectedLabel === 'both';
@@ -96,8 +94,13 @@ function StaffCard({
           <p className='text-xs text-text-sub truncate'>{staff.email}</p>
           <div className='flex items-center gap-2 mt-1'>
             <span className='text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/10 text-text-sub font-medium'>
-              {roleName}
+              Nhân viên
             </span>
+            {staff.isVerified && (
+              <span className='text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-medium'>
+                Đã xác thực
+              </span>
+            )}
             {staff.phoneNumber && (
               <span className='text-[10px] text-text-sub'>
                 {staff.phoneNumber}
@@ -169,15 +172,14 @@ export function AssignStaffDialog({
     order.pickupStaffId ?? null,
   );
 
-  const { data, isLoading } = useStaffForAssignQuery({
-    page: 0,
-    size: 100,
-    sort: 'firstName,asc',
-  });
+  const { data: staffData, isLoading } = useHubStaffForAssignQuery(hub.hubId);
 
   const assignMutation = useAssignStaffMutation();
 
-  const allStaff = useMemo<StaffOption[]>(() => data?.content ?? [], [data]);
+  const allStaff = useMemo<HubStaffResponse[]>(
+    () => staffData ?? [],
+    [staffData],
+  );
 
   const filteredStaff = useMemo(() => {
     if (!search.trim()) return allStaff;

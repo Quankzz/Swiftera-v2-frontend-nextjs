@@ -36,8 +36,8 @@ import {
   STATUS_LABELS,
   STATUS_STYLES,
   type RentalOrderResponse,
-  type StaffOption,
 } from '@/features/rental-orders/types';
+import type { HubStaffResponse } from '@/features/hubs/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ function StaffSlot({
   onClick,
 }: {
   role: 'delivery' | 'pickup';
-  staff: StaffOption | null;
+  staff: HubStaffResponse | null;
   onClick: () => void;
 }) {
   const isDelivery = role === 'delivery';
@@ -179,8 +179,10 @@ export function RentalOrderAssignDialog({
   isOpen,
   onClose,
 }: RentalOrderAssignDialogProps) {
-  const [deliveryStaff, setDeliveryStaff] = useState<StaffOption | null>(null);
-  const [pickupStaff, setPickupStaff] = useState<StaffOption | null>(null);
+  const [deliveryStaff, setDeliveryStaff] = useState<HubStaffResponse | null>(
+    null,
+  );
+  const [pickupStaff, setPickupStaff] = useState<HubStaffResponse | null>(null);
   // Which slot's picker is open: null | 'delivery' | 'pickup'
   const [pickerOpen, setPickerOpen] = useState<'delivery' | 'pickup' | null>(
     null,
@@ -489,9 +491,10 @@ export function RentalOrderAssignDialog({
       {pickerOpen && (
         <StaffPickerDialog
           role={pickerOpen}
+          hubId={order.hubId ?? ''}
           isOpen={!!pickerOpen}
           onClose={() => setPickerOpen(null)}
-          onSelected={(staff: StaffOption) => {
+          onSelected={(staff) => {
             if (pickerOpen === 'delivery') setDeliveryStaff(staff);
             else setPickupStaff(staff);
             setPickerOpen(null);
