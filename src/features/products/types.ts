@@ -32,6 +32,23 @@ export interface ProductImageResponse {
 
 // ── Product response (API-051 / API-052 / API-053 / API-054) ────────────────
 
+export interface ProductInventoryItemResponse {
+  inventoryItemId: string;
+  serialNumber: string;
+  status:
+    | 'AVAILABLE'
+    | 'RESERVED'
+    | 'RENTED'
+    | 'MAINTENANCE'
+    | 'DAMAGED'
+    | 'RETIRED';
+  conditionGrade: 'NEW' | 'GOOD' | 'FAIR' | 'POOR' | null;
+  staffNote: string | null;
+  hubId: string;
+  hubCode: string;
+  hubName: string;
+}
+
 export interface ProductResponse {
   productId: string;
   categoryId: string;
@@ -41,6 +58,7 @@ export interface ProductResponse {
   /** e.g. "Black", "Silver" — single string, not array */
   color: string | null;
   name: string;
+  shortDescription: string | null;
   description: string | null;
   dailyPrice: number;
   oldDailyPrice: number | null;
@@ -49,6 +67,8 @@ export interface ProductResponse {
   isActive: boolean;
   /** BE field name is `images` (not `productImages`) */
   images: ProductImageResponse[];
+  /** Các thiết bị vật lý (serial) của sản phẩm này */
+  inventoryItems: ProductInventoryItemResponse[];
   availableStock: number;
   averageRating: number | null;
   createdAt: string;
