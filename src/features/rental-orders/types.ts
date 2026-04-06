@@ -7,6 +7,7 @@
  */
 
 import type { PaginatedData } from '@/api/apiService';
+import type { HubStaffResponse } from '@/features/hubs/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status
@@ -130,9 +131,9 @@ export interface RentalOrderResponse {
   hubId: string | null;
   hubName: string | null;
 
-  // Staff assignment
-  deliveryStaffId: string | null;
-  pickupStaffId: string | null;
+  // Staff assignment (nested objects — trả về từ API sau khi gán)
+  deliveryStaff: HubStaffResponse | null;
+  pickupStaff: HubStaffResponse | null;
 
   // Delivery info
   deliveryRecipientName: string;

@@ -180,9 +180,11 @@ export function RentalOrderAssignDialog({
   onClose,
 }: RentalOrderAssignDialogProps) {
   const [deliveryStaff, setDeliveryStaff] = useState<HubStaffResponse | null>(
-    null,
+    order.deliveryStaff ?? null,
   );
-  const [pickupStaff, setPickupStaff] = useState<HubStaffResponse | null>(null);
+  const [pickupStaff, setPickupStaff] = useState<HubStaffResponse | null>(
+    order.pickupStaff ?? null,
+  );
   // Which slot's picker is open: null | 'delivery' | 'pickup'
   const [pickerOpen, setPickerOpen] = useState<'delivery' | 'pickup' | null>(
     null,

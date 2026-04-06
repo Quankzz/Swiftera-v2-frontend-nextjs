@@ -166,10 +166,10 @@ export function AssignStaffDialog({
 }: AssignStaffDialogProps) {
   const [search, setSearch] = useState('');
   const [deliveryStaffId, setDeliveryStaffId] = useState<string | null>(
-    order.deliveryStaffId ?? null,
+    order.deliveryStaff?.userId ?? null,
   );
   const [pickupStaffId, setPickupStaffId] = useState<string | null>(
-    order.pickupStaffId ?? null,
+    order.pickupStaff?.userId ?? null,
   );
 
   const { data: staffData, isLoading } = useHubStaffForAssignQuery(hub.hubId);

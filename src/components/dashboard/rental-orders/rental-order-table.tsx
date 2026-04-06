@@ -255,7 +255,7 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         id: 'hub',
         header: 'Hub / Nhân viên',
         cell: ({ row }) => {
-          const { hubName, deliveryStaffId, pickupStaffId } = row.original;
+          const { hubName, deliveryStaff, pickupStaff } = row.original;
           if (!hubName) {
             return (
               <span className='inline-flex items-center gap-1 text-xs text-gray-400 italic'>
@@ -270,12 +270,23 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
                 <MapPin className='w-3 h-3 shrink-0' />
                 <span className='line-clamp-1'>{hubName}</span>
               </div>
-              {deliveryStaffId && (
+              {deliveryStaff && (
                 <div className='flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5'>
                   <User2 className='w-3 h-3 shrink-0' />
                   <span>
-                    Giao
-                    {pickupStaffId ? ' + Thu hồi' : ''}
+                    <span className='text-cyan-600'>Giao</span>
+                    {pickupStaff ? (
+                      <span className='text-purple-600'>
+                        {' '}
+                        <span className='text-gray-500 dark:text-gray-400'>
+                          {' '}
+                          +{' '}
+                        </span>{' '}
+                        Thu hồi
+                      </span>
+                    ) : (
+                      ''
+                    )}
                   </span>
                 </div>
               )}
