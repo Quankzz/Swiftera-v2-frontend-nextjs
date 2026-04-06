@@ -203,7 +203,7 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
               </h3>
               {t?.message ? (
                 <div
-                  className='prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300'
+                  className='rich-content text-sm text-gray-700 dark:text-gray-300'
                   dangerouslySetInnerHTML={{ __html: t.message }}
                 />
               ) : (

@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Extension } from '@tiptap/core';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
@@ -88,6 +89,47 @@ function extractYouTubeId(url: string): string | null {
   }
 }
 
+// ─── Custom extension: Exit list on double-Enter while keeping marks ──
+const ExitListOnEmptyItem = Extension.create({
+  name: 'exitListOnEmptyItem',
+  addKeyboardShortcuts() {
+    return {
+      Enter: ({ editor }) => {
+        const { state } = editor;
+        const { selection, storedMarks } = state;
+        const { $from, empty } = selection;
+
+        // Only intercept when cursor is inside a list item
+        const listItem = $from.node(-1);
+        const isBulletList = $from.node(-2)?.type.name === 'bulletList';
+        const isOrderedList = $from.node(-2)?.type.name === 'orderedList';
+        if (!listItem || listItem.type.name !== 'listItem') return false;
+        if (!isBulletList && !isOrderedList) return false;
+
+        // Only intercept when the current list item is empty (no text)
+        if (!empty || listItem.textContent !== '') return false;
+
+        // Capture marks to restore after exit:
+        // storedMarks are set when user toggles a mark before typing.
+        // $from.marks() are the marks at the current cursor position from actual content.
+        // We prefer storedMarks if available, then fall back to position marks.
+        const marksToRestore =
+          storedMarks && storedMarks.length > 0 ? storedMarks : $from.marks();
+
+        // Lift the empty item out of the list
+        const lifted = editor.chain().liftListItem('listItem').run();
+        if (!lifted) return false;
+
+        // Re-apply the marks that were active so B/I/U persist after exit
+        if (marksToRestore.length > 0) {
+          editor.view.dispatch(editor.state.tr.setStoredMarks(marksToRestore));
+        }
+        return true;
+      },
+    };
+  },
+});
+
 export default function RichEditor({
   placeholder = 'Mô tả chi tiết ý kiến của bạn...',
   onChange,
@@ -97,10 +139,14 @@ export default function RichEditor({
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [imageMode, setImageMode] = useState<'none' | 'url'>('none');
   const [imageUrl, setImageUrl] = useState('');
-
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: { levels: [2, 3] } }),
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+        bulletList: { keepMarks: true, keepAttributes: false },
+        orderedList: { keepMarks: true, keepAttributes: false },
+      }),
+      ExitListOnEmptyItem,
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Link.configure({
@@ -134,6 +180,27 @@ export default function RichEditor({
         style: `min-height: ${minHeight}`,
       },
     },
+  });
+
+  // ─── Reactive toolbar state via useEditorState ─────────────────
+  // useEditorState subscribes to ProseMirror transactions directly,
+  // so it updates on every cursor move / mark change without needing forceUpdate hacks.
+  const editorState = useEditorState({
+    editor,
+    selector: (ctx) => ({
+      isBold: ctx.editor?.isActive('bold') ?? false,
+      isItalic: ctx.editor?.isActive('italic') ?? false,
+      isUnderline: ctx.editor?.isActive('underline') ?? false,
+      isH2: ctx.editor?.isActive('heading', { level: 2 }) ?? false,
+      isH3: ctx.editor?.isActive('heading', { level: 3 }) ?? false,
+      isBlockquote: ctx.editor?.isActive('blockquote') ?? false,
+      isBulletList: ctx.editor?.isActive('bulletList') ?? false,
+      isOrderedList: ctx.editor?.isActive('orderedList') ?? false,
+      isAlignLeft: ctx.editor?.isActive({ textAlign: 'left' }) ?? false,
+      isAlignCenter: ctx.editor?.isActive({ textAlign: 'center' }) ?? false,
+      isAlignRight: ctx.editor?.isActive({ textAlign: 'right' }) ?? false,
+      isLink: ctx.editor?.isActive('link') ?? false,
+    }),
   });
 
   // ─── Handlers ────────────────────────────────────────────────────
@@ -294,21 +361,21 @@ export default function RichEditor({
         <ToolBtn
           onClick={() => editor?.chain().focus().toggleBold().run()}
           title='In đậm (Ctrl+B)'
-          active={editor?.isActive('bold') ?? false}
+          active={editorState?.isBold ?? false}
         >
           <Bold size={14} />
         </ToolBtn>
         <ToolBtn
           onClick={() => editor?.chain().focus().toggleItalic().run()}
           title='In nghiêng (Ctrl+I)'
-          active={editor?.isActive('italic') ?? false}
+          active={editorState?.isItalic ?? false}
         >
           <Italic size={14} />
         </ToolBtn>
         <ToolBtn
           onClick={() => editor?.chain().focus().toggleUnderline().run()}
           title='Gạch chân (Ctrl+U)'
-          active={editor?.isActive('underline') ?? false}
+          active={editorState?.isUnderline ?? false}
         >
           <UnderlineIcon size={14} />
         </ToolBtn>
@@ -321,7 +388,7 @@ export default function RichEditor({
             editor?.chain().focus().toggleHeading({ level: 2 }).run()
           }
           title='Tiêu đề lớn'
-          active={editor?.isActive('heading', { level: 2 }) ?? false}
+          active={editorState?.isH2 ?? false}
         >
           <Heading2 size={14} />
         </ToolBtn>
@@ -330,14 +397,14 @@ export default function RichEditor({
             editor?.chain().focus().toggleHeading({ level: 3 }).run()
           }
           title='Tiêu đề nhỏ'
-          active={editor?.isActive('heading', { level: 3 }) ?? false}
+          active={editorState?.isH3 ?? false}
         >
           <Heading3 size={14} />
         </ToolBtn>
         <ToolBtn
           onClick={() => editor?.chain().focus().toggleBlockquote().run()}
           title='Trích dẫn'
-          active={editor?.isActive('blockquote') ?? false}
+          active={editorState?.isBlockquote ?? false}
         >
           <Quote size={14} />
         </ToolBtn>
@@ -348,14 +415,14 @@ export default function RichEditor({
         <ToolBtn
           onClick={() => editor?.chain().focus().toggleBulletList().run()}
           title='Danh sách gạch đầu'
-          active={editor?.isActive('bulletList') ?? false}
+          active={editorState?.isBulletList ?? false}
         >
           <List size={14} />
         </ToolBtn>
         <ToolBtn
           onClick={() => editor?.chain().focus().toggleOrderedList().run()}
           title='Danh sách đánh số'
-          active={editor?.isActive('orderedList') ?? false}
+          active={editorState?.isOrderedList ?? false}
         >
           <ListOrdered size={14} />
         </ToolBtn>
@@ -366,21 +433,21 @@ export default function RichEditor({
         <ToolBtn
           onClick={() => editor?.chain().focus().setTextAlign('left').run()}
           title='Căn trái'
-          active={editor?.isActive({ textAlign: 'left' }) ?? false}
+          active={editorState?.isAlignLeft ?? false}
         >
           <AlignLeft size={14} />
         </ToolBtn>
         <ToolBtn
           onClick={() => editor?.chain().focus().setTextAlign('center').run()}
           title='Căn giữa'
-          active={editor?.isActive({ textAlign: 'center' }) ?? false}
+          active={editorState?.isAlignCenter ?? false}
         >
           <AlignCenter size={14} />
         </ToolBtn>
         <ToolBtn
           onClick={() => editor?.chain().focus().setTextAlign('right').run()}
           title='Căn phải'
-          active={editor?.isActive({ textAlign: 'right' }) ?? false}
+          active={editorState?.isAlignRight ?? false}
         >
           <AlignRight size={14} />
         </ToolBtn>
@@ -396,7 +463,7 @@ export default function RichEditor({
         <ToolBtn
           onClick={handleLink}
           title='Thêm / bỏ liên kết'
-          active={editor?.isActive('link') ?? false}
+          active={editorState?.isLink ?? false}
         >
           <LinkIcon size={14} />
         </ToolBtn>
