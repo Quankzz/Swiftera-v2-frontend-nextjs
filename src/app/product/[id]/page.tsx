@@ -26,8 +26,11 @@ import { RentalStockSection } from '@/components/product-detail/rental-product-s
 import { useProductDetailQuery } from '@/features/products/hooks/use-product-detail';
 import { Skeleton } from '@/components/ui/skeleton';
 
-/** Tạo các gói thời gian thuê từ dailyPrice của BE */
-function buildDurations(dailyPrice: number): RentalDuration[] {
+/** Tạo các gói thời gian thuê từ dailyPrice của BE, lọc theo minRentalDays */
+function buildDurations(
+  dailyPrice: number,
+  minRentalDays: number,
+): RentalDuration[] {
   const packs = [
     { days: 1, label: '1 ngày' },
     { days: 2, label: '2 ngày' },
@@ -37,18 +40,20 @@ function buildDurations(dailyPrice: number): RentalDuration[] {
     { days: 14, label: '14 ngày' },
     { days: 30, label: '30 ngày' },
   ];
-  return packs.map((p) => {
-    const total = dailyPrice * p.days;
-    const discount = p.days >= 7 ? 0.15 : p.days >= 3 ? 0.1 : 0;
-    const original = total;
-    const price = discount > 0 ? Math.round(total * (1 - discount)) : total;
-    return {
-      id: `${p.days}d`,
-      label: p.label,
-      price,
-      originalPrice: discount > 0 ? original : undefined,
-    };
-  });
+  return packs
+    .filter((p) => p.days >= minRentalDays)
+    .map((p) => {
+      const total = dailyPrice * p.days;
+      const discount = p.days >= 7 ? 0.15 : p.days >= 3 ? 0.1 : 0;
+      const original = total;
+      const price = discount > 0 ? Math.round(total * (1 - discount)) : total;
+      return {
+        id: String(p.days), // plain number string, e.g. "2"
+        label: p.label,
+        price,
+        originalPrice: discount > 0 ? original : undefined,
+      };
+    });
 }
 
 const formatter = new Intl.NumberFormat('vi-VN', {
@@ -68,12 +73,12 @@ export default function ProductDetailPage() {
   } = useProductDetailQuery(productId);
 
   const [currentImage, setCurrentImage] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState('2d');
+  const [selectedDuration, setSelectedDuration] = useState('2');
   const [quantity, setQuantity] = useState(1);
 
   // Mặc định chọn duration = minRentalDays
   const defaultDurationId = useMemo(
-    () => `${product?.minRentalDays ?? 1}d`,
+    () => String(product?.minRentalDays ?? 1),
     [product?.minRentalDays],
   );
 
@@ -82,10 +87,13 @@ export default function ProductDetailPage() {
     if (defaultDurationId) setSelectedDuration(defaultDurationId);
   });
 
-  // Build durations từ BE dailyPrice
+  // Build durations từ BE dailyPrice, lọc theo minRentalDays
   const durations = useMemo(
-    () => (product?.dailyPrice ? buildDurations(product.dailyPrice) : []),
-    [product?.dailyPrice],
+    () =>
+      product?.dailyPrice
+        ? buildDurations(product.dailyPrice, product.minRentalDays ?? 1)
+        : [],
+    [product?.dailyPrice, product?.minRentalDays],
   );
 
   // Lấy image URLs
