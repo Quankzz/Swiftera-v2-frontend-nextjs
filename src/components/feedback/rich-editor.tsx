@@ -108,13 +108,15 @@ export default function RichEditor({
         HTMLAttributes: { class: 'text-theme-primary-start underline' },
       }),
       TiptapImage.configure({
-        HTMLAttributes: { class: 'rich-media block my-3 rounded-lg' },
+        HTMLAttributes: { class: 'rich-media block my-3 rounded-lg mx-auto' },
       }),
       Placeholder.configure({ placeholder }),
       TextStyle,
       Color,
       Youtube.configure({
-        HTMLAttributes: { class: 'rich-media aspect-video rounded-xl my-4' },
+        HTMLAttributes: {
+          class: 'rich-media aspect-video rounded-xl my-4 mx-auto',
+        },
         width: 640,
         height: 360,
       }),
@@ -128,7 +130,7 @@ export default function RichEditor({
     editorProps: {
       attributes: {
         class:
-          'px-4 py-3 text-sm text-text-main focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-theme-primary-start/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-text-sub [&_blockquote]:my-2 [&_a]:text-theme-primary-start [&_a]:underline [&_.rich-media]:block [&_.rich-media]:max-w-sm [&_.rich-media]:h-auto [&_.rich-media]:rounded-lg [&_.rich-media]:my-3 [&_iframe.rich-media]:w-full [&_iframe.rich-media]:max-w-sm [&_iframe.rich-media]:aspect-video [&_hr]:border-border/50 [&_hr]:my-3',
+          'px-4 py-3 text-sm text-text-main focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-theme-primary-start/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-text-sub [&_blockquote]:my-2 [&_a]:text-theme-primary-start [&_a]:underline [&_.rich-media]:block [&_.rich-media]:max-w-sm [&_.rich-media]:h-auto [&_.rich-media]:rounded-lg [&_.rich-media]:my-3 [&_.rich-media]:mx-auto [&_iframe.rich-media]:w-full [&_iframe.rich-media]:max-w-sm [&_iframe.rich-media]:aspect-video [&_iframe.rich-media]:mx-auto [&_hr]:border-border/50 [&_hr]:my-3',
         style: `min-height: ${minHeight}`,
       },
     },
@@ -148,7 +150,7 @@ export default function RichEditor({
             .chain()
             .focus()
             .insertContent(
-              `<div data-youtube-video><iframe class="rich-media aspect-video rounded-xl my-4" src="https://player.vimeo.com/video/${vimeoId}" frameborder="0" allowfullscreen></iframe></div>`,
+              `<div data-youtube-video><iframe class="rich-media aspect-video rounded-xl my-4 mx-auto" src="https://player.vimeo.com/video/${vimeoId}" frameborder="0" allowfullscreen></iframe></div>`,
             )
             .run();
         }
@@ -176,33 +178,88 @@ export default function RichEditor({
       if (!file || !editor) return;
       e.target.value = '';
 
-      // Insert uploading placeholder
+      // Remember position before inserting placeholder
+      const insertPos = editor.state.selection.from;
+
+      // Insert uploading placeholder paragraph
       editor
         .chain()
         .focus()
         .insertContent(
-          '<p><em class="text-xs text-text-sub animate-pulse">Đang tải ảnh lên...</em></p>',
+          '<p><em class="text-xs text-text-sub animate-pulse" data-upload-placeholder="1">Đang tải ảnh lên...</em></p>',
         )
         .run();
 
       try {
         const result = await uploadSingleFile(file, 'products');
-        // Remove the placeholder paragraph and insert the real image
-        editor
-          .chain()
-          .focus()
-          .deleteRange({
-            from: editor.state.selection.from - 1,
-            to: editor.state.selection.from,
-          })
-          .setImage({ src: result.fileUrl, alt: file.name })
-          .run();
+
+        // Find and delete the placeholder node by searching for data-upload-placeholder
+        const { state } = editor;
+        let placeholderFrom = -1;
+        let placeholderTo = -1;
+        state.doc.nodesBetween(
+          insertPos,
+          state.doc.content.size,
+          (node, pos) => {
+            if (placeholderFrom !== -1) return false;
+            if (node.type.name === 'paragraph') {
+              const inner = node.textContent;
+              if (inner.includes('Đang tải ảnh lên...')) {
+                placeholderFrom = pos;
+                placeholderTo = pos + node.nodeSize;
+                return false;
+              }
+            }
+          },
+        );
+
+        if (placeholderFrom !== -1) {
+          editor
+            .chain()
+            .focus()
+            .deleteRange({ from: placeholderFrom, to: placeholderTo })
+            .setTextSelection(placeholderFrom)
+            .setImage({ src: result.fileUrl, alt: file.name })
+            .run();
+        } else {
+          // Fallback: just insert at current position
+          editor
+            .chain()
+            .focus()
+            .setImage({ src: result.fileUrl, alt: file.name })
+            .run();
+        }
       } catch {
-        editor
-          .chain()
-          .focus()
-          .insertContent('<p>❌ Tải ảnh thất bại</p>')
-          .run();
+        // Find and replace placeholder with error message
+        const { state } = editor;
+        let placeholderFrom = -1;
+        let placeholderTo = -1;
+        state.doc.nodesBetween(0, state.doc.content.size, (node, pos) => {
+          if (placeholderFrom !== -1) return false;
+          if (
+            node.type.name === 'paragraph' &&
+            node.textContent.includes('Đang tải ảnh lên...')
+          ) {
+            placeholderFrom = pos;
+            placeholderTo = pos + node.nodeSize;
+            return false;
+          }
+        });
+
+        if (placeholderFrom !== -1) {
+          editor
+            .chain()
+            .focus()
+            .deleteRange({ from: placeholderFrom, to: placeholderTo })
+            .insertContent('<p>❌ Tải ảnh thất bại</p>')
+            .run();
+        } else {
+          editor
+            .chain()
+            .focus()
+            .insertContent('<p>❌ Tải ảnh thất bại</p>')
+            .run();
+        }
       }
     },
     [editor],

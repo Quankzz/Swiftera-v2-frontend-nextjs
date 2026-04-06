@@ -791,6 +791,7 @@
         "CONTRACTS",
         "REVIEWS",
         "TICKETS",
+        "DASHBOARDS",
         "POLICIES"
     ]
 }
@@ -1073,6 +1074,8 @@ folderName: "products"
 | `name`                                                                      | ✓        |
 | `addressLine`, `ward`, `district`, `city`, `latitude`, `longitude`, `phone` | tùy chọn |
 
+**Validation phone**: nếu truyền `phone`, bắt buộc đúng chuẩn E.164 (ví dụ `+842812345678`), sai định dạng trả `HUB_PHONE_INVALID`.
+
 **Response**:
 
 ```json
@@ -1176,6 +1179,8 @@ Ví dụ response:
     "isActive": false
 }
 ```
+
+**Validation phone**: nếu truyền `phone`, bắt buộc đúng chuẩn E.164, sai định dạng trả `HUB_PHONE_INVALID`.
 
 **Response**: `HubResponse`
 
@@ -1332,6 +1337,7 @@ Ví dụ response:
 - Gửi `"parentId": null` (hoặc chuỗi rỗng): chuyển thành category root.
 - Gửi `parentId` khác: chuyển category sang cha mới.
 - Không được tự trỏ vào chính nó hoặc trỏ vào node con của chính nó (chặn vòng lặp), lỗi `CATEGORY_CIRCULAR_REFERENCE`.
+- Không dùng sentinel `9999` (number hoặc string) để đại diện root. FE chỉ dùng `null`/chuỗi rỗng cho root; nếu gửi `9999` backend coi là parent không tồn tại và trả `CATEGORY_PARENT_NOT_FOUND`.
 
 **Rule `sortOrder` khi update**:
 
@@ -1341,6 +1347,11 @@ Ví dụ response:
 - `sortOrder` phải `>= 1`, nếu không lỗi `CATEGORY_SORT_ORDER_MIN_1`.
 
 **Response**: `CategoryResponse`
+
+**Lưu ý ổn định request binding (API-050)**:
+
+- Backend đã bỏ constructor/builder positional ở `UpdateCategoryRequest`, deserialize theo setter-field để tránh map nhầm kiểu.
+- `parentId` chỉ nên gửi đúng 3 dạng: bỏ field, `null`/`""`, hoặc một `categoryId` hợp lệ. Không gửi giá trị "đặc biệt" để ép root.
 
 ---
 
@@ -2024,7 +2035,7 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 - `totalPayableAmount = rentalFeeAmount + depositHoldAmount`
 
 **Trạng thái đơn thuê**:
-`PENDING_PAYMENT → PAID → PREPARING → DELIVERING → DELIVERED → IN_USE/PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED`
+`PENDING_PAYMENT → PAID → PREPARING → DELIVERING → DELIVERED → IN_USE → PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED`
 
 hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
@@ -2072,19 +2083,37 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 }
 ```
 
+**Phân quyền runtime**:
+
+- `CUSTOMER`: chỉ được cập nhật **đơn của chính mình** và chỉ cho các bước `PENDING_PAYMENT/PREPARING -> CANCELLED`, `DELIVERED -> IN_USE`, `IN_USE -> PENDING_PICKUP`, `PICKED_UP -> COMPLETED`.
+- `STAFF`: chỉ được cập nhật các bước vận hành `PAID -> PREPARING`, `PREPARING -> DELIVERING/CANCELLED`, `PENDING_PICKUP -> PICKING_UP`. Nếu đơn đã có `deliveryStaff` hoặc `pickupStaff`, staff đang gọi API phải đúng người được gán.
+- `ADMIN`: có thể gọi các bước hợp lệ theo state machine, nhưng vẫn phải thỏa các guard nghiệp vụ bên dưới.
+
 **Chuyển đổi trạng thái cho phép**:
 
-| Từ                | Sang                           |
-| ----------------- | ------------------------------ |
-| `PENDING_PAYMENT` | `PAID` hoặc `CANCELLED`        |
-| `PAID`            | `PREPARING`                    |
-| `PREPARING`       | `DELIVERING` hoặc `CANCELLED`  |
-| `DELIVERING`      | `DELIVERED`                    |
-| `DELIVERED`       | `IN_USE` hoặc `PENDING_PICKUP` |
-| `IN_USE`          | `PENDING_PICKUP`               |
-| `PENDING_PICKUP`  | `PICKING_UP`                   |
-| `PICKING_UP`      | `PICKED_UP`                    |
-| `PICKED_UP`       | `COMPLETED`                    |
+| Từ                | Sang                          |
+| ----------------- | ----------------------------- |
+| `PENDING_PAYMENT` | `PAID` hoặc `CANCELLED`       |
+| `PAID`            | `PREPARING`                   |
+| `PREPARING`       | `DELIVERING` hoặc `CANCELLED` |
+| `DELIVERING`      | `DELIVERED`                   |
+| `DELIVERED`       | `IN_USE`                      |
+| `IN_USE`          | `PENDING_PICKUP`              |
+| `PENDING_PICKUP`  | `PICKING_UP`                  |
+| `PICKING_UP`      | `PICKED_UP`                   |
+| `PICKED_UP`       | `COMPLETED`                   |
+
+**Guard nghiệp vụ bổ sung**:
+
+- `PENDING_PAYMENT -> PAID`: chỉ hợp lệ khi tổng `payment_transactions.status = SUCCESS` của đơn đã đủ `totalPayableAmount`.
+- `PAID -> PREPARING`: phải có `rental_contract` cho đơn.
+- `PREPARING -> DELIVERING`: phải có `rental_contract` và đã gán `deliveryStaff`.
+- `DELIVERING -> DELIVERED`: không nên dùng API-078 để nhảy trạng thái; backend yêu cầu dùng API-083 `record-delivery` để ghi nhận thời gian/toạ độ giao hàng.
+- `DELIVERED -> IN_USE` và `IN_USE -> PENDING_PICKUP`: chỉ hợp lệ khi đơn đã có dữ liệu giao hàng thực tế (`actualDeliveryAt`, `actualRentalStartAt`).
+- `PENDING_PICKUP -> PICKING_UP`: phải gán `pickupStaff` trước.
+- `PICKING_UP -> PICKED_UP`: không nên dùng API-078 để nhảy trạng thái; backend yêu cầu dùng API-084 `record-pickup` để ghi nhận thời gian/toạ độ thu hồi.
+- `PICKED_UP -> COMPLETED`: chỉ hợp lệ khi đơn đã có dữ liệu thu hồi thực tế (`pickedUpAt`, `actualRentalEndAt`).
+- Khi chuyển sang `CANCELLED` qua API-078, backend cũng rollback side effects tương tự luồng hủy: nhả inventory `RESERVED -> AVAILABLE` và giảm `voucher.usedCount` nếu đơn có voucher.
 
 **Response**: `RentalOrderResponse`
 
@@ -2200,7 +2229,43 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 - User được gán phải có role `STAFF_ROLE`, nếu không trả `USER_NOT_STAFF_ROLE`.
 - Nếu đơn đã có `hub` và staff cũng có `hub`, hai hub phải trùng nhau (khác hub sẽ bị từ chối với `INVALID_REQUEST_DATA`).
 
-**Response**: `RentalOrderResponse`
+**Response**: `RentalOrderResponse` (đã include đầy đủ object `deliveryStaff` và `pickupStaff`)
+
+Ví dụ response phần staff:
+
+```json
+{
+    "data": {
+        "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
+        "deliveryStaff": {
+            "userId": "staff-uuid-001",
+            "email": "staff1@swiftera2.io.vn",
+            "firstName": "Nguyen",
+            "lastName": "A",
+            "nickname": "shipper-a",
+            "phoneNumber": "+84901234567",
+            "avatarUrl": null,
+            "isVerified": true,
+            "hubId": "h1a2b3c4-...",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Hồ Chí Minh - Quận 1"
+        },
+        "pickupStaff": {
+            "userId": "staff-uuid-002",
+            "email": "staff2@swiftera2.io.vn",
+            "firstName": "Tran",
+            "lastName": "B",
+            "nickname": "shipper-b",
+            "phoneNumber": "+84908888888",
+            "avatarUrl": null,
+            "isVerified": true,
+            "hubId": "h1a2b3c4-...",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Hồ Chí Minh - Quận 1"
+        }
+    }
+}
+```
 
 ---
 
@@ -2223,7 +2288,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 **Side effects**:
 
-- Chỉ chấp nhận khi đơn đang ở `PREPARING` hoặc `DELIVERING`
+- Chỉ chấp nhận khi đơn đang ở `DELIVERING`
 - Set `actualDeliveryAt` và `actualRentalStartAt`
 - Cập nhật `expectedRentalEndDate = actualRentalStartAt + max(rentalDurationDays)`
 - Inventory: `AVAILABLE → RENTED`
@@ -2252,7 +2317,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 **Side effects**:
 
-- Chỉ chấp nhận khi đơn đang ở `DELIVERED`, `PENDING_PICKUP` hoặc `PICKING_UP`
+- Chỉ chấp nhận khi đơn đang ở `PICKING_UP`
 - Set `actualRentalEndAt` và `pickedUpAt`
 - Inventory: `RENTED/RESERVED → AVAILABLE`
 - Status đơn tự chuyển thành `PICKED_UP`
@@ -2833,7 +2898,218 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-## Phụ lục A: Tổng hợp 112 APIs
+## Module 18: DASHBOARDS (2 APIs)
+
+---
+
+### API-113: Dashboard tổng quan cho ADMIN [AUTH]
+
+- **Method**: `GET`
+- **URL**: `/api/v1/dashboards/admin`
+- **Query**: `hubId` (tùy chọn)
+
+**Quy tắc scope dữ liệu**:
+
+- Không truyền `hubId`: trả số liệu toàn hệ thống.
+- Có `hubId`: trả số liệu theo hub và thêm `hubSummary`.
+- `hubId` không tồn tại: lỗi `HUB_NOT_FOUND`.
+
+**Response** (keys giữ đúng contract để FE bind trực tiếp):
+
+```json
+{
+    "data": {
+        "orderKpi": {
+            "completedToday": 12,
+            "completedYesterday": 9,
+            "completedThisWeek": 58,
+            "completedThisMonth": 241,
+            "dailyCompletedLast7Days": [
+                { "date": "2026-04-01", "count": 6 },
+                { "date": "2026-04-02", "count": 8 },
+                { "date": "2026-04-03", "count": 9 },
+                { "date": "2026-04-04", "count": 11 },
+                { "date": "2026-04-05", "count": 7 },
+                { "date": "2026-04-06", "count": 12 },
+                { "date": "2026-04-07", "count": 5 }
+            ]
+        },
+        "orderStatusCounts": {
+            "pendingPayment": 3,
+            "paid": 15,
+            "preparing": 6,
+            "delivering": 4,
+            "delivered": 2,
+            "inUse": 11,
+            "pendingPickup": 5,
+            "pickingUp": 3,
+            "pickedUp": 2,
+            "completed": 241,
+            "cancelled": 7,
+            "urgentTotal": 22
+        },
+        "overdueOrders": {
+            "count": 8,
+            "topItems": [
+                {
+                    "rentalOrderId": "ro-uuid-001",
+                    "orderCode": "RO-7D6A12B0",
+                    "status": "IN_USE",
+                    "expectedRentalEndDate": "2026-04-03",
+                    "renterFullName": "Nguyen Van A",
+                    "renterPhone": "0901234567",
+                    "itemCount": 2
+                }
+            ]
+        },
+        "inventoryStats": {
+            "totalItems": 320,
+            "available": 140,
+            "rented": 126,
+            "reserved": 21,
+            "maintenance": 18,
+            "damaged": 9,
+            "retired": 6
+        },
+        "revenueStats": {
+            "rentalFeeToday": 12800000,
+            "rentalFeeThisMonth": 241700000,
+            "depositHeldActive": 96500000,
+            "penaltyThisMonth": 3900000
+        },
+        "ticketStats": {
+            "open": 5,
+            "inProgress": 4,
+            "replied": 9,
+            "unresolved": 9
+        },
+        "voucherStats": {
+            "totalActive": 11,
+            "expired": 4,
+            "usedThisMonth": 37
+        },
+        "hubSummary": {
+            "hubId": "hub-001",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Ho Chi Minh Quan 1",
+            "totalStaff": 14,
+            "activeStaff": 11
+        }
+    }
+}
+```
+
+**Logic tính toán chính (để FE hiểu số liệu)**:
+
+- `orderKpi.completed*`: chỉ tính order status `COMPLETED`, mốc thời gian theo `coalesce(actualRentalEndAt, updatedAt)`.
+- `orderKpi.dailyCompletedLast7Days`: luôn đủ 7 điểm, ngày không có dữ liệu trả `count = 0`.
+- `orderStatusCounts.urgentTotal = paid + pendingPickup + overdueOrders.count`.
+- `inventoryStats.totalItems`: tổng các trạng thái inventory trong scope.
+- `ticketStats.unresolved = open + inProgress`.
+- `voucherStats.usedThisMonth`: đếm đơn có áp voucher (`voucherId != null`, `voucherDiscountAmount > 0`) và status khác `PENDING_PAYMENT/CANCELLED` trong tháng hiện tại.
+
+**FE UI/chart guidance**:
+
+- Dùng 4 KPI cards cho `completedToday`, `completedYesterday`, `completedThisWeek`, `completedThisMonth`.
+- Dùng line chart cho `dailyCompletedLast7Days` (trục X = `date`, trục Y = `count`).
+- Dùng stacked bar hoặc donut cho `orderStatusCounts` và `inventoryStats`.
+- Dùng table/top-list cho `overdueOrders.topItems` (ưu tiên sort tăng dần theo `expectedRentalEndDate`).
+- Dùng money formatter thống nhất VNĐ cho `revenueStats.*`.
+- Nếu gọi không truyền `hubId`, `hubSummary` có thể `null`; FE nên ẩn card Hub Summary.
+
+---
+
+### API-114: Dashboard tác nghiệp cho STAFF [AUTH]
+
+- **Method**: `GET`
+- **URL**: `/api/v1/dashboards/staff`
+- **Query**: `hubId` (tùy chọn)
+
+**Quy tắc xác thực hub**:
+
+- Nếu không truyền `hubId`, backend dùng hub đang gán cho staff hiện tại.
+- Nếu truyền `hubId`, phải đúng hub của staff; khác hub sẽ trả `UNAUTHORIZED_ACCESS`.
+- User không có role staff sẽ trả `USER_NOT_STAFF_ROLE`.
+
+**Response**:
+
+```json
+{
+    "data": {
+        "hubInfo": {
+            "hubId": "hub-001",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Ho Chi Minh Quan 1"
+        },
+        "todayTasks": {
+            "deliveriesDueToday": 6,
+            "pickupsDueToday": 4,
+            "total": 10
+        },
+        "urgentOverdue": {
+            "count": 3,
+            "items": [
+                {
+                    "rentalOrderId": "ro-uuid-001",
+                    "orderCode": "RO-7D6A12B0",
+                    "status": "IN_USE",
+                    "expectedRentalEndDate": "2026-04-03",
+                    "renterFullName": "Nguyen Van A",
+                    "renterPhone": "0901234567",
+                    "itemCount": 2,
+                    "daysOverdue": 4
+                }
+            ]
+        },
+        "hubInventoryStats": {
+            "totalItems": 96,
+            "available": 31,
+            "rented": 44,
+            "reserved": 8,
+            "maintenance": 7,
+            "damaged": 4,
+            "retired": 2
+        },
+        "assignedTickets": {
+            "openAssignedToMe": 2,
+            "inProgressAssignedToMe": 1,
+            "totalActiveAssignedToMe": 3
+        }
+    }
+}
+```
+
+**Logic tính toán chính**:
+
+- `todayTasks.deliveriesDueToday`: count order status `PREPARING|DELIVERING` có `expectedDeliveryDate = hôm nay` tại hub.
+- `todayTasks.pickupsDueToday`: count order status `IN_USE|PENDING_PICKUP|PICKING_UP` có `expectedRentalEndDate = hôm nay` tại hub.
+- `urgentOverdue.items`: top 10 order quá hạn (`IN_USE|PENDING_PICKUP`, `expectedRentalEndDate < hôm nay`).
+- `urgentOverdue.items[].daysOverdue`: số ngày trễ theo ngày hiện tại.
+- `assignedTickets`: count ticket `OPEN|IN_PROGRESS` theo `handledByUserId = staff hiện tại` và đúng hub.
+
+**FE UI/chart guidance**:
+
+- Dùng task cards cho `deliveriesDueToday`, `pickupsDueToday`, `total` (ưu tiên hiển thị dạng action queue).
+- Dùng bảng ưu tiên cho `urgentOverdue.items` với badge `daysOverdue` để staff triage nhanh.
+- Dùng mini donut cho `hubInventoryStats` và `assignedTickets`.
+- Khi nhận `UNAUTHORIZED_ACCESS` vì `hubId` sai scope, FE nên fallback gọi lại không truyền `hubId`.
+
+---
+
+### Data Triggers (Dashboard APIs)
+
+- `RentalOrder.status` thay đổi sẽ tác động ngay các khối: `orderStatusCounts`, `todayTasks`, `overdueOrders/urgentOverdue`, `voucherStats.usedThisMonth`.
+- `RentalOrder.expectedDeliveryDate` và `expectedRentalEndDate` thay đổi sẽ tác động `todayTasks` và overdue list/count.
+- `RentalOrder.actualRentalEndAt` hoặc `updatedAt` (khi `COMPLETED`) sẽ tác động `orderKpi` và `dailyCompletedLast7Days`.
+- `PaymentTransaction.status=SUCCESS` + `transactionType` sẽ tác động `revenueStats`.
+- `InventoryItem.status` hoặc `hubId` thay đổi sẽ tác động `inventoryStats`/`hubInventoryStats`.
+- `ContactTicket.status` hoặc `handledByUserId` thay đổi sẽ tác động `ticketStats` và `assignedTickets`.
+- `Voucher.expiresAt/usageLimit/usedCount/isActive` thay đổi sẽ tác động `voucherStats.totalActive|expired`.
+- `User`/`Role` (staff, verify, active, hub) thay đổi sẽ tác động `hubSummary.totalStaff|activeStaff`.
+
+---
+
+## Phụ lục A: Tổng hợp 114 APIs
 
 | #   | Method | URL                                                     | Auth            | Module        |
 | --- | ------ | ------------------------------------------------------- | --------------- | ------------- |
@@ -2949,6 +3225,8 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | 110 | PATCH  | `/api/v1/policies/{policyId}/deactivate`                | AUTH            | POLICIES      |
 | 111 | POST   | `/api/v1/policies/{policyId}/consent`                   | AUTH            | POLICIES      |
 | 112 | GET    | `/api/v1/policies/my-consents`                          | AUTH            | POLICIES      |
+| 113 | GET    | `/api/v1/dashboards/admin`                              | AUTH            | DASHBOARDS    |
+| 114 | GET    | `/api/v1/dashboards/staff`                              | AUTH            | DASHBOARDS    |
 
 ---
 
