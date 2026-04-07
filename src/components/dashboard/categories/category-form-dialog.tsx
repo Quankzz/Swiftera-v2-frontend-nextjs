@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { X, Loader2, Upload, Link as LinkIcon, ImageIcon } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from '@/features/categories/hooks/use-category-management';
+import { useUploadFileMutation } from '@/features/files/hooks/use-files';
 import type { CategoryResponse } from '@/features/categories/types';
 import { CategoryTreeSelect } from './category-tree-select';
 
@@ -27,6 +29,7 @@ interface FormState {
   parentId: string; // "" means root (null on submit)
   sortOrder: string; // string for controlled input; parsed on submit
   isActive: boolean;
+  imageUrl: string;
 }
 
 function initForm(
@@ -39,6 +42,7 @@ function initForm(
       parentId: target.parentId ?? '',
       sortOrder: String(target.sortOrder),
       isActive: target.isActive,
+      imageUrl: target.imageUrl ?? '',
     };
   }
   return {
@@ -46,6 +50,7 @@ function initForm(
     parentId: defaultParentId ?? '',
     sortOrder: '',
     isActive: true,
+    imageUrl: '',
   };
 }
 
@@ -65,11 +70,15 @@ export function CategoryFormDialog({
     Partial<Record<keyof FormState, string>>
   >({});
   const [serverError, setServerError] = useState<string | null>(null);
+  const [urlMode, setUrlMode] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
   const createMutation = useCreateCategoryMutation();
   const updateMutation = useUpdateCategoryMutation();
+  const uploadMutation = useUploadFileMutation();
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   // ── Validation ─────────────────────────────────────────────────────────────
@@ -84,6 +93,27 @@ export function CategoryFormDialog({
     setErrors(e);
     return Object.keys(e).length === 0;
   }
+
+  // ── Upload image ───────────────────────────────────────────────────────────
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setIsUploading(true);
+    try {
+      const result = await uploadMutation.mutateAsync({
+        file,
+        folder: 'categories',
+      });
+      setForm((f) => ({ ...f, imageUrl: result.fileUrl }));
+      setUrlMode(false);
+    } catch {
+      setServerError('Tải ảnh lên thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // ── Submit ─────────────────────────────────────────────────────────────────
 
@@ -105,6 +135,7 @@ export function CategoryFormDialog({
             parentId: parentIdValue,
             sortOrder: sortOrderNum,
             isActive: form.isActive,
+            imageUrl: form.imageUrl || undefined,
           },
         });
       } else {
@@ -112,6 +143,7 @@ export function CategoryFormDialog({
           name: form.name.trim(),
           parentId: parentIdValue ?? undefined,
           sortOrder: sortOrderNum,
+          imageUrl: form.imageUrl || undefined,
         });
       }
       onClose();
@@ -174,6 +206,97 @@ export function CategoryFormDialog({
             {errors.name && (
               <p className='text-xs text-red-500'>{errors.name}</p>
             )}
+          </div>
+
+          {/* Image URL */}
+          <div className='space-y-1.5'>
+            <label className='block text-sm font-medium text-text-main'>
+              Ảnh đại diện
+            </label>
+            <div className='flex gap-3'>
+              {/* Preview */}
+              <div className='relative size-20 shrink-0 overflow-hidden rounded-lg border border-gray-200 dark:border-white/15 bg-gray-50 dark:bg-white/4'>
+                {isUploading ? (
+                  <div className='flex h-full w-full items-center justify-center'>
+                    <Loader2 className='size-5 animate-spin text-theme-primary-start' />
+                  </div>
+                ) : form.imageUrl ? (
+                  <Image
+                    src={form.imageUrl}
+                    alt='Ảnh danh mục'
+                    fill
+                    sizes='80px'
+                    className='object-contain p-1'
+                  />
+                ) : (
+                  <div className='flex h-full w-full items-center justify-center'>
+                    <ImageIcon className='size-8 text-gray-300' />
+                  </div>
+                )}
+              </div>
+
+              {/* Controls */}
+              <div className='flex flex-1 flex-col gap-2'>
+                {/* Toggle buttons */}
+                <div className='flex gap-2'>
+                  <button
+                    type='button'
+                    onClick={() => setUrlMode(true)}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
+                      urlMode
+                        ? 'border-theme-primary-start bg-theme-primary-start/5 text-theme-primary-start'
+                        : 'border-gray-200 dark:border-white/15 bg-white dark:bg-surface-card text-text-sub hover:bg-gray-50 dark:hover:bg-white/5',
+                    )}
+                  >
+                    <LinkIcon size={12} />
+                    Nhập URL
+                  </button>
+                  <button
+                    type='button'
+                    onClick={() => fileRef.current?.click()}
+                    disabled={isUploading || isPending}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition',
+                      !urlMode
+                        ? 'border-theme-primary-start bg-theme-primary-start/5 text-theme-primary-start'
+                        : 'border-gray-200 dark:border-white/15 bg-white dark:bg-surface-card text-text-sub hover:bg-gray-50 dark:hover:bg-white/5',
+                      (isUploading || isPending) &&
+                        'opacity-60 cursor-not-allowed',
+                    )}
+                  >
+                    <Upload size={12} />
+                    {isUploading ? 'Đang tải...' : 'Tải lên'}
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type='file'
+                    accept='image/*'
+                    className='hidden'
+                    onChange={handleFileChange}
+                  />
+                </div>
+
+                {/* URL input */}
+                {urlMode && (
+                  <input
+                    type='url'
+                    value={form.imageUrl}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, imageUrl: e.target.value }))
+                    }
+                    placeholder='https://example.com/category.jpg'
+                    className={inputCls()}
+                    disabled={isPending}
+                  />
+                )}
+                {!urlMode && form.imageUrl && (
+                  <p className='w-0 min-w-full truncate text-xs text-text-sub'>
+                    {form.imageUrl}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Parent + Sort order */}

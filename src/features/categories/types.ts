@@ -58,6 +58,8 @@ export interface CreateCategoryInput {
   parentId?: string | null;
   /** >= 1; auto-assigned if omitted */
   sortOrder?: number;
+  /** URL ảnh đại diện cho danh mục */
+  imageUrl?: string;
 }
 
 // ── Update input (API-049 PATCH /api/v1/categories/{categoryId}) ─────────────
@@ -70,6 +72,8 @@ export interface UpdateCategoryInput {
   parentId?: string | null;
   sortOrder?: number;
   isActive?: boolean;
+  /** URL ảnh đại diện cho danh mục */
+  imageUrl?: string;
 }
 
 // ── Query params (API-047 GET /api/v1/categories) ───────────────────────────
