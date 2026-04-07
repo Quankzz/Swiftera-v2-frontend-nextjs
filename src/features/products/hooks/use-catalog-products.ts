@@ -27,6 +27,8 @@ export interface CatalogQueryParams {
   categoryId?: string;
   /** Subcategory ID — if present, products are filtered to this child category */
   subcategoryId?: string;
+  /** Free-text search query — matched against product name (contains) */
+  searchQuery?: string;
   /** Multi-select brand names (BE stores brand as a single string per product) */
   brands?: string[];
   /** Minimum daily price in VND */
@@ -99,6 +101,12 @@ function selectCatalogResult(data: PaginatedProductsResponse): CatalogResult {
 
 function buildFilter(params: CatalogQueryParams): string {
   const parts: string[] = ['isActive:true'];
+
+  // Free-text search: name contains query (SpringFilter `~` = like)
+  if (params.searchQuery?.trim()) {
+    const safe = params.searchQuery.trim().replace(/'/g, "\\'");
+    parts.push(`name~'*${safe}*'`);
+  }
 
   // Use subcategoryId when present, otherwise fall back to categoryId
   const activeCategory = params.subcategoryId ?? params.categoryId;

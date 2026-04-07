@@ -4,11 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   ChevronRight,
@@ -30,6 +26,9 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/theme-context';
 import logo from '../../public/logo.png';
+import { useHeaderSearch } from '@/features/products/hooks/use-header-search';
+import { useCategoryTreeQuery } from '@/features/categories/hooks/use-category-tree';
+import { HeaderSearchDropdown } from '@/components/header/HeaderSearchDropdown';
 
 export function Header() {
   const HOVER_BRIDGE_HEIGHT = 10;
@@ -48,6 +47,10 @@ export function Header() {
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(
     null,
   );
+
+  // ── Real API data for search ────────────────────────────────────────────────
+  const search = useHeaderSearch();
+  const { data: categoryTree = [] } = useCategoryTreeQuery();
 
   const hoveredCategoryData = useMemo(
     () => sortedCategories.find((c) => c.categoryId === hoveredCategoryId),
@@ -69,7 +72,9 @@ export function Header() {
       return 'Khách hàng';
     }
 
-    return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Khách hàng';
+    return (
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Khách hàng'
+    );
   }, [user]);
 
   const isAdminUser = useMemo(
@@ -82,7 +87,8 @@ export function Header() {
       return 'KH';
     }
 
-    const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim();
+    const initials =
+      `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim();
     return initials || 'KH';
   }, [user]);
 
@@ -177,6 +183,16 @@ export function Header() {
                     <input
                       type='text'
                       autoFocus
+                      value={search.inputValue}
+                      onChange={(e) => search.setInputValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && search.inputValue.trim()) {
+                          setIsSearchOpen(false);
+                          const q = search.inputValue.trim();
+                          search.setInputValue('');
+                          router.push(`/catalog?q=${encodeURIComponent(q)}`);
+                        }
+                      }}
                       placeholder='Tìm kiếm thiết bị, điện thoại, máy tính...'
                       className='flex-1 border-none bg-transparent text-sm text-text-main placeholder:text-text-sub focus:outline-none'
                     />
@@ -184,6 +200,7 @@ export function Header() {
                       type='button'
                       onClick={(e) => {
                         e.stopPropagation();
+                        search.setInputValue('');
                         setIsSearchOpen(false);
                       }}
                       className='flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10'
@@ -206,33 +223,28 @@ export function Header() {
                     </button>
                   </div>
 
-                  <div className='p-6'>
-                    <div className='grid grid-cols-2 gap-4 lg:grid-cols-4'>
-                      {sortedCategories.slice(0, 8).map((category) => {
-                        return (
-                          <button
-                            type='button'
-                            key={category.categoryId}
-                            className='group flex flex-col items-center justify-center gap-3 rounded-2xl bg-gray-50/50 dark:bg-white/5 p-4 transition-colors hover:bg-gray-100 dark:hover:bg-white/10'
-                          >
-                            {category.image && (
-                              <div className='relative h-20 w-20 overflow-hidden mix-blend-multiply dark:mix-blend-normal'>
-                                <Image
-                                  src={category.image}
-                                  alt={category.name}
-                                  fill
-                                  className='object-contain aspect-square'
-                                />
-                              </div>
-                            )}
-                            <span className='text-sm font-medium text-text-main'>
-                              {category.name}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  {/* Dynamic dropdown content */}
+                  <HeaderSearchDropdown
+                    categories={categoryTree}
+                    query={search.inputValue}
+                    isQueryActive={search.isQueryActive}
+                    results={search.results}
+                    totalElements={search.totalElements}
+                    isLoading={search.isLoading}
+                    isEmpty={search.isEmpty}
+                    onViewAll={() => {
+                      setIsSearchOpen(false);
+                      search.setInputValue('');
+                      router.push(
+                        `/catalog?q=${encodeURIComponent(search.debouncedQuery)}`,
+                      );
+                    }}
+                    onCategoryClick={(categoryId) => {
+                      setIsSearchOpen(false);
+                      search.setInputValue('');
+                      router.push(`/catalog?categoryId=${categoryId}`);
+                    }}
+                  />
                 </div>
               )}
             </div>
@@ -251,8 +263,6 @@ export function Header() {
               >
                 <Heart className='size-5 text-text-main' />
               </Button>
-
-              
 
               {/* Dark / Light mode toggle */}
               <Button
@@ -291,8 +301,8 @@ export function Header() {
                   </Button>
                 </Link>
               )}
-{/* User dropdown */}
-<div ref={userMenuRef} className='relative'>
+              {/* User dropdown */}
+              <div ref={userMenuRef} className='relative'>
                 <Button
                   variant='ghost'
                   size='icon'
@@ -371,7 +381,10 @@ export function Header() {
                             onClick={() => setIsUserMenuOpen(false)}
                             className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
                           >
-                            <LogIn size={15} className='text-text-sub shrink-0' />
+                            <LogIn
+                              size={15}
+                              className='text-text-sub shrink-0'
+                            />
                             Đăng nhập
                           </Link>
                           <Link

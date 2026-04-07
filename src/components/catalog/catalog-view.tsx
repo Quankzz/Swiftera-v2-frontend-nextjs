@@ -62,6 +62,7 @@ export function CatalogView({
   const categoryId = searchParams.get('categoryId') ?? initialCategoryId;
   const subcategoryId =
     searchParams.get('subcategoryId') ?? initialSubcategoryId;
+  const searchQuery = searchParams.get('q') ?? undefined;
   const sortParam = (searchParams.get('sort') ?? initialSort) as SortOption;
   const sort: SortOption = VALID_SORTS.includes(sortParam)
     ? sortParam
@@ -92,6 +93,7 @@ export function CatalogView({
   const { data, isLoading, isFetching } = useCatalogProductsQuery({
     categoryId: categoryId ?? undefined,
     subcategoryId: subcategoryId ?? undefined,
+    searchQuery,
     brands: filterState.brands.length > 0 ? filterState.brands : undefined,
     minPrice: filterState.priceMin || undefined,
     maxPrice: filterState.priceMax || undefined,
@@ -112,6 +114,7 @@ export function CatalogView({
 
   // ── Derived display values ────────────────────────────────────────────────
   const activeCategoryName = useMemo(() => {
+    if (searchQuery) return `Kết quả tìm kiếm: "${searchQuery}"`;
     if (!categoryId) return 'Tất cả sản phẩm';
     // If subcategory is selected, use subcategory name
     if (subcategoryId) {
@@ -119,7 +122,7 @@ export function CatalogView({
       if (sub) return sub.name;
     }
     return activeRootNode?.name ?? 'Sản phẩm';
-  }, [categoryId, subcategoryId, flatCategories, activeRootNode]);
+  }, [searchQuery, categoryId, subcategoryId, flatCategories, activeRootNode]);
 
   const breadcrumbs = useMemo(() => {
     if (!activeRootNode) return [];
@@ -180,7 +183,7 @@ export function CatalogView({
     <div>
       {/* Catalog Header */}
       <CatalogHeader
-        variant={categoryId ? 'category' : 'search'}
+        variant={searchQuery ? 'search' : categoryId ? 'category' : 'search'}
         title={activeCategoryName}
         breadcrumbs={breadcrumbs}
         count={total}
