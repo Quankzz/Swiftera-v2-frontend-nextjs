@@ -221,6 +221,11 @@ export function useProductForm(initial?: ProductResponse) {
     );
   }, []);
 
+  /** Reorder images after a drag-and-drop event (pass new ordered array) */
+  const reorderImages = useCallback((newOrder: DraftImage[]) => {
+    setImages(newOrder.map((img, i) => ({ ...img, sortOrder: i + 1 })));
+  }, []);
+
   /* ─── Inventory Item handlers (edit mode only) ─── */
   const addDraftInventoryItem = useCallback(() => {
     setDraftInventoryItems((prev) => [
@@ -292,6 +297,7 @@ export function useProductForm(initial?: ProductResponse) {
     removeImage,
     setPrimary,
     updateImageUrl,
+    reorderImages,
     draftInventoryItems,
     addDraftInventoryItem,
     updateDraftInventoryItem,

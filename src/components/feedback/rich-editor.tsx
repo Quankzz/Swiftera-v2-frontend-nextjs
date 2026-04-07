@@ -37,6 +37,7 @@ interface RichEditorProps {
   placeholder?: string;
   onChange?: (html: string) => void;
   minHeight?: string;
+  initialContent?: string;
 }
 
 // ─── Toolbar separator ────────────────────────────────────────────
@@ -134,6 +135,7 @@ export default function RichEditor({
   placeholder = 'Mô tả chi tiết ý kiến của bạn...',
   onChange,
   minHeight = '180px',
+  initialContent = '',
 }: RichEditorProps) {
   const imgPickerRef = useRef<HTMLInputElement>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -167,7 +169,7 @@ export default function RichEditor({
         height: 360,
       }),
     ],
-    content: '',
+    content: initialContent || '',
     immediatelyRender: false,
     onUpdate: ({ editor: e }) => {
       const html = e.getHTML();

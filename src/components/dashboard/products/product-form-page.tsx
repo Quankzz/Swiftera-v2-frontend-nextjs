@@ -13,7 +13,6 @@ import {
   Link as LinkIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ImageCropModal } from './image-crop-modal';
 import {
   useProductForm,
   draftToProductPreview,
@@ -23,10 +22,13 @@ import {
   useCreateProductMutation,
   useUpdateProductMutation,
 } from '@/features/products/hooks/use-product-management';
-import { useCategoriesQuery } from '@/features/categories/hooks/use-category-management';
+import {
+  useCategoryTreeQuery,
+  flattenTree,
+} from '@/features/categories/hooks/use-category-tree';
+import { CategoryTreeSelect } from '../categories/category-tree-select';
 import type { ProductResponse } from '@/features/products/types';
 import RichEditor from '@/components/feedback/rich-editor';
-import { ColorPickerList } from './color-picker-list';
 import {
   VoucherPriceCalculator,
   type PriceValues,
@@ -119,15 +121,6 @@ function TextInput({
 }
 
 // ─── Image item inside Section 3 ──────────────────────────────────
-function dataUrlToFile(dataUrl: string, filename: string): File {
-  const [header, base64] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-  const binaryStr = atob(base64);
-  const bytes = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-  return new File([bytes], filename, { type: mime });
-}
-
 function ImageItem({
   img,
   onSetPrimary,
@@ -140,50 +133,32 @@ function ImageItem({
   onUpdateUrl: (url: string) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [urlMode, setUrlMode] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const uploadMutation = useUploadFileMutation();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setCropSrc(reader.result as string);
-    reader.readAsDataURL(file);
     // reset input để có thể upload lại cùng file
     e.target.value = '';
+    setIsUploading(true);
+    try {
+      const result = await uploadMutation.mutateAsync({
+        file,
+        folder: 'products',
+      });
+      onUpdateUrl(result.fileUrl);
+      setUrlMode(false);
+    } catch {
+      toast.error('Tải ảnh lên thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
     <>
-      {cropSrc && (
-        <ImageCropModal
-          imageSrc={cropSrc}
-          onCancel={() => setCropSrc(null)}
-          onComplete={async (dataUrl) => {
-            setCropSrc(null);
-            setIsUploading(true);
-            try {
-              const file = dataUrlToFile(
-                dataUrl,
-                `product-image-${Date.now()}.jpg`,
-              );
-              const result = await uploadMutation.mutateAsync({
-                file,
-                folder: 'products',
-              });
-              onUpdateUrl(result.fileUrl);
-              setUrlMode(false);
-            } catch {
-              toast.error('Tải ảnh lên thất bại. Vui lòng thử lại.');
-            } finally {
-              setIsUploading(false);
-            }
-          }}
-        />
-      )}
-
       <div className='flex gap-3 rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 p-3'>
         {/* Preview thumbnail */}
         <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8'>
@@ -240,7 +215,7 @@ function ImageItem({
               )}
             >
               <Upload size={12} />
-              Tải lên + Cắt
+              Tải lên
             </button>
             <input
               ref={fileRef}
@@ -326,16 +301,6 @@ export function ProductFormPage({
 
   const [submitted, setSubmitted] = useState(false);
 
-  // ── Color picker state (multi-color UI, BE only needs first/joined string) ──
-  // Initialize from initialProduct.color (comma-split if stored as comma-joined)
-  const [colors, setColors] = useState<string[]>(() => {
-    if (!initialProduct?.color) return [];
-    return initialProduct.color
-      .split(',')
-      .map((c) => c.trim())
-      .filter(Boolean);
-  });
-
   // ── Voucher price state (tracks computed dailyPrice from calculator) ──
   const [priceValues, setPriceValues] = useState<PriceValues>({
     dailyPrice: initialProduct ? initialProduct.dailyPrice : 0,
@@ -349,31 +314,36 @@ export function ProductFormPage({
     form.productId || '',
   );
 
-  // Fetch categories for dropdown
-  const { data: categoriesData, isLoading: loadingCategories } =
-    useCategoriesQuery({ page: 0, size: 100 });
-  const categoryList = categoriesData?.content ?? [];
+  // Fetch categories for tree select + preview label
+  const { data: categoryTree = [] } = useCategoryTreeQuery();
+  const flatCategories = flattenTree(categoryTree);
 
   // Find categoryName for preview
-  const selectedCategory = categoryList.find(
+  const selectedCategoryName = flatCategories.find(
     (c) => c.categoryId === form.categoryId,
-  );
+  )?.name;
   const previewProduct = draftToProductPreview(
     form,
     images,
-    selectedCategory?.name,
+    selectedCategoryName,
   );
 
   const handleSubmit = async () => {
     setSubmitted(true);
     if (!isValid) return;
 
-    const imageUrls = images
+    // Ảnh: sort primary lên đầu, sau đó theo sortOrder → BE coi phần tử đầu tiên là primary
+    const imageUrls = [...images]
+      .sort((a, b) => {
+        if (a.isPrimary && !b.isPrimary) return -1;
+        if (!a.isPrimary && b.isPrimary) return 1;
+        return a.sortOrder - b.sortOrder;
+      })
       .filter((img) => img.imageUrl)
       .map((img) => img.imageUrl);
 
-    // Màu: join nhiều màu thành 1 string (BE nhận single string)
-    const colorString = colors.length > 0 ? colors.join(',') : undefined;
+    // Màu: lấy thẳng từ form.color (single string, user không còn chọn màu trong UI)
+    const colorString = form.color || undefined;
 
     // Giá: lấy từ VoucherPriceCalculator
     const dailyPrice =
@@ -503,21 +473,11 @@ export function ProductFormPage({
           <div className='flex flex-col gap-4'>
             {/* Danh mục */}
             <Field label='Danh mục' required error={showError('categoryId')}>
-              <select
+              <CategoryTreeSelect
                 value={form.categoryId}
-                onChange={(e) => setField('categoryId', e.target.value)}
-                disabled={loadingCategories}
-                className='h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 disabled:opacity-60'
-              >
-                <option value=''>
-                  {loadingCategories ? 'Đang tải...' : '— Chọn danh mục —'}
-                </option>
-                {categoryList.map((c) => (
-                  <option key={c.categoryId} value={c.categoryId}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => setField('categoryId', id)}
+                placeholder='— Chọn danh mục —'
+              />
             </Field>
 
             {/* Tên sản phẩm */}
@@ -541,23 +501,13 @@ export function ProductFormPage({
               />
             </Field>
 
-            {/* Thương hiệu + Màu sắc (2 cột) */}
-            <div className='grid grid-cols-2 gap-4'>
+            {/* Thương hiệu */}
+            <div className='grid grid-cols-1 gap-4'>
               <Field label='Thương hiệu' hint='VD: Canon, Sony, Fujifilm'>
                 <TextInput
                   value={form.brand}
                   onChange={(v) => setField('brand', v)}
                   placeholder='VD: Canon'
-                />
-              </Field>
-              <Field
-                label='Màu sắc'
-                hint='Chọn 1 hoặc nhiều màu (BE nhận màu đầu tiên / các màu join bằng dấu phẩy)'
-              >
-                <ColorPickerList
-                  colors={colors}
-                  onChange={setColors}
-                  maxColors={5}
                 />
               </Field>
             </div>
@@ -567,6 +517,7 @@ export function ProductFormPage({
               <RichEditor
                 placeholder='Mô tả ngắn gọn về sản phẩm...'
                 minHeight='160px'
+                initialContent={form.description}
                 onChange={(html) =>
                   setField('description', html === '<br>' ? '' : html)
                 }
@@ -727,7 +678,7 @@ export function ProductFormPage({
                 img={img}
                 onSetPrimary={() => setPrimary(img.draftId)}
                 onRemove={() => removeImage(img.draftId)}
-                onUpdateUrl={(url) => updateImageUrl(img.draftId, url)}
+                onUpdateUrl={(url: string) => updateImageUrl(img.draftId, url)}
               />
             ))}
 

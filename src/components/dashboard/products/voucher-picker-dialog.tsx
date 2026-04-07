@@ -96,7 +96,7 @@ function VoucherTicket({
       {/* Ticket shell */}
       <div
         className={cn(
-          'relative flex overflow-hidden rounded-xl border-2 border-dashed',
+          'relative flex min-h-22 overflow-hidden rounded-xl border-2 border-dashed',
           selected
             ? 'border-theme-primary-start bg-theme-primary-start/5 dark:bg-theme-primary-start/10'
             : unavailable
@@ -107,7 +107,7 @@ function VoucherTicket({
         {/* Left side — big discount value */}
         <div
           className={cn(
-            'flex min-w-20 shrink-0 flex-col items-center justify-center px-3 py-4 border-r-2 border-dashed',
+            'flex w-36 shrink-0 flex-col items-center justify-center px-3 py-4 border-r-2 border-dashed',
             selected
               ? 'border-theme-primary-start/40 bg-theme-primary-start/10 dark:bg-theme-primary-start/15'
               : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5',
@@ -132,13 +132,13 @@ function VoucherTicket({
           )}
           <span
             className={cn(
-              'text-2xl font-black leading-none',
+              'text-xl font-black leading-none',
               selected ? 'text-theme-primary-start' : 'text-text-main',
             )}
           >
             {discountText}
           </span>
-          <span className='mt-0.5 text-[9px] text-text-sub font-medium uppercase tracking-wide'>
+          <span className='mt-0.5 text-[9px] text-text-sub font-medium uppercase tracking-wide text-center truncate w-full'>
             {discountSub}
           </span>
         </div>

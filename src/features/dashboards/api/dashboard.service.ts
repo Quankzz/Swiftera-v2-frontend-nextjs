@@ -7,11 +7,7 @@
  */
 
 import { apiGet } from '@/api/apiService';
-import type {
-  AdminDashboardData,
-  AdminDashboardParams,
-  AdminDashboardResponse,
-} from '../types';
+import type { AdminDashboardData, AdminDashboardParams } from '../types';
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -36,6 +32,5 @@ export async function getAdminDashboard(
   params: AdminDashboardParams = {},
 ): Promise<AdminDashboardData> {
   const query = buildQuery({ hubId: params.hubId });
-  const res = await apiGet<AdminDashboardResponse>(`/dashboards/admin${query}`);
-  return res.data;
+  return apiGet<AdminDashboardData>(`/dashboards/admin${query}`);
 }

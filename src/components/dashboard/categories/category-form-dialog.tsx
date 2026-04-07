@@ -5,10 +5,10 @@ import { X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   useCreateCategoryMutation,
-  useCategoriesQuery,
   useUpdateCategoryMutation,
 } from '@/features/categories/hooks/use-category-management';
 import type { CategoryResponse } from '@/features/categories/types';
+import { CategoryTreeSelect } from './category-tree-select';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -65,16 +65,6 @@ export function CategoryFormDialog({
     Partial<Record<keyof FormState, string>>
   >({});
   const [serverError, setServerError] = useState<string | null>(null);
-
-  // ── Data ───────────────────────────────────────────────────────────────────
-
-  const { data: categoriesData } = useCategoriesQuery({ page: 0, size: 200 });
-  const allCategories = categoriesData?.content ?? [];
-
-  // Exclude self from parent options (prevent self-parent)
-  const parentOptions = allCategories.filter(
-    (c) => !isEdit || c.categoryId !== target?.categoryId,
-  );
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
@@ -192,21 +182,14 @@ export function CategoryFormDialog({
               <label className='block text-sm font-medium text-text-main'>
                 Danh mục cha
               </label>
-              <select
+              <CategoryTreeSelect
                 value={form.parentId}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, parentId: e.target.value }))
-                }
-                className={cn(inputCls(), 'cursor-pointer')}
+                onChange={(id) => setForm((f) => ({ ...f, parentId: id }))}
+                excludeId={target?.categoryId}
+                allowRoot
+                rootLabel='— Danh mục gốc —'
                 disabled={isPending}
-              >
-                <option value=''>— Danh mục gốc —</option>
-                {parentOptions.map((c) => (
-                  <option key={c.categoryId} value={c.categoryId}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div className='space-y-1.5'>

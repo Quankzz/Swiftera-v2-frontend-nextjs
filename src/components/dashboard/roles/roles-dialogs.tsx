@@ -65,16 +65,34 @@ export function RoleFormDialog({
   const handleSubmit = async () => {
     if (!formState.name.trim()) return;
 
-    const payload: CreateRoleInput | UpdateRoleInput = {
-      name: formState.name.trim(),
-      description: formState.description ? formState.description.trim() : null,
-      active: formState.active,
-    };
-
     if (isEdit && initialRole) {
+      // Chỉ gửi các trường thực sự thay đổi so với dữ liệu gốc
+      const source = roleDetail ?? initialRole;
+      const payload: UpdateRoleInput = {};
+      const trimmedName = formState.name.trim();
+      const trimmedDesc = formState.description
+        ? formState.description.trim()
+        : null;
+      if (trimmedName !== (source.name ?? '')) payload.name = trimmedName;
+      if (trimmedDesc !== (source.description ?? null))
+        payload.description = trimmedDesc;
+      if (formState.active !== (source.active ?? true))
+        payload.active = formState.active;
+
+      if (Object.keys(payload).length === 0) {
+        onClose();
+        return;
+      }
       await updateMutation.mutateAsync({ roleId: initialRole.roleId, payload });
     } else {
-      await createMutation.mutateAsync(payload as CreateRoleInput);
+      const payload: CreateRoleInput = {
+        name: formState.name.trim(),
+        description: formState.description
+          ? formState.description.trim()
+          : null,
+        active: formState.active,
+      };
+      await createMutation.mutateAsync(payload);
     }
     onClose();
   };

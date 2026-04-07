@@ -94,10 +94,10 @@ export interface RevenueStats {
 
 /** Thống kê ticket hỗ trợ */
 export interface TicketStats {
-  open: number;
   inProgress: number;
-  replied: number;
-  unresolved: number;
+  resolved: number;
+  closed: number;
+  activeTotal: number;
 }
 
 /** Thống kê voucher */
