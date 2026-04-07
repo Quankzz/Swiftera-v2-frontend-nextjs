@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'gmedia.playstation.com' },
       { protocol: 'https', hostname: 'i01.appmifile.com' },
       { protocol: 'https', hostname: 'assets.bose.com' },
+      { protocol: 'https', hostname: 'macone.vn' },
       // Azure Blob Storage (uploaded images)
       { protocol: 'https', hostname: 'swifterastorage.blob.core.windows.net' },
     ],

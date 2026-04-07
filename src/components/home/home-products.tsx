@@ -2,11 +2,13 @@
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   useHomeFeaturedProductsQuery,
   useHomeBudgetProductsQuery,
 } from '@/features/products/hooks/use-home-products';
 import { ProductCard } from './product-card';
+import { ChevronRight } from 'lucide-react';
 
 // ── Loading skeleton for a product grid ──────────────────────────────────────
 
@@ -40,9 +42,13 @@ export function HomeFeaturedProducts() {
             Những lựa chọn được thuê nhiều nhất tuần này.
           </p>
         </div>
-        <Button variant='link' className='text-rose-600'>
-          Xem tất cả
-        </Button>
+
+        <Link
+          href='/catalog'
+          className='text-md font-semibold text-theme-primary-start hover:text-theme-primary-end inline-flex items-center gap-1 transition-colors hover:gap-1.5'
+        >
+          Xem tất cả <ChevronRight className='size-4.5' />
+        </Link>
       </div>
 
       {isLoading && <ProductGridSkeleton />}
@@ -84,9 +90,12 @@ export function HomeBudgetProducts() {
             Lựa chọn phù hợp túi tiền, chất lượng vẫn đảm bảo.
           </p>
         </div>
-        <Button variant='link' className='text-rose-600'>
-          Xem tất cả
-        </Button>
+        <Link
+          href='/catalog'
+          className='text-md font-semibold text-theme-primary-start hover:text-theme-primary-end inline-flex items-center gap-1 transition-colors hover:gap-1.5'
+        >
+          Xem tất cả <ChevronRight className='size-4.5' />
+        </Link>
       </div>
 
       {isLoading && <ProductGridSkeleton />}

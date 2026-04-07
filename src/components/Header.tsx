@@ -21,7 +21,6 @@ import {
   FileText,
   Settings,
 } from 'lucide-react';
-import { topLevelCategories } from '@/data/categories';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/theme-context';
@@ -36,9 +35,16 @@ export function Header() {
   const { resolvedTheme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
+  // ── Real API data for search ────────────────────────────────────────────────
+  const search = useHeaderSearch();
+  const { data: categoryTree = [] } = useCategoryTreeQuery();
+
   const sortedCategories = useMemo(
-    () => [...topLevelCategories].sort((a, b) => a.sortOrder - b.sortOrder),
-    [],
+    () =>
+      [...categoryTree]
+        .filter((c) => c.isActive)
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [categoryTree],
   );
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -47,10 +53,6 @@ export function Header() {
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(
     null,
   );
-
-  // ── Real API data for search ────────────────────────────────────────────────
-  const search = useHeaderSearch();
-  const { data: categoryTree = [] } = useCategoryTreeQuery();
 
   const hoveredCategoryData = useMemo(
     () => sortedCategories.find((c) => c.categoryId === hoveredCategoryId),
@@ -429,7 +431,7 @@ export function Header() {
               {sortedCategories.map((category) => (
                 <div key={category.categoryId}>
                   <Link
-                    href={`/${category.slug}`}
+                    href={`/catalog?categoryId=${category.categoryId}`}
                     onMouseEnter={() =>
                       setHoveredCategoryId(category.categoryId)
                     }
@@ -453,9 +455,7 @@ export function Header() {
             />
 
             {/* Global Full-Width Mega Menu Dropdown */}
-            {hoveredCategoryData &&
-            (hoveredCategoryData.children?.length ||
-              hoveredCategoryData.brands?.length) ? (
+            {hoveredCategoryData && hoveredCategoryData.children?.length ? (
               <div
                 className='absolute left-1/2 w-screen -translate-x-1/2 border-t border-border/40 dark:border-white/5 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default'
                 style={{ top: `calc(100% + ${HOVER_BRIDGE_HEIGHT}px)` }}
@@ -477,7 +477,7 @@ export function Header() {
                               className='group/child relative'
                             >
                               <Link
-                                href={`/${child.slug}`}
+                                href={`/catalog?categoryId=${child.categoryId}`}
                                 className='flex items-center justify-between py-2 text-text-main hover:text-theme-primary-start font-medium transition-colors'
                               >
                                 {child.name}
@@ -495,7 +495,7 @@ export function Header() {
                                       {child.children.map((subChild) => (
                                         <li key={subChild.categoryId}>
                                           <Link
-                                            href={`/${subChild.slug}`}
+                                            href={`/catalog?categoryId=${subChild.categoryId}`}
                                             className='block px-4 py-2.5 rounded-xl hover:bg-rose-50/50 dark:hover:bg-theme-primary-start/10 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors'
                                           >
                                             {subChild.name}
@@ -506,27 +506,6 @@ export function Header() {
                                   </div>
                                 </div>
                               )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                  {hoveredCategoryData.brands &&
-                    hoveredCategoryData.brands.length > 0 && (
-                      <div className='w-70 shrink-0'>
-                        <h3 className='text-lg font-bold text-text-main mb-6'>
-                          Brands
-                        </h3>
-                        <ul className='space-y-2'>
-                          {hoveredCategoryData.brands.map((brand, index) => (
-                            <li key={index}>
-                              <Link
-                                href={`/brands/${brand.toLowerCase()}`}
-                                className='block py-2 text-text-main hover:text-theme-primary-start font-medium transition-colors'
-                              >
-                                {brand}
-                              </Link>
                             </li>
                           ))}
                         </ul>
