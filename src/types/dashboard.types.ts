@@ -14,7 +14,6 @@ export type OrderStatus =
   | 'PENDING_PICKUP'
   | 'PICKING_UP'
   | 'PICKED_UP'
-  | 'INSPECTING'
   // Terminal
   | 'COMPLETED'
   | 'CANCELLED';
@@ -54,13 +53,21 @@ export interface OrderItem {
   checkin_condition?: ProductCondition;
   /** Condition after return (checkout) */
   checkout_condition?: ProductCondition;
-  /** Photo captured by staff before handover */
+  /** First CHECKIN phase photo URL stored on backend */
   checkin_photo_url?: string;
-  /** Photo captured by staff after return */
+  /** First CHECKOUT phase photo URL stored on backend */
   checkout_photo_url?: string;
+  /** All CHECKOUT phase photo URLs (taken at hub before delivery) */
+  checkout_photos: string[];
+  /** All CHECKIN phase photo URLs (taken when recovering goods) */
+  checkin_photos: string[];
+  /** Staff condition note at checkout (hub, before delivery) — backend: checkoutConditionNote */
+  checkout_condition_note?: string;
+  /** Staff condition note at checkin (return from customer) — backend: checkinConditionNote */
+  checkin_condition_note?: string;
   /** Additional penalty charged for damage */
   item_penalty_amount?: number;
-  /** Staff note for this item */
+  /** Staff note for this item (combined from condition notes) */
   staff_note?: string;
 }
 

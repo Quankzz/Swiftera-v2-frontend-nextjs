@@ -18,6 +18,9 @@
 
 const API_BASE_URL = 'https://swiftera.azurewebsites.net/api/v1';
 
+export const API_BASE = API_BASE_URL;
+export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Reusable Error Handler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,12 +137,31 @@ export function normalizeError(error: unknown): AppError {
 // Auth Token Helper
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Token accessor registration
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _getToken: (() => string | null) | null = null;
+
 /**
- * Lấy access token từ localStorage.
- * Module auth sẽ lưu token vào đây khi login/refresh thành công.
+ * Register Zustand store's token accessor so apiService reads the in-memory
+ * token instead of localStorage.
+ * Call this during app bootstrap (e.g. inside auth-store.ts initAuthStore).
  */
+export function registerTokenAccessors(getToken: () => string | null): void {
+  _getToken = getToken;
+}
+
 function getAccessToken(): string | null {
-  return localStorage.getItem('accessToken');
+  // 1. Prefer in-memory Zustand token (most up-to-date, set after login / refresh)
+  const storeToken = _getToken?.();
+  if (storeToken) return storeToken;
+  // 2. Fallback: localStorage token populated by the existing Axios/AuthContext auth system
+  //    This covers the brief window before Zustand is hydrated on page load.
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('accessToken');
+  }
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -369,6 +391,19 @@ export async function apiUpload<T>(
   }
 
   throw await mapApiError(res);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mock helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Return mockData immediately when USE_MOCK=true,
+ * otherwise perform a real GET request.
+ */
+export async function mockOr<T>(endpoint: string, mockData: T): Promise<T> {
+  if (USE_MOCK) return Promise.resolve(mockData);
+  return apiGet<T>(endpoint);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -41,7 +41,6 @@ import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
 import { ActiveWorkflow } from './_components/workflows/ActiveWorkflow';
 import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
 import { PickedUpWorkflow } from './_components/workflows/PickedUpWorkflow';
-import { InspectingWorkflow } from './_components/workflows/InspectingWorkflow';
 import { CompletedWorkflow } from './_components/workflows/CompletedWorkflow';
 
 export default function OrderDetailPage({
@@ -172,7 +171,6 @@ export default function OrderDetailPage({
         setStatusLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [order, localLat, localLng],
   );
 
@@ -194,6 +192,42 @@ export default function OrderDetailPage({
       setStatusLoading(false);
     }
   }, [order]);
+
+  /**
+   * PICKED_UP → COMPLETED (doc 09: direct transition, no intermediate INSPECTING):
+   * 1. setPenalty with the final penalty total from PickedUpWorkflow
+   * 2. updateOrderStatus('COMPLETED')
+   */
+  const handleInspectionComplete = useCallback(
+    async (penaltyTotal: number) => {
+      if (!order) return;
+      setStatusLoading(true);
+      try {
+        await setPenalty(order.rental_order_id, { penaltyTotal });
+        const updated = await updateOrderStatus(
+          order.rental_order_id,
+          'COMPLETED',
+        );
+        setOrder(
+          updated
+            ? { ...updated, total_penalty_amount: penaltyTotal }
+            : (prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      status: 'COMPLETED',
+                      total_penalty_amount: penaltyTotal,
+                    }
+                  : prev,
+        );
+      } catch {
+        // no-op
+      } finally {
+        setStatusLoading(false);
+      }
+    },
+    [order],
+  );
 
   if (pageLoading) {
     return (
@@ -276,17 +310,7 @@ export default function OrderDetailPage({
     'DELIVERING',
     'DELIVERED',
   ];
-  const PICKUP_STATUSES: OrderStatus[] = [
-    'IN_USE',
-    'OVERDUE',
-    'PENDING_PICKUP',
-    'PICKING_UP',
-    'PICKED_UP',
-    'INSPECTING',
-    'COMPLETED',
-  ];
   const isDeliveryStatus = DELIVERY_STATUSES.includes(order.status);
-  const isPickupStatus = PICKUP_STATUSES.includes(order.status);
 
   return (
     <div className="p-3 sm:p-5 lg:p-6 min-h-screen">
@@ -478,21 +502,16 @@ export default function OrderDetailPage({
                   })
                 }
                 loading={statusLoading}
+                staffLat={localLat}
+                staffLng={localLng}
+                staffLocAt={localLocAt}
               />
             )}
 
             {order.status === 'PICKED_UP' && (
               <PickedUpWorkflow
                 order={order}
-                onStartInspection={() => handleStatusChange('INSPECTING')}
-                loading={statusLoading}
-              />
-            )}
-
-            {order.status === 'INSPECTING' && (
-              <InspectingWorkflow
-                order={order}
-                onComplete={() => handleStatusChange('COMPLETED')}
+                onComplete={() => handleInspectionComplete(0)}
                 loading={statusLoading}
               />
             )}

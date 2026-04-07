@@ -24,7 +24,7 @@ export const DELIVERY_STEPS: {
   { key: 'DELIVERED', label: 'Đã giao', icon: CheckCircle2 },
 ];
 
-// ── Pickup workflow steps: PENDING_PICKUP → PICKING_UP → PICKED_UP → INSPECTING → COMPLETED ─
+// ── Pickup workflow steps: PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED ─
 export const PICKUP_STEPS: {
   key: OrderStatus;
   label: string;
@@ -32,8 +32,7 @@ export const PICKUP_STEPS: {
 }[] = [
   { key: 'PENDING_PICKUP', label: 'Chờ thu hồi', icon: ClipboardList },
   { key: 'PICKING_UP', label: 'Đang thu hồi', icon: RotateCcw },
-  { key: 'PICKED_UP', label: 'Đã lấy', icon: Package },
-  { key: 'INSPECTING', label: 'Kiểm định', icon: Warehouse },
+  { key: 'PICKED_UP', label: 'Kiểm định', icon: Package },
   { key: 'COMPLETED', label: 'Hoàn thành', icon: CheckCircle2 },
 ];
 
@@ -52,7 +51,6 @@ const PICKUP_STATUSES: OrderStatus[] = [
   'PENDING_PICKUP',
   'PICKING_UP',
   'PICKED_UP',
-  'INSPECTING',
   'COMPLETED',
 ];
 
@@ -62,7 +60,7 @@ export function getDeliveryStepIndex(status: OrderStatus): number {
 }
 
 export function getPickupStepIndex(status: OrderStatus): number {
-  // IN_USE and OVERDUE map to step 0 (before PENDING_PICKUP) — show as "upcoming"
+  // IN_USE and OVERDUE map to step -1 (before PENDING_PICKUP) — show as "upcoming"
   if (status === 'IN_USE' || status === 'OVERDUE') return -1;
   const idx = PICKUP_STEPS.findIndex((s) => s.key === status);
   return idx === -1 ? 0 : idx;

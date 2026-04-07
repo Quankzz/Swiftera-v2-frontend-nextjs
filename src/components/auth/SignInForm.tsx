@@ -28,7 +28,7 @@ export function SignInForm() {
       setIsSubmitting(true);
       const result = await login({ email, password });
       const roles = result?.data?.userSecured?.rolesSecured ?? [];
-      const isStaff = roles.some((r) => r.name === 'STAFF_ROLE');
+      const isStaff = roles.some((r) => r.name === 'STAFF');
       if (isStaff) router.push('/staff-dashboard');
       else router.push('/');
       router.refresh();

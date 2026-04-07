@@ -43,51 +43,72 @@ import { useAuthStore } from '@/stores/auth-store';
 import { logout as logoutApi } from '@/api/auth';
 import { cn } from '@/lib/utils';
 
-const ORDER_WORKFLOW_TABS = [
+// ── Giao hàng: PAID → PREPARING → DELIVERING → DELIVERED ─────────────────────
+const DELIVERY_WORKFLOW_TABS = [
   {
     title: 'Chờ xác nhận',
     url: '/staff-dashboard/orders?status=PAID',
-    statuses: ['PAID'] as const,
+    status: 'PAID',
     dotClass: 'bg-amber-400',
     urgency: true,
     icon: Clock,
   },
   {
-    title: 'Đang giao hàng',
+    title: 'Đang chuẩn bị',
+    url: '/staff-dashboard/orders?status=PREPARING',
+    status: 'PREPARING',
+    dotClass: 'bg-blue-400 animate-pulse',
+    urgency: false,
+    icon: Package,
+  },
+  {
+    title: 'Đang giao',
     url: '/staff-dashboard/orders?status=DELIVERING',
-    statuses: ['DELIVERING'] as const,
+    status: 'DELIVERING',
     dotClass: 'bg-info animate-pulse',
     urgency: false,
     icon: Truck,
   },
   {
-    title: 'Đang thuê',
-    url: '/staff-dashboard/orders?status=ACTIVE',
-    statuses: ['ACTIVE'] as const,
-    dotClass: 'bg-success',
+    title: 'Đã giao',
+    url: '/staff-dashboard/orders?status=DELIVERED',
+    status: 'DELIVERED',
+    dotClass: 'bg-teal-500',
+    urgency: false,
+    icon: CheckCircle2,
+  },
+] as const;
+
+// ── Thu hồi: PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED ──────────────
+const PICKUP_WORKFLOW_TABS = [
+  {
+    title: 'Chờ thu hồi',
+    url: '/staff-dashboard/orders?status=PENDING_PICKUP',
+    status: 'PENDING_PICKUP',
+    dotClass: 'bg-orange-400 animate-pulse',
+    urgency: true,
+    icon: Clock,
+  },
+  {
+    title: 'Đang thu hồi',
+    url: '/staff-dashboard/orders?status=PICKING_UP',
+    status: 'PICKING_UP',
+    dotClass: 'bg-purple-400 animate-pulse',
+    urgency: false,
+    icon: RotateCcw,
+  },
+  {
+    title: 'Đã lấy hàng',
+    url: '/staff-dashboard/orders?status=PICKED_UP',
+    status: 'PICKED_UP',
+    dotClass: 'bg-indigo-500',
     urgency: false,
     icon: Package,
   },
   {
-    title: 'Cần thu hồi',
-    url: '/staff-dashboard/orders?status=RETURNING',
-    statuses: ['RETURNING'] as const,
-    dotClass: 'bg-destructive animate-pulse',
-    urgency: true,
-    icon: RotateCcw,
-  },
-  {
-    title: 'Đã quá hạn',
-    url: '/staff-dashboard/orders?status=OVERDUE',
-    statuses: ['OVERDUE'] as const,
-    dotClass: 'bg-destructive animate-pulse',
-    urgency: true,
-    icon: RotateCcw,
-  },
-  {
-    title: 'Đã hoàn thành',
+    title: 'Hoàn thành',
     url: '/staff-dashboard/orders?status=COMPLETED',
-    statuses: ['COMPLETED'] as const,
+    status: 'COMPLETED',
     dotClass: 'bg-success',
     urgency: false,
     icon: CheckCircle2,
@@ -134,9 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, []);
 
   const urgentTotal =
-    (orderCounts['RETURNING'] ?? 0) +
-    (orderCounts['OVERDUE'] ?? 0) +
-    (orderCounts['PAID'] ?? 0);
+    (orderCounts['PAID'] ?? 0) + (orderCounts['PENDING_PICKUP'] ?? 0);
 
   const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
 
@@ -236,16 +255,65 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuAction>
               <CollapsibleContent>
                 <SidebarMenuSub className="ml-4 mt-0.5 w-full">
-                  {ORDER_WORKFLOW_TABS.map((tab) => {
-                    const count = tab.statuses.reduce(
-                      (s, st) => s + (orderCounts[st] ?? 0),
-                      0,
-                    );
-                    // Check xem sub-tab này có phải là tab đang xem không
+                  {/* ── Giao hàng ── */}
+                  <div className="px-2 pt-2 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
+                    <Truck className="size-3" />
+                    Giao hàng
+                  </div>
+                  {DELIVERY_WORKFLOW_TABS.map((tab) => {
+                    const count = orderCounts[tab.status] ?? 0;
                     const isTabActive =
                       pathname === '/staff-dashboard/orders' &&
-                      currentStatus === tab.statuses[0];
+                      currentStatus === tab.status;
+                    return (
+                      <SidebarMenuSubItem key={tab.title}>
+                        <SidebarMenuSubButton
+                          render={<Link href={tab.url} />}
+                          isActive={isTabActive}
+                          className={cn(
+                            'py-4 transition-colors',
+                            isTabActive &&
+                              'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'size-1.5 shrink-0 rounded-full',
+                              tab.dotClass,
+                            )}
+                          />
+                          <span className="flex-1 truncate text-sm">
+                            {tab.title}
+                          </span>
+                          {count > 0 && (
+                            <span
+                              className={cn(
+                                'mr-4 min-w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                tab.urgency
+                                  ? 'bg-destructive text-white'
+                                  : isTabActive
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'bg-sidebar-accent text-sidebar-foreground/60',
+                              )}
+                            >
+                              {count}
+                            </span>
+                          )}
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    );
+                  })}
 
+                  {/* ── Thu hồi ── */}
+                  <div className="px-2 pt-3 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
+                    <RotateCcw className="size-3" />
+                    Thu hồi
+                  </div>
+                  {PICKUP_WORKFLOW_TABS.map((tab) => {
+                    const count = orderCounts[tab.status] ?? 0;
+                    const isTabActive =
+                      pathname === '/staff-dashboard/orders' &&
+                      currentStatus === tab.status;
                     return (
                       <SidebarMenuSubItem key={tab.title}>
                         <SidebarMenuSubButton

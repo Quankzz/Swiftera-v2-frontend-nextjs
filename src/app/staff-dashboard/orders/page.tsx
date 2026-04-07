@@ -20,25 +20,23 @@ import {
 import { cn } from '@/lib/utils';
 import { STATUS_CFG } from '@/lib/order-status';
 import { fmt, fmtDateShort } from '@/lib/formatters';
-import { getStaffOrders } from '@/api/staff-orders';
+import { getStaffActionOrders } from '@/api/staff-orders';
 import { useAuthStore } from '@/stores/auth-store';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-// Staff only sees orders that have been paid and assigned — PENDING_PAYMENT
-// is a customer-facing status and never appears in the staff dashboard.
+// All active workflow statuses staff needs to see:
+//   Delivery:  PAID → PREPARING → DELIVERING → DELIVERED
+//   Recovery:  PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED
 const ALL_STATUSES: OrderStatus[] = [
   'PAID',
   'PREPARING',
   'DELIVERING',
   'DELIVERED',
-  'IN_USE',
-  'OVERDUE',
   'PENDING_PICKUP',
   'PICKING_UP',
   'PICKED_UP',
-  'INSPECTING',
   'COMPLETED',
 ];
 
@@ -64,23 +62,46 @@ function OrdersPageInner() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const staffId = user?.userId ?? null;
 
   useEffect(() => {
-    const staffId = user?.userId;
+    // Auth bootstrap not finished yet — keep showing spinner
+    if (!isAuthenticated && user === null) return;
+
+    // Bootstrap done but no user → not logged in
     if (!staffId) {
-      setAllOrders([]);
-      setLoadError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
       setIsLoading(false);
+      setLoadError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
       return;
     }
-    setIsLoading(true);
-    setLoadError(null);
-    getStaffOrders(staffId)
-      .then(setAllOrders)
-      .catch((err: Error) => setLoadError(err.message))
-      .finally(() => setIsLoading(false));
-  }, [user?.userId]);
+
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+      setLoadError(null);
+      try {
+        const orders = await getStaffActionOrders(staffId);
+        if (cancelled) return;
+        console.log('[OrdersPage] orders loaded:', orders.length);
+        setAllOrders(orders);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('[OrdersPage] load error:', err);
+        setLoadError(
+          err instanceof Error ? err.message : 'Không thể tải dữ liệu',
+        );
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [staffId, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 1. Logic lọc NHIỀU trạng thái (Multi-select)
   const activeStatuses = useMemo<OrderStatus[]>(() => {
@@ -167,7 +188,7 @@ function OrdersPageInner() {
   };
 
   const urgentCount = myOrders.filter((o) =>
-    ['PAID', 'OVERDUE', 'PENDING_PICKUP'].includes(o.status),
+    ['PAID', 'PENDING_PICKUP'].includes(o.status),
   ).length;
 
   if (isLoading) {

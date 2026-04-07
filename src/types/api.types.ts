@@ -96,6 +96,24 @@ export interface HubResponse {
 // ─── Rental Orders ────────────────────────────────────────────────────────────
 
 /**
+ * Staff member info returned by GET /hubs/{hubId}/staff (API-043) and embedded
+ * in RentalOrderResponse as deliveryStaff / pickupStaff (API-082).
+ */
+export interface HubStaffResponse {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  nickname: string | null;
+  phoneNumber: string | null;
+  avatarUrl: string | null;
+  isVerified: boolean;
+  hubId: string | null;
+  hubCode: string | null;
+  hubName: string | null;
+}
+
+/**
  * Actual backend status enum.
  * The UI layer maps these to the simpler OrderStatus used in DashboardOrder.
  */
@@ -109,9 +127,15 @@ export type RentalOrderApiStatus =
   | 'PENDING_PICKUP'
   | 'PICKING_UP'
   | 'PICKED_UP'
-  | 'INSPECTING'
   | 'COMPLETED'
   | 'CANCELLED';
+
+export interface RentalOrderLinePhotoResponse {
+  rentalOrderLinePhotoId: string;
+  photoPhase: 'CHECKOUT' | 'CHECKIN';
+  photoUrl: string;
+  sortOrder: number | null;
+}
 
 export interface RentalOrderLineResponse {
   rentalOrderLineId: string;
@@ -127,13 +151,19 @@ export interface RentalOrderLineResponse {
   itemPenaltyAmount: number;
   checkoutConditionNote: string | null;
   checkinConditionNote: string | null;
+  /** Evidence photos — CHECKOUT phase: taken at hub before delivery; CHECKIN: taken when pickup */
+  photos: RentalOrderLinePhotoResponse[];
 }
 
 export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
+  // Staff assignment — backend returns either flat IDs or nested objects depending on endpoint.
+  // API-076 (list) typically returns flat IDs; API-082 (assign-staff) returns nested objects.
   deliveryStaffId: string | null;
   pickupStaffId: string | null;
+  deliveryStaff?: HubStaffResponse | null;
+  pickupStaff?: HubStaffResponse | null;
   hubId: string | null;
   hubName: string | null;
   // Delivery snapshot

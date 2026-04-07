@@ -10,7 +10,7 @@
  */
 
 import { create } from 'zustand';
-import { registerTokenAccessors } from '@/api/client';
+import { registerTokenAccessors } from '@/api/apiService';
 import type {
   UserSecuredResponse,
   AuthenticationResponse,
@@ -51,25 +51,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }));
 
 export function initAuthStore() {
-  registerTokenAccessors(
-    // getToken
-    () => useAuthStore.getState().accessToken,
-    async () => {
-      try {
-        const { refreshAuthToken } = await import('@/api/auth/index');
-        const res = await refreshAuthToken();
-        if (res?.accessToken) {
-          useAuthStore.getState().setAuth(res.accessToken, res.userSecured);
-          return res.accessToken;
-        }
-        useAuthStore.getState().clearAuth();
-        return null;
-      } catch {
-        useAuthStore.getState().clearAuth();
-        return null;
-      }
-    },
-  );
+  registerTokenAccessors(() => useAuthStore.getState().accessToken);
 }
 
 export async function restoreSession(): Promise<void> {

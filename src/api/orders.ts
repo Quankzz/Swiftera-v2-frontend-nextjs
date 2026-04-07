@@ -1,4 +1,4 @@
-import { mockOr, apiPatch, apiPost, USE_MOCK } from './client';
+import { mockOr, apiPatch, apiPost, USE_MOCK } from './apiService';
 import {
   MOCK_ORDERS,
   MOCK_STATS,
@@ -25,7 +25,7 @@ export async function getOrderById(id: string): Promise<DashboardOrder> {
     if (!order) throw new Error(`Order ${id} not found`);
     return Promise.resolve(order);
   }
-  return import('./client').then(({ apiGet }) =>
+  return import('./apiService').then(({ apiGet }) =>
     apiGet<DashboardOrder>(`/orders/${id}`),
   );
 }

@@ -1,4 +1,4 @@
-import { mockOr, apiPatch, USE_MOCK } from './client';
+import { mockOr, apiPatch, USE_MOCK } from './apiService';
 import { MOCK_PRODUCTS } from '@/data/mockDashboard';
 import type {
   DashboardProduct,
@@ -18,7 +18,7 @@ export async function getProductById(id: string): Promise<DashboardProduct> {
     if (!product) throw new Error(`Product ${id} not found`);
     return Promise.resolve(product);
   }
-  return import('./client').then(({ apiGet }) =>
+  return import('./apiService').then(({ apiGet }) =>
     apiGet<DashboardProduct>(`/products/${id}`),
   );
 }

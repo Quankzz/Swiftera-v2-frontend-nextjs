@@ -1,343 +1,357 @@
+'use client';
+
+/**
+ * CompletedWorkflow — Trạng thái COMPLETED
+ *
+ * Đơn hàng hoàn thành. Hiển thị:
+ * - Tóm tắt tài chính (phí thuê, cọc, phạt, hoàn cọc)
+ * - Hình thức xác nhận thanh toán (chuyển khoản / tiền mặt)
+ * - Nút "Xác nhận hoàn tiền cọc" → gọi handleDepositRefund
+ * - Trạng thái đã hoàn tiền nếu deposit_refund_status === 'REFUNDED'
+ */
+
 import React, { useState } from 'react';
+import Image from 'next/image';
 import {
-  BadgeCheck,
-  BanknoteIcon,
   CheckCircle2,
+  Package,
+  Banknote,
+  CreditCard,
+  Camera,
   AlertTriangle,
-  Landmark,
-  Wallet,
-  ClipboardList,
-  User,
-  Phone,
-  MapPin,
-  Calendar,
+  Hash,
+  Award,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { WorkflowBanner } from '../WorkflowBanner';
+import { Section } from '../Section';
 import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
-import { WorkflowBanner } from '../WorkflowBanner';
-import { InfoRow } from '../InfoRow';
 import { fmt, fmtDate } from '../utils';
+
+type PaymentMethod = 'TRANSFER' | 'CASH';
 
 export function CompletedWorkflow({
   order,
   onDepositRefund,
 }: {
   order: DashboardOrder;
-  onDepositRefund: (method: 'cash' | 'bank') => void;
+  onDepositRefund: () => void;
 }) {
-  const [refundMethod, setRefundMethod] = useState<'cash' | 'bank'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('TRANSFER');
+  const [refundLoading, setRefundLoading] = useState(false);
 
-  const damageAmount = order.total_penalty_amount ?? 0;
-  const depositAmount = order.total_deposit;
   const isRefunded = order.deposit_refund_status === 'REFUNDED';
+  const penaltyTotal = order.total_penalty_amount ?? 0;
+  const netRefund = Math.max(0, order.total_deposit - penaltyTotal);
+  const hasPenalty = penaltyTotal > 0;
 
-  const hasDamage = damageAmount > 0;
-  const extraCharge =
-    damageAmount > depositAmount ? damageAmount - depositAmount : 0;
-  const refundRemaining =
-    damageAmount < depositAmount ? depositAmount - damageAmount : 0;
+  const handleRefund = async () => {
+    setRefundLoading(true);
+    try {
+      await onDepositRefund();
+    } finally {
+      setRefundLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Banner */}
+    <div className="flex flex-col gap-4">
       <WorkflowBanner
-        icon={BadgeCheck}
-        variant="success"
-        title="Đơn hàng đã hoàn thành!"
-        desc="Tất cả sản phẩm đã được thu hồi thành công. Xử lý hoàn cọc / phụ thu bên dưới."
+        icon={isRefunded ? Award : CheckCircle2}
+        title={
+          isRefunded
+            ? 'Đơn hàng đã tất toán hoàn toàn'
+            : 'Đơn hàng hoàn thành — Xác nhận hoàn cọc'
+        }
+        desc={
+          isRefunded
+            ? 'Tất cả thủ tục đã hoàn tất. Cảm ơn bạn đã xử lý đơn hàng này!'
+            : 'Kiểm tra thông tin tài chính bên dưới, chọn hình thức hoàn cọc và xác nhận.'
+        }
+        variant={isRefunded ? 'success' : 'primary'}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* ==================== CỘT TRÁI: Thông tin khách & đơn hàng ==================== */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 bg-theme-primary-start/10 rounded-2xl">
-                <ClipboardList className="size-5 text-theme-primary-start" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-foreground">
-                  Thông tin đơn hàng
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Khách thuê & thời gian
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <InfoRow
-                icon={User}
-                label="Khách thuê"
-                value={order.renter.full_name}
-              />
-              <InfoRow
-                icon={Phone}
-                label="Điện thoại"
-                value={order.renter.phone_number}
-              />
-              <InfoRow
-                icon={ClipboardList}
-                label="CCCD"
-                value={order.renter.cccd_number}
-                mono
-              />
-              <InfoRow
-                icon={MapPin}
-                label="Địa chỉ giao"
-                value={order.delivery_address ?? order.renter.address}
-              />
-              <InfoRow
-                icon={Calendar}
-                label="Bắt đầu"
-                value={fmtDate(order.start_date)}
-              />
-              <InfoRow
-                icon={Calendar}
-                label="Kết thúc"
-                value={fmtDate(order.end_date)}
-              />
-              {order.actual_return_date && (
-                <InfoRow
-                  icon={Calendar}
-                  label="Ngày trả thực tế"
-                  value={fmtDate(order.actual_return_date)}
-                />
-              )}
-            </div>
+      {/* ── Financial Summary ── */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-3 border-b border-border/40 bg-muted/30">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+            Tổng kết tài chính
+          </p>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Phí thuê (đã thu)
+            </span>
+            <span className="text-sm font-semibold text-foreground tabular-nums">
+              {fmt(order.total_rental_fee)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Tiền cọc đang giữ
+            </span>
+            <span className="text-sm font-semibold text-foreground tabular-nums">
+              {fmt(order.total_deposit)}
+            </span>
           </div>
 
-          {/* Ghi chú */}
-          {order.notes && (
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-              <p className="text-sm font-semibold text-muted-foreground mb-3">
-                Ghi chú từ khách
-              </p>
-              <p className="text-sm text-foreground leading-relaxed">
-                {order.notes}
+          {hasPenalty && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle className="size-3.5 text-destructive" />
+                <span className="text-sm text-destructive font-medium">
+                  Phí phạt hư hỏng
+                </span>
+              </div>
+              <span className="text-sm font-bold text-destructive tabular-nums">
+                -{fmt(penaltyTotal)}
+              </span>
+            </div>
+          )}
+
+          <div className="h-px bg-border" />
+
+          <div className="flex items-center justify-between">
+            <span className="text-base font-bold text-foreground">
+              Hoàn cọc cho khách
+            </span>
+            <span
+              className={cn(
+                'text-xl font-black tabular-nums',
+                netRefund > 0 ? 'text-success' : 'text-destructive',
+              )}
+            >
+              {fmt(netRefund)}
+            </span>
+          </div>
+
+          {isRefunded && (
+            <div className="flex items-center gap-2 rounded-xl bg-success/10 border border-success/25 px-3 py-2">
+              <CheckCircle2 className="size-4 text-success shrink-0" />
+              <p className="text-sm font-semibold text-success">
+                Đã hoàn tiền cọc
               </p>
             </div>
           )}
         </div>
+      </div>
 
-        {/* ==================== CỘT PHẢI: Tài chính & Xử lý hoàn tiền ==================== */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* Tóm tắt tài chính */}
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 bg-emerald-100 dark:bg-emerald-950 rounded-2xl">
-                <BanknoteIcon className="size-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <p className="text-lg font-semibold text-foreground">
-                Tóm tắt tài chính
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {/* Phí thuê */}
-              <div className="flex justify-between items-center py-2">
-                <span className="text-muted-foreground">Phí thuê</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold px-2.5 py-0.5 bg-success-muted text-success border border-success-border rounded-lg">
-                    {fmt(order.total_rental_fee)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Tiền cọc */}
-              <div className="flex justify-between items-center py-2">
-                <span className="text-muted-foreground">Tiền cọc</span>
-                <span className="font-semibold">{fmt(depositAmount)}</span>
-              </div>
-
-              {/* Phí phạt */}
-              {hasDamage && (
-                <div className="flex justify-between items-center py-2 border-t border-border pt-4">
-                  <span className="text-destructive font-semibold">
-                    Phí phạt hư hại
-                  </span>
-                  <span className="font-semibold text-destructive">
-                    −{fmt(damageAmount)}
-                  </span>
-                </div>
-              )}
-
-              {/* Kết quả cuối cùng */}
-              <div className="border-t border-border pt-4 mt-2">
-                {hasDamage && damageAmount > depositAmount ? (
-                  <div className="flex justify-between items-center">
-                    <span className="text-destructive font-semibold">
-                      Phụ thu thêm
-                    </span>
-                    <span className="text-xl font-bold text-destructive">
-                      +{fmt(extraCharge)}
-                    </span>
-                  </div>
-                ) : hasDamage && damageAmount < depositAmount ? (
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-foreground">
-                      Hoàn lại cho khách
-                    </span>
-                    <span className="text-xl font-bold text-theme-primary-start">
-                      {fmt(refundRemaining)}
-                    </span>
-                  </div>
-                ) : !hasDamage ? (
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-foreground">
-                      Hoàn cọc đầy đủ
-                    </span>
-                    <span className="text-xl font-bold text-success">
-                      {fmt(depositAmount)}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-muted-foreground">
-                      Không hoàn / không thu thêm
-                    </span>
-                    <span className="text-xl font-bold text-muted-foreground">
-                      0
-                    </span>
-                  </div>
+      {/* ── Payment Method + Refund Action (only if not yet refunded) ── */}
+      {!isRefunded && netRefund > 0 && (
+        <>
+          {/* Payment method selector */}
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
+              Hình thức hoàn cọc
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('TRANSFER')}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all',
+                  paymentMethod === 'TRANSFER'
+                    ? 'border-theme-primary-start/40 bg-theme-primary-start/8 shadow-sm'
+                    : 'border-border hover:bg-accent/50',
                 )}
-              </div>
-            </div>
-          </div>
-
-          {/* Xử lý hoàn cọc / phụ thu */}
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm flex-1 flex flex-col">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-theme-primary-start/10 rounded-2xl">
-                <BanknoteIcon className="size-5 text-theme-primary-start" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-foreground">
-                  {damageAmount > depositAmount
-                    ? 'Thu phụ thu từ khách'
-                    : 'Hoàn tiền cọc'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {isRefunded
-                    ? 'Đã xử lý xong'
-                    : 'Chọn phương thức và xác nhận'}
-                </p>
-              </div>
-            </div>
-
-            {isRefunded ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="flex items-center gap-3 rounded-2xl border border-success-border bg-success-muted px-6 py-5">
-                  <CheckCircle2 className="size-6 text-success" />
-                  <span className="font-semibold text-success">
-                    {damageAmount > depositAmount
-                      ? 'Đã thu phụ thu thành công'
-                      : 'Đã hoàn cọc thành công'}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col gap-6">
-                {/* Mô tả tình huống */}
-                <div>
-                  {!hasDamage && (
-                    <p className="text-sm text-muted-foreground">
-                      Hoàn toàn bộ tiền cọc{' '}
-                      <span className="font-bold text-foreground">
-                        {fmt(depositAmount)}
-                      </span>{' '}
-                      cho khách.
-                    </p>
-                  )}
-                  {hasDamage && damageAmount > depositAmount && (
-                    <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 flex gap-3">
-                      <AlertTriangle className="size-5 text-destructive shrink-0 mt-0.5" />
-                      <p className="text-sm text-destructive">
-                        Hư hại vượt quá tiền cọc. Cần thu thêm{' '}
-                        <span className="font-bold">{fmt(extraCharge)}</span> từ
-                        khách.
-                      </p>
-                    </div>
-                  )}
-                  {hasDamage && damageAmount < depositAmount && (
-                    <p className="text-sm text-muted-foreground">
-                      Hoàn lại{' '}
-                      <span className="font-bold text-foreground">
-                        {fmt(refundRemaining)}
-                      </span>{' '}
-                      sau khi trừ phí hư hại.
-                    </p>
-                  )}
-                </div>
-
-                {/* Chọn phương thức */}
-                {damageAmount !== depositAmount && (
-                  <div>
-                    <p className="text-xs font-semibold text-foreground mb-2">
-                      Phương thức{' '}
-                      {damageAmount > depositAmount ? 'thu tiền' : 'hoàn tiền'}
-                    </p>
-                    <div className="relative">
-                      <select
-                        value={refundMethod}
-                        onChange={(e) =>
-                          setRefundMethod(e.target.value as 'cash' | 'bank')
-                        }
-                        className="w-full h-12 px-11 rounded-lg border border-border bg-background focus:ring-2 focus:ring-theme-primary-start/30 text-sm"
-                      >
-                        <option value="cash">Tiền mặt</option>
-                        <option value="bank">Chuyển khoản ngân hàng</option>
-                      </select>
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                        {refundMethod === 'cash' ? (
-                          <Wallet className="size-5 text-muted-foreground" />
-                        ) : (
-                          <Landmark className="size-5 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Nút xác nhận */}
-                <Button
-                  size="default"
-                  variant={
-                    damageAmount > depositAmount ? 'destructive' : 'default'
-                  }
-                  onClick={() => onDepositRefund(refundMethod)}
+              >
+                <div
                   className={cn(
-                    'w-full h-12 gap-3 text-base font-semibold p-2',
-                    damageAmount <= depositAmount &&
-                      'bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-105 text-white shadow-md',
+                    'size-10 rounded-xl flex items-center justify-center',
+                    paymentMethod === 'TRANSFER'
+                      ? 'bg-theme-primary-start/15'
+                      : 'bg-muted',
                   )}
                 >
-                  {damageAmount > depositAmount ? (
-                    <>
-                      {refundMethod === 'bank' ? (
-                        <Landmark className="size-5" />
-                      ) : (
-                        <BanknoteIcon className="size-5" />
-                      )}
-                      Xác nhận thu phụ thu{' '}
-                      {refundMethod === 'bank' ? 'chuyển khoản' : 'tiền mặt'}
-                    </>
-                  ) : (
-                    <>
-                      {refundMethod === 'bank' ? (
-                        <Landmark className="size-5" />
-                      ) : (
-                        <Wallet className="size-5" />
-                      )}
-                      Xác nhận hoàn tiền{' '}
-                      {refundMethod === 'bank' ? 'chuyển khoản' : 'tiền mặt'}
-                    </>
+                  <CreditCard
+                    className={cn(
+                      'size-5',
+                      paymentMethod === 'TRANSFER'
+                        ? 'text-theme-primary-start'
+                        : 'text-muted-foreground',
+                    )}
+                  />
+                </div>
+                <p
+                  className={cn(
+                    'text-sm font-bold',
+                    paymentMethod === 'TRANSFER'
+                      ? 'text-theme-primary-start'
+                      : 'text-muted-foreground',
                   )}
-                </Button>
+                >
+                  Chuyển khoản
+                </p>
+                {paymentMethod === 'TRANSFER' && (
+                  <CheckCircle2 className="size-4 text-theme-primary-start" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('CASH')}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-2xl border p-4 transition-all',
+                  paymentMethod === 'CASH'
+                    ? 'border-success/40 bg-success/8 shadow-sm'
+                    : 'border-border hover:bg-accent/50',
+                )}
+              >
+                <div
+                  className={cn(
+                    'size-10 rounded-xl flex items-center justify-center',
+                    paymentMethod === 'CASH' ? 'bg-success/15' : 'bg-muted',
+                  )}
+                >
+                  <Banknote
+                    className={cn(
+                      'size-5',
+                      paymentMethod === 'CASH'
+                        ? 'text-success'
+                        : 'text-muted-foreground',
+                    )}
+                  />
+                </div>
+                <p
+                  className={cn(
+                    'text-sm font-bold',
+                    paymentMethod === 'CASH'
+                      ? 'text-success'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  Tiền mặt
+                </p>
+                {paymentMethod === 'CASH' && (
+                  <CheckCircle2 className="size-4 text-success" />
+                )}
+              </button>
+            </div>
+
+            {paymentMethod === 'TRANSFER' && (
+              <div className="mt-3 rounded-xl bg-muted/40 px-4 py-3">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  💳 Yêu cầu khách hàng cung cấp thông tin tài khoản ngân hàng
+                  để chuyển khoản số tiền{' '}
+                  <strong className="text-success font-bold tabular-nums">
+                    {fmt(netRefund)}
+                  </strong>
+                </p>
+              </div>
+            )}
+            {paymentMethod === 'CASH' && (
+              <div className="mt-3 rounded-xl bg-muted/40 px-4 py-3">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  💵 Trả trực tiếp{' '}
+                  <strong className="text-success font-bold tabular-nums">
+                    {fmt(netRefund)}
+                  </strong>{' '}
+                  tiền mặt cho khách hàng
+                </p>
               </div>
             )}
           </div>
+
+          {/* Refund CTA */}
+          <Button
+            onClick={handleRefund}
+            disabled={refundLoading}
+            size="lg"
+            className="w-full h-14 text-base font-bold gap-2 rounded-2xl bg-success hover:bg-success/90 text-white disabled:opacity-50"
+          >
+            {refundLoading ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="size-5" />
+            )}
+            Xác nhận đã hoàn cọc {fmt(netRefund)} (
+            {paymentMethod === 'TRANSFER' ? 'Chuyển khoản' : 'Tiền mặt'})
+          </Button>
+        </>
+      )}
+
+      {/* ── Items Returned ── */}
+      <Section
+        title={`Thiết bị đã thu hồi (${order.items.length})`}
+        icon={Package}
+        defaultOpen={false}
+      >
+        <div className="flex flex-col divide-y divide-border/40 pt-2">
+          {order.items.map((item) => {
+            const itemPenalty = item.item_penalty_amount ?? 0;
+            return (
+              <div
+                key={item.rental_order_item_id}
+                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <div className="relative size-10 shrink-0 rounded-lg overflow-hidden border border-border bg-muted">
+                  {item.image_url ? (
+                    <Image
+                      src={item.image_url}
+                      alt={item.product_name}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  ) : (
+                    <div className="size-full flex items-center justify-center">
+                      <Camera className="size-3.5 text-muted-foreground/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {item.product_name}
+                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Hash className="size-3 text-muted-foreground" />
+                    <p className="text-xs font-mono text-muted-foreground">
+                      {item.serial_number}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  {itemPenalty > 0 ? (
+                    <>
+                      <p className="text-xs font-bold text-destructive tabular-nums">
+                        Phạt: {fmt(itemPenalty)}
+                      </p>
+                    </>
+                  ) : (
+                    <CheckCircle2 className="size-4 text-success" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* ── Order dates ── */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
+          {[
+            { label: 'Bắt đầu thuê', value: fmtDate(order.start_date) },
+            { label: 'Ngày kết thúc', value: fmtDate(order.end_date) },
+            {
+              label: 'Ngày trả thực tế',
+              value: order.actual_return_date
+                ? fmtDate(order.actual_return_date)
+                : '—',
+            },
+          ].map((item) => (
+            <div key={item.label} className="flex flex-col items-center gap-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+                {item.label}
+              </p>
+              <p className="text-sm font-bold text-foreground tabular-nums">
+                {item.value}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>

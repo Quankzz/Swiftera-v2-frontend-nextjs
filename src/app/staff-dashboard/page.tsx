@@ -81,18 +81,11 @@ const URGENT_CFG: Record<
     border: 'border-amber-200 dark:border-amber-700/40',
     dot: 'bg-amber-400',
   },
-  RETURNING: {
-    label: 'Cần thu hồi',
+  PENDING_PICKUP: {
+    label: 'Chờ thu hồi',
     color: 'text-destructive',
     bg: 'bg-destructive/5',
     border: 'border-destructive/25',
-    dot: 'bg-destructive animate-pulse',
-  },
-  OVERDUE: {
-    label: 'Quá hạn',
-    color: 'text-destructive',
-    bg: 'bg-destructive/10',
-    border: 'border-destructive/30',
     dot: 'bg-destructive animate-pulse',
   },
 };
@@ -220,19 +213,15 @@ export default function DashboardPage() {
     preparing: myOrders.filter((o) => o.status === 'PREPARING').length,
     delivering: myOrders.filter((o) => o.status === 'DELIVERING').length,
     delivered: myOrders.filter((o) => o.status === 'DELIVERED').length,
-    inUse: myOrders.filter((o) => o.status === 'IN_USE').length,
-    overdue: myOrders.filter((o) => o.status === 'OVERDUE').length,
     pendingPickup: myOrders.filter((o) => o.status === 'PENDING_PICKUP').length,
     pickingUp: myOrders.filter((o) => o.status === 'PICKING_UP').length,
     pickedUp: myOrders.filter((o) => o.status === 'PICKED_UP').length,
-    inspecting: myOrders.filter((o) => o.status === 'INSPECTING').length,
     completed: myOrders.filter((o) => o.status === 'COMPLETED').length,
   };
 
   const urgentOrders = [
-    ...myOrders.filter((o) => o.status === 'OVERDUE'),
-    ...myOrders.filter((o) => o.status === 'PENDING_PICKUP'),
     ...myOrders.filter((o) => o.status === 'PAID'),
+    ...myOrders.filter((o) => o.status === 'PENDING_PICKUP'),
   ].slice(0, 5);
 
   const todayCount = WEEK_DATA[6].completed;
@@ -241,18 +230,23 @@ export default function DashboardPage() {
   const monthTotal = weekTotal * 4 + 3;
   const avgCompleted = Math.round(weekTotal / WEEK_DATA.length);
   const todayDiff = todayCount - yesterdayCount;
-  const urgentTotal = counts.paid + counts.pendingPickup + counts.overdue;
+  const urgentTotal = counts.paid + counts.pendingPickup;
 
   const statusBarData = [
     {
-      name: 'Đang giao & thuê',
-      value: counts.preparing + counts.delivering + counts.inUse,
+      name: 'Đang giao',
+      value: counts.preparing + counts.delivering,
       fill: '#0284c7',
     },
     {
       name: 'Cần xử lý',
-      value: counts.paid + counts.pendingPickup + counts.overdue,
+      value: counts.paid + counts.pendingPickup,
       fill: '#ef4444',
+    },
+    {
+      name: 'Thu hồi',
+      value: counts.pickingUp + counts.pickedUp,
+      fill: '#7c3aed',
     },
     { name: 'Hoàn thành', value: counts.completed, fill: '#059669' },
   ];
@@ -386,49 +380,69 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* ── Status Cards ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatusCard
-              label="Chờ xác nhận"
-              count={counts.paid}
-              icon={Clock}
-              colorClass="text-amber-600 dark:text-amber-400"
-              bgClass="bg-amber-50 dark:bg-amber-950/30"
-              borderClass="border-amber-200/80 dark:border-amber-700/30"
-              dotClass="bg-amber-400"
-              urgent={counts.paid > 0}
-              href="/staff-dashboard/orders?status=PAID"
-            />
-            <StatusCard
-              label="Đang giao"
-              count={counts.delivering}
+          {/* ── Workflow Sections ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <WorkflowSection
+              title="Giao hàng"
               icon={Truck}
-              colorClass="text-info"
-              bgClass="bg-info/8"
-              borderClass="border-info/20"
-              dotClass="bg-info"
-              href="/staff-dashboard/orders?status=DELIVERING"
+              steps={[
+                {
+                  label: 'Chờ xác nhận',
+                  count: counts.paid,
+                  href: '/staff-dashboard/orders?status=PAID',
+                  urgent: true,
+                  color: '#d97706',
+                },
+                {
+                  label: 'Chuẩn bị',
+                  count: counts.preparing,
+                  href: '/staff-dashboard/orders?status=PREPARING',
+                  color: '#0284c7',
+                },
+                {
+                  label: 'Đang giao',
+                  count: counts.delivering,
+                  href: '/staff-dashboard/orders?status=DELIVERING',
+                  color: '#0ea5e9',
+                },
+                {
+                  label: 'Đã giao',
+                  count: counts.delivered,
+                  href: '/staff-dashboard/orders?status=DELIVERED',
+                  color: '#0d9488',
+                },
+              ]}
             />
-            <StatusCard
-              label="Đang thuê"
-              count={counts.inUse}
-              icon={Package}
-              colorClass="text-success"
-              bgClass="bg-success/8"
-              borderClass="border-success/20"
-              dotClass="bg-success"
-              href="/staff-dashboard/orders?status=IN_USE"
-            />
-            <StatusCard
-              label="Cần thu hồi"
-              count={counts.pendingPickup + counts.overdue}
+            <WorkflowSection
+              title="Thu hồi"
               icon={RotateCcw}
-              colorClass="text-destructive"
-              bgClass="bg-destructive/8"
-              borderClass="border-destructive/25"
-              dotClass="bg-destructive"
-              urgent={counts.pendingPickup + counts.overdue > 0}
-              href="/staff-dashboard/orders?status=PENDING_PICKUP"
+              steps={[
+                {
+                  label: 'Chờ thu hồi',
+                  count: counts.pendingPickup,
+                  href: '/staff-dashboard/orders?status=PENDING_PICKUP',
+                  urgent: true,
+                  color: '#ea580c',
+                },
+                {
+                  label: 'Đang thu hồi',
+                  count: counts.pickingUp,
+                  href: '/staff-dashboard/orders?status=PICKING_UP',
+                  color: '#7c3aed',
+                },
+                {
+                  label: 'Đã lấy',
+                  count: counts.pickedUp,
+                  href: '/staff-dashboard/orders?status=PICKED_UP',
+                  color: '#4f46e5',
+                },
+                {
+                  label: 'Hoàn thành',
+                  count: counts.completed,
+                  href: '/staff-dashboard/orders?status=COMPLETED',
+                  color: '#059669',
+                },
+              ]}
             />
           </div>
 
@@ -917,6 +931,70 @@ function StatusCard({
         </p>
       </div>
     </Link>
+  );
+}
+
+// ─── Workflow Section ─────────────────────────────────────────────────────────
+function WorkflowSection({
+  title,
+  icon: Icon,
+  steps,
+}: {
+  title: string;
+  icon: React.ElementType;
+  steps: {
+    label: string;
+    count: number;
+    href: string;
+    urgent?: boolean;
+    color: string;
+  }[];
+}) {
+  const activeCount = steps.reduce((s, step) => s + step.count, 0);
+  return (
+    <section className="rounded-2xl border border-border/50 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/25 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Icon className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-bold text-foreground">{title}</h2>
+        </div>
+        <span className="text-xs text-muted-foreground font-medium">
+          {activeCount} đơn
+        </span>
+      </div>
+      <div className="flex items-stretch divide-x divide-border/30">
+        {steps.map((step, i) => (
+          <Link
+            key={step.label}
+            href={step.href}
+            className="relative flex-1 flex flex-col items-center justify-center gap-1 px-2 py-4 hover:bg-accent/50 transition-colors min-h-20 group"
+          >
+            <span
+              className="text-2xl font-black tabular-nums leading-none"
+              style={{
+                color:
+                  step.count === 0
+                    ? undefined
+                    : step.urgent
+                      ? '#ef4444'
+                      : step.color,
+              }}
+            >
+              {step.count}
+            </span>
+            <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight">
+              {step.label}
+            </span>
+            {step.urgent && step.count > 0 && (
+              <span className="absolute top-2 right-2 size-1.5 rounded-full bg-destructive animate-pulse" />
+            )}
+            {i < steps.length - 1 && (
+              <ChevronRight className="absolute -right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-border z-10" />
+            )}
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 

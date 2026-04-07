@@ -1,26 +1,34 @@
-import React from 'react';
+'use client';
+
+/**
+ * PendingWorkflow — Trạng thái PAID
+ *
+ * Staff xem thông tin đơn hàng, danh sách sản phẩm cần chuẩn bị,
+ * tick xác nhận và nhấn "Nhận đơn → Chuẩn bị hàng" để chuyển sang PREPARING.
+ */
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import {
+  ClipboardList,
   User,
   Phone,
   MapPin,
-  ClipboardList,
+  Calendar,
   Package,
-  AlertCircle,
   CheckCircle2,
   Loader2,
-  CalendarDays,
-  CreditCard,
-  ShieldCheck,
-  Receipt,
-  ArrowRight,
+  Banknote,
+  Camera,
+  Hash,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { DashboardOrder } from '@/types/dashboard.types';
 import { WorkflowBanner } from '../WorkflowBanner';
+import { Section } from '../Section';
 import { InfoRow } from '../InfoRow';
-import { fmt, fmtDate } from '../utils';
 import { cn } from '@/lib/utils';
+import type { DashboardOrder } from '@/types/dashboard.types';
+import { fmt, fmtDate } from '../utils';
 
 export function PendingWorkflow({
   order,
@@ -31,250 +39,197 @@ export function PendingWorkflow({
   onConfirm: () => void;
   loading: boolean;
 }) {
-  const isPaid = order.payment_status === 'PAID';
+  const [checked, setChecked] = useState(false);
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Banner */}
+    <div className="flex flex-col gap-4">
       <WorkflowBanner
         icon={ClipboardList}
-        variant="primary"
-        title="Đơn hàng mới — Cần xác nhận"
-        desc="Kiểm tra kỹ thông tin khách thuê và danh sách sản phẩm trước khi xác nhận để bắt đầu chuẩn bị giao hàng."
+        title="Đơn hàng chờ bạn xác nhận"
+        desc="Kiểm tra kỹ thông tin đơn hàng và danh sách sản phẩm trước khi nhận đơn và bắt đầu chuẩn bị hàng tại hub."
+        variant="warning"
       />
 
-      {/* Cảnh báo thanh toán */}
-      {!isPaid && (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-4 flex items-start gap-3">
-          <AlertCircle className="size-5 text-destructive shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-bold text-destructive">
-              Khách chưa thanh toán đầy đủ
-            </p>
-            <p className="text-xs text-destructive/80 mt-1">
-              Không thể xác nhận đơn hàng. Vui lòng đợi khách thanh toán hoặc
-              liên hệ hỗ trợ.
-            </p>
+      {/* ── Customer Info ── */}
+      <Section title="Thông tin khách hàng" icon={User} defaultOpen>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-3">
+          <InfoRow
+            icon={User}
+            label="Người nhận hàng"
+            value={order.renter.full_name}
+          />
+          <InfoRow
+            icon={Phone}
+            label="Số điện thoại"
+            value={order.renter.phone_number}
+          />
+          <div className="sm:col-span-2">
+            <InfoRow
+              icon={MapPin}
+              label="Địa chỉ giao hàng"
+              value={order.delivery_address ?? order.renter.address ?? '—'}
+            />
           </div>
+          <InfoRow
+            icon={Calendar}
+            label="Ngày bắt đầu thuê"
+            value={fmtDate(order.start_date)}
+          />
+          <InfoRow
+            icon={Calendar}
+            label="Ngày kết thúc thuê"
+            value={fmtDate(order.end_date)}
+          />
+          <InfoRow
+            icon={Banknote}
+            label="Phí thuê"
+            value={fmt(order.total_rental_fee)}
+          />
+          <InfoRow
+            icon={Banknote}
+            label="Tiền đặt cọc"
+            value={fmt(order.total_deposit)}
+          />
         </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* ==================== CỘT TRÁI (7) ==================== */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
-          {/* Thông tin khách thuê */}
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 bg-theme-primary-start/10 rounded-2xl">
-                <User className="size-5 text-theme-primary-start" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-foreground">
-                  Khách thuê
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Thông tin người đặt hàng
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <InfoRow
-                icon={User}
-                label="Họ và tên"
-                value={order.renter.full_name}
-                strong
-              />
-              <InfoRow
-                icon={Phone}
-                label="Số điện thoại"
-                value={order.renter.phone_number}
-              />
-              <InfoRow
-                icon={ClipboardList}
-                label="CCCD"
-                value={order.renter.cccd_number}
-                mono
-              />
-              <InfoRow
-                icon={MapPin}
-                label="Địa chỉ giao hàng"
-                value={order.delivery_address ?? order.renter.address}
-              />
-            </div>
+        {order.notes && (
+          <div className="mt-3 rounded-xl border border-yellow-200/60 dark:border-yellow-800/40 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
+            <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400 mb-1 uppercase tracking-widest">
+              Ghi chú của khách
+            </p>
+            <p className="text-sm text-foreground leading-relaxed">
+              {order.notes}
+            </p>
           </div>
+        )}
+      </Section>
 
-          {/* Chi tiết lịch trình & Tài chính */}
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-2.5 bg-emerald-100 dark:bg-emerald-950 rounded-2xl">
-                <Receipt className="size-5 text-emerald-600 dark:text-emerald-400" />
+      {/* ── Items List ── */}
+      <Section
+        title={`Sản phẩm cần chuẩn bị (${order.items.length} thiết bị)`}
+        icon={Package}
+        defaultOpen
+      >
+        <div className="flex flex-col divide-y divide-border/40 pt-2">
+          {order.items.map((item) => (
+            <div
+              key={item.rental_order_item_id}
+              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+            >
+              {/* Thumbnail */}
+              <div className="relative size-14 shrink-0 rounded-xl overflow-hidden border border-border bg-muted">
+                {item.image_url ? (
+                  <Image
+                    src={item.image_url}
+                    alt={item.product_name}
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                  />
+                ) : (
+                  <div className="size-full flex items-center justify-center">
+                    <Camera className="size-5 text-muted-foreground/40" />
+                  </div>
+                )}
               </div>
-              <p className="text-lg font-semibold text-foreground">
-                Chi tiết thuê & Thanh toán
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground leading-snug truncate">
+                  {item.product_name}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Hash className="size-3 text-muted-foreground shrink-0" />
+                  <p className="text-xs font-mono text-muted-foreground truncate">
+                    {item.serial_number || 'Chưa có serial'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Pricing */}
+              <div className="text-right shrink-0">
+                <p className="text-sm font-bold text-theme-primary-start tabular-nums">
+                  {fmt(item.daily_price)}/ng
+                </p>
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  Cọc: {fmt(item.deposit_amount)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── Financial Summary ── */}
+      <div className="rounded-2xl border border-border bg-card p-4">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
+          Tổng quan tài chính
+        </p>
+        <div className="grid grid-cols-3 gap-3 text-center">
+          {[
+            {
+              label: 'Phí thuê',
+              value: fmt(order.total_rental_fee),
+              color: 'text-foreground',
+            },
+            {
+              label: 'Tiền cọc',
+              value: fmt(order.total_deposit),
+              color: 'text-info',
+            },
+            {
+              label: 'Tổng cộng',
+              value: fmt(order.total_rental_fee + order.total_deposit),
+              color: 'text-theme-primary-start',
+            },
+          ].map((row) => (
+            <div
+              key={row.label}
+              className="rounded-xl bg-muted/40 px-2 py-3 flex flex-col items-center"
+            >
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                {row.label}
+              </p>
+              <p
+                className={cn(
+                  'text-base font-black tabular-nums leading-none',
+                  row.color,
+                )}
+              >
+                {row.value}
               </p>
             </div>
-
-            <div className="flex flex-col gap-4">
-              {/* ── 1. Khối Thời Gian (Timeline) ── */}
-              <div className="relative flex items-center justify-between rounded-2xl border border-border bg-muted/30 p-4">
-                {/* Ngày nhận */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <CalendarDays className="size-4" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider">
-                      Nhận hàng
-                    </span>
-                  </div>
-                  <p className="text-sm font-bold text-foreground">
-                    {fmtDate(order.start_date)}
-                  </p>
-                </div>
-
-                {/* Mũi tên điều hướng ở giữa */}
-                <div className="flex flex-col items-center justify-center px-4">
-                  <ArrowRight className="size-8 text-muted-foreground/50 z-10" />
-                </div>
-
-                {/* Ngày trả */}
-                <div className="space-y-1.5 text-right">
-                  <div className="flex items-center justify-end gap-1.5 text-muted-foreground">
-                    <span className="text-[11px] font-bold uppercase tracking-wider">
-                      Trả hàng
-                    </span>
-                    <CalendarDays className="size-4" />
-                  </div>
-                  <p className="text-sm font-bold text-foreground">
-                    {fmtDate(order.end_date)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {/* Phí thuê */}
-                <div className="rounded-2xl border border-blue-200/50 dark:border-blue-900/50 bg-blue-50/50 dark:bg-blue-950/20 p-3.5">
-                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-                    <CreditCard className="size-4" />
-                    <span className="text-xs font-semibold">Phí thuê</span>
-                  </div>
-                  <p className="text-lg font-extrabold text-blue-700 dark:text-blue-300 tabular-nums leading-none mt-1.5">
-                    {fmt(order.total_rental_fee)}
-                  </p>
-                </div>
-
-                {/* Tiền cọc */}
-                <div className="rounded-2xl border border-emerald-200/50 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5">
-                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-1">
-                    <ShieldCheck className="size-4" />
-                    <span className="text-xs font-semibold">Tiền cọc</span>
-                  </div>
-                  <p className="text-lg font-extrabold text-emerald-700 dark:text-emerald-300 tabular-nums leading-none mt-1.5">
-                    {fmt(order.total_deposit)}
-                  </p>
-                </div>
-              </div>
-
-              {/* ── 3. Ghi chú khách hàng ── */}
-              {order.notes && (
-                <div className="mt-1 rounded-2xl border border-amber-200/60 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ClipboardList className="size-4 text-amber-600 dark:text-amber-500" />
-                    <span className="text-xs font-bold text-amber-700 dark:text-amber-500 uppercase tracking-wider">
-                      Ghi chú từ khách hàng
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground/90 leading-relaxed italic">
-                    {order.notes}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ==================== CỘT PHẢI (5) ==================== */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* Danh sách sản phẩm */}
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm flex-1">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-orange-100 dark:bg-orange-950 rounded-2xl">
-                  <Package className="size-5 text-orange-600 dark:text-orange-400" />
-                </div>
-                <div>
-                  <p className="text-lg font-semibold text-foreground">
-                    Sản phẩm thuê
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {order.items.length} món hàng
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-              {order.items.map((item) => (
-                <div
-                  key={item.rental_order_item_id}
-                  className="flex gap-4 rounded-2xl border border-border bg-muted/30 p-4 hover:bg-muted/50 transition-all"
-                >
-                  <div className="relative size-20 shrink-0 rounded-xl overflow-hidden border border-border bg-muted">
-                    <Image
-                      src={item.image_url}
-                      alt={item.product_name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground leading-tight line-clamp-2">
-                        {item.product_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono mt-1">
-                        SN: {item.serial_number}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-theme-primary-start">
-                        {fmt(item.daily_price)}
-                        <span className="text-xs font-normal text-muted-foreground">
-                          /ngày
-                        </span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Cọc: {fmt(item.deposit_amount)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Nút Xác nhận */}
-          <div>
-            <Button
-              size="default"
-              onClick={onConfirm}
-              disabled={loading || !isPaid}
-              className={cn(
-                'w-full h-16 gap-3 text-xl font-semibold shadow-md transition-all',
-                isPaid
-                  ? 'bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:brightness-105 text-white'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed',
-              )}
-            >
-              {loading ? (
-                <Loader2 className="size-5 animate-spin" />
-              ) : (
-                <CheckCircle2 className="size-5" />
-              )}
-              {isPaid ? 'Xác nhận đơn hàng' : 'Chưa thể xác nhận đơn'}
-            </Button>
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* ── Confirm Checklist ── */}
+      <label className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 cursor-pointer hover:bg-accent/40 transition-colors select-none">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => setChecked(e.target.checked)}
+          className="mt-0.5 size-4 shrink-0 rounded accent-amber-500"
+        />
+        <span className="text-sm text-muted-foreground leading-relaxed">
+          Tôi đã kiểm tra thông tin đơn hàng, xác nhận danh sách sản phẩm và sẽ
+          chuẩn bị giao đơn này.
+        </span>
+      </label>
+
+      {/* ── CTA ── */}
+      <Button
+        onClick={onConfirm}
+        disabled={loading || !checked}
+        size="lg"
+        className="w-full h-14 text-base font-bold gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50"
+      >
+        {loading ? (
+          <Loader2 className="size-5 animate-spin" />
+        ) : (
+          <CheckCircle2 className="size-5" />
+        )}
+        Xác nhận nhận đơn → Bắt đầu chuẩn bị hàng
+      </Button>
     </div>
   );
 }
