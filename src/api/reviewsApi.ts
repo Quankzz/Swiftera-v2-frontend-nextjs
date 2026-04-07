@@ -26,23 +26,6 @@ export interface ProductReviewResponse {
   updatedAt: string;
 }
 
-export interface ReviewListResponse {
-  success: boolean;
-  message?: string;
-  data: {
-    meta: {
-      currentPage: number;
-      pageSize: number;
-      totalPages: number;
-      totalElements: number;
-      hasNext: boolean;
-      hasPrevious: boolean;
-    };
-    content: ProductReviewResponse[];
-  };
-  meta?: { timestamp: string; instance: string };
-}
-
 export interface ReviewSingleResponse {
   success: boolean;
   message?: string;
@@ -54,6 +37,27 @@ export interface ReviewVoidResponse {
   success: boolean;
   message: string;
   data: null;
+  meta?: { timestamp: string; instance: string };
+}
+
+// ─── Pagination ─────────────────────────────────────────────────────────────
+
+export interface PaginatedReviewsData {
+  meta: {
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+    totalElements: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+  content: ProductReviewResponse[];
+}
+
+export interface PaginatedReviewsResponse {
+  success: boolean;
+  message?: string;
+  data: PaginatedReviewsData;
   meta?: { timestamp: string; instance: string };
 }
 
@@ -73,6 +77,8 @@ const authOpts = { requireToken: true as const };
 /**
  * API-095: Tạo đánh giá sản phẩm [AUTH]
  *
+ * @param input - rentalOrderId, productId, rating (1-5), content (optional)
+ *
  * Lỗi: REVIEW_ALREADY_EXISTS, REVIEW_ORDER_NOT_COMPLETED
  */
 export function createReview(
@@ -83,6 +89,8 @@ export function createReview(
 
 /**
  * API-096: Lấy đánh giá theo ID [AUTH]
+ *
+ * @param reviewId - UUID của đánh giá
  */
 export function getReviewById(
   reviewId: string,
@@ -96,15 +104,17 @@ export function getReviewById(
 /**
  * API-097: Lấy danh sách đánh giá [AUTH]
  *
+ * @param params - page, size, sort, filter (SpringFilter DSL)
+ *
  * Ví dụ filter: productId:'...' hoặc rating:4
  */
 export function getReviews(params?: {
   page?: number;
   size?: number;
-  filter?: string;
   sort?: string;
-}): Promise<AxiosResponse<ReviewListResponse>> {
-  return httpService.get<ReviewListResponse>('/reviews', {
+  filter?: string;
+}): Promise<AxiosResponse<PaginatedReviewsResponse>> {
+  return httpService.get<PaginatedReviewsResponse>('/reviews', {
     ...authOpts,
     params,
   });
@@ -112,19 +122,24 @@ export function getReviews(params?: {
 
 /**
  * API-098: Lấy đánh giá theo sản phẩm [AUTH]
+ *
+ * @param productId - UUID của sản phẩm
+ * @param params - page, size
  */
 export function getReviewsByProduct(
   productId: string,
   params?: { page?: number; size?: number },
-): Promise<AxiosResponse<ReviewListResponse>> {
-  return httpService.get<ReviewListResponse>(`/reviews/product/${productId}`, {
-    ...authOpts,
-    params,
-  });
+): Promise<AxiosResponse<PaginatedReviewsResponse>> {
+  return httpService.get<PaginatedReviewsResponse>(
+    `/reviews/product/${productId}`,
+    { ...authOpts, params },
+  );
 }
 
 /**
  * API-099: Xóa đánh giá [AUTH]
+ *
+ * @param reviewId - UUID của đánh giá
  */
 export function deleteReview(
   reviewId: string,

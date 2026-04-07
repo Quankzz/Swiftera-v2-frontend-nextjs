@@ -78,6 +78,19 @@ export interface RentalOrderLineResponse {
   photos: string[];
 }
 
+// ─── Staff embedded in RentalOrderResponse ───────────────────────────────
+
+export interface RentalOrderStaffSummary {
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  nickname: string | null;
+  phoneNumber: string | null;
+  avatarUrl: string | null;
+  isVerified: boolean;
+}
+
 export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string;
@@ -114,6 +127,9 @@ export interface RentalOrderResponse {
   depositRefundAmount: number | null;
   totalPaidAmount: number;
   placedAt: string;
+  createdBy: string | null;
+  deliveryStaff: RentalOrderStaffSummary | null;
+  pickupStaff: RentalOrderStaffSummary | null;
   rentalOrderLines: RentalOrderLineResponse[];
   createdAt: string;
   updatedAt: string;
@@ -136,11 +152,15 @@ export interface RentalOrderVoidResponse {
 // ─── Pagination ─────────────────────────────────────────────────────────────
 
 export interface PaginatedRentalOrdersData {
-  items: RentalOrderResponse[];
-  page: number;
-  size: number;
-  totalItems: number;
-  totalPages: number;
+  content: RentalOrderResponse[];
+  meta: {
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+    totalElements: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
 }
 
 export interface PaginatedRentalOrdersResponse {

@@ -52,7 +52,7 @@ export default function CheckoutPage() {
       customerPhone: phone.trim(),
     });
     clearCart();
-    router.push(`/orders/${id}`);
+    router.push(`/rental-orders/${id}`);
   };
 
   if (lines.length === 0) {
