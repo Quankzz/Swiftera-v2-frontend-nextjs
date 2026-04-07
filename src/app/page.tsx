@@ -9,31 +9,23 @@ import { CalendarRange, ShieldCheck, Smile, WalletCards } from 'lucide-react';
 
 const heroSlides = [
   {
-    title: 'Thiết bị của bạn.',
-    subtitle: 'Theo cách của bạn.',
-    description:
-      'Sử dụng công nghệ theo nhu cầu với mức phí theo ngày phù hợp ngân sách, không cần trả trước quá lớn.',
-    image:
-      'https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?auto=format&fit=crop&w=1400&q=80',
-    accent: 'Linh hoạt mỗi ngày',
-  },
-  {
     title: 'Yêu công nghệ.',
     subtitle: 'Chọn Swiftera.',
     description:
       'Nâng cấp thiết bị dễ dàng, chi phí hợp lý, giao nhanh và đổi trả thuận tiện.',
     image:
-      'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1400&q=80',
-    accent: 'Nâng cấp nhanh',
-  },
-  {
-    title: 'Thuê thiết bị cao cấp.',
-    subtitle: 'Giữ trọn tự do.',
-    description:
-      'Chọn điện thoại, máy chơi game, laptop và wearables mới nhất với kỳ hạn thuê linh hoạt từ 1 đến 24+ tháng.',
-    image:
-      'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=1400&q=80',
-    accent: 'Kỳ hạn linh hoạt',
+      'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=400&q=80',
+    // Tập hợp ảnh hiển thị trên orbit (sản phẩm cho thuê)
+    orbitImages: [
+      'https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?auto=format&fit=crop&w=400&q=80', // camera
+      'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=400&q=80', // laptop
+      'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=400&q=80', // drone
+      'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=400&q=80', // iphone
+      'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=400&q=80', // smartwatch
+      'https://images.unsplash.com/photo-1612293788016-88e434fd37ec?auto=format&fit=crop&w=400&q=80', // gaming
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80', // headphones
+      'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=400&q=80', // tablet
+    ],
   },
 ];
 
@@ -54,9 +46,10 @@ export default function Home() {
   return (
     <Layout>
       <div className='bg-white dark:bg-surface-base pb-20'>
-        <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
-          <HeroBanner slides={heroSlides} />
+        {/* Hero — full viewport, outside padding wrapper */}
+        <HeroBanner slides={heroSlides} />
 
+        <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           {/* Highlight stats */}
           <div className='mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-border/40 dark:border-white/5 bg-white/80 dark:bg-white/4 p-4 shadow-sm md:grid-cols-2 lg:grid-cols-4'>
             {highlightStats.map((item) => (
@@ -90,6 +83,7 @@ export default function Home() {
           <HomeFeaturedProducts />
           <HomeBudgetProducts />
         </div>
+        {/* end padding wrapper */}
       </div>
     </Layout>
   );
