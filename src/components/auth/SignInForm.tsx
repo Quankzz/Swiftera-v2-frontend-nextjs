@@ -26,8 +26,11 @@ export function SignInForm() {
 
     try {
       setIsSubmitting(true);
-      await login({ email, password });
-      router.push('/');
+      const result = await login({ email, password });
+      const roles = result?.data?.userSecured?.rolesSecured ?? [];
+      const isStaff = roles.some((r) => r.name === 'STAFF_ROLE');
+      if (isStaff) router.push('/staff-dashboard');
+      else router.push('/');
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại');
@@ -41,7 +44,9 @@ export function SignInForm() {
       onSubmit={handleLogin}
       className="flex h-full w-full flex-col items-center justify-center bg-white px-5 py-6 sm:px-10 sm:py-0 dark:bg-zinc-900"
     >
-      <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">Đăng nhập</h1>
+      <h1 className="text-xl font-bold text-zinc-900 sm:text-2xl dark:text-zinc-100">
+        Đăng nhập
+      </h1>
       <Input
         type="email"
         placeholder="Email"
@@ -66,7 +71,10 @@ export function SignInForm() {
       </Link>
       <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400">
         Chưa xác thực email?{' '}
-        <Link href="/auth/resend-verification" className="text-[#fe1451] hover:underline">
+        <Link
+          href="/auth/resend-verification"
+          className="text-[#fe1451] hover:underline"
+        >
           Gửi lại mã xác thực
         </Link>
       </p>
