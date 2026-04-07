@@ -190,6 +190,9 @@ export interface PaginatedData<T> {
 /**
  * Serialize params object thành query string.
  * Bỏ qua undefined/null values.
+ *
+ * NOTE: URLSearchParams encodes spaces as `+` (form-encoding).  Spring's
+ * filter/RSQL parser expects `%20`, so we replace after serialising.
  */
 function buildQueryString(
   params?: Record<string, string | number | boolean | undefined | null>,
@@ -203,7 +206,7 @@ function buildQueryString(
   for (const [key, value] of entries) {
     searchParams.append(key, String(value));
   }
-  return `?${searchParams.toString()}`;
+  return `?${searchParams.toString().replace(/\+/g, '%20')}`;
 }
 
 /**

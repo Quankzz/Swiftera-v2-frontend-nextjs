@@ -1,12 +1,18 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Layout } from '@/components/Layout';
-import { CatalogGrid } from '@/components/catalog/catalog-grid';
+import { CatalogView } from '@/components/catalog/catalog-view';
+import { ProductGridSkeleton } from '@/components/catalog/product-card-skeleton';
 import type { SortOption } from '@/components/catalog/catalog-header';
 
 interface CatalogSearchParams {
-  q?: string;
+  /** Legacy: category card links use ?category= */
   category?: string;
+  /** New: preferred param name */
+  categoryId?: string;
+  subcategoryId?: string;
   sort?: string;
+  page?: string;
 }
 
 export async function generateMetadata({
@@ -15,10 +21,13 @@ export async function generateMetadata({
   searchParams: Promise<CatalogSearchParams>;
 }): Promise<Metadata> {
   const params = await searchParams;
-  const title = params.q
-    ? `Tìm kiếm "${params.q}" — Swiftera`
-    : 'Danh mục sản phẩm — Swiftera';
-  return { title };
+  return {
+    title: 'Danh mục sản phẩm — Swiftera',
+    description:
+      params.categoryId || params.category
+        ? 'Xem sản phẩm theo danh mục trên Swiftera'
+        : 'Khám phá tất cả sản phẩm cho thuê trên Swiftera',
+  };
 }
 
 const VALID_SORTS: SortOption[] = [
@@ -35,20 +44,29 @@ export default async function CatalogPage({
 }) {
   const params = await searchParams;
 
-  const query = params.q ?? '';
-  const categoryId = params.category ?? undefined;
+  // Support both ?category= (home page legacy) and ?categoryId=
+  const categoryId = params.categoryId ?? params.category ?? undefined;
+  const subcategoryId = params.subcategoryId ?? undefined;
   const sort: SortOption = VALID_SORTS.includes(params.sort as SortOption)
     ? (params.sort as SortOption)
     : 'relevance';
+  const page = parseInt(params.page ?? '1', 10) || 1;
 
   return (
     <Layout>
       <div className='mx-auto w-full px-4 py-8 lg:px-18'>
-        <CatalogGrid
-          initialQuery={query}
-          initialCategoryId={categoryId}
-          initialSort={sort}
-        />
+        {/*
+          CatalogView is a client component that uses useSearchParams.
+          Wrap in Suspense so the server shell renders immediately.
+        */}
+        <Suspense fallback={<ProductGridSkeleton count={12} />}>
+          <CatalogView
+            initialCategoryId={categoryId}
+            initialSubcategoryId={subcategoryId}
+            initialSort={sort}
+            initialPage={page}
+          />
+        </Suspense>
       </div>
     </Layout>
   );
