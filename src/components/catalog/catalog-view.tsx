@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, SearchX } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -59,7 +59,11 @@ export function CatalogView({
   const searchParams = useSearchParams();
 
   // ── Read from URL (URL is source of truth) ───────────────────────────────
-  const categoryId = searchParams.get('categoryId') ?? initialCategoryId;
+  // Support both ?categoryId= (internal navigation) and ?category= (from Home)
+  const categoryId =
+    searchParams.get('categoryId') ??
+    searchParams.get('category') ??
+    initialCategoryId;
   const subcategoryId =
     searchParams.get('subcategoryId') ?? initialSubcategoryId;
   const searchQuery = searchParams.get('q') ?? undefined;
@@ -69,6 +73,17 @@ export function CatalogView({
     : 'relevance';
   const page =
     parseInt(searchParams.get('page') ?? String(initialPage), 10) || 1;
+
+  // ── Normalize URL: replace legacy ?category= with ?categoryId= ───────────
+  useEffect(() => {
+    const legacyCategory = searchParams.get('category');
+    if (legacyCategory && !searchParams.get('categoryId')) {
+      const next = new URLSearchParams(searchParams.toString());
+      next.set('categoryId', legacyCategory);
+      next.delete('category');
+      router.replace(`?${next.toString()}`);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Local filter state (brands + price — NOT in URL for now) ─────────────
   const [filterState, setFilterState] = useState<FilterState>(EMPTY_FILTER);
@@ -211,12 +226,13 @@ export function CatalogView({
       )}
 
       {/* Main content: filter sidebar + product grid */}
-      <div className='relative mt-6 flex gap-6'>
+      <div className='relative mt-6 flex items-start gap-6'>
         {/* Filter sidebar */}
         <div
           className={cn(
             'fixed inset-y-0 left-0 z-50 w-72 overflow-y-auto bg-white dark:bg-surface-base p-5 shadow-xl transition-transform duration-300',
-            'lg:static lg:z-auto lg:w-auto lg:overflow-visible lg:bg-transparent lg:dark:bg-transparent lg:p-0 lg:shadow-none',
+            'lg:static lg:z-auto lg:w-auto lg:bg-transparent lg:dark:bg-transparent lg:p-0 lg:shadow-none',
+            'lg:sticky lg:top-1.5 lg:self-start',
             'lg:min-w-55 lg:max-w-65 lg:flex-none lg:translate-x-0',
             filterOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           )}
@@ -230,6 +246,7 @@ export function CatalogView({
             onCategoryChange={(id) => {
               const next = new URLSearchParams(searchParams.toString());
               next.set('categoryId', id);
+              next.delete('category'); // clean up legacy ?category= param from Home
               next.delete('subcategoryId');
               next.delete('page');
               router.push(`?${next.toString()}`);

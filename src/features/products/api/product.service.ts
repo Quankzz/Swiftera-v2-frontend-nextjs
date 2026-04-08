@@ -62,8 +62,14 @@ function buildQuery(
 export function getProducts(
   params: ProductListParams = {},
 ): Promise<PaginatedProductsResponse> {
-  const { page = 0, size = 12, sort, filter } = params;
-  const query = buildQuery({ page, size, sort, filter });
+  const { page = 1, size = 12, sort, filter, includeDescendants } = params;
+  const query = buildQuery({
+    page,
+    size,
+    sort,
+    filter,
+    ...(includeDescendants ? { includeDescendants: true } : {}),
+  });
   return apiGet<PaginatedProductsResponse>(`/products${query}`);
 }
 

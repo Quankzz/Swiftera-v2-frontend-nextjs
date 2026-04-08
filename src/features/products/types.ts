@@ -128,6 +128,8 @@ export interface ProductListParams {
   size?: number;
   sort?: string;
   filter?: string;
+  /** API-054: include products from descendant categories when filtering by categoryId */
+  includeDescendants?: boolean;
 }
 
 // ── Inventory Item Types (Module 9: INVENTORY ITEMS — API-056 to API-060) ──

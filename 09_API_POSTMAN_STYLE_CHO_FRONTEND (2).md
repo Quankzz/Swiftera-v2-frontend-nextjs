@@ -1393,7 +1393,7 @@ Ví dụ response:
 {
   "categoryId": "cat-uuid-mirrorless",
   "brand": "Canon",
-  "color": "Black",
+  "color": "Black,Silver",
   "name": "Canon EOS R50",
   "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
   "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
@@ -1401,6 +1401,16 @@ Ví dụ response:
   "oldDailyPrice": 300000,
   "depositAmount": 5000000,
   "minRentalDays": 1,
+  "colors": [
+    {
+      "name": "Black",
+      "code": "#111111"
+    },
+    {
+      "name": "Silver",
+      "code": "#C0C0C0"
+    }
+  ],
   "imageUrls": [
     "https://cdn.example.com/products/canon-r50-front.jpg",
     "https://cdn.example.com/products/canon-r50-back.jpg"
@@ -1408,13 +1418,13 @@ Ví dụ response:
 }
 ```
 
-| Field                                                                                              | Bắt buộc |
-| -------------------------------------------------------------------------------------------------- | -------- |
-| `categoryId`                                                                                       | ✓        |
-| `name`                                                                                             | ✓        |
-| `dailyPrice`                                                                                       | ✓, > 0   |
-| `depositAmount`                                                                                    | ✓, >= 0  |
-| `brand`, `color`, `shortDescription`, `description`, `oldDailyPrice`, `minRentalDays`, `imageUrls` | tùy chọn |
+| Field                                                                                                        | Bắt buộc |
+| ------------------------------------------------------------------------------------------------------------ | -------- |
+| `categoryId`                                                                                                 | ✓        |
+| `name`                                                                                                       | ✓        |
+| `dailyPrice`                                                                                                 | ✓, > 0   |
+| `depositAmount`                                                                                              | ✓, >= 0  |
+| `brand`, `color`, `shortDescription`, `description`, `oldDailyPrice`, `minRentalDays`, `colors`, `imageUrls` | tùy chọn |
 
 **Rule giá**:
 
@@ -1429,7 +1439,23 @@ Ví dụ response:
     "categoryId": "cat-uuid-mirrorless",
     "categoryName": "Mirrorless",
     "brand": "Canon",
-    "color": "Black",
+    "color": "Black, Silver",
+    "colors": [
+      {
+        "productColorId": "pc-black-r50",
+        "name": "Black",
+        "code": "#111111",
+        "quantity": 4,
+        "availableQuantity": 3
+      },
+      {
+        "productColorId": "pc-silver-r50",
+        "name": "Silver",
+        "code": "#C0C0C0",
+        "quantity": 2,
+        "availableQuantity": 1
+      }
+    ],
     "name": "Canon EOS R50",
     "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
     "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
@@ -1449,6 +1475,11 @@ Ví dụ response:
 
 **Lưu ý**: `images` là mảng `ProductImageResponse[]` mỗi phần tử: `{ productImageId, imageUrl, sortOrder, isPrimary }`
 
+**Lưu ý thêm**:
+
+- `colors[]` là nguồn dữ liệu màu chuẩn cho FE; `color` chỉ là summary string để tương thích ngược.
+- Nếu update có truyền `colors[]`, backend sẽ sync lại full danh sách màu của product theo payload mới.
+
 ---
 
 ### API-053: Lấy sản phẩm theo ID [PUBLIC]
@@ -1460,16 +1491,21 @@ Ví dụ response:
 
 Mỗi phần tử `inventoryItems` gồm:
 
-- `inventoryItemId`, `serialNumber`, `status`, `conditionGrade`, `staffNote`, `hubId`, `hubCode`, `hubName`
+- `inventoryItemId`, `serialNumber`, `status`, `conditionGrade`, `staffNote`, `hubId`, `hubCode`, `hubName`, `productColorId`, `colorName`, `colorCode`
 
 ---
 
 ### API-054: Lấy danh sách sản phẩm [PUBLIC]
 
 - **Method**: `GET`
-- **URL**: `/api/v1/products?page=1&size=12&sort=createdAt,desc&filter=isActive:true and categoryId:'cat-uuid-mirrorless'`
+- **URL**: `/api/v1/products?page=1&size=12&sort=createdAt,desc&filter=isActive:true and categoryId:'cat-uuid-camera-root'&includeDescendants=true`
 
 **Response**: `PaginationResponse` chứa mảng `ProductResponse`
+
+**Ghi chú**:
+
+- `includeDescendants=true` chỉ có tác dụng khi filter có điều kiện theo `categoryId` dạng SpringFilter DSL.
+- Nếu không truyền `includeDescendants`, backend vẫn giữ behavior cũ: chỉ match category trực tiếp.
 
 ---
 
@@ -1484,7 +1520,7 @@ Mỗi phần tử `inventoryItems` gồm:
 {
   "categoryId": "cat-uuid-new",
   "brand": "Canon",
-  "color": "Silver",
+  "color": "Black,Silver,White",
   "name": "Canon EOS R50 Silver",
   "shortDescription": "Bản màu bạc, phù hợp chụp vlog",
   "description": "Phiên bản màu bạc",
@@ -1492,6 +1528,22 @@ Mỗi phần tử `inventoryItems` gồm:
   "oldDailyPrice": 300000,
   "depositAmount": 5500000,
   "minRentalDays": 2,
+  "colors": [
+    {
+      "productColorId": "pc-black-r50",
+      "name": "Black",
+      "code": "#111111"
+    },
+    {
+      "productColorId": "pc-silver-r50",
+      "name": "Silver",
+      "code": "#C0C0C0"
+    },
+    {
+      "name": "White",
+      "code": "#F5F5F5"
+    }
+  ],
   "imageUrls": ["https://cdn.example.com/products/canon-r50-silver-front.jpg"],
   "isActive": true
 }
@@ -1537,19 +1589,21 @@ Mỗi phần tử `inventoryItems` gồm:
 {
   "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
   "hubId": "h1a2b3c4-...",
+  "productColorId": "pc-black-r50",
   "serialNumber": "CANON-R50-001",
   "conditionGrade": "NEW",
   "staffNote": "Mới nhập kho tháng 3/2026"
 }
 ```
 
-| Field            | Bắt buộc | Giá trị                       |
-| ---------------- | -------- | ----------------------------- |
-| `productId`      | ✓        | UUID product                  |
-| `hubId`          | ✓        | UUID hub                      |
-| `serialNumber`   | ✓        | chuỗi duy nhất                |
-| `conditionGrade` | tùy chọn | `NEW`, `GOOD`, `FAIR`, `POOR` |
-| `staffNote`      | tùy chọn | ghi chú nội bộ                |
+| Field            | Bắt buộc | Giá trị                                                     |
+| ---------------- | -------- | ----------------------------------------------------------- |
+| `productId`      | ✓        | UUID product                                                |
+| `hubId`          | ✓        | UUID hub                                                    |
+| `serialNumber`   | ✓        | chuỗi duy nhất                                              |
+| `productColorId` | tùy chọn | UUID màu thuộc đúng product; bắt buộc nếu product có >1 màu |
+| `conditionGrade` | tùy chọn | `NEW`, `GOOD`, `FAIR`, `POOR`                               |
+| `staffNote`      | tùy chọn | ghi chú nội bộ                                              |
 
 **Response**:
 
@@ -1559,6 +1613,9 @@ Mỗi phần tử `inventoryItems` gồm:
     "inventoryItemId": "inv-uuid-001",
     "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
     "productName": "Canon EOS R50",
+    "productColorId": "pc-black-r50",
+    "colorName": "Black",
+    "colorCode": "#111111",
     "hubId": "h1a2b3c4-...",
     "hubName": "Hub Hồ Chí Minh - Quận 1",
     "serialNumber": "CANON-R50-001",
@@ -1603,6 +1660,7 @@ Mỗi phần tử `inventoryItems` gồm:
 ```json
 {
   "hubId": "hub-uuid-new",
+  "productColorId": "pc-silver-r50",
   "status": "MAINTENANCE",
   "conditionGrade": "FAIR",
   "staffNote": "Còn vết xước nhẹ trên thân máy"
@@ -1654,12 +1712,30 @@ Mỗi phần tử `inventoryItems` gồm:
       {
         "cartLineId": "e6dcdf5e-...",
         "productId": "f3152824-...",
+        "productColorId": "pc-black-r50",
+        "colorName": "Black",
+        "colorCode": "#111111",
         "productName": "Canon EOS R50",
         "productImageUrl": "https://cdn.example.com/canon-r50.jpg",
         "dailyPrice": 250000,
         "rentalDurationDays": 5,
         "quantity": 2,
-        "lineTotal": 2500000
+        "lineTotal": 2500000,
+        "availableVouchers": [
+          {
+            "voucherId": "v-item-001",
+            "code": "CAMERA7",
+            "type": "ITEM_VOUCHER",
+            "productId": "f3152824-...",
+            "productName": "Canon EOS R50",
+            "discountType": "PERCENTAGE",
+            "discountValue": 7,
+            "maxDiscountAmount": 200000,
+            "minRentalDays": 3,
+            "expiresAt": "2026-12-31 11:59:59 PM",
+            "isActive": true
+          }
+        ]
       }
     ],
     "createdAt": "2026-03-24 10:00:00 AM",
@@ -1682,6 +1758,7 @@ Mỗi phần tử `inventoryItems` gồm:
 ```json
 {
   "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+  "productColorId": "pc-black-r50",
   "rentalDurationDays": 7,
   "quantity": 1
 }
@@ -1690,10 +1767,11 @@ Mỗi phần tử `inventoryItems` gồm:
 | Field                | Bắt buộc | Validation                         |
 | -------------------- | -------- | ---------------------------------- |
 | `productId`          | ✓        | UUID product đang active           |
+| `productColorId`     | tùy chọn | bắt buộc nếu product có >1 màu     |
 | `rentalDurationDays` | ✓        | >= 1 và >= `product.minRentalDays` |
 | `quantity`           | tùy chọn | >= 1 (mặc định 1)                  |
 
-**Merge logic**: Nếu đã có line cùng `productId` và `rentalDurationDays`, quantity sẽ cộng thêm.
+**Merge logic**: Nếu đã có line cùng `productId`, cùng `productColorId` và cùng `rentalDurationDays`, quantity sẽ cộng thêm.
 
 **Response**: `CartResponse` (xem API-062)
 
@@ -1710,6 +1788,7 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
+  "productColorId": "pc-silver-r50",
   "rentalDurationDays": 10,
   "quantity": 3
 }
@@ -1767,28 +1846,31 @@ Mỗi phần tử `inventoryItems` gồm:
 ```json
 {
   "code": "SUMMER30",
+  "type": "ITEM_VOUCHER",
+  "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
   "discountType": "PERCENTAGE",
   "discountValue": 30,
   "maxDiscountAmount": 500000,
   "minRentalDays": 3,
-  "expiresAt": "2026-12-31T16:59:59Z",
-  "usageLimit": 100
+  "expiresAt": "2026-12-31T16:59:59Z"
 }
 ```
 
-| Field               | Bắt buộc | Giá trị                               |
-| ------------------- | -------- | ------------------------------------- |
-| `code`              | ✓        | mã voucher duy nhất                   |
-| `discountType`      | ✓        | `PERCENTAGE` hoặc `FIXED`             |
-| `discountValue`     | ✓        | > 0                                   |
-| `maxDiscountAmount` | tùy chọn | giới hạn giảm tối đa (cho PERCENTAGE) |
-| `minRentalDays`     | tùy chọn | số ngày thuê tối thiểu để áp dụng     |
-| `expiresAt`         | tùy chọn | ISO 8601 UTC                          |
-| `usageLimit`        | tùy chọn | giới hạn số lần dùng                  |
+| Field               | Bắt buộc | Giá trị                                |
+| ------------------- | -------- | -------------------------------------- |
+| `code`              | ✓        | mã voucher duy nhất                    |
+| `type`              | ✓        | `ITEM_VOUCHER` hoặc `PRODUCT_DISCOUNT` |
+| `productId`         | tùy chọn | bắt buộc nếu `type=PRODUCT_DISCOUNT`   |
+| `discountType`      | ✓        | `PERCENTAGE` hoặc `FIXED`              |
+| `discountValue`     | ✓        | > 0                                    |
+| `maxDiscountAmount` | tùy chọn | giới hạn giảm tối đa (cho PERCENTAGE)  |
+| `minRentalDays`     | tùy chọn | số ngày thuê tối thiểu để áp dụng      |
+| `expiresAt`         | tùy chọn | ISO 8601 UTC                           |
 
 **Validation quan trọng**:
 
 - Nếu `discountType` không phải `PERCENTAGE` hoặc `FIXED`, backend trả `VOUCHER_DISCOUNT_TYPE_INVALID`.
+- Nếu `type=PRODUCT_DISCOUNT` nhưng thiếu `productId`, backend trả `VOUCHER_PRODUCT_REQUIRED`.
 
 **Response**:
 
@@ -1797,13 +1879,14 @@ Mỗi phần tử `inventoryItems` gồm:
   "data": {
     "voucherId": "v-uuid-001",
     "code": "SUMMER30",
+    "type": "ITEM_VOUCHER",
+    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+    "productName": "Canon EOS R50",
     "discountType": "PERCENTAGE",
     "discountValue": 30,
     "maxDiscountAmount": 500000,
     "minRentalDays": 3,
     "expiresAt": "2026-12-31 11:59:59 PM",
-    "usageLimit": 100,
-    "usedCount": 0,
     "isActive": true,
     "createdAt": "2026-03-24 10:00:00 AM",
     "updatedAt": "2026-03-24 10:00:00 AM"
@@ -1836,20 +1919,24 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 ### API-070: Kiểm tra và tính giảm giá voucher [AUTH]
 
 - **Method**: `GET`
-- **URL**: `/api/v1/vouchers/validate?code=SUMMER30&rentalDurationDays=7&rentalSubtotalAmount=3500000`
+- **URL**: `/api/v1/vouchers/validate?code=SUMMER30&productId=f3152824-15dd-4c17-af69-c92089e86d22&rentalDurationDays=7&rentalSubtotalAmount=3500000`
 
-| Query param            | Bắt buộc | Ý nghĩa                  |
-| ---------------------- | -------- | ------------------------ |
-| `code`                 | ✓        | mã voucher cần kiểm tra  |
-| `rentalDurationDays`   | ✓        | tổng ngày thuê của đơn   |
-| `rentalSubtotalAmount` | ✓        | tổng phí thuê trước giảm |
+| Query param            | Bắt buộc | Ý nghĩa                                     |
+| ---------------------- | -------- | ------------------------------------------- |
+| `code`                 | ✓        | mã voucher cần kiểm tra                     |
+| `productId`            | tùy chọn | product target để check scope voucher       |
+| `rentalDurationDays`   | ✓        | số ngày thuê của line/product target        |
+| `rentalSubtotalAmount` | ✓        | subtotal trước giảm của line/product target |
 
 **Response**:
 
 ```json
 {
   "data": {
+    "voucherId": "v-uuid-001",
     "code": "SUMMER30",
+    "type": "ITEM_VOUCHER",
+    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
     "valid": true,
     "rentalSubtotalAmount": 3500000,
     "discountAmount": 500000,
@@ -1860,7 +1947,7 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 }
 ```
 
-**Lỗi thường gặp**: `VOUCHER_NOT_FOUND`, `VOUCHER_INACTIVE`, `VOUCHER_EXPIRED`, `VOUCHER_USAGE_LIMIT_REACHED`, `VOUCHER_MIN_RENTAL_DAYS_NOT_MET`
+**Lỗi thường gặp**: `VOUCHER_NOT_FOUND`, `VOUCHER_INACTIVE`, `VOUCHER_EXPIRED`, `VOUCHER_MIN_RENTAL_DAYS_NOT_MET`, `VOUCHER_PRODUCT_SCOPE_INVALID`, `VOUCHER_ALREADY_USED`
 
 ---
 
@@ -1882,12 +1969,13 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ```json
 {
+  "type": "PRODUCT_DISCOUNT",
+  "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
   "discountType": "FIXED",
   "discountValue": 200000,
   "maxDiscountAmount": null,
   "minRentalDays": 5,
   "expiresAt": "2027-06-30T16:59:59Z",
-  "usageLimit": 200,
   "isActive": true
 }
 ```
@@ -1933,33 +2021,34 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
   "deliveryDistrict": "Quận 5",
   "deliveryCity": "Hồ Chí Minh",
   "expectedDeliveryDate": "2026-03-26",
-  "voucherCode": "SUMMER30",
   "orderLines": [
     {
       "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+      "productColorId": "pc-black-r50",
+      "voucherCode": "CAMERA7",
       "quantity": 1,
       "rentalDurationDays": 5
-    },
-    {
-      "productId": "5a43f1f5-8fb1-4ea1-8a70-c38393f32888",
-      "quantity": 2,
-      "rentalDurationDays": 7
     }
   ]
 }
 ```
 
-| Field                                    | Bắt buộc | Validation                             |
-| ---------------------------------------- | -------- | -------------------------------------- |
-| `deliveryRecipientName`                  | ✓        | not blank                              |
-| `deliveryPhone`                          | ✓        | not blank                              |
-| `expectedDeliveryDate`                   | ✓        | định dạng `YYYY-MM-DD`                 |
-| `orderLines`                             | ✓        | không rỗng                             |
-| `orderLines[].productId`                 | ✓        | UUID product tồn tại, đang active      |
-| `orderLines[].quantity`                  | ✓        | >= 1                                   |
-| `orderLines[].rentalDurationDays`        | ✓        | >= 1 và >= `minRentalDays` của product |
-| `deliveryAddressLine/Ward/District/City` | tùy chọn | địa chỉ giao                           |
-| `voucherCode`                            | tùy chọn | mã voucher hợp lệ                      |
+| Field                                    | Bắt buộc | Validation                               |
+| ---------------------------------------- | -------- | ---------------------------------------- |
+| `deliveryRecipientName`                  | ✓        | not blank                                |
+| `deliveryPhone`                          | ✓        | not blank                                |
+| `expectedDeliveryDate`                   | ✓        | định dạng `YYYY-MM-DD`                   |
+| `orderLines`                             | ✓        | không rỗng                               |
+| `orderLines[].productId`                 | ✓        | UUID product tồn tại, đang active        |
+| `orderLines[].productColorId`            | tùy chọn | bắt buộc nếu product có >1 màu           |
+| `orderLines[].voucherCode`               | tùy chọn | voucher line-level hợp lệ cho product đó |
+| `orderLines[].quantity`                  | ✓        | >= 1                                     |
+| `orderLines[].rentalDurationDays`        | ✓        | >= 1 và >= `minRentalDays` của product   |
+| `deliveryAddressLine/Ward/District/City` | tùy chọn | địa chỉ giao                             |
+
+**Tương thích ngược**:
+
+- `voucherCode` top-level vẫn được backend chấp nhận cho đơn đúng 1 line; FE mới nên ưu tiên `orderLines[].voucherCode`.
 
 **Response**:
 
@@ -1993,12 +2082,12 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
     "pickedUpLatitude": null,
     "pickedUpLongitude": null,
     "status": "PENDING_PAYMENT",
-    "rentalSubtotalAmount": 4250000,
-    "voucherCodeSnapshot": "SUMMER30",
-    "voucherDiscountAmount": 500000,
-    "rentalFeeAmount": 3750000,
-    "depositHoldAmount": 10000000,
-    "totalPayableAmount": 13750000,
+    "rentalSubtotalAmount": 1250000,
+    "voucherCodeSnapshot": "CAMERA7",
+    "voucherDiscountAmount": 87500,
+    "rentalFeeAmount": 1162500,
+    "depositHoldAmount": 5000000,
+    "totalPayableAmount": 6162500,
     "penaltyChargeAmount": null,
     "depositRefundAmount": null,
     "totalPaidAmount": 0,
@@ -2007,12 +2096,17 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
       {
         "rentalOrderLineId": "rol-uuid-001",
         "productId": "f3152824-...",
+        "productColorId": "pc-black-r50",
+        "colorNameSnapshot": "Black",
+        "colorCodeSnapshot": "#111111",
         "productNameSnapshot": "Canon EOS R50",
         "inventoryItemId": "inv-uuid-001",
         "inventorySerialNumber": "CANON-R50-001",
         "dailyPriceSnapshot": 250000,
         "depositAmountSnapshot": 5000000,
         "rentalDurationDays": 5,
+        "voucherCodeSnapshot": "CAMERA7",
+        "voucherDiscountAmount": 87500,
         "checkoutConditionNote": null,
         "checkinConditionNote": null,
         "itemPenaltyAmount": 0,
@@ -2031,6 +2125,11 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 - `rentalFeeAmount = rentalSubtotalAmount - voucherDiscountAmount`
 - `depositHoldAmount = sum(depositAmount × quantity)` cho từng line
 - `totalPayableAmount = rentalFeeAmount + depositHoldAmount`
+
+**Ghi chú**:
+
+- `voucherCodeSnapshot` ở cấp order là aggregate string các voucher line-level đã áp, có thể là 1 mã hoặc chuỗi ghép bởi dấu phẩy.
+- Một logical line số lượng > 1 có thể được persist thành nhiều `rentalOrderLines[]`, mỗi dòng gắn với một serial thật.
 
 **Trạng thái đơn thuê**:
 `PENDING_PAYMENT → PAID → PREPARING → DELIVERING → DELIVERED → IN_USE → PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED`
@@ -2111,7 +2210,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 - `PENDING_PICKUP -> PICKING_UP`: phải gán `pickupStaff` trước.
 - `PICKING_UP -> PICKED_UP`: không nên dùng API-078 để nhảy trạng thái; backend yêu cầu dùng API-084 `record-pickup` để ghi nhận thời gian/toạ độ thu hồi.
 - `PICKED_UP -> COMPLETED`: chỉ hợp lệ khi đơn đã có dữ liệu thu hồi thực tế (`pickedUpAt`, `actualRentalEndAt`).
-- Khi chuyển sang `CANCELLED` qua API-078, backend cũng rollback side effects tương tự luồng hủy: nhả inventory `RESERVED -> AVAILABLE` và giảm `voucher.usedCount` nếu đơn có voucher.
+- Khi chuyển sang `CANCELLED` qua API-078, backend rollback inventory `RESERVED -> AVAILABLE`; không còn semantics rollback bộ đếm voucher toàn cục.
 
 **Response**: `RentalOrderResponse`
 
@@ -2126,7 +2225,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 **Rule**: chỉ hủy khi status là `PENDING_PAYMENT`.
 
-**Side effects**: Voucher `usedCount` giảm 1 nếu đơn dùng voucher.
+**Side effects**: inventory reserved của đơn được trả lại `AVAILABLE`; voucher one-time-per-user đã ghi trên user không được rollback về trạng thái chưa dùng.
 
 **Response**:
 
@@ -3104,7 +3203,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 - `PaymentTransaction.status=SUCCESS` + `transactionType` sẽ tác động `revenueStats`.
 - `InventoryItem.status` hoặc `hubId` thay đổi sẽ tác động `inventoryStats`/`hubInventoryStats`.
 - `ContactTicket.status` hoặc `handledByUserId` thay đổi sẽ tác động `ticketStats` và `assignedTickets`.
-- `Voucher.expiresAt/usageLimit/usedCount/isActive` thay đổi sẽ tác động `voucherStats.totalActive|expired`.
+- `Voucher.expiresAt/type/product/isActive` thay đổi sẽ tác động `voucherStats.totalActive|expired`.
 - `User`/`Role` (staff, verify, active, hub) thay đổi sẽ tác động `hubSummary.totalStaff|activeStaff`.
 
 ---
@@ -3253,9 +3352,13 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | `RENTAL_DURATION_DAYS_MIN_1`             | 2008 | Thời lượng thuê phải >= 1                   |
 | `VOUCHER_NOT_FOUND`                      | 2101 | Không tìm thấy voucher                      |
 | `VOUCHER_EXPIRED`                        | 2104 | Voucher đã hết hạn                          |
-| `VOUCHER_USAGE_LIMIT_REACHED`            | 2105 | Voucher đã hết lượt sử dụng                 |
+| `VOUCHER_INACTIVE`                       | 2106 | Voucher không còn hoạt động                 |
 | `VOUCHER_MIN_RENTAL_DAYS_NOT_MET`        | 2107 | Chưa đạt số ngày thuê tối thiểu của voucher |
 | `VOUCHER_DISCOUNT_TYPE_INVALID`          | 2108 | Loại giảm giá không hợp lệ                  |
+| `VOUCHER_TYPE_INVALID`                   | 2109 | Loại voucher không hợp lệ                   |
+| `VOUCHER_ALREADY_USED`                   | 2110 | User đã dùng voucher này trước đó           |
+| `VOUCHER_PRODUCT_REQUIRED`               | 2111 | Voucher PRODUCT_DISCOUNT phải có product    |
+| `VOUCHER_PRODUCT_SCOPE_INVALID`          | 2112 | Voucher không áp dụng cho product này       |
 | `RENTAL_ORDER_NOT_FOUND`                 | 2201 | Không tìm thấy đơn thuê                     |
 | `RENTAL_ORDER_INVALID_STATUS_TRANSITION` | 2202 | Chuyển trạng thái đơn thuê không hợp lệ     |
 | `RENTAL_ORDER_CANNOT_CANCEL`             | 2203 | Không thể hủy đơn ở trạng thái hiện tại     |

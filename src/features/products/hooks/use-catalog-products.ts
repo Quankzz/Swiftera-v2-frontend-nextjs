@@ -27,6 +27,11 @@ export interface CatalogQueryParams {
   categoryId?: string;
   /** Subcategory ID — if present, products are filtered to this child category */
   subcategoryId?: string;
+  /**
+   * When true, pass includeDescendants=true to BE so products from all
+   * descendant categories are returned (used when only root categoryId is set).
+   */
+  includeDescendants?: boolean;
   /** Free-text search query — matched against product name (contains) */
   searchQuery?: string;
   /** Multi-select brand names (BE stores brand as a single string per product) */
@@ -108,12 +113,11 @@ function buildFilter(params: CatalogQueryParams): string {
     parts.push(`name~'*${safe}*'`);
   }
 
-  // Use subcategoryId when present, otherwise fall back to categoryId
+  // Use subcategoryId when present, otherwise fall back to categoryId.
+  // SpringFilter DSL uses `categoryId:'<id>'` directly on the product field.
   const activeCategory = params.subcategoryId ?? params.categoryId;
   if (activeCategory) {
-    // SpringFilter DSL field path: product entity has a @ManyToOne `category`
-    // relation — the filterable path is `category.id`, NOT `categoryId`.
-    parts.push(`category.id:'${activeCategory}'`);
+    parts.push(`categoryId:'${activeCategory}'`);
   }
 
   // Brand filter: each brand produces an OR clause
@@ -151,12 +155,19 @@ export const catalogKeys = {
 export function useCatalogProductsQuery(params: CatalogQueryParams = {}) {
   const { sort = 'createdAt,desc', page = 1, size = 12 } = params;
 
-  // BE uses 0-based page index; URL uses 1-based
+  // includeDescendants=true when a root categoryId is selected but no
+  // subcategoryId — tells BE to return products from all child categories too.
+  const includeDescendants =
+    params.includeDescendants ?? (!!params.categoryId && !params.subcategoryId);
+
   const beParams = {
-    page: page - 1,
+    page, // backend one-indexed: page=1 is first page
     size,
     sort,
     filter: buildFilter(params),
+    ...(includeDescendants && params.categoryId && !params.subcategoryId
+      ? { includeDescendants: true as const }
+      : {}),
   };
 
   return useQuery<PaginatedProductsResponse, Error, CatalogResult>({
