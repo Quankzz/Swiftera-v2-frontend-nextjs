@@ -5,8 +5,6 @@
  * Base URL: /api/v1
  *
  * NOTE: Tất cả endpoints đều yêu cầu xác thực [AUTH]
- *
- * Sử dụng httpService (axios) giống cấu trúc userProfileApi.ts
  */
 
 import type { AxiosResponse } from 'axios';
@@ -16,10 +14,18 @@ const authOpts = { requireToken: true as const };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type VoucherType = 'ITEM_VOUCHER' | 'PRODUCT_DISCOUNT';
+export type VoucherDiscountType = 'PERCENTAGE' | 'FIXED';
+
 export interface VoucherResponse {
   voucherId: string;
   code: string;
-  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  /** ITEM_VOUCHER: áp dụng cho sản phẩm cụ thể; PRODUCT_DISCOUNT: giảm giá theo product */
+  type: VoucherType;
+  /** Chỉ có khi type = PRODUCT_DISCOUNT */
+  productId: string | null;
+  productName: string | null;
+  discountType: VoucherDiscountType;
   discountValue: number;
   maxDiscountAmount: number | null;
   minRentalDays: number | null;
@@ -31,8 +37,13 @@ export interface VoucherResponse {
   updatedAt: string;
 }
 
+/** Response của API-070: validate voucher */
 export interface VoucherValidateResponse {
+  voucherId: string;
   code: string;
+  type: VoucherType;
+  /** productId mà voucher scope đến (nếu là ITEM_VOUCHER) */
+  productId: string | null;
   valid: boolean;
   rentalSubtotalAmount: number;
   discountAmount: number;
@@ -79,20 +90,27 @@ export interface VoucherVoidResponse {
   meta?: { timestamp: string; instance: string };
 }
 
-// ─── Request payloads ────────────────────────────────────────────────────────────
+// ─── Request payloads ─────────────────────────────────────────────────────────
 
 export interface CreateVoucherInput {
   code: string;
-  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  /** ITEM_VOUCHER hoặc PRODUCT_DISCOUNT */
+  type: VoucherType;
+  /** Bắt buộc nếu type = PRODUCT_DISCOUNT */
+  productId?: string;
+  discountType: VoucherDiscountType;
   discountValue: number;
   maxDiscountAmount?: number;
   minRentalDays?: number;
-  expiresAt?: string; // ISO 8601 UTC
+  /** ISO 8601 UTC, VD: "2026-12-31T16:59:59Z" */
+  expiresAt?: string;
   usageLimit?: number;
 }
 
 export interface UpdateVoucherInput {
-  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  type?: VoucherType;
+  productId?: string | null;
+  discountType?: VoucherDiscountType;
   discountValue?: number;
   maxDiscountAmount?: number | null;
   minRentalDays?: number;
@@ -105,7 +123,10 @@ export interface UpdateVoucherInput {
 
 export const vouchersApi = {
   /**
-   * API-066: Tạo voucher [AUTH]
+   * API-067: Tạo voucher [AUTH]
+   *
+   * Lỗi: VOUCHER_DISCOUNT_TYPE_INVALID (discountType không hợp lệ),
+   *       VOUCHER_PRODUCT_REQUIRED (type=PRODUCT_DISCOUNT nhưng thiếu productId)
    */
   create(
     data: CreateVoucherInput,
@@ -114,7 +135,7 @@ export const vouchersApi = {
   },
 
   /**
-   * API-067: Lấy voucher theo ID [AUTH]
+   * API-068: Lấy voucher theo ID [AUTH]
    */
   getById(voucherId: string): Promise<AxiosResponse<VoucherSingleResponse>> {
     return httpService.get<VoucherSingleResponse>(
@@ -124,7 +145,7 @@ export const vouchersApi = {
   },
 
   /**
-   * API-068: Lấy voucher theo mã code [AUTH]
+   * API-069: Lấy voucher theo mã code [AUTH]
    *
    * @param code - VD: SUMMER30
    */
@@ -136,36 +157,40 @@ export const vouchersApi = {
   },
 
   /**
-   * API-069: Kiểm tra và tính giảm giá voucher [AUTH]
+   * API-070: Kiểm tra và tính giảm giá voucher [AUTH]
    *
-   * @param code               - mã voucher cần kiểm tra
-   * @param rentalDurationDays - tổng ngày thuê của đơn
-   * @param rentalSubtotalAmount - tổng phí thuê trước giảm
+   * @param code                 - mã voucher cần kiểm tra
+   * @param rentalDurationDays   - số ngày thuê của line/product target
+   * @param rentalSubtotalAmount - subtotal trước giảm của line/product target
+   * @param productId            - (tùy chọn) product target để check scope voucher
    *
    * Lỗi: VOUCHER_NOT_FOUND, VOUCHER_INACTIVE, VOUCHER_EXPIRED,
-   *       VOUCHER_USAGE_LIMIT_REACHED, VOUCHER_MIN_RENTAL_DAYS_NOT_MET
+   *       VOUCHER_MIN_RENTAL_DAYS_NOT_MET, VOUCHER_PRODUCT_SCOPE_INVALID,
+   *       VOUCHER_ALREADY_USED
    */
   validate(
     code: string,
     rentalDurationDays: number,
     rentalSubtotalAmount: number,
+    productId?: string,
   ): Promise<AxiosResponse<VoucherValidateSingleResponse>> {
-    const qs = new URLSearchParams({
+    const searchParams: Record<string, string> = {
       code,
       rentalDurationDays: String(rentalDurationDays),
       rentalSubtotalAmount: String(rentalSubtotalAmount),
-    });
+    };
+    if (productId) searchParams['productId'] = productId;
     return httpService.get<VoucherValidateSingleResponse>(
-      `/vouchers/validate?${qs.toString()}`,
+      `/vouchers/validate?${new URLSearchParams(searchParams).toString()}`,
       authOpts,
     );
   },
 
   /**
-   * API-070: Lấy danh sách voucher [AUTH]
+   * API-071: Lấy danh sách voucher [AUTH]
    *
-   * @param params.page   - mặc định 0
-   * @param params.size  - mặc định 10
+   * @param params.page   - mặc định 1 (one-indexed)
+   * @param params.size   - mặc định 10
    * @param params.filter - SpringFilter DSL, VD: isActive:true
    */
   list(params?: {
@@ -173,21 +198,18 @@ export const vouchersApi = {
     size?: number;
     filter?: string;
   }): Promise<AxiosResponse<VoucherListResponse>> {
-    const page = params?.page ?? 0;
-    const size = params?.size ?? 10;
-    const searchParams: Record<string, string> = {
-      page: String(page),
-      size: String(size),
-    };
-    if (params?.filter) searchParams['filter'] = params.filter;
-    return httpService.get<VoucherListResponse>(`/vouchers`, {
+    return httpService.get<VoucherListResponse>('/vouchers', {
       ...authOpts,
-      params: searchParams,
+      params: {
+        page: params?.page ?? 1,
+        size: params?.size ?? 10,
+        ...(params?.filter ? { filter: params.filter } : {}),
+      },
     });
   },
 
   /**
-   * API-071: Cập nhật voucher [AUTH]
+   * API-072: Cập nhật voucher [AUTH]
    */
   update(
     voucherId: string,
@@ -201,7 +223,7 @@ export const vouchersApi = {
   },
 
   /**
-   * API-072: Xóa voucher [AUTH]
+   * API-073: Xóa voucher [AUTH]
    */
   delete(voucherId: string): Promise<AxiosResponse<VoucherVoidResponse>> {
     return httpService.delete<VoucherVoidResponse>(

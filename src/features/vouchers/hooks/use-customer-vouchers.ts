@@ -43,7 +43,8 @@ export function useCustomerVouchersQuery() {
 }
 
 /**
- * Validate voucher theo mã — gọi API-070 mỗi khi user nhập mã
+ * Validate voucher theo mã — gọi API-070 mỗi khi user nhập mã.
+ * Truyền productId khi validate per-line voucher (ITEM_VOUCHER / PRODUCT_DISCOUNT).
  */
 export function useValidateVoucherMutation() {
   const qc = useQueryClient();
@@ -52,6 +53,7 @@ export function useValidateVoucherMutation() {
       code: string;
       rentalDurationDays: number;
       rentalSubtotalAmount: number;
+      productId?: string;
     }) => validateVoucher(params),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['vouchers', 'customer'] });
@@ -78,6 +80,8 @@ export function useVoucherApply() {
     rentalSubtotalAmount: number,
     onSuccess: (result: VoucherValidateResponse) => void,
     onError: (msg: string) => void,
+    /** productId để check scope ITEM_VOUCHER / PRODUCT_DISCOUNT */
+    productId?: string,
   ) {
     setInputError('');
     try {
@@ -85,6 +89,7 @@ export function useVoucherApply() {
         code: code.trim().toUpperCase(),
         rentalDurationDays,
         rentalSubtotalAmount,
+        ...(productId ? { productId } : {}),
       });
       if (result.valid) {
         setSelectedCode(code.trim().toUpperCase());

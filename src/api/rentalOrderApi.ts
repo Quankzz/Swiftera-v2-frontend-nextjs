@@ -66,12 +66,18 @@ export const RENTAL_ORDER_STATUS_COLORS: Record<RentalOrderStatus, string> = {
 export interface RentalOrderLineResponse {
   rentalOrderLineId: string;
   productId: string;
+  productColorId: string | null;
+  colorNameSnapshot: string | null;
+  colorCodeSnapshot: string | null;
   productNameSnapshot: string;
   inventoryItemId: string;
   inventorySerialNumber: string;
   dailyPriceSnapshot: number;
   depositAmountSnapshot: number;
   rentalDurationDays: number;
+  /** Voucher được áp dụng cho line này (nếu có) */
+  voucherCodeSnapshot: string | null;
+  voucherDiscountAmount: number;
   checkoutConditionNote: string | null;
   checkinConditionNote: string | null;
   itemPenaltyAmount: number;
@@ -174,8 +180,12 @@ export interface PaginatedRentalOrdersResponse {
 
 export interface CreateOrderLineInput {
   productId: string;
+  /** Bắt buộc nếu product có >1 màu */
+  productColorId?: string;
   quantity: number;
   rentalDurationDays: number;
+  /** Voucher áp dụng riêng cho line này (ưu tiên dùng thay vì top-level voucherCode) */
+  voucherCode?: string;
 }
 
 export interface CreateRentalOrderInput {
@@ -186,6 +196,7 @@ export interface CreateRentalOrderInput {
   deliveryDistrict?: string;
   deliveryCity?: string;
   expectedDeliveryDate: string; // YYYY-MM-DD
+  /** @deprecated Dùng orderLines[].voucherCode thay thế (chỉ tương thích ngược với đơn 1 line) */
   voucherCode?: string;
   orderLines: CreateOrderLineInput[];
 }
@@ -196,6 +207,33 @@ export interface UpdateOrderStatusInput {
 
 export interface ExtendOrderInput {
   additionalRentalDays: number;
+}
+
+export interface AssignStaffInput {
+  /** UUID staff có role STAFF_ROLE */
+  deliveryStaffId?: string;
+  /** UUID staff có role STAFF_ROLE */
+  pickupStaffId?: string;
+}
+
+export interface RecordDeliveryInput {
+  /** ISO 8601 UTC; nếu không gửi backend dùng now() */
+  deliveredAt?: string;
+  deliveredLatitude?: number;
+  deliveredLongitude?: number;
+}
+
+export interface RecordPickupInput {
+  /** ISO 8601 UTC; nếu không gửi backend dùng now() */
+  pickedUpAt?: string;
+  pickedUpLatitude?: number;
+  pickedUpLongitude?: number;
+}
+
+export interface SetPenaltyInput {
+  /** >= 0; depositRefundAmount = depositHoldAmount - penaltyTotal */
+  penaltyTotal: number;
+  note?: string;
 }
 
 // ─── Staff Detail ────────────────────────────────────────────────────────────
@@ -375,6 +413,92 @@ export function getRentalOrderStaffDetail(
 ): Promise<AxiosResponse<RentalOrderStaffDetailResponse>> {
   return httpService.get<RentalOrderStaffDetailResponse>(
     `/rental-orders/${rentalOrderId}/staff-detail`,
+    authOpts,
+  );
+}
+
+/**
+ * API-082: Gán nhân viên cho đơn thuê [AUTH]
+ *
+ * @param rentalOrderId - UUID của đơn thuê
+ * @param input - deliveryStaffId và/hoặc pickupStaffId (ít nhất 1 field)
+ *
+ * Validation:
+ * - User được gán phải có role STAFF_ROLE
+ * - Nếu đơn và staff khác hub → lỗi INVALID_REQUEST_DATA
+ */
+export function assignRentalOrderStaff(
+  rentalOrderId: string,
+  input: AssignStaffInput,
+): Promise<AxiosResponse<RentalOrderSingleResponse>> {
+  return httpService.patch<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/assign-staff`,
+    input,
+    authOpts,
+  );
+}
+
+/**
+ * API-083: Ghi nhận giao hàng [AUTH]
+ *
+ * @param rentalOrderId - UUID của đơn thuê (phải đang ở trạng thái DELIVERING)
+ * @param input - thời gian và toạ độ giao hàng (nếu không gửi backend dùng now())
+ *
+ * Side effects:
+ * - Set actualDeliveryAt, actualRentalStartAt
+ * - Cập nhật expectedRentalEndDate = actualRentalStartAt + max(rentalDurationDays)
+ * - Inventory: AVAILABLE → RENTED
+ * - Status đơn → DELIVERED
+ */
+export function recordDelivery(
+  rentalOrderId: string,
+  input?: RecordDeliveryInput,
+): Promise<AxiosResponse<RentalOrderSingleResponse>> {
+  return httpService.patch<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/record-delivery`,
+    input ?? {},
+    authOpts,
+  );
+}
+
+/**
+ * API-084: Ghi nhận thu hồi [AUTH]
+ *
+ * @param rentalOrderId - UUID của đơn thuê (phải đang ở trạng thái PICKING_UP)
+ * @param input - thời gian và toạ độ thu hồi (nếu không gửi backend dùng now())
+ *
+ * Side effects:
+ * - Set actualRentalEndAt, pickedUpAt
+ * - Inventory: RENTED/RESERVED → AVAILABLE
+ * - Status đơn → PICKED_UP
+ */
+export function recordPickup(
+  rentalOrderId: string,
+  input?: RecordPickupInput,
+): Promise<AxiosResponse<RentalOrderSingleResponse>> {
+  return httpService.patch<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/record-pickup`,
+    input ?? {},
+    authOpts,
+  );
+}
+
+/**
+ * API-085: Cập nhật phí phạt đơn thuê [AUTH]
+ *
+ * @param rentalOrderId - UUID của đơn thuê
+ * @param input - penaltyTotal (>= 0) và note tùy chọn
+ *
+ * Business logic:
+ * - depositRefundAmount = depositHoldAmount - penaltyChargeAmount
+ */
+export function setPenalty(
+  rentalOrderId: string,
+  input: SetPenaltyInput,
+): Promise<AxiosResponse<RentalOrderSingleResponse>> {
+  return httpService.patch<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/set-penalty`,
+    input,
     authOpts,
   );
 }

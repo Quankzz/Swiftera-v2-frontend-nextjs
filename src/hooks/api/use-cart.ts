@@ -13,7 +13,7 @@ import {
   removeCartLine,
   clearCart,
 } from './cart.service';
-import type { AddCartLineInput } from '@/api/cart';
+import type { AddCartLineInput, CartResponse } from '@/api/cart';
 import { useAuth } from '@/context/AuthContext';
 
 /**
@@ -54,12 +54,44 @@ export function useAddToCart(options?: {
       return addCartLine(input);
     },
 
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      const previousCart = queryClient.getQueryData<CartResponse>(
+        cartKeys.cart(),
+      );
+
+      queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          cartLines: [
+            ...old.cartLines,
+            {
+              cartLineId: `optimistic-${Date.now()}`,
+              productId: input.productId,
+              productName: '',
+              productImageUrl: null,
+              dailyPrice: 0,
+              rentalDurationDays: input.rentalDurationDays,
+              quantity: input.quantity ?? 1,
+              lineTotal: 0,
+            },
+          ],
+        };
+      });
+
+      return { previousCart };
+    },
+
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
       options?.onSuccess?.();
     },
 
-    onError: (error: Error) => {
+    onError: (error: Error, _input, context) => {
+      if (context?.previousCart !== undefined) {
+        queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+      }
       options?.onError?.(error);
     },
   });

@@ -68,7 +68,7 @@ export function useReviewQuery(reviewId: string) {
  * Kiểm tra user hiện tại đã đánh giá sản phẩm này chưa [AUTH]
  *
  * @param productId - UUID sản phẩm
- * @param userId    - UUID user hiện tại (lấy từ auth store)
+ * @param userId    - UUID user hiện tại (chỉ để khớp bản ghi sau khi gọi API-098, không đưa vào query)
  *
  * Trả về review nếu đã đánh giá, null nếu chưa.
  * Dùng để quyết định hiện form viết đánh giá hay không.

@@ -19,6 +19,8 @@
 import type { AxiosResponse } from 'axios';
 import { httpService } from '@/api/http';
 
+const authOpts = { requireToken: true as const };
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 /** transactionType */
@@ -137,3 +139,77 @@ export function getVnpayMessage(code: string): string {
 export function isVnpaySuccess(code: string): boolean {
   return code === '00';
 }
+
+// ─── API ─────────────────────────────────────────────────────────────────────
+
+export const paymentApi = {
+  /**
+   * API-086: Lấy giao dịch thanh toán theo ID [AUTH]
+   *
+   * @param paymentTransactionId - UUID của giao dịch
+   */
+  getById(
+    paymentTransactionId: string,
+  ): Promise<AxiosResponse<PaymentTransactionSingleResponse>> {
+    return httpService.get<PaymentTransactionSingleResponse>(
+      `/payments/${paymentTransactionId}`,
+      authOpts,
+    );
+  },
+
+  /**
+   * API-087: Lấy danh sách giao dịch [AUTH]
+   *
+   * @param params.page   - số trang (one-indexed, mặc định 1)
+   * @param params.size   - kích thước trang (mặc định 10)
+   * @param params.filter - SpringFilter DSL, VD: status:'SUCCESS'
+   * @param params.sort   - VD: createdAt,desc
+   */
+  list(params?: {
+    page?: number;
+    size?: number;
+    filter?: string;
+    sort?: string;
+  }): Promise<AxiosResponse<PaymentTransactionListResponse>> {
+    return httpService.get<PaymentTransactionListResponse>('/payments', {
+      ...authOpts,
+      params,
+    });
+  },
+
+  /**
+   * API-088: Lấy danh sách giao dịch theo đơn thuê [AUTH]
+   *
+   * @param rentalOrderId - UUID của đơn thuê
+   * @param params.page   - số trang
+   * @param params.size   - kích thước trang
+   */
+  listByRentalOrder(
+    rentalOrderId: string,
+    params?: { page?: number; size?: number },
+  ): Promise<AxiosResponse<PaymentTransactionListResponse>> {
+    return httpService.get<PaymentTransactionListResponse>(
+      `/payments/rental-order/${rentalOrderId}`,
+      { ...authOpts, params },
+    );
+  },
+
+  /**
+   * API-089: Tạo link thanh toán VNPay [AUTH]
+   *
+   * @param rentalOrderId - UUID của đơn thuê (phải ở trạng thái PENDING_PAYMENT)
+   *
+   * Logic backend: amount = totalPayableAmount - totalPaidAmount
+   * Tạo transaction RENTAL_FEE status=PENDING, ký URL VNPay.
+   * Frontend redirect window.location.href sang URL trả về.
+   */
+  initiate(
+    rentalOrderId: string,
+  ): Promise<AxiosResponse<PaymentInitiateResponse>> {
+    return httpService.post<PaymentInitiateResponse>(
+      `/payments/${rentalOrderId}/initiate`,
+      undefined,
+      authOpts,
+    );
+  },
+};
