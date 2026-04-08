@@ -17,6 +17,7 @@ import {
   type RentalVoucher,
 } from '@/lib/rental-voucher';
 import { useAddToCart } from '@/hooks/api/use-cart';
+import { useCartAnimationStore } from '@/stores/cart-animation-store';
 import { toast } from 'sonner';
 
 /* ---------- Types ---------- */
@@ -31,6 +32,14 @@ export interface RentalDuration {
 export interface ProductVariant {
   id: string;
   label: string;
+}
+
+export interface ProductColorOption {
+  productColorId: string;
+  name: string;
+  code: string;
+  quantity: number;
+  availableQuantity: number;
 }
 
 /* ---------- Gallery ---------- */
@@ -226,9 +235,12 @@ interface RentalProductSummaryProps {
     rating?: number;
     reviews?: number;
     rentedCount?: number;
+    colors?: ProductColorOption[];
     variants?: ProductVariant[];
     durations: RentalDuration[];
   };
+  selectedColorId?: string | null;
+  onColorChange?: (colorId: string) => void;
   selectedVariant: string;
   onVariantChange: (variant: string) => void;
   selectedDuration: string;
@@ -239,6 +251,8 @@ interface RentalProductSummaryProps {
 
 export function RentalProductSummary({
   productData,
+  selectedColorId,
+  onColorChange,
   selectedVariant,
   onVariantChange,
   selectedDuration,
@@ -255,6 +269,7 @@ export function RentalProductSummary({
     rating = 0,
     reviews = 0,
     rentedCount = 0,
+    colors = [],
     variants = [],
     durations,
   } = productData;
@@ -323,6 +338,89 @@ export function RentalProductSummary({
           Giá chưa bao gồm phí vận chuyển và 8% VAT
         </p>
       </div>
+
+      {/* Color picker */}
+      {colors.length > 0 && (
+        <div>
+          <div className='mb-2 flex items-center justify-between'>
+            <h3 className='text-sm font-bold text-foreground'>
+              Màu sắc
+              {selectedColorId && (
+                <span className='ml-2 font-normal text-muted-foreground'>
+                  —{' '}
+                  {colors.find((c) => c.productColorId === selectedColorId)
+                    ?.name ?? ''}
+                </span>
+              )}
+            </h3>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {colors.map((color) => {
+              const isSelected = selectedColorId === color.productColorId;
+              const isUnavailable = color.availableQuantity === 0;
+              return (
+                <button
+                  key={color.productColorId}
+                  type='button'
+                  disabled={isUnavailable}
+                  onClick={() => onColorChange?.(color.productColorId)}
+                  title={`${color.name}${isUnavailable ? ' — Hết hàng' : ` — ${color.availableQuantity} sẵn sàng`}`}
+                  className={[
+                    'relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-all',
+                    isUnavailable
+                      ? 'cursor-not-allowed border-border/40 bg-muted/30 opacity-50'
+                      : isSelected
+                        ? 'border-rose-600 bg-rose-50 ring-1 ring-rose-600 dark:border-rose-400 dark:bg-rose-950/50 dark:ring-rose-400'
+                        : 'border-border bg-card text-foreground hover:border-rose-500/50 dark:hover:border-rose-400/40',
+                  ].join(' ')}
+                >
+                  {/* Color swatch */}
+                  <span
+                    className={[
+                      'inline-block size-4 shrink-0 rounded-full border',
+                      isSelected
+                        ? 'border-rose-600 dark:border-rose-400'
+                        : 'border-border/60',
+                    ].join(' ')}
+                    style={{ backgroundColor: color.code }}
+                  />
+                  <span
+                    className={
+                      isSelected
+                        ? 'text-rose-900 dark:text-rose-100'
+                        : 'text-foreground'
+                    }
+                  >
+                    {color.name}
+                  </span>
+                  <span
+                    className={[
+                      'ml-0.5 tabular-nums',
+                      isUnavailable
+                        ? 'text-muted-foreground'
+                        : isSelected
+                          ? 'text-rose-700 dark:text-rose-300'
+                          : 'text-muted-foreground',
+                    ].join(' ')}
+                  >
+                    ({isUnavailable ? 'Hết' : color.availableQuantity})
+                  </span>
+                  {isUnavailable && (
+                    <span className='absolute inset-0 flex items-center justify-center rounded-xl'>
+                      <span className='h-px w-3/4 -rotate-12 bg-muted-foreground/40' />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {colors.length > 1 && !selectedColorId && (
+            <p className='mt-1.5 text-xs text-amber-600 dark:text-amber-400'>
+              Vui lòng chọn màu trước khi thêm vào giỏ hàng
+            </p>
+          )}
+        </div>
+      )}
 
       {variants.length > 0 && (
         <div>
@@ -400,9 +498,15 @@ interface RentalCheckoutCardProps {
     name: string;
     image: string;
     sku: string;
+    /** productColorId được chọn — bắt buộc nếu sản phẩm có >1 màu */
+    productColorId?: string | null;
+    /** Hiển thị tên màu đang chọn */
+    colorName?: string | null;
     variantId?: string;
     variantLabel?: string;
   };
+  /** Nếu true thì nút "Thêm vào giỏ" bị disable do chưa chọn màu */
+  requireColorSelection?: boolean;
   /** Sau khi thêm giỏ thành công */
   onAddedToCart?: () => void;
 }
@@ -416,12 +520,16 @@ export function RentalCheckoutCard({
   setQuantity,
   vouchers = defaultRentalVouchers,
   cartProduct,
+  requireColorSelection = false,
   onAddedToCart,
 }: RentalCheckoutCardProps) {
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [appliedVoucher, setAppliedVoucher] = useState<RentalVoucher | null>(
     null,
   );
+
+  const addToCartBtnRef = useRef<HTMLButtonElement>(null);
+  const addFlyingItem = useCartAnimationStore((s) => s.addFlyingItem);
 
   const totalRental = rentalPrice * quantity;
   const voucherDiscount = useMemo(
@@ -459,8 +567,35 @@ export function RentalCheckoutCard({
 
   const handleAddToCart = () => {
     if (!cartProduct) return;
+
+    if (addToCartBtnRef.current) {
+      const rect = addToCartBtnRef.current.getBoundingClientRect();
+      const size = Math.max(rect.height * 1.5, 72);
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const flyRect = {
+        left: cx - size / 2,
+        top: cy - size / 2,
+        right: cx + size / 2,
+        bottom: cy + size / 2,
+        width: size,
+        height: size,
+        x: cx - size / 2,
+        y: cy - size / 2,
+        toJSON: () => ({}),
+      } as DOMRect;
+      addFlyingItem({
+        id: `${cartProduct.productId}-${Date.now()}`,
+        imageUrl: cartProduct.image,
+        fromRect: flyRect,
+      });
+    }
+
     addToCart({
       productId: cartProduct.productId,
+      ...(cartProduct.productColorId
+        ? { productColorId: cartProduct.productColorId }
+        : {}),
       rentalDurationDays: parseInt(durationId, 10),
       quantity,
     });
@@ -469,6 +604,16 @@ export function RentalCheckoutCard({
   return (
     <div className='space-y-4 rounded-xl border border-border bg-card p-4 font-sans shadow-sm ambient-glow sm:space-y-5 sm:p-5'>
       <div className='space-y-3 rounded-xl bg-muted/50 p-3 dark:bg-muted/30 sm:p-4'>
+        {cartProduct?.colorName && (
+          <div className='flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
+            <span className='text-xs text-muted-foreground sm:text-sm'>
+              Màu sắc
+            </span>
+            <span className='text-sm font-semibold text-foreground sm:text-base'>
+              {cartProduct.colorName}
+            </span>
+          </div>
+        )}
         <div className='flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
           <span className='text-xs text-muted-foreground sm:text-sm'>
             Tiền thuê ({selectedDuration})
@@ -547,12 +692,17 @@ export function RentalCheckoutCard({
           </Button>
         </div>
         <Button
+          ref={addToCartBtnRef}
           type='button'
-          disabled={!cartProduct || isAddingToCart}
+          disabled={!cartProduct || isAddingToCart || requireColorSelection}
           onClick={handleAddToCart}
           className='h-12 min-h-12 min-w-0 flex-1 rounded-xl bg-rose-600 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600 sm:text-base'
           title={
-            !cartProduct ? 'Thiếu thông tin sản phẩm để thêm giỏ' : undefined
+            requireColorSelection
+              ? 'Vui lòng chọn màu trước'
+              : !cartProduct
+                ? 'Thiếu thông tin sản phẩm để thêm giỏ'
+                : undefined
           }
         >
           {isAddingToCart ? (

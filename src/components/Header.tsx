@@ -26,7 +26,7 @@ import { topLevelCategories } from '@/data/categories';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/theme-context';
-import { useRentalCartStore } from '@/stores/rental-cart-store';
+import { useCartQuery } from '@/hooks/api/use-cart';
 import { useCartAnimationStore } from '@/stores/cart-animation-store';
 import logo from '../../public/logo.png';
 
@@ -57,7 +57,7 @@ function CartFlyOverlayInner() {
         const dx = endX - startX;
         const dy = endY - startY;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const duration = Math.min(650, Math.max(320, dist * 0.55));
+        const duration = Math.min(950, Math.max(520, dist * 0.8));
 
         return (
           <div
@@ -79,15 +79,16 @@ function CartFlyOverlayInner() {
             <style>{`
               @keyframes flyToCart {
                 0%   { transform: translate(0,0) scale(1) rotate(0deg); opacity: 1; }
-                45%  { transform: translate(calc(var(--dx)*0.5), calc(var(--dy)*0.5)) scale(0.6) rotate(-15deg); opacity: 0.95; }
-                80%  { transform: translate(calc(var(--dx)*0.92), calc(var(--dy)*0.92)) scale(0.2) rotate(18deg); opacity: 0.5; }
-                100% { transform: translate(var(--dx), var(--dy)) scale(0.05) rotate(25deg); opacity: 0; }
+                30%  { transform: translate(calc(var(--dx)*0.25), calc(var(--dy)*0.25)) scale(0.85) rotate(-8deg); opacity: 1; }
+                60%  { transform: translate(calc(var(--dx)*0.65), calc(var(--dy)*0.65)) scale(0.45) rotate(-18deg); opacity: 0.9; }
+                85%  { transform: translate(calc(var(--dx)*0.92), calc(var(--dy)*0.92)) scale(0.15) rotate(12deg); opacity: 0.45; }
+                100% { transform: translate(var(--dx), var(--dy)) scale(0.04) rotate(20deg); opacity: 0; }
               }
             `}</style>
             <div
               className='w-full h-full rounded-xl shadow-2xl shadow-rose-500/50 overflow-hidden'
               style={{
-                animation: `flyToCart var(--dur) cubic-bezier(0.4,0,0.2,1) forwards`,
+                animation: `flyToCart var(--dur) cubic-bezier(0.16, 1, 0.3, 1) forwards`,
               }}
             >
               {item.imageUrl ? (
@@ -113,29 +114,27 @@ function CartFlyOverlayInner() {
 /* ------------------------------------------------------------------ */
 /*  Header                                                            */
 /* ------------------------------------------------------------------ */
-export function Header() {
+interface HeaderProps {
+  stickyHeader?: boolean;
+}
+
+export function Header({ stickyHeader = false }: HeaderProps) {
   const HOVER_BRIDGE_HEIGHT = 10;
   const router = useRouter();
   const { resolvedTheme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
-  // Cart quantity – use raw selector to avoid SSR/hydration issues
-  const cartLines = useRentalCartStore((s) => s.lines);
+  // Cart quantity từ API (optimistic update được xử lý trong useAddToCart)
+  const { data: cartData } = useCartQuery();
   const cartCount = useMemo(
-    () => cartLines.reduce((sum, l) => sum + l.quantity, 0),
-    [cartLines],
+    () => cartData?.cartLines?.reduce((sum, l) => sum + l.quantity, 0) ?? 0,
+    [cartData],
   );
 
   // Fly animation state
   const flyingItems = useCartAnimationStore((s) => s.flyingItems);
   const setCartRect = useCartAnimationStore((s) => s.setCartRect);
   const isFlying = flyingItems.length > 0;
-
-  // Hydration guard
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
 
   const sortedCategories = useMemo(
     () => [...topLevelCategories].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -234,6 +233,7 @@ export function Header() {
       <header
         className={cn(
           'top-0 w-full bg-white dark:bg-surface-base',
+          stickyHeader && 'sticky',
           isSearchOpen
             ? 'z-50 border-transparent'
             : 'z-40 border-b border-border/20 dark:border-white/5 backdrop-blur shadow-sm dark:shadow-black/30',
@@ -244,8 +244,8 @@ export function Header() {
             ? '0 8px 32px -4px rgba(254,20,81,0.18)'
             : '0 1px 3px rgba(0,0,0,0.1)',
           transition: isFlying
-            ? 'transform 320ms cubic-bezier(0.4,0,0.2,1) 60ms, box-shadow 320ms 60ms'
-            : 'transform 500ms cubic-bezier(0.4,0,0.2,1) 600ms, box-shadow 500ms 600ms',
+            ? 'transform 380ms cubic-bezier(0.4,0,0.2,1) 80ms, box-shadow 380ms 80ms'
+            : 'transform 500ms cubic-bezier(0.4,0,0.2,1) 700ms, box-shadow 500ms 700ms',
         }}
       >
         {isSearchOpen && (
@@ -405,9 +405,8 @@ export function Header() {
                       isFlying && 'text-rose-500',
                     )}
                   />
-                  {hydrated && cartCount > 0 && (
+                  {cartCount > 0 && (
                     <span
-                      suppressHydrationWarning
                       className={cn(
                         'absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full text-[10px] font-bold flex items-center justify-center transition-all duration-300',
                         isFlying

@@ -5,12 +5,16 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { MainLayout } from '@/layouts/MainLayout';
 import { MapPinned, Phone } from 'lucide-react';
+import { useCartSync } from '@/hooks/useCartSync';
 
 type LayoutProps = {
   children: React.ReactNode;
+  stickyHeader?: boolean;
 };
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, stickyHeader = false }: LayoutProps) {
+  useCartSync();
+
   const buttonWrapperClass =
     'group relative flex h-14 w-14 items-center justify-center';
   const buttonActiveArea =
@@ -18,7 +22,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <MainLayout>
-      <Header />
+      <Header stickyHeader={stickyHeader} />
       <main className='min-h-screen flex-1'>{children}</main>
       <Footer />
 

@@ -32,6 +32,7 @@ import {
   useCreateReview,
   useDeleteReview,
 } from '@/hooks/api/use-reviews';
+import { useRelatedProductsQuery } from '@/features/products/hooks/use-related-products';
 import { toast } from 'sonner';
 import type { ProductReviewResponse } from '@/api/reviews';
 import { useAuthStore } from '@/stores/auth-store';
@@ -577,86 +578,9 @@ export function RentalReviewsSection({
 
 /* ─── Sản phẩm liên quan ───────────────────────────────────────────────── */
 
-interface RelatedRentalProduct {
-  id: number;
-  name: string;
-  image: string;
-  pricePerDay: number;
-  originalPrice?: number;
-  discount?: number;
-  rating: number;
-}
-
 interface ArrowProps {
   onClick?: () => void;
 }
-
-const relatedProducts: RelatedRentalProduct[] = [
-  {
-    id: 1,
-    name: 'Cho thuê PlayStation 5 Slim Digital',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=PS5+Digital',
-    pricePerDay: 250000,
-    originalPrice: 280000,
-    discount: 10,
-    rating: 4.9,
-  },
-  {
-    id: 2,
-    name: 'Cho thuê Xbox Series X 1TB',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=Xbox+X',
-    pricePerDay: 280000,
-    rating: 4.8,
-  },
-  {
-    id: 3,
-    name: 'Cho thuê Nintendo Switch OLED',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=Switch+OLED',
-    pricePerDay: 200000,
-    originalPrice: 220000,
-    discount: 9,
-    rating: 4.7,
-  },
-  {
-    id: 4,
-    name: 'Cho thuê MacBook Pro M3 14 inch',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=MacBook+Pro',
-    pricePerDay: 500000,
-    rating: 5.0,
-  },
-  {
-    id: 5,
-    name: 'Cho thuê iPad Pro M4 13 inch',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=iPad+Pro',
-    pricePerDay: 350000,
-    originalPrice: 400000,
-    discount: 12,
-    rating: 4.9,
-  },
-  {
-    id: 6,
-    name: 'Cho thuê kính VR Meta Quest 3',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=Quest+3',
-    pricePerDay: 300000,
-    rating: 4.6,
-  },
-  {
-    id: 7,
-    name: 'Cho thuê loa JBL PartyBox 310',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=JBL+310',
-    pricePerDay: 400000,
-    originalPrice: 450000,
-    discount: 11,
-    rating: 4.8,
-  },
-  {
-    id: 8,
-    name: 'Cho thuê máy chiếu Epson EB-FH52',
-    image: 'https://placehold.co/280x280/f0f0f0/333?text=Epson+FH52',
-    pricePerDay: 350000,
-    rating: 4.7,
-  },
-];
 
 function SampleNextArrow(props: ArrowProps) {
   const { onClick } = props;
@@ -700,18 +624,40 @@ function SamplePrevArrow(props: ArrowProps) {
   );
 }
 
-export function RentalRelatedProducts() {
+interface RentalRelatedProductsProps {
+  currentProductId: string;
+}
+
+export function RentalRelatedProducts({
+  currentProductId,
+}: RentalRelatedProductsProps) {
+  const {
+    data: related = [],
+    isLoading,
+    isError,
+  } = useRelatedProductsQuery(currentProductId);
+
+  const n = related.length;
   const settings = {
     dots: false,
-    infinite: true,
+    infinite: n > 4,
     speed: 500,
-    slidesToShow: 4,
+    slidesToShow: Math.min(4, n),
     slidesToScroll: 1,
     nextArrow: <SampleNextArrow />,
     prevArrow: <SamplePrevArrow />,
     responsive: [
-      { breakpoint: 1024, settings: { slidesToShow: 3 } },
-      { breakpoint: 768, settings: { slidesToShow: 2, slidesToScroll: 1 } },
+      {
+        breakpoint: 1024,
+        settings: { slidesToShow: Math.min(3, n) },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: Math.min(2, n),
+          slidesToScroll: 1,
+        },
+      },
       {
         breakpoint: 480,
         settings: {
@@ -729,55 +675,87 @@ export function RentalRelatedProducts() {
       <h2 className='mb-4 text-base font-bold tracking-tight text-foreground sm:mb-5 sm:text-lg'>
         Sản phẩm liên quan
       </h2>
-      <div className='overflow-x-hidden px-1 sm:px-4'>
-        <Slider {...settings} className='related-rental-slider'>
-          {relatedProducts.map((product) => (
-            <div key={product.id} className='px-2'>
-              <Link href={`/product/${product.id}`} className='block group'>
-                <div className='relative mb-3 aspect-square overflow-hidden rounded-xl bg-muted/40'>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
-                  />
-                  {product.discount && (
-                    <span className='absolute top-2 left-2 rounded bg-red-500 px-2 py-0.5 text-xs font-bold text-white'>
-                      -{product.discount}%
-                    </span>
-                  )}
-                </div>
-                <h3 className='mb-2 line-clamp-2 text-sm font-semibold text-foreground transition-colors group-hover:text-rose-600 dark:group-hover:text-rose-400'>
-                  {product.name}
-                </h3>
-                <div className='mb-1 flex items-center gap-1'>
-                  {[...Array(5)].map((_, i) => (
-                    <span
-                      key={i}
-                      className={`text-sm ${i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-muted-foreground/25'}`}
-                    >
-                      ★
-                    </span>
-                  ))}
-                  <span className='ml-1 text-xs text-muted-foreground'>
-                    {product.rating}
-                  </span>
-                </div>
-                <div className='flex items-baseline gap-2'>
-                  <span className='text-base font-bold text-rose-600 dark:text-rose-400'>
-                    {product.pricePerDay.toLocaleString()}₫
-                  </span>
-                  <span className='text-xs text-muted-foreground'>/ngày</span>
-                </div>
-                {product.originalPrice && (
-                  <span className='text-xs text-muted-foreground line-through'>
-                    {product.originalPrice.toLocaleString()}₫
-                  </span>
-                )}
-              </Link>
+
+      {isLoading ? (
+        <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4'>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className='space-y-2'>
+              <Skeleton className='aspect-square w-full rounded-xl' />
+              <Skeleton className='h-4 w-full' />
+              <Skeleton className='h-3 w-2/3' />
             </div>
           ))}
-        </Slider>
-      </div>
+        </div>
+      ) : isError ? (
+        <p className='py-6 text-center text-sm text-muted-foreground'>
+          Không tải được danh sách sản phẩm liên quan. Vui lòng thử lại sau.
+        </p>
+      ) : related.length === 0 ? (
+        <p className='py-6 text-center text-sm text-muted-foreground'>
+          Chưa có sản phẩm gợi ý khác.
+        </p>
+      ) : (
+        <div className='overflow-x-hidden px-1 sm:px-4'>
+          <Slider {...settings} className='related-rental-slider'>
+            {related.map((product) => (
+              <div key={product.productId} className='px-2'>
+                <Link
+                  href={`/product/${product.productId}`}
+                  className='block group'
+                >
+                  <div className='relative mb-3 aspect-square overflow-hidden rounded-xl bg-muted/40'>
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
+                      />
+                    ) : (
+                      <div className='flex h-full w-full items-center justify-center bg-muted text-xs text-muted-foreground'>
+                        Chưa có ảnh
+                      </div>
+                    )}
+                    {product.discountPercent != null &&
+                      product.discountPercent > 0 && (
+                        <span className='absolute top-2 left-2 rounded bg-red-500 px-2 py-0.5 text-xs font-bold text-white'>
+                          -{product.discountPercent}%
+                        </span>
+                      )}
+                  </div>
+                  <h3 className='mb-2 line-clamp-2 text-sm font-semibold text-foreground transition-colors group-hover:text-rose-600 dark:group-hover:text-rose-400'>
+                    {product.name}
+                  </h3>
+                  <div className='mb-1 flex items-center gap-1'>
+                    {[...Array(5)].map((_, i) => (
+                      <span
+                        key={i}
+                        className={`text-sm ${i < Math.floor(product.rating) ? 'text-yellow-400' : 'text-muted-foreground/25'}`}
+                      >
+                        ★
+                      </span>
+                    ))}
+                    <span className='ml-1 text-xs text-muted-foreground'>
+                      {product.rating > 0 ? product.rating.toFixed(1) : '—'}
+                    </span>
+                  </div>
+                  <div className='flex items-baseline gap-2'>
+                    <span className='text-base font-bold text-rose-600 dark:text-rose-400'>
+                      {product.dailyPrice.toLocaleString('vi-VN')}₫
+                    </span>
+                    <span className='text-xs text-muted-foreground'>/ngày</span>
+                  </div>
+                  {product.oldDailyPrice != null &&
+                    product.oldDailyPrice > product.dailyPrice && (
+                      <span className='text-xs text-muted-foreground line-through'>
+                        {product.oldDailyPrice.toLocaleString('vi-VN')}₫
+                      </span>
+                    )}
+                </Link>
+              </div>
+            ))}
+          </Slider>
+        </div>
+      )}
     </div>
   );
 }
