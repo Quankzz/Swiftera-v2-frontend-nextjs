@@ -108,12 +108,3 @@ export async function getRentalOrderStaffDetail(
   );
   return res.data.data;
 }
-
-export async function initiatePayment(rentalOrderId: string): Promise<string> {
-  const res = await httpService.post<{
-    success: boolean;
-    message: string;
-    data: string;
-  }>(`/payments/${rentalOrderId}/initiate`, undefined, authOpts);
-  return res.data.data;
-}

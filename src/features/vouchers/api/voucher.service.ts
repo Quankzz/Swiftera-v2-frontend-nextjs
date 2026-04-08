@@ -53,6 +53,28 @@ export function getVoucherByCode(code: string): Promise<VoucherResponse> {
   return apiGet<VoucherResponse>(`/vouchers/code/${encodeURIComponent(code)}`);
 }
 
+/**
+ * API-070: GET /vouchers/validate
+ * Kiểm tra & tính giảm giá voucher theo mã — dùng cho khách hàng
+ */
+export interface VoucherValidateResponse {
+  code: string;
+  valid: boolean;
+  rentalSubtotalAmount: number;
+  discountAmount: number;
+  rentalFeeAmount: number;
+  rentalDurationDays: number;
+  expiresAt: string | null;
+}
+
+export function validateVoucher(params: {
+  code: string;
+  rentalDurationDays: number;
+  rentalSubtotalAmount: number;
+}): Promise<VoucherValidateResponse> {
+  return apiGet<VoucherValidateResponse>('/vouchers/validate', { params });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Mutations
 // ─────────────────────────────────────────────────────────────────────────────

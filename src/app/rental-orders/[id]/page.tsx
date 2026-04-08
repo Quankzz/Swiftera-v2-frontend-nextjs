@@ -15,6 +15,9 @@ import {
   PlusCircle,
   CreditCard,
   CalendarPlus,
+  Star,
+  RotateCcw,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,9 +35,13 @@ import {
   useRentalOrderQuery,
   useCancelOrder,
   useExtendOrder,
-  useInitiatePayment,
 } from '@/hooks/api/use-rental-orders';
+import { useInitiatePayment } from '@/hooks/api/use-payments';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/stores/auth-store';
+import { useRentalCartStore } from '@/stores/rental-cart-store';
+import { useCartAnimationStore } from '@/stores/cart-animation-store';
+import { cn } from '@/lib/utils';
 import {
   RENTAL_ORDER_STATUS_LABELS,
   RENTAL_ORDER_STATUS_COLORS,
@@ -278,8 +285,53 @@ export default function RentalOrderDetailPage() {
   const params = useParams();
   const id = typeof params?.id === 'string' ? params.id : '';
   const [extendOpen, setExtendOpen] = useState(false);
+  const [reorderState, setReorderState] = useState<
+    'idle' | 'adding' | 'success'
+  >('idle');
 
   const { data: order, isLoading, isError } = useRentalOrderQuery(id);
+  const addToCart = useRentalCartStore((s) => s.addLine);
+  const currentUser = useAuthStore((s) => s.user);
+  const addFlyingItem = useCartAnimationStore((s) => s.addFlyingItem);
+
+  function handleReorder() {
+    if (!order || reorderState !== 'idle') return;
+
+    const btn = document.getElementById('reorder-btn');
+    const firstLine = document.getElementById('order-line-0');
+
+    const fromRect = firstLine
+      ? firstLine.getBoundingClientRect()
+      : btn
+        ? btn.getBoundingClientRect()
+        : new DOMRect(window.innerWidth / 2, window.innerHeight / 2, 80, 60);
+
+    addFlyingItem({
+      id: `reorder-${Date.now()}`,
+      imageUrl: '',
+      fromRect,
+    });
+
+    setReorderState('adding');
+    setTimeout(() => {
+      for (const line of order.rentalOrderLines) {
+        addToCart({
+          productId: line.productId,
+          name: line.productNameSnapshot,
+          image: '',
+          sku: line.inventorySerialNumber,
+          durationId: String(line.rentalDurationDays),
+          durationLabel: `${line.rentalDurationDays} ngày`,
+          rentalPricePerUnit: line.dailyPriceSnapshot,
+          quantity: 1,
+          depositPerUnit: line.depositAmountSnapshot,
+          voucher: null,
+        });
+      }
+      setReorderState('success');
+      setTimeout(() => setReorderState('idle'), 2500);
+    }, 400);
+  }
 
   const cancelOrder = useCancelOrder({
     onSuccess: () => toast.success('Đơn thuê đã được hủy thành công.'),
@@ -409,6 +461,62 @@ export default function RentalOrderDetailPage() {
                 </Button>
               )}
 
+              {/* Viết đánh giá — chỉ hiện khi đơn COMPLETED */}
+              {order.status === 'COMPLETED' &&
+                order.rentalOrderLines.length > 0 && (
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    className='gap-1.5'
+                    render={
+                      <Link
+                        href={`/product/${order.rentalOrderLines[0].productId}#reviews`}
+                      />
+                    }
+                  >
+                    <Star className='size-4' />
+                    Viết đánh giá
+                  </Button>
+                )}
+
+              {/* Thuê lại — chỉ hiện khi đơn COMPLETED */}
+              {order.status === 'COMPLETED' &&
+                order.rentalOrderLines.length > 0 && (
+                  <Button
+                    id='reorder-btn'
+                    size='sm'
+                    className={`
+                      gap-1.5 transition-all duration-300
+                      ${
+                        reorderState === 'success'
+                          ? 'bg-green-600 hover:bg-green-700 text-white scale-105 shadow-lg shadow-green-500/30'
+                          : reorderState === 'adding'
+                            ? 'bg-rose-400 text-white cursor-wait animate-pulse'
+                            : 'bg-rose-600 hover:bg-rose-700 text-white'
+                      }
+                    `}
+                    onClick={handleReorder}
+                    disabled={reorderState !== 'idle'}
+                  >
+                    {reorderState === 'adding' ? (
+                      <>
+                        <Loader2 className='size-4 animate-spin' />
+                        Đang thêm...
+                      </>
+                    ) : reorderState === 'success' ? (
+                      <span className='flex items-center gap-1.5'>
+                        <Check className='size-4' />
+                        Đã thêm vào giỏ!
+                      </span>
+                    ) : (
+                      <>
+                        <RotateCcw className='size-4' />
+                        Thuê lại
+                      </>
+                    )}
+                  </Button>
+                )}
+
               {/* Hủy đơn */}
               {order.status === 'PENDING_PAYMENT' && (
                 <Button
@@ -452,8 +560,9 @@ export default function RentalOrderDetailPage() {
                     Sản phẩm thuê
                   </div>
                   <ul className='mt-4 space-y-4'>
-                    {order.rentalOrderLines.map((line) => (
+                    {order.rentalOrderLines.map((line, idx) => (
                       <li
+                        id={`order-line-${idx}`}
                         key={line.rentalOrderLineId}
                         className='border-b border-border/50 pb-3 text-sm last:border-0 last:pb-0'
                       >

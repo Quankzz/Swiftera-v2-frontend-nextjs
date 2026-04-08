@@ -60,6 +60,26 @@ export async function getReviews(params?: {
   return normalize(res);
 }
 
+/**
+ * Kiểm tra user hiện tại đã đánh giá sản phẩm này chưa.
+ * Dùng filter = productId + userId trên API-097.
+ * Trả về review đã tồn tại, hoặc null nếu chưa đánh giá.
+ */
+export async function getMyReviewForProduct(
+  productId: string,
+  userId: string,
+): Promise<ProductReviewResponse | null> {
+  const res = await httpService.get<ReviewListResponse>('/reviews', {
+    ...authOpts,
+    params: {
+      filter: `productId:'${productId}' and userId:'${userId}'`,
+      size: 1,
+    },
+  });
+  const items = res.data.data.content ?? [];
+  return items.length > 0 ? items[0] : null;
+}
+
 export async function getReviewById(
   reviewId: string,
 ): Promise<ProductReviewResponse> {

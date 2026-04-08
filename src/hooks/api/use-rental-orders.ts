@@ -1,6 +1,8 @@
 /**
  * Rental Orders hooks — TanStack Query
- * Module 12: RENTAL ORDERS (API-074 → API-085, API-089)
+ * Module 12: RENTAL ORDERS (API-074 → API-085)
+ *
+ * Lưu ý: initiatePayment đã chuyển sang Module 13 (useInitiatePayment trong use-payments.ts)
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,7 +14,6 @@ import {
   updateRentalOrderStatus,
   cancelRentalOrder,
   extendRentalOrder,
-  initiatePayment,
 } from './rental-order.service';
 import type {
   CreateRentalOrderInput,
@@ -170,28 +171,6 @@ export function useExtendOrder(options?: {
       });
       void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
       options?.onSuccess?.();
-    },
-
-    onError: (error: Error) => {
-      options?.onError?.(error);
-    },
-  });
-}
-
-/**
- * Tạo link thanh toán VNPay [AUTH] — API-089
- */
-export function useInitiatePayment(options?: {
-  onSuccess?: (paymentUrl: string) => void;
-  onError?: (error: Error) => void;
-}) {
-  return useMutation({
-    mutationFn: async (rentalOrderId: string) => {
-      return initiatePayment(rentalOrderId);
-    },
-
-    onSuccess: (paymentUrl) => {
-      options?.onSuccess?.(paymentUrl);
     },
 
     onError: (error: Error) => {

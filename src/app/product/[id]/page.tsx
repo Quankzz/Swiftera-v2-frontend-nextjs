@@ -24,6 +24,8 @@ import {
 } from '@/components/product-detail/rental-product-relations';
 import { RentalStockSection } from '@/components/product-detail/rental-product-stock';
 import { useProductDetailQuery } from '@/features/products/hooks/use-product-detail';
+import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
+import { useAuthStore } from '@/stores/auth-store';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /** Tạo các gói thời gian thuê từ dailyPrice của BE, lọc theo minRentalDays */
@@ -65,12 +67,26 @@ const formatter = new Intl.NumberFormat('vi-VN', {
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = typeof params?.id === 'string' ? params.id : '';
+  const currentUserId = useAuthStore((s) => s.user?.userId ?? null);
 
   const {
     data: product,
     isLoading,
     isError,
   } = useProductDetailQuery(productId);
+
+  // Lấy tất cả đơn của user để tìm order COMPLETED cho sản phẩm này
+  const { data: ordersData } = useMyOrdersQuery({ size: 50 });
+  const completedOrderId = useMemo(() => {
+    if (!ordersData?.items) return null;
+    return (
+      ordersData.items.find(
+        (o) =>
+          o.status === 'COMPLETED' &&
+          o.rentalOrderLines.some((l) => l.productId === productId),
+      )?.rentalOrderId ?? null
+    );
+  }, [ordersData?.items, productId]);
 
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState('2');
@@ -172,7 +188,7 @@ export default function ProductDetailPage() {
   if (isLoading) {
     return (
       <div className='min-h-screen bg-white font-sans dark:bg-surface-base'>
-        <div className='mx-auto max-w-7xl px-3 pb-8 pt-20 sm:px-4 sm:pb-10 sm:pt-24 md:px-6 md:pt-28'>
+        <div className='mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8'>
           <Skeleton className='mb-6 h-4 w-64' />
           <div className='grid grid-cols-12 gap-4 sm:gap-6'>
             <div className='col-span-12 lg:col-span-5'>
@@ -206,7 +222,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className='min-h-screen bg-white font-sans dark:bg-surface-base'>
-      <div className='mx-auto max-w-7xl px-3 pb-8 pt-20 sm:px-4 sm:pb-10 sm:pt-24 md:px-6 md:pt-28'>
+      <div className='mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8'>
         {/* Breadcrumb */}
         <nav className='mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm'>
           <ol className='flex flex-wrap items-center gap-x-1.5 gap-y-1'>
@@ -340,8 +356,11 @@ export default function ProductDetailPage() {
         {/* Reviews */}
         <div className='mt-4 sm:mt-6'>
           <RentalReviewsSection
+            productId={product.productId}
             rating={product.averageRating ?? 0}
-            reviews={0}
+            reviewCount={0}
+            currentUserId={currentUserId}
+            userCompletedOrderId={completedOrderId}
           />
         </div>
 

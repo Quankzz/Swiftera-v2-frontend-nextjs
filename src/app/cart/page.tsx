@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
@@ -11,6 +11,11 @@ import {
   Sparkles,
   Truck,
   AlertCircle,
+  TicketPercent,
+  X,
+  CheckSquare,
+  Square,
+  Phone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +30,17 @@ import {
   useUpdateCartLineQuantity,
   useClearCart,
 } from '@/hooks/api/use-cart';
+import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
+import { useInitiatePayment } from '@/hooks/api/use-payments';
+import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
+import {
+  useCustomerVouchersQuery,
+  useValidateVoucherMutation,
+} from '@/features/vouchers/hooks/use-customer-vouchers';
+import { toast } from 'sonner';
+import type { VoucherResponse } from '@/features/vouchers/types';
 import type { CartLineResponse } from '@/api/cart';
+import { useRouter } from 'next/navigation';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -33,7 +48,7 @@ const formatter = new Intl.NumberFormat('vi-VN', {
   maximumFractionDigits: 0,
 });
 
-/* ─── Loading skeleton row ─────────────────────────────────────────────────── */
+/* ─── Skeleton ─────────────────────────────────────────────────────────────── */
 
 function CartLineSkeleton() {
   return (
@@ -59,6 +74,8 @@ function CartLineSkeleton() {
 function CartLineRow({
   line,
   index,
+  isSelected,
+  onToggle,
   onRemove,
   onUpdateQty,
   isRemoving,
@@ -66,6 +83,8 @@ function CartLineRow({
 }: {
   line: CartLineResponse;
   index: number;
+  isSelected: boolean;
+  onToggle: (cartLineId: string) => void;
   onRemove: (cartLineId: string) => void;
   onUpdateQty: (cartLineId: string, quantity: number) => void;
   isRemoving: boolean;
@@ -88,10 +107,28 @@ function CartLineRow({
       }}
     >
       <SpotlightCard
-        className='rounded-2xl border border-border/70 bg-card/90 shadow-sm backdrop-blur-sm dark:bg-card/80'
+        className={`rounded-2xl border shadow-sm backdrop-blur-sm transition-colors ${
+          isSelected
+            ? 'border-rose-500/50 bg-card/95 dark:bg-card/80 ring-1 ring-rose-500/20'
+            : 'border-border/70 bg-card/90 dark:bg-card/80'
+        }`}
         spotlightColor='rgba(254, 20, 81, 0.14)'
       >
         <div className='flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-5 sm:p-5'>
+          {/* Checkbox */}
+          <button
+            type='button'
+            onClick={() => onToggle(line.cartLineId)}
+            className='mx-auto flex size-8 shrink-0 items-center justify-center rounded-lg text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 sm:mx-0'
+            aria-label={isSelected ? 'Bỏ chọn' : 'Chọn'}
+          >
+            {isSelected ? (
+              <CheckSquare className='size-5 fill-rose-500 text-rose-500' />
+            ) : (
+              <Square className='size-5 text-muted-foreground/50' />
+            )}
+          </button>
+
           {/* Image */}
           <Link
             href={`/product/${line.productId}`}
@@ -116,7 +153,11 @@ function CartLineRow({
               <div>
                 <Link
                   href={`/product/${line.productId}`}
-                  className='text-base font-semibold leading-snug text-foreground transition-colors hover:text-rose-600 dark:hover:text-rose-400'
+                  className={`text-base font-semibold leading-snug transition-colors ${
+                    isSelected
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-foreground hover:text-rose-600 dark:hover:text-rose-400'
+                  }`}
                 >
                   {line.productName}
                 </Link>
@@ -201,7 +242,7 @@ function CartLineRow({
   );
 }
 
-/* ─── Summary panel skeleton ───────────────────────────────────────────────── */
+/* ─── Summary skeleton ────────────────────────────────────────────────────── */
 
 function SummarySkeleton() {
   return (
@@ -230,20 +271,186 @@ function SummarySkeleton() {
   );
 }
 
+/* ─── Voucher input section ────────────────────────────────────────────────── */
+
+function VoucherSection({
+  voucherCode,
+  onApply,
+  onClear,
+  cartRentalSubtotal,
+  cartRentalDays,
+}: {
+  voucherCode: string;
+  onApply: (code: string) => void;
+  onClear: () => void;
+  cartRentalSubtotal: number;
+  cartRentalDays: number;
+}) {
+  const [input, setInput] = useState(voucherCode);
+  const { data: vouchersData, isLoading } = useCustomerVouchersQuery();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const vouchers: VoucherResponse[] = vouchersData?.items ?? [];
+
+  // Validate voucher trước khi apply
+  const validateVoucher = useValidateVoucherMutation();
+
+  async function handleApply() {
+    if (!input.trim()) return;
+    try {
+      const result = await validateVoucher.mutateAsync({
+        code: input.trim().toUpperCase(),
+        rentalDurationDays: cartRentalDays,
+        rentalSubtotalAmount: cartRentalSubtotal,
+      });
+      if (result.valid) {
+        onApply(input.trim().toUpperCase());
+      } else {
+        toast.error('Voucher không hợp lệ hoặc chưa đủ điều kiện.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Mã voucher không đúng.';
+      toast.error(msg);
+    }
+  }
+
+  function handlePick(v: VoucherResponse) {
+    setInput(v.code);
+    onApply(v.code);
+    setDialogOpen(false);
+  }
+
+  return (
+    <div className='space-y-2'>
+      <label className='flex items-center gap-1.5 text-sm font-semibold text-foreground'>
+        <TicketPercent className='size-4 text-rose-600 dark:text-rose-400' />
+        Mã voucher
+      </label>
+
+      {voucherCode ? (
+        <div className='flex items-center justify-between rounded-lg border border-rose-500/40 bg-rose-50/60 px-3 py-2 dark:bg-rose-950/30'>
+          <span className='font-mono text-sm font-bold text-rose-600 dark:text-rose-400'>
+            {voucherCode}
+          </span>
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon-sm'
+            className='size-7 shrink-0 text-destructive hover:bg-red-50 dark:hover:bg-red-950/30'
+            onClick={onClear}
+          >
+            <X className='size-3.5' />
+          </Button>
+        </div>
+      ) : (
+        <div className='flex gap-2'>
+          <input
+            type='text'
+            placeholder='Nhập mã voucher…'
+            value={input}
+            onChange={(e) => setInput(e.target.value.toUpperCase())}
+            onKeyDown={(e) => e.key === 'Enter' && void handleApply()}
+            className='h-10 w-full rounded-lg border border-input bg-background px-3 font-mono text-sm uppercase placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200'
+          />
+          <Button
+            type='button'
+            size='sm'
+            className='h-10 shrink-0 gap-1.5 bg-rose-600 px-3 hover:bg-rose-700'
+            onClick={() => void handleApply()}
+            disabled={!input.trim()}
+          >
+            Áp dụng
+          </Button>
+          <Button
+            type='button'
+            size='sm'
+            variant='outline'
+            className='h-10 shrink-0 gap-1.5 border-rose-500/30'
+            onClick={() => setDialogOpen(true)}
+          >
+            Chọn voucher
+          </Button>
+        </div>
+      )}
+
+      <VoucherLinePickerDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        lineRentalSubtotal={cartRentalSubtotal}
+        lineRentalDays={cartRentalDays}
+        appliedCode={voucherCode}
+        onApply={(v) => handlePick(v)}
+        onClear={() => setDialogOpen(false)}
+      />
+    </div>
+  );
+}
+
 /* ─── Cart page ────────────────────────────────────────────────────────────── */
 
 export default function CartPage() {
+  const router = useRouter();
   const { data: cart, isLoading, isError } = useCartQuery();
   const removeMutation = useRemoveCartLine();
   const updateQtyMutation = useUpdateCartLineQuantity();
   const clearMutation = useClearCart();
+  const createOrder = useCreateRentalOrder();
+  const initiatePayment = useInitiatePayment();
+
+  // Chọn sản phẩm
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Voucher — chỉ lưu code string
+  const [voucherCode, setVoucherCode] = useState('');
+  const [phone, setPhone] = useState('');
+  const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
+  const [voucherDialogLine, setVoucherDialogLine] =
+    useState<CartLineResponse | null>(null);
 
   const lines: CartLineResponse[] = cart?.cartLines ?? [];
 
-  const totals = useMemo(() => {
-    const subtotal = lines.reduce((acc, l) => acc + l.lineTotal, 0);
-    return { subtotal, grandTotal: subtotal };
-  }, [lines]);
+  // Toggle checkbox
+  function toggleSelect(cartLineId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(cartLineId)) {
+        next.delete(cartLineId);
+      } else {
+        next.add(cartLineId);
+      }
+      return next;
+    });
+  }
+
+  // Select all / deselect all
+  function toggleSelectAll() {
+    if (selectedIds.size === lines.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(lines.map((l) => l.cartLineId)));
+    }
+  }
+
+  const selectedLines = useMemo(
+    () => lines.filter((l) => selectedIds.has(l.cartLineId)),
+    [lines, selectedIds],
+  );
+
+  // Tính tổng cho sản phẩm đã chọn
+  const selectedTotals = useMemo(() => {
+    const subtotal = selectedLines.reduce((acc, l) => acc + l.lineTotal, 0);
+    const maxRentalDays = selectedLines.reduce(
+      (max, l) => Math.max(max, l.rentalDurationDays),
+      0,
+    );
+    return {
+      subtotal,
+      grandTotal: subtotal,
+      selectedCount: selectedLines.length,
+      selectedQty: selectedLines.reduce((a, l) => a + l.quantity, 0),
+      maxRentalDays,
+    };
+  }, [selectedLines]);
 
   const totalQty = useMemo(
     () => lines.reduce((a, l) => a + l.quantity, 0),
@@ -254,6 +461,11 @@ export default function CartPage() {
 
   const handleRemove = (cartLineId: string) => {
     removeMutation.mutate(cartLineId);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(cartLineId);
+      return next;
+    });
   };
 
   const handleUpdateQty = (cartLineId: string, quantity: number) => {
@@ -264,8 +476,62 @@ export default function CartPage() {
   const handleClear = () => {
     if (confirm('Xóa toàn bộ giỏ hàng?')) {
       clearMutation.mutate();
+      setSelectedIds(new Set());
     }
   };
+
+  function handleApplyVoucher(code: string) {
+    setVoucherCode(code.toUpperCase());
+  }
+
+  function handleRemoveVoucher() {
+    setVoucherCode('');
+  }
+
+  async function handleProceedToRent() {
+    if (selectedLines.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
+      return;
+    }
+    if (!phone.trim()) {
+      toast.error('Vui lòng nhập số điện thoại liên hệ giao hàng.');
+      return;
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const expectedDeliveryDate = tomorrow.toISOString().slice(0, 10);
+
+    try {
+      const result = await createOrder.mutateAsync({
+        deliveryRecipientName: 'Khách hàng',
+        deliveryPhone: phone.trim(),
+        expectedDeliveryDate,
+        voucherCode: voucherCode || undefined,
+        orderLines: selectedLines.map((l) => ({
+          productId: l.productId,
+          quantity: l.quantity,
+          rentalDurationDays: l.rentalDurationDays,
+        })),
+      });
+
+      // Lấy payment URL
+      const paymentUrl = await initiatePayment.mutateAsync(
+        result.rentalOrderId,
+      );
+
+      // Xóa các dòng đã chọn khỏi cart (gọi từng dòng)
+      await Promise.all(
+        selectedLines.map((l) => removeMutation.mutateAsync(l.cartLineId)),
+      );
+
+      // Redirect Vnpay
+      window.location.href = paymentUrl;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Tạo đơn thuê thất bại.';
+      toast.error(msg);
+    }
+  }
 
   return (
     <div className='relative min-h-screen overflow-x-hidden bg-white font-sans dark:bg-surface-base'>
@@ -349,7 +615,7 @@ export default function CartPage() {
           </SpotlightCard>
         )}
 
-        {/* Empty (not loading, no error, no lines) */}
+        {/* Empty */}
         {!isLoading && !isError && lines.length === 0 && (
           <SpotlightCard
             className='rounded-3xl border border-dashed border-border/80 bg-card/80 p-12 text-center shadow-lg backdrop-blur-md dark:bg-card/60'
@@ -391,7 +657,7 @@ export default function CartPage() {
                 spotlightColor='rgba(254, 20, 81, 0.1)'
               >
                 <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-4 py-4 sm:px-6'>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-3'>
                     <span className='text-sm font-semibold text-foreground'>
                       Đơn của bạn
                     </span>
@@ -404,16 +670,33 @@ export default function CartPage() {
                     )}
                   </div>
                   {!isLoading && lines.length > 0 && (
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='text-destructive hover:bg-destructive/10 hover:text-destructive'
-                      disabled={isMutating}
-                      onClick={handleClear}
-                    >
-                      Xóa tất cả
-                    </Button>
+                    <div className='flex items-center gap-2'>
+                      <button
+                        type='button'
+                        onClick={toggleSelectAll}
+                        className='flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                      >
+                        {selectedIds.size === lines.length &&
+                        lines.length > 0 ? (
+                          <CheckSquare className='size-3.5 fill-rose-500 text-rose-500' />
+                        ) : (
+                          <Square className='size-3.5' />
+                        )}
+                        {selectedIds.size === lines.length
+                          ? 'Bỏ chọn tất cả'
+                          : 'Chọn tất cả'}
+                      </button>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        className='text-destructive hover:bg-destructive/10 hover:text-destructive'
+                        disabled={isMutating}
+                        onClick={handleClear}
+                      >
+                        Xóa tất cả
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -427,6 +710,8 @@ export default function CartPage() {
                           key={line.cartLineId}
                           line={line}
                           index={index}
+                          isSelected={selectedIds.has(line.cartLineId)}
+                          onToggle={toggleSelect}
                           onRemove={handleRemove}
                           onUpdateQty={handleUpdateQty}
                           isRemoving={
@@ -462,22 +747,69 @@ export default function CartPage() {
                         </h2>
                       </div>
 
+                      {/* Số điện thoại giao hàng */}
+                      <div className='space-y-2'>
+                        <label
+                          htmlFor='delivery-phone'
+                          className='flex items-center gap-1.5 text-sm font-semibold text-foreground'
+                        >
+                          <Phone className='size-4 text-rose-600 dark:text-rose-400' />
+                          Số điện thoại giao hàng
+                        </label>
+                        <input
+                          id='delivery-phone'
+                          type='tel'
+                          inputMode='tel'
+                          placeholder='09xx xxx xxx'
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          autoComplete='tel'
+                          className='h-10 w-full rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200'
+                        />
+                      </div>
+
+                      {/* Voucher */}
+                      <VoucherSection
+                        voucherCode={voucherCode}
+                        onApply={handleApplyVoucher}
+                        onClear={handleRemoveVoucher}
+                        cartRentalSubtotal={selectedTotals.subtotal}
+                        cartRentalDays={selectedTotals.maxRentalDays}
+                      />
+
                       <div className='space-y-3 text-sm'>
                         <div className='flex items-baseline justify-between gap-3'>
                           <span className='text-muted-foreground'>
-                            Tiền thuê ({totalQty} sản phẩm)
+                            Tiền thuê
+                            {selectedTotals.selectedCount > 0 && (
+                              <span className='ml-1'>
+                                ({selectedTotals.selectedQty} sản phẩm)
+                              </span>
+                            )}
                           </span>
                           <span className='font-medium tabular-nums text-foreground'>
-                            {formatter.format(totals.subtotal)}
+                            {selectedTotals.selectedCount > 0
+                              ? formatter.format(selectedTotals.subtotal)
+                              : formatter.format(0)}
                           </span>
                         </div>
+
+                        {selectedTotals.selectedCount === 0 &&
+                          lines.length > 0 && (
+                            <p className='text-xs text-amber-600 dark:text-amber-400'>
+                              Chưa chọn sản phẩm nào.
+                            </p>
+                          )}
+
                         <div className='border-t border-border/80 pt-4'>
                           <div className='flex items-baseline justify-between gap-3'>
                             <span className='text-base font-bold text-foreground'>
                               Tổng thanh toán
                             </span>
                             <span className='text-2xl font-extrabold tabular-nums text-rose-600 dark:text-rose-400'>
-                              {formatter.format(totals.grandTotal)}
+                              {selectedTotals.selectedCount > 0
+                                ? formatter.format(selectedTotals.grandTotal)
+                                : formatter.format(0)}
                             </span>
                           </div>
                         </div>
@@ -485,16 +817,31 @@ export default function CartPage() {
 
                       <div className='rounded-lg border border-rose-200 bg-rose-50/80 p-3 text-xs leading-relaxed text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100'>
                         Giá chưa bao gồm phí vận chuyển và 8% VAT. Tiền cọc (nếu
-                        có) sẽ hiển thị ở bước thanh toán.
+                        có) sẽ hiển thị ở bước thanh toán VNPay.
                       </div>
 
                       <Magnetic intensity={0.3} range={100}>
                         <Button
+                          type='button'
                           className='h-12 w-full rounded-xl bg-rose-600 text-base font-bold text-white shadow-lg hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600'
-                          disabled={isMutating || lines.length === 0}
-                          render={<Link href='/checkout' />}
+                          disabled={
+                            isMutating ||
+                            selectedTotals.selectedCount === 0 ||
+                            !phone.trim() ||
+                            createOrder.isPending ||
+                            initiatePayment.isPending
+                          }
+                          onClick={() => void handleProceedToRent()}
                         >
-                          Tiến hành thuê
+                          {createOrder.isPending ||
+                          initiatePayment.isPending ? (
+                            <span className='flex items-center gap-2'>
+                              <span className='size-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
+                              Đang xử lý…
+                            </span>
+                          ) : (
+                            'Tiến hành thuê'
+                          )}
                         </Button>
                       </Magnetic>
 
@@ -514,6 +861,29 @@ export default function CartPage() {
           </div>
         )}
       </div>
+
+      {/* Voucher picker dialog */}
+      {voucherDialogLine && (
+        <VoucherLinePickerDialog
+          open={voucherDialogOpen}
+          onOpenChange={(o) => {
+            setVoucherDialogOpen(o);
+            if (!o) setVoucherDialogLine(null);
+          }}
+          lineRentalSubtotal={
+            voucherDialogLine.dailyPrice *
+            voucherDialogLine.quantity *
+            voucherDialogLine.rentalDurationDays
+          }
+          lineRentalDays={voucherDialogLine.rentalDurationDays}
+          appliedCode={voucherCode}
+          onApply={(v) => {
+            handleApplyVoucher(v.code);
+            setVoucherDialogLine(null);
+          }}
+          onClear={() => setVoucherDialogLine(null)}
+        />
+      )}
     </div>
   );
 }

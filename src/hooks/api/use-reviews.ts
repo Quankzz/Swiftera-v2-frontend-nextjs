@@ -8,6 +8,7 @@ import { reviewKeys } from './review.keys';
 import {
   getReviewsByProduct,
   getReviews,
+  getMyReviewForProduct,
   getReviewById,
   createReview,
   deleteReview,
@@ -63,6 +64,28 @@ export function useReviewQuery(reviewId: string) {
   });
 }
 
+/**
+ * Kiểm tra user hiện tại đã đánh giá sản phẩm này chưa [AUTH]
+ *
+ * @param productId - UUID sản phẩm
+ * @param userId    - UUID user hiện tại (lấy từ auth store)
+ *
+ * Trả về review nếu đã đánh giá, null nếu chưa.
+ * Dùng để quyết định hiện form viết đánh giá hay không.
+ */
+export function useMyReviewForProductQuery(
+  productId: string,
+  userId: string | null,
+) {
+  return useQuery({
+    queryKey: ['reviews', 'my', productId, userId] as const,
+    queryFn: () => getMyReviewForProduct(productId, userId!),
+    enabled: !!productId && !!userId,
+    staleTime: 30_000,
+    retry: false,
+  });
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────────
 
 /**
@@ -86,6 +109,9 @@ export function useCreateReview(options?: {
         queryKey: reviewKeys.byProduct(variables.productId),
       });
       void qc.invalidateQueries({ queryKey: reviewKeys.list() });
+      void qc.invalidateQueries({
+        queryKey: ['reviews', 'my', variables.productId],
+      });
       options?.onSuccess?.();
     },
 

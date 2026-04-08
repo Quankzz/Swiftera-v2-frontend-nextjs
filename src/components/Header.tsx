@@ -4,11 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   ChevronRight,
@@ -25,17 +21,121 @@ import {
   FileText,
   Settings,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { topLevelCategories } from '@/data/categories';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/theme-context';
+import { useRentalCartStore } from '@/stores/rental-cart-store';
+import { useCartAnimationStore } from '@/stores/cart-animation-store';
 import logo from '../../public/logo.png';
 
+/* ------------------------------------------------------------------ */
+/*  Cart fly overlay – rendered inside Header so store is shared       */
+/* ------------------------------------------------------------------ */
+function CartFlyOverlayInner() {
+  const flyingItems = useCartAnimationStore((s) => s.flyingItems);
+  const cartRect = useCartAnimationStore((s) => s.cartRect);
+  const removeFlyingItem = useCartAnimationStore((s) => s.removeFlyingItem);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !cartRect || flyingItems.length === 0) return null;
+
+  return createPortal(
+    <>
+      {flyingItems.map((item) => {
+        const startX = item.fromRect.left;
+        const startY = item.fromRect.top;
+        const endX =
+          cartRect.left + cartRect.width / 2 - item.fromRect.width / 2;
+        const endY =
+          cartRect.top + cartRect.height / 2 - item.fromRect.height / 2;
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const duration = Math.min(650, Math.max(320, dist * 0.55));
+
+        return (
+          <div
+            key={item.id}
+            className='pointer-events-none fixed z-[9999]'
+            style={
+              {
+                left: startX,
+                top: startY,
+                width: item.fromRect.width,
+                height: item.fromRect.height,
+                '--dx': `${dx}px`,
+                '--dy': `${dy}px`,
+                '--dur': `${duration}ms`,
+              } as React.CSSProperties
+            }
+            onAnimationEnd={() => removeFlyingItem(item.id)}
+          >
+            <style>{`
+              @keyframes flyToCart {
+                0%   { transform: translate(0,0) scale(1) rotate(0deg); opacity: 1; }
+                45%  { transform: translate(calc(var(--dx)*0.5), calc(var(--dy)*0.5)) scale(0.6) rotate(-15deg); opacity: 0.95; }
+                80%  { transform: translate(calc(var(--dx)*0.92), calc(var(--dy)*0.92)) scale(0.2) rotate(18deg); opacity: 0.5; }
+                100% { transform: translate(var(--dx), var(--dy)) scale(0.05) rotate(25deg); opacity: 0; }
+              }
+            `}</style>
+            <div
+              className='w-full h-full rounded-xl shadow-2xl shadow-rose-500/50 overflow-hidden'
+              style={{
+                animation: `flyToCart var(--dur) cubic-bezier(0.4,0,0.2,1) forwards`,
+              }}
+            >
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt=''
+                  className='w-full h-full object-cover'
+                />
+              ) : (
+                <div className='w-full h-full bg-rose-100 flex items-center justify-center rounded-xl'>
+                  <ShoppingCart className='size-6 text-rose-500' />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </>,
+    document.body,
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Header                                                            */
+/* ------------------------------------------------------------------ */
 export function Header() {
   const HOVER_BRIDGE_HEIGHT = 10;
   const router = useRouter();
   const { resolvedTheme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
+
+  // Cart quantity – use raw selector to avoid SSR/hydration issues
+  const cartLines = useRentalCartStore((s) => s.lines);
+  const cartCount = useMemo(
+    () => cartLines.reduce((sum, l) => sum + l.quantity, 0),
+    [cartLines],
+  );
+
+  // Fly animation state
+  const flyingItems = useCartAnimationStore((s) => s.flyingItems);
+  const setCartRect = useCartAnimationStore((s) => s.setCartRect);
+  const isFlying = flyingItems.length > 0;
+
+  // Hydration guard
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   const sortedCategories = useMemo(
     () => [...topLevelCategories].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -48,6 +148,7 @@ export function Header() {
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(
     null,
   );
+  const cartBtnRef = useRef<HTMLButtonElement>(null);
 
   const hoveredCategoryData = useMemo(
     () => sortedCategories.find((c) => c.categoryId === hoveredCategoryId),
@@ -55,21 +156,17 @@ export function Header() {
   );
 
   const avatarUrl = useMemo(() => {
-    if (!user) {
-      return '';
-    }
-
+    if (!user) return '';
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(
       user.firstName || '',
     )}+${encodeURIComponent(user.lastName || '')}&background=random`;
   }, [user]);
 
   const userDisplayName = useMemo(() => {
-    if (!user) {
-      return 'Khách hàng';
-    }
-
-    return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Khách hàng';
+    if (!user) return 'Khách hàng';
+    return (
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Khách hàng'
+    );
   }, [user]);
 
   const isAdminUser = useMemo(
@@ -78,13 +175,27 @@ export function Header() {
   );
 
   const userInitials = useMemo(() => {
-    if (!user) {
-      return 'KH';
-    }
-
-    const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim();
+    if (!user) return 'KH';
+    const initials =
+      `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim();
     return initials || 'KH';
   }, [user]);
+
+  // Track cart icon rect for fly animation
+  useEffect(() => {
+    function updateRect() {
+      if (cartBtnRef.current) {
+        setCartRect(cartBtnRef.current.getBoundingClientRect());
+      }
+    }
+    updateRect();
+    window.addEventListener('scroll', updateRect, { passive: true });
+    window.addEventListener('resize', updateRect);
+    return () => {
+      window.removeEventListener('scroll', updateRect);
+      window.removeEventListener('resize', updateRect);
+    };
+  }, [setCartRect]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -118,13 +229,24 @@ export function Header() {
 
   return (
     <>
+      <CartFlyOverlayInner />
+
       <header
         className={cn(
-          'top-0 w-full bg-white dark:bg-surface-base transition-colors duration-300 shadow-sm dark:shadow-black/30',
+          'top-0 w-full bg-white dark:bg-surface-base',
           isSearchOpen
             ? 'z-50 border-transparent'
-            : 'z-40 border-b border-border/20 dark:border-white/5 backdrop-blur',
+            : 'z-40 border-b border-border/20 dark:border-white/5 backdrop-blur shadow-sm dark:shadow-black/30',
         )}
+        style={{
+          transform: isFlying ? 'translateY(-100%)' : 'translateY(0)',
+          boxShadow: isFlying
+            ? '0 8px 32px -4px rgba(254,20,81,0.18)'
+            : '0 1px 3px rgba(0,0,0,0.1)',
+          transition: isFlying
+            ? 'transform 320ms cubic-bezier(0.4,0,0.2,1) 60ms, box-shadow 320ms 60ms'
+            : 'transform 500ms cubic-bezier(0.4,0,0.2,1) 600ms, box-shadow 500ms 600ms',
+        }}
       >
         {isSearchOpen && (
           <div
@@ -134,6 +256,7 @@ export function Header() {
         )}
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           <div className='flex items-center gap-4 lg:gap-6'>
+            {/* Logo */}
             <div className='flex items-center gap-3 relative z-30'>
               <Button
                 variant='ghost'
@@ -154,11 +277,10 @@ export function Header() {
             </div>
             <div></div>
 
+            {/* Search */}
             <div className='relative hidden flex-1 lg:flex z-50'>
               <div
-                className={cn(
-                  'flex h-12 w-full max-w-2xl cursor-text items-center rounded-full border border-border/60 dark:border-white/10 bg-white dark:bg-white/5 px-4 shadow-sm transition-all',
-                )}
+                className='flex h-12 w-full max-w-2xl cursor-text items-center rounded-full border border-border/60 dark:border-white/10 bg-white dark:bg-white/5 px-4 shadow-sm transition-all'
                 onClick={() => setIsSearchOpen(true)}
               >
                 <Search className='mr-3 size-5 text-text-sub' />
@@ -208,35 +330,34 @@ export function Header() {
 
                   <div className='p-6'>
                     <div className='grid grid-cols-2 gap-4 lg:grid-cols-4'>
-                      {sortedCategories.slice(0, 8).map((category) => {
-                        return (
-                          <button
-                            type='button'
-                            key={category.categoryId}
-                            className='group flex flex-col items-center justify-center gap-3 rounded-2xl bg-gray-50/50 dark:bg-white/5 p-4 transition-colors hover:bg-gray-100 dark:hover:bg-white/10'
-                          >
-                            {category.image && (
-                              <div className='relative h-20 w-20 overflow-hidden mix-blend-multiply dark:mix-blend-normal'>
-                                <Image
-                                  src={category.image}
-                                  alt={category.name}
-                                  fill
-                                  className='object-contain aspect-square'
-                                />
-                              </div>
-                            )}
-                            <span className='text-sm font-medium text-text-main'>
-                              {category.name}
-                            </span>
-                          </button>
-                        );
-                      })}
+                      {sortedCategories.slice(0, 8).map((category) => (
+                        <button
+                          type='button'
+                          key={category.categoryId}
+                          className='group flex flex-col items-center justify-center gap-3 rounded-2xl bg-gray-50/50 dark:bg-white/5 p-4 transition-colors hover:bg-gray-100 dark:hover:bg-white/10'
+                        >
+                          {category.image && (
+                            <div className='relative h-20 w-20 overflow-hidden mix-blend-multiply dark:mix-blend-normal'>
+                              <Image
+                                src={category.image}
+                                alt={category.name}
+                                fill
+                                className='object-contain aspect-square'
+                              />
+                            </div>
+                          )}
+                          <span className='text-sm font-medium text-text-main'>
+                            {category.name}
+                          </span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
             </div>
 
+            {/* Right actions */}
             <div
               className={cn(
                 'relative ml-auto flex items-center gap-2 lg:gap-3',
@@ -252,9 +373,6 @@ export function Header() {
                 <Heart className='size-5 text-text-main' />
               </Button>
 
-              
-
-              {/* Dark / Light mode toggle */}
               <Button
                 variant='ghost'
                 size='icon'
@@ -269,16 +387,40 @@ export function Header() {
                 )}
               </Button>
 
+              {/* Cart button with badge */}
               <Link href='/cart'>
                 <Button
+                  ref={cartBtnRef}
                   variant='ghost'
                   size='icon'
-                  aria-label='Cart'
-                  className='dark:hover:bg-white/10'
+                  aria-label={`Giỏ hàng${cartCount > 0 ? `, ${cartCount} sản phẩm` : ''}`}
+                  className={cn(
+                    'relative dark:hover:bg-white/10 transition-all duration-300',
+                    isFlying && 'animate-cartBounce',
+                  )}
                 >
-                  <ShoppingCart className='size-5 text-text-main' />
+                  <ShoppingCart
+                    className={cn(
+                      'size-5 text-text-main transition-colors',
+                      isFlying && 'text-rose-500',
+                    )}
+                  />
+                  {hydrated && cartCount > 0 && (
+                    <span
+                      suppressHydrationWarning
+                      className={cn(
+                        'absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full text-[10px] font-bold flex items-center justify-center transition-all duration-300',
+                        isFlying
+                          ? 'bg-green-500 text-white scale-125'
+                          : 'bg-rose-500 text-white',
+                      )}
+                    >
+                      {cartCount > 99 ? '99+' : cartCount}
+                    </span>
+                  )}
                 </Button>
               </Link>
+
               {!isAuthenticated && (
                 <Link href='/auth/login'>
                   <Button
@@ -291,8 +433,9 @@ export function Header() {
                   </Button>
                 </Link>
               )}
-{/* User dropdown */}
-<div ref={userMenuRef} className='relative'>
+
+              {/* User dropdown */}
+              <div ref={userMenuRef} className='relative'>
                 <Button
                   variant='ghost'
                   size='icon'
@@ -315,7 +458,6 @@ export function Header() {
 
                 {isUserMenuOpen && (
                   <div className='absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1'>
-                    {/* User info header */}
                     <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
                       <p className='text-sm font-semibold text-text-main'>
                         {userDisplayName}
@@ -371,7 +513,10 @@ export function Header() {
                             onClick={() => setIsUserMenuOpen(false)}
                             className='flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors'
                           >
-                            <LogIn size={15} className='text-text-sub shrink-0' />
+                            <LogIn
+                              size={15}
+                              className='text-text-sub shrink-0'
+                            />
                             Đăng nhập
                           </Link>
                           <Link
@@ -408,6 +553,7 @@ export function Header() {
             </div>
           </div>
 
+          {/* Nav categories */}
           <div
             className='relative hidden lg:block'
             onMouseLeave={() => setHoveredCategoryId(null)}
@@ -439,7 +585,6 @@ export function Header() {
               aria-hidden
             />
 
-            {/* Global Full-Width Mega Menu Dropdown */}
             {hoveredCategoryData &&
             (hoveredCategoryData.children?.length ||
               hoveredCategoryData.brands?.length) ? (
@@ -473,8 +618,6 @@ export function Header() {
                                     <ChevronRight className='size-5 text-text-sub group-hover/child:text-theme-primary-start transition-colors' />
                                   )}
                               </Link>
-
-                              {/* Sub-menu level 3 */}
                               {child.children && child.children.length > 0 && (
                                 <div className='absolute left-full top-0 pl-8 hidden group-hover/child:block z-50'>
                                   <div className='w-64 rounded-2xl bg-white dark:bg-[#1e1e26] shadow-xl dark:shadow-black/50 border border-gray-100 dark:border-white/8 p-4'>
@@ -524,6 +667,17 @@ export function Header() {
             ) : null}
           </div>
         </div>
+
+        <style>{`
+          @keyframes cartBounce {
+            0%   { transform: scale(1); }
+            30%  { transform: scale(1.4); }
+            55%  { transform: scale(0.9); }
+            75%  { transform: scale(1.15); }
+            90%  { transform: scale(0.97); }
+            100% { transform: scale(1); }
+          }
+        `}</style>
       </header>
     </>
   );

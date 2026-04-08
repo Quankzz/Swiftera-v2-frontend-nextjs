@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TicketPercent, CreditCard, Wallet, ArrowLeft, ShieldCheck } from 'lucide-react';
+import {
+  TicketPercent,
+  CreditCard,
+  Wallet,
+  ArrowLeft,
+  ShieldCheck,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,8 +24,15 @@ import {
   useRentalCartStore,
   rentalSubtotalLine,
 } from '@/stores/rental-cart-store';
-import { useRentalOrderStore, type RentalPaymentMethod } from '@/stores/rental-order-store';
-import { computeVoucherDiscount } from '@/lib/rental-voucher';
+import {
+  useRentalOrderStore,
+  type RentalPaymentMethod,
+} from '@/stores/rental-order-store';
+import {
+  computeVoucherDiscount,
+  type RentalVoucher,
+} from '@/lib/rental-voucher';
+import type { VoucherResponse } from '@/features/vouchers/types';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -63,20 +76,30 @@ export default function CheckoutPage() {
     );
   }
 
-  const editingLine = voucherLineId ? lines.find((l) => l.lineId === voucherLineId) : null;
+  const editingLine = voucherLineId
+    ? lines.find((l) => l.lineId === voucherLineId)
+    : null;
   const editingSubtotal = editingLine ? rentalSubtotalLine(editingLine) : 0;
 
   return (
     <div className='min-h-screen bg-white px-3 pb-16 pt-20 font-sans dark:bg-surface-base sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
       <div className='mx-auto max-w-7xl'>
-        <Button variant='ghost' size='sm' className='mb-4 gap-1 text-muted-foreground' render={<Link href='/cart' />}>
+        <Button
+          variant='ghost'
+          size='sm'
+          className='mb-4 gap-1 text-muted-foreground'
+          render={<Link href='/cart' />}
+        >
           <ArrowLeft className='size-4' />
           Quay lại giỏ hàng
         </Button>
 
-        <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>Thanh toán đơn thuê</h1>
+        <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>
+          Thanh toán đơn thuê
+        </h1>
         <p className='mt-1 text-sm text-muted-foreground'>
-          Áp voucher từng dòng nếu cần — xác nhận thông tin và phương thức thanh toán.
+          Áp voucher từng dòng nếu cần — xác nhận thông tin và phương thức thanh
+          toán.
         </p>
 
         <div className='mt-8 grid gap-8 lg:grid-cols-12 lg:gap-10'>
@@ -85,11 +108,15 @@ export default function CheckoutPage() {
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md backdrop-blur-sm dark:bg-card/70'
               spotlightColor='rgba(254, 20, 81, 0.1)'
             >
-              <h2 className='text-lg font-bold text-foreground'>Sản phẩm &amp; voucher</h2>
+              <h2 className='text-lg font-bold text-foreground'>
+                Sản phẩm &amp; voucher
+              </h2>
               <ul className='mt-4 space-y-4'>
                 {lines.map((line) => {
                   const sub = rentalSubtotalLine(line);
-                  const disc = line.voucher ? computeVoucherDiscount(sub, line.voucher) : 0;
+                  const disc = line.voucher
+                    ? computeVoucherDiscount(sub, line.voucher)
+                    : 0;
                   const rentAfter = lineRentalAfterVoucher(line);
                   const dep = lineDepositTotal(line);
                   return (
@@ -99,17 +126,24 @@ export default function CheckoutPage() {
                     >
                       <div className='relative size-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted/40'>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={line.image} alt='' className='size-full object-cover' />
+                        <img
+                          src={line.image}
+                          alt=''
+                          className='size-full object-cover'
+                        />
                       </div>
                       <div className='min-w-0 flex-1'>
-                        <p className='font-semibold text-foreground'>{line.name}</p>
+                        <p className='font-semibold text-foreground'>
+                          {line.name}
+                        </p>
                         <p className='text-xs text-muted-foreground'>
                           {line.variantLabel && `${line.variantLabel} · `}
                           {line.durationLabel} · SL: {line.quantity}
                         </p>
                         {line.voucher && disc > 0 && (
                           <p className='mt-1 text-xs font-medium text-rose-600 dark:text-rose-400'>
-                            {line.voucher.code} · −{disc.toLocaleString('vi-VN')}₫
+                            {line.voucher.code} · −
+                            {disc.toLocaleString('vi-VN')}₫
                           </p>
                         )}
                         <div className='mt-2 flex flex-wrap items-center gap-2'>
@@ -127,10 +161,16 @@ export default function CheckoutPage() {
                       </div>
                       <div className='shrink-0 whitespace-nowrap text-right text-sm tabular-nums'>
                         <div className='text-muted-foreground'>
-                          Thuê: <span className='font-semibold text-foreground'>{rentAfter.toLocaleString('vi-VN')}₫</span>
+                          Thuê:{' '}
+                          <span className='font-semibold text-foreground'>
+                            {rentAfter.toLocaleString('vi-VN')}₫
+                          </span>
                         </div>
                         <div className='text-muted-foreground'>
-                          Cọc: <span className='font-semibold text-foreground'>{dep.toLocaleString('vi-VN')}₫</span>
+                          Cọc:{' '}
+                          <span className='font-semibold text-foreground'>
+                            {dep.toLocaleString('vi-VN')}₫
+                          </span>
                         </div>
                       </div>
                     </li>
@@ -143,7 +183,9 @@ export default function CheckoutPage() {
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md dark:bg-card/70'
               spotlightColor='rgba(254, 20, 81, 0.08)'
             >
-              <h2 className='text-lg font-bold text-foreground'>Thông tin liên hệ</h2>
+              <h2 className='text-lg font-bold text-foreground'>
+                Thông tin liên hệ
+              </h2>
               <div className='mt-4 grid gap-4 sm:grid-cols-2'>
                 <div className='space-y-2'>
                   <Label htmlFor='co-name'>Họ và tên</Label>
@@ -173,38 +215,58 @@ export default function CheckoutPage() {
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md dark:bg-card/70'
               spotlightColor='rgba(254, 20, 81, 0.08)'
             >
-              <h2 className='mb-4 text-lg font-bold text-foreground'>Phương thức thanh toán</h2>
-              <RadioGroup value={payment} onValueChange={(v) => setPayment(v as RentalPaymentMethod)} className='gap-3'>
+              <h2 className='mb-4 text-lg font-bold text-foreground'>
+                Phương thức thanh toán
+              </h2>
+              <RadioGroup
+                value={payment}
+                onValueChange={(v) => setPayment(v as RentalPaymentMethod)}
+                className='gap-3'
+              >
                 <label
                   htmlFor='pay-bank'
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-xl border border-input bg-muted/20 p-4 dark:bg-muted/10',
-                    payment === 'bank_transfer' && 'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
+                    payment === 'bank_transfer' &&
+                      'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
                   )}
                 >
-                  <RadioGroupItem value='bank_transfer' id='pay-bank' className='mt-0.5' />
+                  <RadioGroupItem
+                    value='bank_transfer'
+                    id='pay-bank'
+                    className='mt-0.5'
+                  />
                   <div>
                     <div className='flex items-center gap-2 font-semibold text-foreground'>
                       <CreditCard className='size-4 text-rose-600 dark:text-rose-400' />
                       Chuyển khoản ngân hàng
                     </div>
-                    <p className='mt-1 text-xs text-muted-foreground'>QR / số tài khoản Swiftera (demo — không thu tiền thật).</p>
+                    <p className='mt-1 text-xs text-muted-foreground'>
+                      QR / số tài khoản Swiftera (demo — không thu tiền thật).
+                    </p>
                   </div>
                 </label>
                 <label
                   htmlFor='pay-wallet'
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-xl border border-input bg-muted/20 p-4 dark:bg-muted/10',
-                    payment === 'e_wallet' && 'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
+                    payment === 'e_wallet' &&
+                      'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
                   )}
                 >
-                  <RadioGroupItem value='e_wallet' id='pay-wallet' className='mt-0.5' />
+                  <RadioGroupItem
+                    value='e_wallet'
+                    id='pay-wallet'
+                    className='mt-0.5'
+                  />
                   <div>
                     <div className='flex items-center gap-2 font-semibold text-foreground'>
                       <Wallet className='size-4 text-rose-600 dark:text-rose-400' />
                       Ví điện tử
                     </div>
-                    <p className='mt-1 text-xs text-muted-foreground'>Momo, ZaloPay… (demo).</p>
+                    <p className='mt-1 text-xs text-muted-foreground'>
+                      Momo, ZaloPay… (demo).
+                    </p>
                   </div>
                 </label>
               </RadioGroup>
@@ -260,7 +322,8 @@ export default function CheckoutPage() {
                   {submitting ? 'Đang xử lý…' : 'Xác nhận & thanh toán'}
                 </Button>
                 <p className='mt-2 text-center text-xs text-muted-foreground'>
-                  Bằng việc thanh toán, bạn đồng ý với điều khoản cho thuê (demo).
+                  Bằng việc thanh toán, bạn đồng ý với điều khoản cho thuê
+                  (demo).
                 </p>
               </SpotlightCard>
             </div>
@@ -273,8 +336,33 @@ export default function CheckoutPage() {
           open={!!voucherLineId}
           onOpenChange={(o) => !o && setVoucherLineId(null)}
           lineRentalSubtotal={editingSubtotal}
-          applied={editingLine.voucher}
-          onApply={(v) => updateLineVoucher(editingLine.lineId, v)}
+          lineRentalDays={
+            editingLine.durationLabel
+              ? parseInt(editingLine.durationLabel.replace(/\D/g, ''), 10) || 1
+              : 1
+          }
+          appliedCode={editingLine.voucher?.code ?? null}
+          onApply={(v) => {
+            // Convert VoucherResponse → RentalVoucher
+            const rv: RentalVoucher = {
+              id: v.voucherId,
+              code: v.code,
+              title: v.maxDiscountAmount
+                ? `Giảm ${v.discountType === 'PERCENTAGE' ? `${v.discountValue}%` : `${v.discountValue.toLocaleString('vi-VN')}₫`}`
+                : v.discountType === 'FIXED_AMOUNT'
+                  ? `Giảm ${v.discountValue.toLocaleString('vi-VN')}₫`
+                  : `Giảm ${v.discountValue}%`,
+              description: v.minRentalDays
+                ? `Áp dụng từ ${v.minRentalDays} ngày`
+                : 'Voucher Swiftera',
+              kind: v.discountType === 'FIXED_AMOUNT' ? 'fixed' : 'percent',
+              value: v.discountValue,
+            };
+            updateLineVoucher(editingLine.lineId, rv);
+          }}
+          onClear={() => {
+            updateLineVoucher(editingLine.lineId, null);
+          }}
         />
       )}
     </div>
