@@ -3,8 +3,16 @@
 /**
  * ConfirmedWorkflow — Trạng thái PREPARING
  *
- * Staff đến hub lấy đúng thiết bị theo danh sách, chụp ảnh tình trạng sản phẩm
- * trước khi giao (CHECKOUT phase), tick xác nhận, rồi bấm "Bắt đầu giao hàng".
+ * DELIVERY WORKFLOW - STEP 2/4
+ *
+ * Staff đã xác nhận nhận đơn từ trạng thái PAID.
+ * Bây giờ staff đến hub/kho để:
+ * 1. Lấy đúng thiết bị theo danh sách (kiểm tra serial numbers)
+ * 2. Chụp ảnh CHECKOUT của từng thiết bị (bằng chứng nó ở tình trạng tốt trước khi giao)
+ * 3. Chuẩn bị bao bì/vận chuyển
+ *
+ * Sau khi xác nhận, staff bấm "Bắt đầu giao hàng" → DELIVERING
+ * API: updateOrderStatus(orderId, 'DELIVERING')
  */
 
 import React, { useState } from 'react';

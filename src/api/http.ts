@@ -97,9 +97,7 @@ class Http {
           let shouldRefresh = false;
 
           if (errorData?.errors && Array.isArray(errorData.errors)) {
-            shouldRefresh = errorData.errors.some(
-              (err) => err.code === 1005,
-            );
+            shouldRefresh = errorData.errors.some((err) => err.code === 1005);
           } else if (errorData?.code === 1005) {
             shouldRefresh = true;
           }
@@ -113,9 +111,11 @@ class Http {
                   if (newAccessToken) {
                     console.log('✅ Token refresh successful');
                     storageService.setAccessToken(newAccessToken);
-
+                    // Sync to localStorage so fetch-based apiService also picks it up
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('accessToken', newAccessToken);
+                    }
                     dispatchTokenRefreshedEvent(newAccessToken);
-
                     return newAccessToken;
                   }
                   return Promise.reject(

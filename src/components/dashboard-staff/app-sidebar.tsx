@@ -120,6 +120,8 @@ const SECONDARY_ITEMS = [
   { title: 'Cài đặt', url: '#', icon: Settings },
 ];
 
+const DEFAULT_ORDERS_URL = '/staff-dashboard/orders?status=PAID,PENDING_PICKUP';
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -140,6 +142,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isOrdersActive =
     pathname === '/staff-dashboard/orders' ||
     pathname.startsWith('/staff-dashboard/orders/');
+  const isOrdersOverviewActive =
+    isOrdersActive &&
+    (!currentStatus || currentStatus === 'PAID,PENDING_PICKUP');
 
   // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
@@ -225,13 +230,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               render={<SidebarMenuItem />}
             >
               <SidebarMenuButton
-                render={<Link href="/staff-dashboard/orders" />}
-                isActive={isOrdersActive && !currentStatus}
+                render={<Link href={DEFAULT_ORDERS_URL} />}
+                isActive={isOrdersOverviewActive}
                 tooltip="Đơn hàng"
                 className={cn(
                   'gap-3 transition-colors',
-                  isOrdersActive &&
-                    !currentStatus &&
+                  isOrdersOverviewActive &&
                     'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
                 )}
               >

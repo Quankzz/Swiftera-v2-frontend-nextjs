@@ -3,8 +3,17 @@
 /**
  * PendingWorkflow — Trạng thái PAID
  *
- * Staff xem thông tin đơn hàng, danh sách sản phẩm cần chuẩn bị,
- * tick xác nhận và nhấn "Nhận đơn → Chuẩn bị hàng" để chuyển sang PREPARING.
+ * DELIVERY WORKFLOW - STEP 1/4
+ *
+ * Đơn hàng đã được thanh toán và được phân công cho shipper (staff).
+ * Staff xem kỹ thông tin đơn hàng:
+ * - Thông tin khách hàng
+ * - Danh sách sản phẩm cần chuẩn bị
+ * - Thời hạn thuê
+ * - Yêu cầu đặc biệt từ khách
+ *
+ * Sau khi xác nhận, staff bấm "Nhận đơn & Chuẩn bị hàng" → PREPARING
+ * API: updateOrderStatus(orderId, 'PREPARING')
  */
 
 import React, { useState } from 'react';

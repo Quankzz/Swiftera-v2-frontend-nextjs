@@ -51,7 +51,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }));
 
 export function initAuthStore() {
-  registerTokenAccessors(() => useAuthStore.getState().accessToken);
+  registerTokenAccessors(
+    () => useAuthStore.getState().accessToken,
+    (token, user) =>
+      useAuthStore.getState().setAuth(token, user as UserSecuredResponse),
+    () => useAuthStore.getState().clearAuth(),
+  );
 }
 
 export async function restoreSession(): Promise<void> {

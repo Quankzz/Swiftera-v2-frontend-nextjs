@@ -20,15 +20,18 @@ import {
 import { cn } from '@/lib/utils';
 import { STATUS_CFG } from '@/lib/order-status';
 import { fmt, fmtDateShort } from '@/lib/formatters';
-import { getStaffActionOrders } from '@/api/staff-orders';
+import { getStaffOrders } from '@/api/staff-orders';
 import { useAuthStore } from '@/stores/auth-store';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-// All active workflow statuses staff needs to see:
-//   Delivery:  PAID → PREPARING → DELIVERING → DELIVERED
-//   Recovery:  PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED
+// Default landing view for "Đơn hàng": show the two queues that require staff
+// confirmation right now.
+const DEFAULT_QUEUE_STATUSES: OrderStatus[] = ['PAID', 'PENDING_PICKUP'];
+
+// Full staff workflow statuses must remain available so the shipper can re-open
+// an in-progress order after leaving the page by mistake.
 const ALL_STATUSES: OrderStatus[] = [
   'PAID',
   'PREPARING',
@@ -82,7 +85,7 @@ function OrdersPageInner() {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const orders = await getStaffActionOrders(staffId);
+        const orders = await getStaffOrders(staffId);
         if (cancelled) return;
         console.log('[OrdersPage] orders loaded:', orders.length);
         setAllOrders(orders);
@@ -103,21 +106,28 @@ function OrdersPageInner() {
     };
   }, [staffId, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 1. Logic lọc NHIỀU trạng thái (Multi-select)
+  // Multi-select filter across the full workflow. If the route has no status,
+  // fall back to the default confirmation queues (PAID + PENDING_PICKUP).
   const activeStatuses = useMemo<OrderStatus[]>(() => {
     const s = searchParams.get('status');
-    if (!s) return [];
-    return s
+    if (!s) return DEFAULT_QUEUE_STATUSES;
+
+    const parsed = s
       .split(',')
       .filter((val) =>
         ALL_STATUSES.includes(val as OrderStatus),
       ) as OrderStatus[];
+
+    return parsed.length > 0 ? parsed : DEFAULT_QUEUE_STATUSES;
   }, [searchParams]);
 
   const toggleStatusFilter = useCallback(
     (status: OrderStatus | 'ALL') => {
       if (status === 'ALL') {
-        router.replace(`/staff-dashboard/orders`, { scroll: false });
+        router.replace(
+          `/staff-dashboard/orders?status=${DEFAULT_QUEUE_STATUSES.join(',')}`,
+          { scroll: false },
+        );
         return;
       }
 
@@ -129,7 +139,10 @@ function OrdersPageInner() {
       }
 
       if (newStatuses.length === 0) {
-        router.replace(`/staff-dashboard/orders`, { scroll: false });
+        router.replace(
+          `/staff-dashboard/orders?status=${DEFAULT_QUEUE_STATUSES.join(',')}`,
+          { scroll: false },
+        );
       } else {
         router.replace(
           `/staff-dashboard/orders?status=${newStatuses.join(',')}`,
@@ -305,7 +318,10 @@ function OrdersPageInner() {
                   onClick={() => toggleStatusFilter('ALL')}
                   className={cn(
                     'px-4 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm',
-                    activeStatuses.length === 0
+                    activeStatuses.length === DEFAULT_QUEUE_STATUSES.length &&
+                      DEFAULT_QUEUE_STATUSES.every((status) =>
+                        activeStatuses.includes(status),
+                      )
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
                   )}

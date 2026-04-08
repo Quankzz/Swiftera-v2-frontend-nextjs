@@ -55,6 +55,15 @@ export default function OrderDetailPage({
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pickupInspectionSaved, setPickupInspectionSaved] =
+    useState<boolean>(false);
+
+  useEffect(() => {
+    if (order?.status !== 'PICKED_UP') {
+      setPickupInspectionSaved(false);
+    }
+  }, [order?.status]);
 
   useEffect(() => {
     if (!user?.userId) {
@@ -136,6 +145,7 @@ export default function OrderDetailPage({
     async (newStatus: OrderStatus, extra?: Partial<DashboardOrder>) => {
       if (!order) return;
       setStatusLoading(true);
+      setActionError(null);
       try {
         let updated: DashboardOrder | null = null;
         if (newStatus === 'DELIVERED') {
@@ -165,8 +175,10 @@ export default function OrderDetailPage({
             prev ? { ...prev, status: newStatus, ...extra } : prev,
           );
         }
-      } catch {
-        // Keep current state on error; could show a toast here
+      } catch (err) {
+        setActionError(
+          err instanceof Error ? err.message : 'Không thể cập nhật trạng thái',
+        );
       } finally {
         setStatusLoading(false);
       }
@@ -177,6 +189,7 @@ export default function OrderDetailPage({
   const handleDepositRefund = useCallback(async () => {
     if (!order) return;
     setStatusLoading(true);
+    setActionError(null);
     try {
       const updated = await setPenalty(order.rental_order_id, {
         penaltyTotal: order.total_penalty_amount ?? 0,
@@ -186,8 +199,12 @@ export default function OrderDetailPage({
           ? { ...(updated ?? prev), deposit_refund_status: 'REFUNDED' }
           : prev,
       );
-    } catch {
-      // no-op
+    } catch (err) {
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Không thể xác nhận hoàn tiền/chi phí',
+      );
     } finally {
       setStatusLoading(false);
     }
@@ -198,36 +215,46 @@ export default function OrderDetailPage({
    * 1. setPenalty with the final penalty total from PickedUpWorkflow
    * 2. updateOrderStatus('COMPLETED')
    */
-  const handleInspectionComplete = useCallback(
-    async (penaltyTotal: number) => {
-      if (!order) return;
-      setStatusLoading(true);
-      try {
-        await setPenalty(order.rental_order_id, { penaltyTotal });
-        const updated = await updateOrderStatus(
-          order.rental_order_id,
-          'COMPLETED',
-        );
-        setOrder(
-          updated
-            ? { ...updated, total_penalty_amount: penaltyTotal }
-            : (prev) =>
-                prev
-                  ? {
-                      ...prev,
-                      status: 'COMPLETED',
-                      total_penalty_amount: penaltyTotal,
-                    }
-                  : prev,
-        );
-      } catch {
-        // no-op
-      } finally {
-        setStatusLoading(false);
+  const handleSavePickupInspection = useCallback(async () => {
+    if (!order) return;
+    setStatusLoading(true);
+    setActionError(null);
+    try {
+      await setPenalty(order.rental_order_id, {
+        penaltyTotal: order.total_penalty_amount ?? 0,
+      });
+      setPickupInspectionSaved(true);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : 'Không thể lưu dữ liệu kiểm chứng',
+      );
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [order]);
+
+  const handleFinalizeCompleted = useCallback(async () => {
+    if (!order) return;
+    setStatusLoading(true);
+    setActionError(null);
+    try {
+      const updated = await updateOrderStatus(
+        order.rental_order_id,
+        'COMPLETED',
+      );
+      if (updated) {
+        setOrder(updated);
+      } else {
+        setOrder((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
       }
-    },
-    [order],
-  );
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : 'Không thể hoàn tất đơn hàng',
+      );
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [order]);
 
   if (pageLoading) {
     return (
@@ -355,8 +382,8 @@ export default function OrderDetailPage({
           </div>
         </div>
 
-        {/* Workflow stepper — full width */}
-        <WorkflowStepper status={order.status} staffRole={staffRole} />
+        {/* Workflow stepper — only show the flow matching current status */}
+        <WorkflowStepper status={order.status} />
 
         {/* Main content grid */}
         <div
@@ -434,6 +461,11 @@ export default function OrderDetailPage({
 
           {/* LEFT column: Workflow + full details */}
           <div className="flex flex-col gap-4 lg:order-1">
+            {actionError && (
+              <div className="rounded-xl border border-destructive/25 bg-destructive/8 px-4 py-3 text-sm text-destructive font-medium">
+                {actionError}
+              </div>
+            )}
             {/* Status-specific workflow panel */}
             {/* ── Delivery staff workflows ─── */}
             {(staffRole === 'delivery' ||
@@ -472,7 +504,11 @@ export default function OrderDetailPage({
             )}
 
             {order.status === 'DELIVERED' && (
-              <DeliveredWorkflow order={order} />
+              <DeliveredWorkflow
+                order={order}
+                loading={statusLoading}
+                onConfirmHandover={() => handleStatusChange('IN_USE')}
+              />
             )}
 
             {/* ── Pickup staff workflows ─── */}
@@ -511,8 +547,15 @@ export default function OrderDetailPage({
             {order.status === 'PICKED_UP' && (
               <PickedUpWorkflow
                 order={order}
-                onComplete={() => handleInspectionComplete(0)}
+                onSaveInspection={handleSavePickupInspection}
                 loading={statusLoading}
+              />
+            )}
+
+            {order.status === 'PICKED_UP' && pickupInspectionSaved && (
+              <CompletedWorkflow
+                order={order}
+                onDepositRefund={handleFinalizeCompleted}
               />
             )}
 

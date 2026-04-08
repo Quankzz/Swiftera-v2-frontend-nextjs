@@ -3,8 +3,23 @@
 /**
  * ReturningWorkflow — Trạng thái PICKING_UP
  *
- * Staff đang trên đường đến lấy thiết bị từ khách hàng. Hiển thị thông tin liên
- * hệ, GPS status, nút điều hướng, và nút "Đã lấy được hàng" → recordPickup → PICKED_UP.
+ * RETURN WORKFLOW - STEP 2/4
+ *
+ * Sau khi khách yêu cầu trả hàng, staff đã xác nhận trong PENDING_PICKUP.
+ * Bây giờ staff đang trên đường đến khách để lấy thiết bị trả về.
+ *
+ * Quy trình:
+ * 1. Gọi điện cho khách liên hệ
+ * 2. Điều hướng tới địa chỉ khách (Google Maps)
+ * 3. Theo dõi GPS real-time (tương tự Grab)
+ * 4. Tại điểm lấy hàng:
+ *    - Quét QR code hoặc xác nhận danh tính khách
+ *    - Kiểm tra nhận đầy đủ thiết bị
+ *    - Xác nhận nhận hàng trả
+ * 5. Bấm "Đã lấy được hàng" → recordPickup(lat/lng) → PICKED_UP
+ *
+ * API: recordPickup(orderId, {pickedUpLatitude, pickedUpLongitude})
+ * Lưu ý: pickedUpLatitude/pickedUpLongitude lấy từ GPS hiện tại của staff
  */
 
 import React, { useState } from 'react';

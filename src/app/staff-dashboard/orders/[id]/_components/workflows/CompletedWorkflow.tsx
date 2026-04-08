@@ -3,11 +3,23 @@
 /**
  * CompletedWorkflow — Trạng thái COMPLETED
  *
- * Đơn hàng hoàn thành. Hiển thị:
- * - Tóm tắt tài chính (phí thuê, cọc, phạt, hoàn cọc)
- * - Hình thức xác nhận thanh toán (chuyển khoản / tiền mặt)
- * - Nút "Xác nhận hoàn tiền cọc" → gọi handleDepositRefund
- * - Trạng thái đã hoàn tiền nếu deposit_refund_status === 'REFUNDED'
+ * RETURN WORKFLOW - STEP 4/4 (END OF RETURN STAFF WORKFLOW)
+ *
+ * Đơn hàng hoàn thành toàn bộ quy trình thu hồi và kiểm tra.
+ * Hiển thị tóm tắt tài chính:
+ * - Phí thuê (đã thu từ khách)
+ * - Tiền cọc (đang giữ)
+ * - Phí phạt hư hỏng (nếu có)
+ * - Tiền hoàn cọc cho khách (= cọc - phạt)
+ *
+ * Quy trình hoàn tất (FINAL STEP):
+ * 1. Staff xác nhận hình thức hoàn cọc: Chuyển khoản hoặc Tiền mặt
+ * 2. Bấm "Xác nhận đã hoàn cọc" → gọi handleDepositRefund()
+ *    - Gọi setPenalty() để ghi nhận phí phạt cuối cùng
+ *    - Cập nhật trạng thái deposit_refund_status → REFUNDED
+ * 3. Đơn hàng được đánh dấu hoàn toàn
+ *
+ * Lưu ý: Hệ thống tự động tính toán hoàn tiền = Tiền cọc - Phí phạt
  */
 
 import React, { useState } from 'react';
@@ -43,6 +55,7 @@ export function CompletedWorkflow({
   const [refundLoading, setRefundLoading] = useState(false);
 
   const isRefunded = order.deposit_refund_status === 'REFUNDED';
+  const isFinalizingFromPickedUp = order.status === 'PICKED_UP';
   const penaltyTotal = order.total_penalty_amount ?? 0;
   const netRefund = Math.max(0, order.total_deposit - penaltyTotal);
   const hasPenalty = penaltyTotal > 0;
@@ -61,14 +74,18 @@ export function CompletedWorkflow({
       <WorkflowBanner
         icon={isRefunded ? Award : CheckCircle2}
         title={
-          isRefunded
-            ? 'Đơn hàng đã tất toán hoàn toàn'
-            : 'Đơn hàng hoàn thành — Xác nhận hoàn cọc'
+          isFinalizingFromPickedUp
+            ? 'Xác nhận hoàn tất thu hồi đơn hàng'
+            : isRefunded
+              ? 'Đơn hàng đã tất toán hoàn toàn'
+              : 'Đơn hàng hoàn thành — Xác nhận hoàn cọc'
         }
         desc={
-          isRefunded
-            ? 'Tất cả thủ tục đã hoàn tất. Cảm ơn bạn đã xử lý đơn hàng này!'
-            : 'Kiểm tra thông tin tài chính bên dưới, chọn hình thức hoàn cọc và xác nhận.'
+          isFinalizingFromPickedUp
+            ? 'Hệ thống đã có dữ liệu phạt/hoàn tiền. Chọn hình thức thanh toán và xác nhận để chuyển đơn sang COMPLETED.'
+            : isRefunded
+              ? 'Tất cả thủ tục đã hoàn tất. Cảm ơn bạn đã xử lý đơn hàng này!'
+              : 'Kiểm tra thông tin tài chính bên dưới, chọn hình thức hoàn cọc và xác nhận.'
         }
         variant={isRefunded ? 'success' : 'primary'}
       />
@@ -140,7 +157,7 @@ export function CompletedWorkflow({
       </div>
 
       {/* ── Payment Method + Refund Action (only if not yet refunded) ── */}
-      {!isRefunded && netRefund > 0 && (
+      {!isRefunded && (netRefund > 0 || isFinalizingFromPickedUp) && (
         <>
           {/* Payment method selector */}
           <div className="rounded-2xl border border-border bg-card p-4">
@@ -235,7 +252,7 @@ export function CompletedWorkflow({
               <div className="mt-3 rounded-xl bg-muted/40 px-4 py-3">
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   💳 Yêu cầu khách hàng cung cấp thông tin tài khoản ngân hàng
-                  để chuyển khoản số tiền{' '}
+                  để xử lý thanh toán số tiền{' '}
                   <strong className="text-success font-bold tabular-nums">
                     {fmt(netRefund)}
                   </strong>
@@ -245,7 +262,7 @@ export function CompletedWorkflow({
             {paymentMethod === 'CASH' && (
               <div className="mt-3 rounded-xl bg-muted/40 px-4 py-3">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  💵 Trả trực tiếp{' '}
+                  💵 Thanh toán trực tiếp{' '}
                   <strong className="text-success font-bold tabular-nums">
                     {fmt(netRefund)}
                   </strong>{' '}
@@ -267,8 +284,9 @@ export function CompletedWorkflow({
             ) : (
               <CheckCircle2 className="size-5" />
             )}
-            Xác nhận đã hoàn cọc {fmt(netRefund)} (
-            {paymentMethod === 'TRANSFER' ? 'Chuyển khoản' : 'Tiền mặt'})
+            {isFinalizingFromPickedUp
+              ? `Xác nhận hoàn tất quy trình (${paymentMethod === 'TRANSFER' ? 'Chuyển khoản' : 'Tiền mặt'})`
+              : `Xác nhận đã hoàn cọc ${fmt(netRefund)} (${paymentMethod === 'TRANSFER' ? 'Chuyển khoản' : 'Tiền mặt'})`}
           </Button>
         </>
       )}

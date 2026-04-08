@@ -3,10 +3,18 @@
 /**
  * DeliveredWorkflow — Trạng thái DELIVERED
  *
- * Staff đã giao hàng thành công. Hiển thị xác nhận giao hàng, cho phép
- * chụp ảnh bàn giao làm bằng chứng (local state), và giải thích bước tiếp theo:
- * khách nhấn "Đã nhận hàng" → đơn chuyển sang IN_USE (không hiện ở dashboard staff).
- * Khi khách nhấn "Trả hàng" → PENDING_PICKUP → staff bắt đầu workflow thu hồi.
+ * DELIVERY WORKFLOW - STEP 4/4 (END OF DELIVERY STAFF WORKFLOW)
+ *
+ * Staff đã giao hàng thành công cho khách. Bây giờ chờ khách xác nhận trên ứng dụng.
+ *
+ * Quy trình tiếp theo (diễn ra ở phía KHÁCH, KHÔNG hiển thị ở dashboard staff):
+ * 1. Khách xác nhận đã nhận được hàng → Đơn chuyển sang IN_USE (Đang thuê)
+ * 2. Khách sử dụng sản phẩm trong thời hạn thuê
+ * 3. Khi hết hạn hoặc khách muốn trả sớm → Khách bấm "Trả hàng"
+ *    → Đơn chuyển sang PENDING_PICKUP (Staff sẽ thấy trong mục "Thu hồi")
+ *
+ * Lưu ý: Staff có thể chụp ảnh bàn giao để làm bằng chứng giao hàng thành công
+ * (local state, không gửi lên server).
  */
 
 import React, { useState } from 'react';
@@ -20,7 +28,9 @@ import {
   Phone,
   Calendar,
   Hash,
+  Loader2,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { WorkflowBanner } from '../WorkflowBanner';
 import { Section } from '../Section';
 import { InfoRow } from '../InfoRow';
@@ -28,8 +38,17 @@ import { CameraCapture } from '../CameraCapture';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { fmtDate } from '../utils';
 
-export function DeliveredWorkflow({ order }: { order: DashboardOrder }) {
+export function DeliveredWorkflow({
+  order,
+  onConfirmHandover,
+  loading,
+}: {
+  order: DashboardOrder;
+  onConfirmHandover: () => void;
+  loading: boolean;
+}) {
   const [handoverPhotos, setHandoverPhotos] = useState<string[]>([]);
+  const [checked, setChecked] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -66,6 +85,33 @@ export function DeliveredWorkflow({ order }: { order: DashboardOrder }) {
           </p>
         )}
       </Section>
+
+      <label className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 cursor-pointer hover:bg-accent/40 transition-colors select-none">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => setChecked(e.target.checked)}
+          className="mt-0.5 size-4 shrink-0 rounded accent-teal-600"
+        />
+        <span className="text-sm text-muted-foreground leading-relaxed">
+          Tôi đã bàn giao xong và lưu ảnh bằng chứng. Xác nhận chuyển đơn sang
+          trạng thái Đang thuê (IN_USE).
+        </span>
+      </label>
+
+      <Button
+        onClick={onConfirmHandover}
+        disabled={loading || !checked}
+        size="lg"
+        className="w-full h-14 text-base font-bold gap-2 rounded-2xl bg-success hover:bg-success/90 text-white disabled:opacity-50"
+      >
+        {loading ? (
+          <Loader2 className="size-5 animate-spin" />
+        ) : (
+          <CheckCircle2 className="size-5" />
+        )}
+        Xác nhận bàn giao xong → chuyển IN_USE
+      </Button>
 
       {/* ── Next Step Info ── */}
       <div className="rounded-2xl border border-info/30 bg-info/5 p-4 flex items-start gap-3">

@@ -142,14 +142,25 @@ export function normalizeError(error: unknown): AppError {
 // ─────────────────────────────────────────────────────────────────────────────
 
 let _getToken: (() => string | null) | null = null;
+let _setToken: ((token: string, user: unknown) => void) | null = null;
+let _clearAuth: (() => void) | null = null;
 
 /**
- * Register Zustand store's token accessor so apiService reads the in-memory
- * token instead of localStorage.
+ * Register Zustand store accessors so apiService can:
+ *  - read the current in-memory token (getToken)
+ *  - update the store after a silent refresh (setToken)
+ *  - clear auth on unrecoverable 401 (clearAuth)
+ *
  * Call this during app bootstrap (e.g. inside auth-store.ts initAuthStore).
  */
-export function registerTokenAccessors(getToken: () => string | null): void {
+export function registerTokenAccessors(
+  getToken: () => string | null,
+  setToken?: (token: string, user: unknown) => void,
+  clearAuth?: () => void,
+): void {
   _getToken = getToken;
+  _setToken = setToken ?? null;
+  _clearAuth = clearAuth ?? null;
 }
 
 function getAccessToken(): string | null {
@@ -162,6 +173,79 @@ function getAccessToken(): string | null {
     return localStorage.getItem('accessToken');
   }
   return null;
+}
+
+// ─── Silent token refresh ─────────────────────────────────────────────────────
+// Singleton promise: if multiple concurrent requests get a 401 simultaneously,
+// only one refresh call is made and all waiters share the result.
+
+let _refreshPromise: Promise<{ token: string; user?: unknown } | null> | null =
+  null;
+
+/**
+ * Silently refresh the access token via the httpOnly cookie.
+ * Returns both the new token AND the updated user (if available).
+ *
+ * Multiple concurrent 401s will share a single refresh request (singleton pattern).
+ * All waiters get the same result, then each retry their original request.
+ */
+async function silentRefresh(): Promise<{
+  token: string;
+  user?: unknown;
+} | null> {
+  if (_refreshPromise) return _refreshPromise;
+
+  _refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      });
+
+      if (!res.ok) {
+        console.warn('[silentRefresh] refresh endpoint returned', res.status);
+        return null;
+      }
+
+      const body: { data?: { accessToken?: string; userSecured?: unknown } } =
+        await res.json();
+      const newToken = body?.data?.accessToken ?? null;
+
+      if (!newToken) {
+        console.warn('[silentRefresh] no accessToken in response');
+        return null;
+      }
+
+      // Always update localStorage immediately so concurrent requests can read new token
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', newToken);
+        console.log(
+          '[silentRefresh] token refreshed, length:',
+          newToken.length,
+        );
+      }
+
+      // Also sync to Zustand store if available
+      const user = body.data?.userSecured;
+      if (_setToken && user) {
+        _setToken(newToken, user);
+      }
+
+      return { token: newToken, user };
+    } catch (error) {
+      console.error(
+        '[silentRefresh] failed:',
+        error instanceof Error ? error.message : error,
+      );
+      return null;
+    } finally {
+      _refreshPromise = null;
+    }
+  })();
+
+  return _refreshPromise;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -231,11 +315,20 @@ function buildQueryString(
  * Core fetch wrapper — tất cả method đều đi qua đây.
  *
  * @returns Parsed JSON body (unwrapped `data` nếu BE trả wrapper chuẩn).
+ *
+ * 401 handling:
+ *  1. If response is 401 and not a retry, attempt silent token refresh.
+ *  2. If refresh succeeds, retry the original request exactly ONCE with new token.
+ *  3. If refresh fails, clear auth and throw 401 error.
+ *
+ * Token sync: After refresh succeeds, we fetch the new token before retry
+ * to ensure the in-memory token is synchronized with backend state.
  */
 async function request<T>(
   method: string,
   endpoint: string,
   options: ApiRequestOptions = {},
+  _isRetry = false,
 ): Promise<T> {
   const { params, body, headers: extraHeaders, signal, skipAuth } = options;
 
@@ -249,7 +342,6 @@ async function request<T>(
   // Auto-attach Authorization header
   if (!skipAuth) {
     const token = getAccessToken();
-
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -283,6 +375,28 @@ async function request<T>(
     }
 
     return json as T;
+  }
+
+  // ── 401 handling: attempt silent token refresh then retry once ──────────────
+  if (res.status === 401 && !skipAuth && !_isRetry) {
+    console.log('[request] got 401, attempting silent refresh...');
+
+    // Attempt refresh: this is a singleton promise, so concurrent 401s
+    // will all wait for the same refresh attempt
+    const refreshResult = await silentRefresh();
+
+    if (refreshResult?.token) {
+      console.log('[request] refresh succeeded, retrying with new token');
+      // CRITICAL: After refresh, retry the original request
+      // The new token is now in localStorage and Zustand, so getAccessToken()
+      // will return the fresh token in the next request() call
+      return request<T>(method, endpoint, options, true);
+    }
+
+    // Refresh failed — clear auth and throw so UI redirects to login
+    console.warn('[request] refresh failed, clearing auth');
+    _clearAuth?.();
+    throw await mapApiError(res);
   }
 
   // Error response — map thành AppError

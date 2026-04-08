@@ -3,8 +3,25 @@
 /**
  * PickedUpWorkflow — Trạng thái PICKED_UP
  *
- * Staff đã lấy thiết bị về hub. Tại đây, staff chụp ảnh tình trạng từng thiết bị
- * (CHECKIN phase), viết ghi chú, rồi bấm "Xác nhận hoàn thành kiểm tra" → COMPLETED.
+ * RETURN WORKFLOW - STEP 3/4
+ *
+ * Staff đã lấy thiết bị trả về từ khách và đã về tới hub/điểm kiểm tra.
+ * Bây giờ staff cần kiểm tra tình trạng của từng thiết bị:
+ *
+ * 1. Chụp ảnh CHECKIN (tình trạng thiết bị khi trả về)
+ * 2. Ghi nhận tình trạng: Tốt / Khá / Trung bình / Kém/Hư hỏng
+ * 3. Nếu hư hỏng:
+ *    - Chụp ảnh chi tiết vị trí hư hỏng
+ *    - Ghi chú chi tiết: vết trầy, vỡ, thiếu phụ kiện, v.v.
+ *    - Tính toán phí phạt (sẽ được xác định cụ thể ở bước COMPLETED)
+ * 4. Kiểm tra lại thiết bị trước khi bàn giao với khách (chụp ảnh niêm phong)
+ *
+ * Sau khi hoàn tất kiểm tra:
+ * - Bấm "Xác nhận hoàn thành kiểm tra" → COMPLETED
+ * - Lúc này staff sẽ thực hiện tính toán hoàn tiền và xác nhận hình thức thanh toán
+ *
+ * API: updateOrderStatus(orderId, 'COMPLETED')
+ * Sau đó: setPenalty(orderId, {penaltyTotal}) để ghi nhận phí phạt cuối cùng
  */
 
 import React, { useState } from 'react';
@@ -63,11 +80,11 @@ const CONDITION_OPTIONS: {
 
 export function PickedUpWorkflow({
   order,
-  onComplete,
+  onSaveInspection,
   loading,
 }: {
   order: DashboardOrder;
-  onComplete: () => void;
+  onSaveInspection: () => void;
   loading: boolean;
 }) {
   const [itemConditions, setItemConditions] = useState<
@@ -274,7 +291,7 @@ export function PickedUpWorkflow({
 
       {/* ── CTA ── */}
       <Button
-        onClick={onComplete}
+        onClick={onSaveInspection}
         disabled={loading || !checkedReady}
         size="lg"
         className="w-full h-14 text-base font-bold gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
@@ -284,7 +301,7 @@ export function PickedUpWorkflow({
         ) : (
           <ClipboardList className="size-5" />
         )}
-        Xác nhận hoàn thành kiểm tra →
+        Lưu dữ liệu kiểm chứng và chuyển bước thanh toán/phạt →
       </Button>
     </div>
   );

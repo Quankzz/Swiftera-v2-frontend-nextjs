@@ -1,5 +1,32 @@
 'use client';
 
+/**
+ * ActiveWorkflow — Trạng thái PENDING_PICKUP, IN_USE, hoặc OVERDUE
+ *
+ * RETURN WORKFLOW - STEP 1/4
+ *
+ * Hiển thị 3 tình huống khác nhau:
+ *
+ * 1. PENDING_PICKUP (Chờ thu hồi)
+ *    - Khách đã yêu cầu trả hàng trên ứng dụng
+ *    - Staff nhấn "Xác nhận & Bắt đầu thu hồi" → PICKING_UP
+ *    - API: updateOrderStatus(orderId, 'PICKING_UP')
+ *
+ * 2. IN_USE (Đang thuê)
+ *    - Khách đang sử dụng sản phẩm
+ *    - Staff không cần hành động gì
+ *    - Chỉ hiển thị thông tin cho tham khảo
+ *    - Sẽ chuyển sang PENDING_PICKUP khi khách bấm "Trả hàng" trên ứng dụng
+ *
+ * 3. OVERDUE (Quá hạn)
+ *    - Khách đã vượt quá ngày hẹn trả
+ *    - Staff cần liên hệ ngay khách để sắp xếp thu hồi
+ *    - Nhấn "Xác nhận & Bắt đầu thu hồi" → PICKING_UP
+ *    - API: updateOrderStatus(orderId, 'PICKING_UP')
+ *
+ * Lưu ý: IN_USE không lại hiển thị một nút "Bắt đầu thu hồi". Staff sẽ thấy
+ * PENDING_PICKUP khi khách yêu cầu trả.
+ */
 import React, { useState } from 'react';
 import Image from 'next/image';
 import {

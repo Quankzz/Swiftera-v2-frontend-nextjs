@@ -3,9 +3,20 @@
 /**
  * DeliveringWorkflow — Trạng thái DELIVERING
  *
- * Staff đang trên đường giao hàng. Hiển thị thông tin liên hệ khách, nút gọi điện,
- * nút điều hướng bản đồ, trạng thái GPS, và nút "Xác nhận đã giao hàng thành công".
- * Khi nhấn confirm → gọi recordDelivery (lat/lng) → DELIVERED.
+ * DELIVERY WORKFLOW - STEP 3/4
+ *
+ * Staff đang trên đường giao hàng tới khách. Quy trình:
+ * 1. Liên hệ khách (nút gọi điện)
+ * 2. Điều hướng tới địa chỉ giao (Google Maps)
+ * 3. Theo dõi GPS real-time (tương tự Grab)
+ * 4. Tại điểm giao:
+ *    - Quét QR code hoặc nhập mã đơn từ phía khách
+ *    - Chụp ảnh sản phẩm trước khi bàn giao (để có bằng chứng tình trạng)
+ *    - Khách xác nhận nhận hàng
+ * 5. Bấm "Đã giao" → recordDelivery(lat/lng) → DELIVERED
+ *
+ * API: recordDelivery(orderId, {deliveredLatitude, deliveredLongitude})
+ * Lưu ý: deliveredLatitude/deliveredLongitude lấy từ GPS hiện tại của staff
  */
 
 import React, { useState } from 'react';
@@ -21,11 +32,14 @@ import {
   Camera,
   Navigation,
   Hash,
+  QrCode,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { WorkflowBanner } from '../WorkflowBanner';
 import { Section } from '../Section';
 import { InfoRow } from '../InfoRow';
+import { QrScanner } from '../QrScanner';
 import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { fmtDatetime } from '../utils';
@@ -46,6 +60,10 @@ export function DeliveringWorkflow({
   staffLocAt?: string;
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   const hasDeliveryCoords =
     order.delivery_latitude != null && order.delivery_longitude != null;
@@ -141,6 +159,79 @@ export function DeliveringWorkflow({
         </div>
       </Section>
 
+      {/* ── Verify customer/order by QR or code ── */}
+      <Section title="Đối chiếu khách nhận" icon={QrCode} defaultOpen>
+        {!verified ? (
+          <div className="space-y-3 pt-2">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Tại điểm giao, quét QR của khách hoặc nhập mã đơn để xác nhận giao
+              đúng người nhận.
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowScanner((v) => !v)}
+              >
+                <QrCode className="size-4 mr-2" />
+                {showScanner ? 'Ẩn QR Scanner' : 'Mở QR Scanner'}
+              </Button>
+            </div>
+
+            {showScanner && (
+              <div className="rounded-2xl border border-border bg-card p-3">
+                <QrScanner
+                  expectedCode={order.order_code}
+                  order={order}
+                  onSuccess={() => {
+                    setVerified(true);
+                    setVerifyError(null);
+                    setShowScanner(false);
+                  }}
+                  onCancel={() => setShowScanner(false)}
+                />
+              </div>
+            )}
+
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+              <Input
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                placeholder="Hoặc nhập mã đơn khách cung cấp"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  const ok =
+                    manualCode.trim().toUpperCase() ===
+                    order.order_code.trim().toUpperCase();
+                  if (!ok) {
+                    setVerifyError('Mã đơn không khớp với đơn đang xử lý.');
+                    return;
+                  }
+                  setVerified(true);
+                  setVerifyError(null);
+                }}
+              >
+                Xác minh mã
+              </Button>
+            </div>
+
+            {verifyError && (
+              <p className="text-sm text-destructive font-medium">
+                {verifyError}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-success/30 bg-success/10 px-4 py-3 text-sm font-semibold text-success">
+            Đã xác minh đúng khách nhận qua QR/mã đơn.
+          </div>
+        )}
+      </Section>
+
       {/* ── Items Being Delivered ── */}
       <Section
         title={`Thiết bị đang giao (${order.items.length})`}
@@ -202,7 +293,7 @@ export function DeliveringWorkflow({
       {/* ── CTA ── */}
       <Button
         onClick={onConfirmDelivery}
-        disabled={loading || !confirmed}
+        disabled={loading || !confirmed || !verified}
         size="lg"
         className="w-full h-14 text-base font-bold gap-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white disabled:opacity-50"
       >
