@@ -56,7 +56,7 @@ export default function RentalOrdersPage() {
 
   // Load orders for stats (high page size, no filter)
   const { data: allData, isLoading: statsLoading } = useRentalOrdersQuery({
-    page: 0,
+    page: 1,
     size: 200,
   });
   const allOrders = allData?.content ?? [];

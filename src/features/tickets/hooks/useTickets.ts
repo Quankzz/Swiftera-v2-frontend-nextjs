@@ -11,11 +11,9 @@ import {
   getTicketById,
   getTickets,
   replyTicket,
-  updateTicketStatus,
 } from '../api/ticket.service';
 import type {
   ContactTicketResponse,
-  ContactTicketStatus,
   CreateTicketRequest,
   ReplyTicketRequest,
   TicketListParams,
@@ -88,22 +86,6 @@ export function useCloseTicket() {
   const queryClient = useQueryClient();
   return useMutation<ContactTicketResponse, Error, string>({
     mutationFn: (id) => closeTicket(id),
-    onSuccess: (data) => {
-      queryClient.setQueryData(ticketKeys.detail(data.contactTicketId), data);
-      queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });
-    },
-  });
-}
-
-/** API-106: Cập nhật trạng thái ticket (admin) */
-export function useUpdateTicketStatus() {
-  const queryClient = useQueryClient();
-  return useMutation<
-    ContactTicketResponse,
-    Error,
-    { id: string; status: ContactTicketStatus }
-  >({
-    mutationFn: ({ id, status }) => updateTicketStatus(id, { status }),
     onSuccess: (data) => {
       queryClient.setQueryData(ticketKeys.detail(data.contactTicketId), data);
       queryClient.invalidateQueries({ queryKey: ticketKeys.lists() });

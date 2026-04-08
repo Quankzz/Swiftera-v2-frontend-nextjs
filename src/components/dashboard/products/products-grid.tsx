@@ -55,7 +55,7 @@ export function ProductsGrid({
 
   // ── Fetch categories for filter dropdown ──
   const { data: categoriesData } = useCategoriesQuery({
-    page: 0,
+    page: 1,
     size: 100,
   });
   const categoryOptions = (categoriesData?.content ?? []).map((c) => ({

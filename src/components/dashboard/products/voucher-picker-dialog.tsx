@@ -260,7 +260,7 @@ export function VoucherPickerDialog({
   }, [open, onClose]);
 
   const { data, isLoading, isError } = useVouchersQuery({
-    page: 0,
+    page: 1,
     size: 200,
   });
   const allVouchers = useMemo(() => data?.content ?? [], [data]);

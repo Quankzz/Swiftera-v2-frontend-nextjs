@@ -65,7 +65,7 @@ function selectProducts(data: PaginatedProductsResponse): Product[] {
 // ─── Featured products: sorted by dailyPrice desc ─────────────────────────────
 
 const FEATURED_PARAMS = {
-  page: 0,
+  page: 1,
   size: 8,
   sort: 'dailyPrice,desc',
   filter: 'isActive:true',
@@ -87,7 +87,7 @@ export function useHomeFeaturedProductsQuery() {
 // ─── Budget products: sorted by dailyPrice asc ────────────────────────────────
 
 const BUDGET_PARAMS = {
-  page: 0,
+  page: 1,
   size: 8,
   sort: 'dailyPrice,asc',
   filter: 'isActive:true',

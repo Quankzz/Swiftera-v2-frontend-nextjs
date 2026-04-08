@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  MessageSquare,
-  Clock,
-  CircleDot,
-  MessageSquareReply,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+import { MessageSquare, CircleDot, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TicketListTable } from '@/features/tickets/components/TicketListTable';
 import { TicketDetailModal } from '@/features/tickets/components/TicketDetailModal';
@@ -87,16 +80,7 @@ export default function ContactTicketsPage() {
       </div>
 
       {/* Summary row */}
-      <div className='grid grid-cols-2 gap-3 sm:grid-cols-5'>
-        <SummaryCard
-          label='Mới'
-          status='OPEN'
-          icon={Clock}
-          colorCls='text-blue-600 dark:text-blue-400'
-          bgCls='bg-blue-50 dark:bg-blue-900/20'
-          borderCls='border-blue-100 dark:border-blue-500/20'
-          iconBgCls='bg-blue-100 dark:bg-blue-900/30'
-        />
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
         <SummaryCard
           label='Đang xử lý'
           status='IN_PROGRESS'
@@ -105,15 +89,6 @@ export default function ContactTicketsPage() {
           bgCls='bg-amber-50 dark:bg-amber-900/20'
           borderCls='border-amber-100 dark:border-amber-500/20'
           iconBgCls='bg-amber-100 dark:bg-amber-900/30'
-        />
-        <SummaryCard
-          label='Đã trả lời'
-          status='REPLIED'
-          icon={MessageSquareReply}
-          colorCls='text-indigo-600 dark:text-indigo-400'
-          bgCls='bg-indigo-50 dark:bg-indigo-900/20'
-          borderCls='border-indigo-100 dark:border-indigo-500/20'
-          iconBgCls='bg-indigo-100 dark:bg-indigo-900/30'
         />
         <SummaryCard
           label='Đã giải quyết'

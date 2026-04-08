@@ -92,7 +92,7 @@ export function VoucherPriceCalculator({
 
   // Fetch active vouchers — needed to find selectedVoucher details
   const { data: vouchersData } = useVouchersQuery({
-    page: 0,
+    page: 1,
     size: 200,
   });
   const vouchers = useMemo(() => vouchersData?.content ?? [], [vouchersData]);

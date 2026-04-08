@@ -19,6 +19,7 @@ import { useTickets } from '../hooks/useTickets';
 import { TICKET_STATUS_LABELS, TICKET_STATUS_STYLES } from '../types';
 import type { ContactTicketResponse, ContactTicketStatus } from '../types';
 import { cn } from '@/lib/utils';
+import { fmtBackendDate } from '@/lib/formatters';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status badge
@@ -45,9 +46,7 @@ function StatusBadge({ status }: { status: ContactTicketStatus }) {
 
 const FILTER_TABS: { label: string; value: ContactTicketStatus | 'ALL' }[] = [
   { label: 'Tất cả', value: 'ALL' },
-  { label: 'Mở', value: 'OPEN' },
   { label: 'Đang xử lý', value: 'IN_PROGRESS' },
-  { label: 'Đã phản hồi', value: 'REPLIED' },
   { label: 'Đã giải quyết', value: 'RESOLVED' },
   { label: 'Đã đóng', value: 'CLOSED' },
 ];
@@ -66,7 +65,7 @@ export function TicketListTable({ onView }: TicketListTableProps) {
   const [activeStatus, setActiveStatus] = useState<ContactTicketStatus | 'ALL'>(
     'ALL',
   );
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1); // backend one-indexed (page=1 là trang đầu)
 
   const { data, isLoading, isError } = useTickets({
     page,
@@ -79,10 +78,10 @@ export function TicketListTable({ onView }: TicketListTableProps) {
   const meta = data?.meta;
   const totalPages = meta?.totalPages ?? 0;
 
-  // Reset to page 0 when switching filters
+  // Reset về trang 1 khi đổi filter
   const handleStatusChange = (s: ContactTicketStatus | 'ALL') => {
     setActiveStatus(s);
-    setPage(0);
+    setPage(1);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -175,13 +174,13 @@ export function TicketListTable({ onView }: TicketListTableProps) {
       {totalPages > 1 && (
         <div className='flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-white/8'>
           <p className='text-xs text-gray-500 dark:text-gray-400'>
-            Trang {(meta?.currentPage ?? 0) + 1} / {totalPages}
+            Trang {page} / {totalPages}
             {meta && <> &middot; {meta.totalElements} ticket</>}
           </p>
           <div className='flex items-center gap-1'>
             <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
               className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed'
             >
               <ChevronLeft
@@ -190,8 +189,8 @@ export function TicketListTable({ onView }: TicketListTableProps) {
               />
             </button>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
               className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed'
             >
               <ChevronRight
@@ -218,11 +217,7 @@ function TicketRow({
   onView: (ticket: ContactTicketResponse) => void;
 }) {
   const shortId = ticket.contactTicketId.slice(0, 8).toUpperCase();
-  const date = new Date(ticket.createdAt).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+  const date = fmtBackendDate(ticket.createdAt);
 
   return (
     <tr className='border-b border-gray-50 dark:border-white/5 hover:bg-gray-50/60 dark:hover:bg-white/3 transition-colors'>

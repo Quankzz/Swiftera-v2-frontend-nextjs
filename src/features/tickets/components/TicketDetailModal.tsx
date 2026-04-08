@@ -30,11 +30,11 @@ import {
   useReplyTicket,
   useCloseTicket,
   useTicketDetail,
-  useUpdateTicketStatus,
 } from '../hooks/useTickets';
 import { TICKET_STATUS_LABELS, TICKET_STATUS_STYLES } from '../types';
 import type { ContactTicketResponse, ContactTicketStatus } from '../types';
 import { cn } from '@/lib/utils';
+import { fmtBackendDatetime } from '@/lib/formatters';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status badge
@@ -104,8 +104,6 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
 
   const { mutate: reply, isPending: replying } = useReplyTicket();
   const { mutate: close, isPending: closing } = useCloseTicket();
-  const { mutate: updateStatus, isPending: updatingStatus } =
-    useUpdateTicketStatus();
 
   // Reset reply text when the selected ticket changes (during render — avoids useEffect setState)
   const currentId = ticket?.contactTicketId;
@@ -187,11 +185,7 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
                 <InfoRow
                   icon={Calendar}
                   label='Ngày gửi'
-                  value={
-                    t
-                      ? new Date(t.createdAt).toLocaleString('vi-VN')
-                      : undefined
-                  }
+                  value={t ? fmtBackendDatetime(t.createdAt) : undefined}
                 />
               </div>
             </section>
@@ -243,7 +237,7 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
                 </p>
                 {t.repliedAt && (
                   <p className='mt-2 text-xs text-purple-500 dark:text-purple-400'>
-                    {new Date(t.repliedAt).toLocaleString('vi-VN')}
+                    {fmtBackendDatetime(t.repliedAt)}
                   </p>
                 )}
               </section>
@@ -257,45 +251,29 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
           <div className='space-y-2'>
             <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5'>
               <RefreshCw size={12} />
-              Cập nhật trạng thái
+              Trạng thái hiện tại
             </label>
             <div className='flex flex-wrap items-center gap-2'>
               {(
-                [
-                  'OPEN',
-                  'IN_PROGRESS',
-                  'REPLIED',
-                  'RESOLVED',
-                  'CLOSED',
-                ] as ContactTicketStatus[]
+                ['IN_PROGRESS', 'RESOLVED', 'CLOSED'] as ContactTicketStatus[]
               ).map((s) => {
                 const style = TICKET_STATUS_STYLES[s];
                 const isActive = t?.status === s;
                 return (
-                  <button
+                  <span
                     key={s}
-                    type='button'
-                    disabled={isActive || updatingStatus}
-                    onClick={() => {
-                      if (!t) return;
-                      updateStatus({ id: t.contactTicketId, status: s });
-                    }}
                     className={cn(
-                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all',
+                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border',
                       isActive
-                        ? `${style.badge} border-current opacity-100 ring-2 ring-offset-1 ring-current/30 cursor-default`
-                        : `${style.badge} border-transparent opacity-60 hover:opacity-100 hover:border-current disabled:cursor-not-allowed`,
+                        ? `${style.badge} border-current ring-2 ring-offset-1 ring-current/30`
+                        : `${style.badge} border-transparent opacity-40`,
                     )}
                   >
-                    {updatingStatus && isActive ? (
-                      <Loader2 size={10} className='animate-spin' />
-                    ) : (
-                      <span
-                        className={cn('w-1.5 h-1.5 rounded-full', style.dot)}
-                      />
-                    )}
+                    <span
+                      className={cn('w-1.5 h-1.5 rounded-full', style.dot)}
+                    />
                     {TICKET_STATUS_LABELS[s]}
-                  </button>
+                  </span>
                 );
               })}
             </div>
@@ -355,9 +333,7 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
               <CheckCircle2 size={15} className='text-gray-400' />
               <span>
                 Ticket đã đóng
-                {t?.closedAt
-                  ? ` · ${new Date(t.closedAt).toLocaleString('vi-VN')}`
-                  : ''}
+                {t?.closedAt ? ` · ${fmtBackendDatetime(t.closedAt)}` : ''}
               </span>
             </div>
           )}

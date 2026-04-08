@@ -73,7 +73,7 @@ export function useHeaderSearch() {
     queryKey: searchKeys.preview(debouncedQuery),
     queryFn: () =>
       getProducts({
-        page: 0,
+        page: 1,
         size: PREVIEW_SIZE,
         sort: 'createdAt,desc',
         filter: buildSearchFilter(debouncedQuery),

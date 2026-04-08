@@ -9,17 +9,11 @@ import type { PaginatedData } from '@/api/apiService';
 // Status enum
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ContactTicketStatus =
-  | 'OPEN'
-  | 'IN_PROGRESS'
-  | 'REPLIED'
-  | 'RESOLVED'
-  | 'CLOSED';
+// API chỉ có đúng 3 trạng thái (Module 16, API-100)
+export type ContactTicketStatus = 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 
 export const TICKET_STATUS_LABELS: Record<ContactTicketStatus, string> = {
-  OPEN: 'Mở',
   IN_PROGRESS: 'Đang xử lý',
-  REPLIED: 'Đã phản hồi',
   RESOLVED: 'Đã giải quyết',
   CLOSED: 'Đã đóng',
 };
@@ -28,20 +22,10 @@ export const TICKET_STATUS_STYLES: Record<
   ContactTicketStatus,
   { badge: string; dot: string }
 > = {
-  OPEN: {
-    badge:
-      'bg-theme-primary-start/10 text-theme-primary-start dark:bg-theme-primary-start/20 dark:text-theme-primary-start',
-    dot: 'bg-theme-primary-start',
-  },
   IN_PROGRESS: {
     badge:
       'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     dot: 'bg-amber-500',
-  },
-  REPLIED: {
-    badge:
-      'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    dot: 'bg-purple-500',
   },
   RESOLVED: {
     badge:
