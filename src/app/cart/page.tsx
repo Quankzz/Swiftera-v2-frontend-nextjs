@@ -16,6 +16,7 @@ import {
   CheckSquare,
   Square,
   Phone,
+  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +40,7 @@ import {
 } from '@/features/vouchers/hooks/use-customer-vouchers';
 import { toast } from 'sonner';
 import type { VoucherResponse } from '@/features/vouchers/types';
-import type { CartLineResponse } from '@/api/cart';
+import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
 import { useRouter } from 'next/navigation';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
@@ -69,6 +70,23 @@ function CartLineSkeleton() {
   );
 }
 
+/* ─── Tính discount từ CartLineVoucherItem ─────────────────────────────────── */
+
+function calcLineVoucherDiscount(
+  lineSubtotal: number,
+  vouchers: CartLineVoucherItem[],
+  code: string,
+): number {
+  const v = vouchers.find((x) => x.code === code);
+  if (!v) return 0;
+  if (v.discountType === 'PERCENTAGE') {
+    let d = Math.floor((lineSubtotal * v.discountValue) / 100);
+    if (v.maxDiscountAmount) d = Math.min(d, v.maxDiscountAmount);
+    return d;
+  }
+  return Math.min(v.discountValue, lineSubtotal);
+}
+
 /* ─── Cart line row ───────────────────────────────────────────────────────── */
 
 function CartLineRow({
@@ -80,6 +98,9 @@ function CartLineRow({
   onUpdateQty,
   isRemoving,
   isUpdating,
+  appliedVoucherCode,
+  voucherDiscount,
+  onOpenVoucher,
 }: {
   line: CartLineResponse;
   index: number;
@@ -89,6 +110,9 @@ function CartLineRow({
   onUpdateQty: (cartLineId: string, quantity: number) => void;
   isRemoving: boolean;
   isUpdating: boolean;
+  appliedVoucherCode: string | null;
+  voucherDiscount: number;
+  onOpenVoucher: (line: CartLineResponse) => void;
 }) {
   const days = line.rentalDurationDays;
   const qty = line.quantity;
@@ -162,7 +186,7 @@ function CartLineRow({
                   {line.productName}
                 </Link>
 
-                <div className='mt-2 flex flex-wrap gap-2'>
+                <div className='mt-2 flex flex-wrap items-center gap-2'>
                   <Badge
                     variant='outline'
                     className='rounded-lg border-rose-500/30 text-xs font-normal text-rose-700 dark:text-rose-300'
@@ -175,6 +199,22 @@ function CartLineRow({
                   >
                     {formatter.format(line.dailyPrice)}₫ / ngày
                   </Badge>
+
+                  {/* Màu sắc */}
+                  {line.colorName && (
+                    <Badge
+                      variant='outline'
+                      className='gap-1.5 rounded-lg border-border/60 text-xs font-normal text-foreground'
+                    >
+                      {line.colorCode && (
+                        <span
+                          className='inline-block size-2.5 shrink-0 rounded-full border border-border/60'
+                          style={{ backgroundColor: line.colorCode }}
+                        />
+                      )}
+                      {line.colorName}
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -194,45 +234,98 @@ function CartLineRow({
               </Button>
             </div>
 
-            {/* Quantity + Price */}
-            <div className='flex flex-col gap-4 border-t border-border/60 pt-3 sm:flex-row sm:items-center sm:justify-between'>
-              <div className='flex items-center gap-1 rounded-xl border border-input bg-muted/30 p-1 dark:bg-muted/20'>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  className='size-9 rounded-lg p-0'
-                  disabled={qty <= 1 || isMutating}
-                  onClick={() => onUpdateQty(line.cartLineId, qty - 1)}
-                >
-                  <Minus className='size-4' />
-                </Button>
-                <span
-                  className={`min-w-9 text-center text-sm font-bold tabular-nums ${isUpdating ? 'opacity-60' : ''}`}
-                >
-                  {qty}
-                </span>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  className='size-9 rounded-lg p-0'
-                  disabled={isMutating}
-                  onClick={() => onUpdateQty(line.cartLineId, qty + 1)}
-                >
-                  <Plus className='size-4' />
-                </Button>
-              </div>
+            {/* Quantity + Price + Voucher */}
+            <div className='flex flex-col gap-3 border-t border-border/60 pt-3'>
+              <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='flex items-center gap-1 rounded-xl border border-input bg-muted/30 p-1 dark:bg-muted/20'>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='size-9 rounded-lg p-0'
+                    disabled={qty <= 1 || isMutating}
+                    onClick={() => onUpdateQty(line.cartLineId, qty - 1)}
+                  >
+                    <Minus className='size-4' />
+                  </Button>
+                  <span
+                    className={`min-w-9 text-center text-sm font-bold tabular-nums ${isUpdating ? 'opacity-60' : ''}`}
+                  >
+                    {qty}
+                  </span>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='size-9 rounded-lg p-0'
+                    disabled={isMutating}
+                    onClick={() => onUpdateQty(line.cartLineId, qty + 1)}
+                  >
+                    <Plus className='size-4' />
+                  </Button>
+                </div>
 
-              <div className='min-w-0 max-w-full self-stretch overflow-x-auto sm:max-w-none sm:shrink-0 sm:self-center'>
-                <div className='ml-auto inline-block min-w-min space-y-1 text-right text-sm'>
-                  <div className='whitespace-nowrap text-muted-foreground'>
-                    Thuê ({qty} × {days} ngày):
-                  </div>
-                  <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
-                    {formatter.format(lineTotal)}
+                <div className='min-w-0 max-w-full self-stretch overflow-x-auto sm:max-w-none sm:shrink-0 sm:self-center'>
+                  <div className='ml-auto inline-block min-w-min space-y-0.5 text-right text-sm'>
+                    <div className='whitespace-nowrap text-muted-foreground'>
+                      Thuê ({qty} × {days} ngày):
+                    </div>
+                    {voucherDiscount > 0 ? (
+                      <>
+                        <div className='whitespace-nowrap text-sm text-muted-foreground line-through'>
+                          {formatter.format(lineTotal)}
+                        </div>
+                        <div className='whitespace-nowrap text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                          {formatter.format(lineTotal - voucherDiscount)}
+                        </div>
+                      </>
+                    ) : (
+                      <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                        {formatter.format(lineTotal)}
+                      </div>
+                    )}
                   </div>
                 </div>
+              </div>
+
+              {/* Voucher per-line */}
+              <div className='flex items-center gap-2'>
+                {appliedVoucherCode ? (
+                  <>
+                    <div className='flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-50/60 px-2.5 py-1.5 dark:bg-rose-950/30'>
+                      <TicketPercent className='size-3.5 shrink-0 text-rose-600 dark:text-rose-400' />
+                      <span className='font-mono text-xs font-bold text-rose-600 dark:text-rose-400'>
+                        {appliedVoucherCode}
+                      </span>
+                      {voucherDiscount > 0 && (
+                        <span className='ml-auto text-xs font-medium text-emerald-600 dark:text-emerald-400'>
+                          −{formatter.format(voucherDiscount)}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon-sm'
+                      className='size-7 shrink-0 text-destructive hover:bg-red-50 dark:hover:bg-red-950/30'
+                      onClick={() => onOpenVoucher(line)}
+                      title='Đổi hoặc bỏ voucher'
+                    >
+                      <X className='size-3.5' />
+                    </Button>
+                  </>
+                ) : (
+                  <button
+                    type='button'
+                    onClick={() => onOpenVoucher(line)}
+                    className='flex items-center gap-1.5 rounded-lg border border-dashed border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-rose-400/60 hover:bg-rose-50/40 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400'
+                  >
+                    <Tag className='size-3.5' />
+                    {line.availableVouchers.length > 0
+                      ? `${line.availableVouchers.length} voucher khả dụng`
+                      : 'Áp mã voucher'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -400,9 +493,14 @@ export default function CartPage() {
   // Chọn sản phẩm
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Voucher — chỉ lưu code string
+  // Voucher toàn đơn
   const [voucherCode, setVoucherCode] = useState('');
   const [phone, setPhone] = useState('');
+
+  // Voucher per-line: cartLineId → voucherCode
+  const [lineVouchers, setLineVouchers] = useState<Map<string, string>>(
+    new Map(),
+  );
   const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
   const [voucherDialogLine, setVoucherDialogLine] =
     useState<CartLineResponse | null>(null);
@@ -436,6 +534,17 @@ export default function CartPage() {
     [lines, selectedIds],
   );
 
+  // Tính tổng discount từ voucher per-line cho selectedLines
+  const lineVoucherDiscount = useMemo(() => {
+    return selectedLines.reduce((sum, l) => {
+      const code = lineVouchers.get(l.cartLineId);
+      if (!code) return sum;
+      return (
+        sum + calcLineVoucherDiscount(l.lineTotal, l.availableVouchers, code)
+      );
+    }, 0);
+  }, [selectedLines, lineVouchers]);
+
   // Tính tổng cho sản phẩm đã chọn
   const selectedTotals = useMemo(() => {
     const subtotal = selectedLines.reduce((acc, l) => acc + l.lineTotal, 0);
@@ -445,12 +554,12 @@ export default function CartPage() {
     );
     return {
       subtotal,
-      grandTotal: subtotal,
+      grandTotal: subtotal - lineVoucherDiscount,
       selectedCount: selectedLines.length,
       selectedQty: selectedLines.reduce((a, l) => a + l.quantity, 0),
       maxRentalDays,
     };
-  }, [selectedLines]);
+  }, [selectedLines, lineVoucherDiscount]);
 
   const totalQty = useMemo(
     () => lines.reduce((a, l) => a + l.quantity, 0),
@@ -488,6 +597,29 @@ export default function CartPage() {
     setVoucherCode('');
   }
 
+  function handleOpenLineVoucher(line: CartLineResponse) {
+    setVoucherDialogLine(line);
+    setVoucherDialogOpen(true);
+  }
+
+  function handleApplyLineVoucher(cartLineId: string, code: string) {
+    setLineVouchers((prev) => {
+      const next = new Map(prev);
+      next.set(cartLineId, code.toUpperCase());
+      return next;
+    });
+  }
+
+  function handleClearLineVoucher(cartLineId: string) {
+    setLineVouchers((prev) => {
+      const next = new Map(prev);
+      next.delete(cartLineId);
+      return next;
+    });
+    setVoucherDialogLine(null);
+    setVoucherDialogOpen(false);
+  }
+
   async function handleProceedToRent() {
     if (selectedLines.length === 0) {
       toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
@@ -512,6 +644,10 @@ export default function CartPage() {
           productId: l.productId,
           quantity: l.quantity,
           rentalDurationDays: l.rentalDurationDays,
+          ...(l.productColorId ? { productColorId: l.productColorId } : {}),
+          ...(lineVouchers.get(l.cartLineId)
+            ? { voucherCode: lineVouchers.get(l.cartLineId) }
+            : {}),
         })),
       });
 
@@ -705,26 +841,40 @@ export default function CartPage() {
                     ? Array.from({ length: 2 }).map((_, i) => (
                         <CartLineSkeleton key={i} />
                       ))
-                    : lines.map((line, index) => (
-                        <CartLineRow
-                          key={line.cartLineId}
-                          line={line}
-                          index={index}
-                          isSelected={selectedIds.has(line.cartLineId)}
-                          onToggle={toggleSelect}
-                          onRemove={handleRemove}
-                          onUpdateQty={handleUpdateQty}
-                          isRemoving={
-                            removeMutation.isPending &&
-                            removeMutation.variables === line.cartLineId
-                          }
-                          isUpdating={
-                            updateQtyMutation.isPending &&
-                            updateQtyMutation.variables?.cartLineId ===
-                              line.cartLineId
-                          }
-                        />
-                      ))}
+                    : lines.map((line, index) => {
+                        const appliedCode =
+                          lineVouchers.get(line.cartLineId) ?? null;
+                        const voucherDiscount = appliedCode
+                          ? calcLineVoucherDiscount(
+                              line.lineTotal,
+                              line.availableVouchers,
+                              appliedCode,
+                            )
+                          : 0;
+                        return (
+                          <CartLineRow
+                            key={line.cartLineId}
+                            line={line}
+                            index={index}
+                            isSelected={selectedIds.has(line.cartLineId)}
+                            onToggle={toggleSelect}
+                            onRemove={handleRemove}
+                            onUpdateQty={handleUpdateQty}
+                            isRemoving={
+                              removeMutation.isPending &&
+                              removeMutation.variables === line.cartLineId
+                            }
+                            isUpdating={
+                              updateQtyMutation.isPending &&
+                              updateQtyMutation.variables?.cartLineId ===
+                                line.cartLineId
+                            }
+                            appliedVoucherCode={appliedCode}
+                            voucherDiscount={voucherDiscount}
+                            onOpenVoucher={handleOpenLineVoucher}
+                          />
+                        );
+                      })}
                 </div>
               </SpotlightCard>
             </div>
@@ -794,6 +944,19 @@ export default function CartPage() {
                           </span>
                         </div>
 
+                        {/* Giảm giá voucher per-line */}
+                        {lineVoucherDiscount > 0 && (
+                          <div className='flex items-baseline justify-between gap-3'>
+                            <span className='flex items-center gap-1 text-muted-foreground'>
+                              <TicketPercent className='size-3.5 text-rose-500' />
+                              Voucher sản phẩm
+                            </span>
+                            <span className='font-medium tabular-nums text-emerald-600 dark:text-emerald-400'>
+                              −{formatter.format(lineVoucherDiscount)}
+                            </span>
+                          </div>
+                        )}
+
                         {selectedTotals.selectedCount === 0 &&
                           lines.length > 0 && (
                             <p className='text-xs text-amber-600 dark:text-amber-400'>
@@ -862,28 +1025,45 @@ export default function CartPage() {
         )}
       </div>
 
-      {/* Voucher picker dialog */}
-      {voucherDialogLine && (
-        <VoucherLinePickerDialog
-          open={voucherDialogOpen}
-          onOpenChange={(o) => {
-            setVoucherDialogOpen(o);
-            if (!o) setVoucherDialogLine(null);
-          }}
-          lineRentalSubtotal={
-            voucherDialogLine.dailyPrice *
-            voucherDialogLine.quantity *
-            voucherDialogLine.rentalDurationDays
-          }
-          lineRentalDays={voucherDialogLine.rentalDurationDays}
-          appliedCode={voucherCode}
-          onApply={(v) => {
-            handleApplyVoucher(v.code);
-            setVoucherDialogLine(null);
-          }}
-          onClear={() => setVoucherDialogLine(null)}
-        />
-      )}
+      {/* Voucher picker dialog — per-line */}
+      {voucherDialogLine &&
+        (() => {
+          // Tập hợp các code đang được dùng ở các dòng KHÁC (không phải dòng đang mở dialog)
+          const usedByOtherLines = new Set(
+            [...lineVouchers.entries()]
+              .filter(([id]) => id !== voucherDialogLine.cartLineId)
+              .map(([, code]) => code),
+          );
+          return (
+            <VoucherLinePickerDialog
+              open={voucherDialogOpen}
+              onOpenChange={(o) => {
+                setVoucherDialogOpen(o);
+                if (!o) setVoucherDialogLine(null);
+              }}
+              lineRentalSubtotal={
+                voucherDialogLine.dailyPrice *
+                voucherDialogLine.quantity *
+                voucherDialogLine.rentalDurationDays
+              }
+              lineRentalDays={voucherDialogLine.rentalDurationDays}
+              appliedCode={
+                lineVouchers.get(voucherDialogLine.cartLineId) ?? null
+              }
+              suggestedVouchers={voucherDialogLine.availableVouchers}
+              productId={voucherDialogLine.productId}
+              usedCodes={usedByOtherLines}
+              onApply={(v) => {
+                handleApplyLineVoucher(voucherDialogLine.cartLineId, v.code);
+                setVoucherDialogLine(null);
+                setVoucherDialogOpen(false);
+              }}
+              onClear={() =>
+                handleClearLineVoucher(voucherDialogLine.cartLineId)
+              }
+            />
+          );
+        })()}
     </div>
   );
 }

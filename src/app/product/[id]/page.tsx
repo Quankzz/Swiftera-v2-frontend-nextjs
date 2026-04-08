@@ -91,6 +91,7 @@ export default function ProductDetailPage() {
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState('2');
   const [quantity, setQuantity] = useState(1);
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
 
   // Mặc định chọn duration = minRentalDays
   const defaultDurationId = useMemo(
@@ -138,13 +139,28 @@ export default function ProductDetailPage() {
     return Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
   }, [originalPrice, currentPrice]);
 
-  // Đếm AVAILABLE stock
-  const availableStock = useMemo(
-    () =>
-      product?.inventoryItems?.filter((i) => i.status === 'AVAILABLE').length ??
-      0,
-    [product?.inventoryItems],
+  // Tự động chọn màu đầu tiên khi có colors và chưa chọn
+  const colors = useMemo(() => product?.colors ?? [], [product?.colors]);
+
+  const selectedColor = useMemo(
+    () => colors.find((c) => c.productColorId === selectedColorId) ?? null,
+    [colors, selectedColorId],
   );
+
+  // Cần chọn màu khi product có >1 màu và chưa chọn
+  const requireColorSelection = colors.length > 1 && !selectedColorId;
+
+  // Đếm AVAILABLE stock — nếu đã chọn màu, lọc theo màu đó
+  const availableStock = useMemo(() => {
+    if (!product?.inventoryItems) return 0;
+    const items = product.inventoryItems.filter(
+      (i) => i.status === 'AVAILABLE',
+    );
+    if (selectedColorId) {
+      return items.filter((i) => i.productColorId === selectedColorId).length;
+    }
+    return items.length;
+  }, [product?.inventoryItems, selectedColorId]);
 
   // Thông số kỹ thuật
   const specifications = useMemo(() => {
@@ -281,8 +297,11 @@ export default function ProductDetailPage() {
                   rating: product.averageRating ?? 0,
                   reviews: 0,
                   rentedCount: 0,
+                  colors,
                   durations,
                 }}
+                selectedColorId={selectedColorId}
+                onColorChange={setSelectedColorId}
                 selectedVariant='default'
                 onVariantChange={() => {}}
                 selectedDuration={selectedDuration}
@@ -307,11 +326,14 @@ export default function ProductDetailPage() {
               durationId={selectedDuration}
               quantity={quantity}
               setQuantity={setQuantity}
+              requireColorSelection={requireColorSelection}
               cartProduct={{
                 productId: product.productId,
                 name: product.name,
                 image: imageUrls[0] ?? '',
                 sku: product.productId.slice(0, 8).toUpperCase(),
+                productColorId: selectedColorId,
+                colorName: selectedColor?.name ?? null,
               }}
             />
           </div>
@@ -364,9 +386,9 @@ export default function ProductDetailPage() {
           />
         </div>
 
-        {/* Related Products */}
+        {/* Related Products — API-054, loại trừ id ở client */}
         <div className='mt-4 sm:mt-6'>
-          <RentalRelatedProducts />
+          <RentalRelatedProducts currentProductId={product.productId} />
         </div>
       </div>
     </div>

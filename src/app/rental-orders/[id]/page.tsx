@@ -1,27 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
-  ListOrdered,
   Truck,
   User,
   AlertCircle,
   Package,
   Loader2,
   Ban,
-  PlusCircle,
   CreditCard,
   CalendarPlus,
   Star,
   RotateCcw,
   Check,
+  MapPin,
+  Clock3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SpotlightCard } from '@/components/common/spotlight-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
@@ -38,9 +37,8 @@ import {
 } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/stores/auth-store';
-import { useRentalCartStore } from '@/stores/rental-cart-store';
 import { useCartAnimationStore } from '@/stores/cart-animation-store';
+import { useAddToCart } from '@/hooks/api/use-cart';
 import { cn } from '@/lib/utils';
 import {
   RENTAL_ORDER_STATUS_LABELS,
@@ -88,6 +86,144 @@ function formatDateShort(iso: string) {
   }
 }
 
+const STATUS_GROUPS: RentalOrderStatus[][] = [
+  ['PENDING_PAYMENT'],
+  ['PAID', 'PREPARING'],
+  ['DELIVERING'],
+  ['DELIVERED', 'IN_USE'],
+  ['PENDING_PICKUP', 'PICKING_UP', 'PICKED_UP'],
+  ['COMPLETED'],
+];
+
+const STEP_LABELS = [
+  'Thanh toán',
+  'Chuẩn bị',
+  'Giao hàng',
+  'Đang dùng',
+  'Thu hồi',
+  'Hoàn tất',
+];
+
+function getActiveGroupIndex(status: RentalOrderStatus): number {
+  if (status === 'CANCELLED') return -1;
+  if (status === 'COMPLETED') return STATUS_GROUPS.length;
+  const i = STATUS_GROUPS.findIndex((g) =>
+    g.includes(status as RentalOrderStatus),
+  );
+  return i >= 0 ? i : 0;
+}
+
+function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
+  if (status === 'CANCELLED') {
+    return (
+      <div className='flex items-center gap-2.5 rounded-xl border border-red-200/80 bg-red-50/60 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300'>
+        <Ban className='size-4 shrink-0' />
+        Đơn đã hủy — không còn xử lý tiếp.
+      </div>
+    );
+  }
+
+  const active = getActiveGroupIndex(status);
+
+  return (
+    <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+      <div className='flex min-w-[min(100%,520px)] items-start py-1 sm:min-w-0'>
+        {STEP_LABELS.map((label, i) => {
+          const done = i < active || status === 'COMPLETED';
+          const current = i === active && status !== 'COMPLETED';
+          const segmentDone =
+            i > 0 && (i - 1 < active || status === 'COMPLETED');
+
+          return (
+            <Fragment key={label}>
+              {i > 0 && (
+                <div
+                  className={cn(
+                    'mt-[15px] h-px min-w-[8px] flex-1',
+                    segmentDone ? 'bg-rose-500' : 'bg-border',
+                  )}
+                  aria-hidden
+                />
+              )}
+              <div className='flex w-12 shrink-0 flex-col items-center sm:w-16'>
+                <div
+                  className={cn(
+                    'flex size-[30px] items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
+                    done
+                      ? 'border-rose-500 bg-rose-500 text-white'
+                      : current
+                        ? 'border-rose-500 bg-card text-rose-600 ring-4 ring-rose-500/15 dark:bg-card dark:text-rose-400'
+                        : 'border-border bg-muted/50 text-muted-foreground',
+                  )}
+                >
+                  {done ? (
+                    <Check className='size-3.5' strokeWidth={3} />
+                  ) : (
+                    i + 1
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    'mt-2 text-center text-[10px] font-medium leading-tight sm:text-[11px]',
+                    done || current
+                      ? 'text-foreground'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  {label}
+                </span>
+              </div>
+            </Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SectionCard({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({
+  icon,
+  iconBg,
+  title,
+}: {
+  icon: React.ReactNode;
+  iconBg: string;
+  title: string;
+}) {
+  return (
+    <div className='flex items-center gap-3 border-b border-border/60 px-5 py-4'>
+      <div
+        className={cn(
+          'flex size-8 shrink-0 items-center justify-center rounded-lg text-white',
+          iconBg,
+        )}
+      >
+        {icon}
+      </div>
+      <span className='font-semibold text-foreground'>{title}</span>
+    </div>
+  );
+}
+
 function StaffAvatar({
   staff,
   role,
@@ -101,11 +237,11 @@ function StaffAvatar({
         <img
           src={staff.avatarUrl}
           alt={`${staff.firstName} ${staff.lastName}`}
-          className='size-10 shrink-0 rounded-full object-cover ring-2 ring-border'
+          className='size-9 shrink-0 rounded-full object-cover ring-2 ring-border'
         />
       ) : (
-        <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300'>
-          <User className='size-5' />
+        <div className='flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+          <User className='size-4' />
         </div>
       )}
       <div>
@@ -123,25 +259,27 @@ function StaffAvatar({
 
 function DetailSkeleton() {
   return (
-    <div className='space-y-6'>
-      <div className='flex flex-wrap items-end justify-between gap-3'>
-        <div className='space-y-2'>
-          <Skeleton className='h-4 w-32' />
-          <Skeleton className='h-8 w-48' />
-          <Skeleton className='h-4 w-40' />
+    <div className='space-y-5'>
+      <div className='space-y-3 rounded-2xl border border-border/60 bg-card p-6'>
+        <Skeleton className='h-5 w-32' />
+        <Skeleton className='h-8 w-48' />
+        <Skeleton className='h-4 w-64' />
+        <Skeleton className='mt-4 h-10 w-full rounded-xl' />
+        <div className='flex gap-3 pt-1'>
+          <Skeleton className='h-10 w-36 rounded-xl' />
+          <Skeleton className='h-10 w-28 rounded-xl' />
         </div>
-        <Skeleton className='h-6 w-24' />
       </div>
-      <div className='grid gap-6 lg:grid-cols-2'>
-        <div className='space-y-4'>
-          {Array.from({ length: 3 }).map((_, i) => (
+      <div className='grid gap-5 lg:grid-cols-12'>
+        <div className='space-y-5 lg:col-span-7'>
+          {Array.from({ length: 2 }).map((_, i) => (
             <div
               key={i}
-              className='space-y-3 rounded-xl border border-border/60 bg-card/85 p-5'
+              className='rounded-2xl border border-border/60 bg-card p-5'
             >
-              <Skeleton className='h-5 w-32' />
+              <Skeleton className='mb-4 h-5 w-36' />
               {Array.from({ length: 3 }).map((_, j) => (
-                <div key={j} className='space-y-1'>
+                <div key={j} className='mb-3 space-y-1'>
                   <Skeleton className='h-3 w-24' />
                   <Skeleton className='h-4 w-40' />
                 </div>
@@ -149,10 +287,9 @@ function DetailSkeleton() {
             </div>
           ))}
         </div>
-        <div className='space-y-4'>
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className='h-40 w-full rounded-xl' />
-          ))}
+        <div className='space-y-5 lg:col-span-5'>
+          <Skeleton className='h-56 w-full rounded-2xl' />
+          <Skeleton className='h-40 w-full rounded-2xl' />
         </div>
       </div>
     </div>
@@ -290,11 +427,10 @@ export default function RentalOrderDetailPage() {
   >('idle');
 
   const { data: order, isLoading, isError } = useRentalOrderQuery(id);
-  const addToCart = useRentalCartStore((s) => s.addLine);
-  const currentUser = useAuthStore((s) => s.user);
+  const { mutateAsync: addToCartApi } = useAddToCart();
   const addFlyingItem = useCartAnimationStore((s) => s.addFlyingItem);
 
-  function handleReorder() {
+  async function handleReorder() {
     if (!order || reorderState !== 'idle') return;
 
     const btn = document.getElementById('reorder-btn');
@@ -306,31 +442,24 @@ export default function RentalOrderDetailPage() {
         ? btn.getBoundingClientRect()
         : new DOMRect(window.innerWidth / 2, window.innerHeight / 2, 80, 60);
 
-    addFlyingItem({
-      id: `reorder-${Date.now()}`,
-      imageUrl: '',
-      fromRect,
-    });
-
+    addFlyingItem({ id: `reorder-${Date.now()}`, imageUrl: '', fromRect });
     setReorderState('adding');
-    setTimeout(() => {
+
+    try {
       for (const line of order.rentalOrderLines) {
-        addToCart({
+        await addToCartApi({
           productId: line.productId,
-          name: line.productNameSnapshot,
-          image: '',
-          sku: line.inventorySerialNumber,
-          durationId: String(line.rentalDurationDays),
-          durationLabel: `${line.rentalDurationDays} ngày`,
-          rentalPricePerUnit: line.dailyPriceSnapshot,
+          rentalDurationDays: line.rentalDurationDays,
           quantity: 1,
-          depositPerUnit: line.depositAmountSnapshot,
-          voucher: null,
         });
       }
-      setReorderState('success');
-      setTimeout(() => setReorderState('idle'), 2500);
-    }, 400);
+      toast.success('Đã thêm vào giỏ hàng!');
+    } catch {
+      toast.error('Không thể thêm một số sản phẩm vào giỏ hàng.');
+    }
+
+    setReorderState('success');
+    setTimeout(() => setReorderState('idle'), 2500);
   }
 
   const cancelOrder = useCancelOrder({
@@ -365,9 +494,11 @@ export default function RentalOrderDetailPage() {
 
   if (isError) {
     return (
-      <div className='min-h-screen bg-white dark:bg-surface-base px-3 pb-16 pt-24 font-sans sm:pt-28'>
+      <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-24 font-sans sm:pt-28 dark:bg-background'>
         <div className='mx-auto max-w-lg text-center'>
-          <AlertCircle className='mx-auto size-12 text-destructive' />
+          <div className='mx-auto flex size-16 items-center justify-center rounded-2xl bg-destructive/10'>
+            <AlertCircle className='size-8 text-destructive' />
+          </div>
           <p className='mt-4 text-lg font-semibold text-foreground'>
             Không tải được đơn thuê
           </p>
@@ -375,7 +506,7 @@ export default function RentalOrderDetailPage() {
             Đơn có thể không tồn tại hoặc bạn chưa đăng nhập.
           </p>
           <Button
-            className='mt-6'
+            className='mt-6 rounded-xl'
             variant='outline'
             render={<Link href='/rental-orders' />}
           >
@@ -387,13 +518,12 @@ export default function RentalOrderDetailPage() {
   }
 
   return (
-    <div className='min-h-screen bg-white dark:bg-surface-base px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
-      <div className='mx-auto max-w-4xl'>
-        {/* Back */}
+    <div className='min-h-screen bg-muted/30 font-sans dark:bg-background'>
+      <div className='mx-auto max-w-5xl px-3 pb-20 pt-20 sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
         <Button
           variant='ghost'
           size='sm'
-          className='mb-4 gap-1 text-muted-foreground'
+          className='mb-5 gap-1.5 text-muted-foreground hover:text-foreground'
           render={<Link href='/rental-orders' />}
         >
           <ArrowLeft className='size-4' />
@@ -404,137 +534,174 @@ export default function RentalOrderDetailPage() {
 
         {order && (
           <>
-            {/* Header */}
-            <div className='flex flex-wrap items-end justify-between gap-3'>
-              <div>
-                <p className='font-mono text-sm font-bold text-rose-600 dark:text-rose-400'>
-                  #{order.rentalOrderId.slice(0, 8).toUpperCase()}
-                </p>
-                <h1 className='mt-1 text-2xl font-extrabold text-foreground'>
-                  Chi tiết đơn thuê
-                </h1>
-                <p className='mt-1 text-sm text-muted-foreground'>
-                  Đặt lúc {formatDate(order.placedAt)}
-                </p>
-                {order.createdBy && (
-                  <p className='mt-0.5 text-xs text-muted-foreground'>
-                    Mã đơn: {order.createdBy}
-                  </p>
-                )}
-              </div>
-              <Badge
-                className={`rounded-full px-3 py-1 text-sm font-semibold ${RENTAL_ORDER_STATUS_COLORS[order.status as RentalOrderStatus]}`}
-              >
-                {RENTAL_ORDER_STATUS_LABELS[order.status as RentalOrderStatus]}
-              </Badge>
-            </div>
-
-            {/* Action buttons */}
-            <div className='mt-4 flex flex-wrap gap-2'>
-              {/* Thanh toán */}
-              {order.status === 'PENDING_PAYMENT' && (
-                <Button
-                  size='sm'
-                  className='gap-1.5 bg-rose-600 text-white hover:bg-rose-700'
-                  onClick={handlePayment}
-                  disabled={initiatePayment.isPending}
-                >
-                  {initiatePayment.isPending ? (
-                    <Loader2 className='size-4 animate-spin' />
-                  ) : (
-                    <CreditCard className='size-4' />
-                  )}
-                  Thanh toán ngay
-                </Button>
-              )}
-
-              {/* Gia hạn */}
-              {isExtendable && (
-                <Button
-                  size='sm'
-                  variant='outline'
-                  className='gap-1.5'
-                  onClick={() => setExtendOpen(true)}
-                >
-                  <CalendarPlus className='size-4' />
-                  Gia hạn
-                </Button>
-              )}
-
-              {/* Viết đánh giá — chỉ hiện khi đơn COMPLETED */}
-              {order.status === 'COMPLETED' &&
-                order.rentalOrderLines.length > 0 && (
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    className='gap-1.5'
-                    render={
-                      <Link
-                        href={`/product/${order.rentalOrderLines[0].productId}#reviews`}
-                      />
-                    }
-                  >
-                    <Star className='size-4' />
-                    Viết đánh giá
-                  </Button>
-                )}
-
-              {/* Thuê lại — chỉ hiện khi đơn COMPLETED */}
-              {order.status === 'COMPLETED' &&
-                order.rentalOrderLines.length > 0 && (
-                  <Button
-                    id='reorder-btn'
-                    size='sm'
-                    className={`
-                      gap-1.5 transition-all duration-300
-                      ${
-                        reorderState === 'success'
-                          ? 'bg-green-600 hover:bg-green-700 text-white scale-105 shadow-lg shadow-green-500/30'
-                          : reorderState === 'adding'
-                            ? 'bg-rose-400 text-white cursor-wait animate-pulse'
-                            : 'bg-rose-600 hover:bg-rose-700 text-white'
-                      }
-                    `}
-                    onClick={handleReorder}
-                    disabled={reorderState !== 'idle'}
-                  >
-                    {reorderState === 'adding' ? (
-                      <>
-                        <Loader2 className='size-4 animate-spin' />
-                        Đang thêm...
-                      </>
-                    ) : reorderState === 'success' ? (
-                      <span className='flex items-center gap-1.5'>
-                        <Check className='size-4' />
-                        Đã thêm vào giỏ!
-                      </span>
-                    ) : (
-                      <>
-                        <RotateCcw className='size-4' />
-                        Thuê lại
-                      </>
+            {/* ── Order header card ── */}
+            <SectionCard className='mb-5'>
+              <div className='p-5 sm:p-6'>
+                {/* Top: ID + Status badge */}
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div className='space-y-1'>
+                    <span className='inline-flex items-center rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-muted-foreground'>
+                      #{order.rentalOrderId.slice(0, 8).toUpperCase()}
+                    </span>
+                    <h1 className='text-2xl font-extrabold tracking-tight text-foreground'>
+                      Đơn thuê của bạn
+                    </h1>
+                    <p className='flex items-center gap-1.5 text-sm text-muted-foreground'>
+                      <Clock3 className='size-3.5 shrink-0' />
+                      Đặt lúc {formatDate(order.placedAt)}
+                    </p>
+                  </div>
+                  <Badge
+                    className={cn(
+                      'shrink-0 rounded-full px-3 py-1 text-sm font-semibold',
+                      RENTAL_ORDER_STATUS_COLORS[
+                        order.status as RentalOrderStatus
+                      ],
                     )}
-                  </Button>
-                )}
+                  >
+                    {
+                      RENTAL_ORDER_STATUS_LABELS[
+                        order.status as RentalOrderStatus
+                      ]
+                    }
+                  </Badge>
+                </div>
 
-              {/* Hủy đơn */}
-              {order.status === 'PENDING_PAYMENT' && (
-                <Button
-                  size='sm'
-                  variant='outline'
-                  className='gap-1.5 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/30'
-                  onClick={handleCancel}
-                  disabled={cancelOrder.isPending}
-                >
-                  {cancelOrder.isPending ? (
-                    <Loader2 className='size-4 animate-spin' />
-                  ) : (
-                    <Ban className='size-4' />
-                  )}
-                  Hủy đơn
-                </Button>
-              )}
-            </div>
+                {/* Status stepper */}
+                <div className='mt-5 border-t border-border/60 pt-5'>
+                  <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+                    Tiến trình đơn hàng
+                  </p>
+                  <OrderStatusStepper
+                    status={order.status as RentalOrderStatus}
+                  />
+                </div>
+
+                {/* Action buttons */}
+                {(() => {
+                  const hasPay = order.status === 'PENDING_PAYMENT';
+                  const hasCancel = order.status === 'PENDING_PAYMENT';
+                  const hasReview =
+                    order.status === 'COMPLETED' &&
+                    order.rentalOrderLines.length > 0;
+                  const hasReorder =
+                    order.status === 'COMPLETED' &&
+                    order.rentalOrderLines.length > 0;
+                  const anyAction =
+                    hasPay ||
+                    isExtendable ||
+                    hasReview ||
+                    hasReorder ||
+                    hasCancel;
+
+                  if (!anyAction) return null;
+
+                  return (
+                    <div className='mt-5 border-t border-border/60 pt-5'>
+                      <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+                        Thao tác
+                      </p>
+                      <div className='flex flex-wrap gap-2.5'>
+                        {hasPay && (
+                          <Button
+                            size='default'
+                            className='gap-2 rounded-xl bg-rose-600 px-5 font-semibold text-white shadow-sm hover:bg-rose-700 active:scale-[0.98]'
+                            onClick={handlePayment}
+                            disabled={initiatePayment.isPending}
+                          >
+                            {initiatePayment.isPending ? (
+                              <Loader2 className='size-4 animate-spin' />
+                            ) : (
+                              <CreditCard className='size-4' />
+                            )}
+                            Thanh toán ngay
+                          </Button>
+                        )}
+
+                        {isExtendable && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-rose-300 px-5 font-semibold text-rose-700 hover:bg-rose-50 hover:border-rose-400 dark:border-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/50'
+                            onClick={() => setExtendOpen(true)}
+                          >
+                            <CalendarPlus className='size-4' />
+                            Gia hạn
+                          </Button>
+                        )}
+
+                        {hasReview && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-amber-300 px-5 font-semibold text-amber-800 hover:bg-amber-50 hover:border-amber-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/50'
+                            render={
+                              <Link
+                                href={`/product/${order.rentalOrderLines[0].productId}#reviews`}
+                              />
+                            }
+                          >
+                            <Star className='size-4 fill-amber-400 text-amber-500' />
+                            Viết đánh giá
+                          </Button>
+                        )}
+
+                        {hasReorder && (
+                          <Button
+                            id='reorder-btn'
+                            size='default'
+                            className={cn(
+                              'gap-2 rounded-xl px-5 font-semibold transition-all active:scale-[0.98]',
+                              reorderState === 'success'
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : reorderState === 'adding'
+                                  ? 'animate-pulse cursor-wait bg-rose-400 text-white'
+                                  : 'bg-rose-600 text-white hover:bg-rose-700',
+                            )}
+                            onClick={handleReorder}
+                            disabled={reorderState !== 'idle'}
+                          >
+                            {reorderState === 'adding' ? (
+                              <>
+                                <Loader2 className='size-4 animate-spin' />
+                                Đang thêm...
+                              </>
+                            ) : reorderState === 'success' ? (
+                              <>
+                                <Check className='size-4' />
+                                Đã thêm vào giỏ!
+                              </>
+                            ) : (
+                              <>
+                                <RotateCcw className='size-4' />
+                                Thuê lại
+                              </>
+                            )}
+                          </Button>
+                        )}
+
+                        {hasCancel && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-red-200 px-5 font-semibold text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50'
+                            onClick={handleCancel}
+                            disabled={cancelOrder.isPending}
+                          >
+                            {cancelOrder.isPending ? (
+                              <Loader2 className='size-4 animate-spin' />
+                            ) : (
+                              <Ban className='size-4' />
+                            )}
+                            Hủy đơn
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </SectionCard>
 
             {/* Extend Dialog */}
             {order && (
@@ -546,71 +713,88 @@ export default function RentalOrderDetailPage() {
               />
             )}
 
-            {/* Grid */}
-            <div className='mt-8 grid gap-6 lg:grid-cols-2 lg:gap-10'>
+            {/* ── Two-column layout ── */}
+            <div className='grid gap-5 lg:grid-cols-12 lg:gap-6'>
               {/* Left column */}
-              <div className='space-y-5'>
+              <div className='space-y-5 lg:col-span-7'>
                 {/* Products */}
-                <SpotlightCard
-                  className='rounded-2xl border border-border/60 bg-card/85 p-5 dark:bg-card/75'
-                  spotlightColor='rgba(254, 20, 81, 0.08)'
-                >
-                  <div className='flex items-center gap-2 font-bold text-foreground'>
-                    <Package className='size-5 text-rose-600 dark:text-rose-400' />
-                    Sản phẩm thuê
-                  </div>
-                  <ul className='mt-4 space-y-4'>
+                <SectionCard>
+                  <SectionHeader
+                    icon={<Package className='size-4' />}
+                    iconBg='bg-rose-500'
+                    title='Sản phẩm trong đơn'
+                  />
+                  <ul className='divide-y divide-border/60'>
                     {order.rentalOrderLines.map((line, idx) => (
                       <li
                         id={`order-line-${idx}`}
                         key={line.rentalOrderLineId}
-                        className='border-b border-border/50 pb-3 text-sm last:border-0 last:pb-0'
+                        className='flex gap-3.5 px-5 py-4'
                       >
-                        <p className='font-medium text-foreground'>
-                          {line.productNameSnapshot}
-                        </p>
-                        <p className='text-xs text-muted-foreground'>
-                          Serial: {line.inventorySerialNumber}
-                        </p>
-                        <p className='text-xs text-muted-foreground'>
-                          {line.rentalDurationDays} ngày ·{' '}
-                          {fmt.format(line.dailyPriceSnapshot)} / ngày
-                        </p>
-                        <p className='mt-1 tabular-nums text-muted-foreground'>
-                          Thuê:{' '}
-                          <span className='font-semibold text-foreground'>
-                            {fmt.format(
-                              line.dailyPriceSnapshot * line.rentalDurationDays,
-                            )}
-                          </span>
-                          {' · '}
-                          Cọc:{' '}
-                          <span className='font-semibold text-foreground'>
-                            {fmt.format(line.depositAmountSnapshot)}
-                          </span>
-                        </p>
+                        <span className='flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-muted-foreground'>
+                          {idx + 1}
+                        </span>
+                        <div className='min-w-0 flex-1 space-y-1.5 text-sm'>
+                          <p className='font-semibold leading-snug text-foreground'>
+                            {line.productNameSnapshot}
+                          </p>
+                          <p className='text-xs text-muted-foreground'>
+                            Serial{' '}
+                            <span className='font-mono text-foreground/80'>
+                              {line.inventorySerialNumber}
+                            </span>
+                          </p>
+                          <div className='flex flex-wrap gap-1.5'>
+                            <span className='rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground'>
+                              {line.rentalDurationDays} ngày
+                            </span>
+                            <span className='rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground'>
+                              {fmt.format(line.dailyPriceSnapshot)}/ngày
+                            </span>
+                          </div>
+                          <div className='flex flex-wrap gap-4 border-t border-dashed border-border/60 pt-2 text-xs text-muted-foreground'>
+                            <span>
+                              Tạm tính:{' '}
+                              <span className='font-semibold text-foreground tabular-nums'>
+                                {fmt.format(
+                                  line.dailyPriceSnapshot *
+                                    line.rentalDurationDays,
+                                )}
+                              </span>
+                            </span>
+                            <span>
+                              Cọc:{' '}
+                              <span className='font-semibold text-foreground tabular-nums'>
+                                {fmt.format(line.depositAmountSnapshot)}
+                              </span>
+                            </span>
+                          </div>
+                        </div>
                       </li>
                     ))}
                   </ul>
-                </SpotlightCard>
+                </SectionCard>
 
                 {/* Delivery */}
-                <SpotlightCard
-                  className='rounded-2xl border border-border/60 bg-card/85 p-5 dark:bg-card/75'
-                  spotlightColor='rgba(254, 20, 81, 0.08)'
-                >
-                  <div className='flex items-center gap-2 font-bold text-foreground'>
-                    <Truck className='size-5 text-rose-600 dark:text-rose-400' />
-                    Địa chỉ giao hàng
-                  </div>
-                  <div className='mt-4 space-y-1 text-sm'>
-                    <p className='font-medium text-foreground'>
-                      {order.deliveryRecipientName}
-                    </p>
-                    <p className='text-muted-foreground'>
-                      {order.deliveryPhone}
-                    </p>
-                    <p className='text-muted-foreground'>
+                <SectionCard>
+                  <SectionHeader
+                    icon={<MapPin className='size-4' />}
+                    iconBg='bg-sky-500'
+                    title='Giao hàng'
+                  />
+                  <div className='space-y-4 p-5 text-sm'>
+                    <div className='flex gap-3 rounded-xl bg-muted/40 p-3'>
+                      <Truck className='mt-0.5 size-4 shrink-0 text-sky-600 dark:text-sky-400' />
+                      <div className='min-w-0 space-y-0.5'>
+                        <p className='font-semibold text-foreground'>
+                          {order.deliveryRecipientName}
+                        </p>
+                        <p className='text-muted-foreground'>
+                          {order.deliveryPhone}
+                        </p>
+                      </div>
+                    </div>
+                    <p className='text-sm leading-relaxed text-muted-foreground'>
                       {[
                         order.deliveryAddressLine,
                         order.deliveryWard,
@@ -620,89 +804,90 @@ export default function RentalOrderDetailPage() {
                         .filter(Boolean)
                         .join(', ')}
                     </p>
-                    {order.expectedDeliveryDate && (
-                      <p className='mt-2 text-xs text-muted-foreground'>
-                        Dự kiến giao:{' '}
-                        <span className='font-medium text-foreground'>
-                          {formatDateShort(order.expectedDeliveryDate)}
-                        </span>
-                      </p>
-                    )}
-                    {order.expectedRentalEndDate && (
-                      <p className='text-xs text-muted-foreground'>
-                        Dự kiến trả:{' '}
-                        <span className='font-medium text-foreground'>
-                          {formatDateShort(order.expectedRentalEndDate)}
-                        </span>
-                      </p>
+                    {(order.expectedDeliveryDate ||
+                      order.expectedRentalEndDate) && (
+                      <div className='grid gap-2 sm:grid-cols-2'>
+                        {order.expectedDeliveryDate && (
+                          <div className='rounded-xl border border-border/60 bg-background/80 px-3 py-2.5'>
+                            <p className='text-xs text-muted-foreground'>
+                              Dự kiến giao
+                            </p>
+                            <p className='mt-0.5 text-sm font-semibold text-foreground'>
+                              {formatDateShort(order.expectedDeliveryDate)}
+                            </p>
+                          </div>
+                        )}
+                        {order.expectedRentalEndDate && (
+                          <div className='rounded-xl border border-border/60 bg-background/80 px-3 py-2.5'>
+                            <p className='text-xs text-muted-foreground'>
+                              Dự kiến trả
+                            </p>
+                            <p className='mt-0.5 text-sm font-semibold text-foreground'>
+                              {formatDateShort(order.expectedRentalEndDate)}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-                </SpotlightCard>
+                </SectionCard>
 
                 {/* Staff */}
                 {(order.deliveryStaff ||
                   order.pickupStaff ||
                   order.hubName) && (
-                  <SpotlightCard
-                    className='rounded-2xl border border-border/60 bg-card/85 p-5 dark:bg-card/75'
-                    spotlightColor='rgba(254, 20, 81, 0.08)'
-                  >
-                    <div className='flex items-center gap-2 font-bold text-foreground'>
-                      <User className='size-5 text-rose-600 dark:text-rose-400' />
-                      Nhân viên phụ trách
-                    </div>
-                    {order.hubName && (
-                      <p className='mt-3 text-xs text-muted-foreground'>
-                        Hub:{' '}
-                        <span className='font-medium text-foreground'>
-                          {order.hubName}
-                        </span>
-                      </p>
-                    )}
-                    <div className='mt-4 space-y-4'>
+                  <SectionCard>
+                    <SectionHeader
+                      icon={<User className='size-4' />}
+                      iconBg='bg-violet-500'
+                      title='Nhân viên phụ trách'
+                    />
+                    <div className='space-y-4 p-5'>
+                      {order.hubName && (
+                        <p className='text-xs text-muted-foreground'>
+                          Hub:{' '}
+                          <span className='font-medium text-foreground'>
+                            {order.hubName}
+                          </span>
+                        </p>
+                      )}
                       {order.deliveryStaff && (
                         <div>
-                          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                          <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
                             Giao hàng
                           </p>
-                          <div className='mt-2'>
-                            <StaffAvatar
-                              staff={order.deliveryStaff}
-                              role='Nhân viên giao hàng'
-                            />
-                          </div>
+                          <StaffAvatar
+                            staff={order.deliveryStaff}
+                            role='Nhân viên giao hàng'
+                          />
                         </div>
                       )}
                       {order.pickupStaff && (
                         <div>
-                          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                          <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
                             Thu hồi
                           </p>
-                          <div className='mt-2'>
-                            <StaffAvatar
-                              staff={order.pickupStaff}
-                              role='Nhân viên thu hồi'
-                            />
-                          </div>
+                          <StaffAvatar
+                            staff={order.pickupStaff}
+                            role='Nhân viên thu hồi'
+                          />
                         </div>
                       )}
                     </div>
-                  </SpotlightCard>
+                  </SectionCard>
                 )}
               </div>
 
               {/* Right column */}
-              <div className='space-y-5'>
+              <div className='space-y-5 lg:col-span-5 lg:sticky lg:top-24 lg:self-start'>
                 {/* Payment summary */}
-                <SpotlightCard
-                  className='rounded-2xl border border-rose-500/20 bg-card/90 p-5 dark:border-rose-500/25 dark:bg-card/80'
-                  spotlightColor='rgba(254, 20, 81, 0.18)'
-                >
-                  <div className='flex items-center gap-2 font-bold text-foreground'>
-                    <ListOrdered className='size-5 text-rose-600 dark:text-rose-400' />
-                    Thanh toán
-                  </div>
-                  <div className='mt-4 space-y-2 text-sm'>
+                <SectionCard>
+                  <SectionHeader
+                    icon={<CreditCard className='size-4' />}
+                    iconBg='bg-rose-600'
+                    title='Tổng thanh toán'
+                  />
+                  <div className='space-y-2.5 p-5 text-sm'>
                     <div className='flex justify-between gap-2'>
                       <span className='text-muted-foreground'>
                         Tổng tiền thuê
@@ -711,12 +896,13 @@ export default function RentalOrderDetailPage() {
                         {fmt.format(order.rentalSubtotalAmount)}
                       </span>
                     </div>
+
                     {order.voucherDiscountAmount > 0 && (
                       <div className='flex justify-between gap-2'>
                         <span className='text-muted-foreground'>
                           Giảm voucher
                           {order.voucherCodeSnapshot && (
-                            <span className='ml-1 text-rose-600'>
+                            <span className='ml-1 font-mono text-rose-600'>
                               ({order.voucherCodeSnapshot})
                             </span>
                           )}
@@ -726,6 +912,7 @@ export default function RentalOrderDetailPage() {
                         </span>
                       </div>
                     )}
+
                     <div className='flex justify-between gap-2'>
                       <span className='text-muted-foreground'>
                         Tiền cọc (hold)
@@ -734,6 +921,7 @@ export default function RentalOrderDetailPage() {
                         {fmt.format(order.depositHoldAmount)}
                       </span>
                     </div>
+
                     {order.totalPaidAmount > 0 && (
                       <div className='flex justify-between gap-2'>
                         <span className='text-muted-foreground'>
@@ -744,6 +932,7 @@ export default function RentalOrderDetailPage() {
                         </span>
                       </div>
                     )}
+
                     {order.penaltyChargeAmount !== null &&
                       order.penaltyChargeAmount > 0 && (
                         <div className='flex justify-between gap-2'>
@@ -755,9 +944,10 @@ export default function RentalOrderDetailPage() {
                           </span>
                         </div>
                       )}
-                    <div className='border-t border-border pt-3'>
-                      <div className='flex justify-between gap-2'>
-                        <span className='text-base font-bold text-foreground'>
+
+                    <div className='mt-1 rounded-xl border border-rose-200/70 bg-rose-50/60 px-4 py-3 dark:border-rose-800/50 dark:bg-rose-950/30'>
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <span className='font-semibold text-foreground'>
                           Cần thanh toán
                         </span>
                         <span className='text-xl font-extrabold tabular-nums text-rose-600 dark:text-rose-400'>
@@ -765,55 +955,63 @@ export default function RentalOrderDetailPage() {
                         </span>
                       </div>
                     </div>
-                  </div>
-                  {order.depositRefundAmount !== null &&
-                    order.depositRefundAmount > 0 && (
-                      <div className='mt-3 rounded-lg border border-green-200 bg-green-50/80 p-3 text-sm text-green-900 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-100'>
-                        Tiền cọc hoàn: {fmt.format(order.depositRefundAmount)}
-                      </div>
-                    )}
-                </SpotlightCard>
 
-                {/* Rental timeline */}
-                <SpotlightCard
-                  className='rounded-2xl border border-border/60 bg-card/85 p-5 dark:bg-card/75'
-                  spotlightColor='rgba(254, 20, 81, 0.06)'
-                >
-                  <div className='flex items-center gap-2 font-bold text-foreground'>
-                    <ListOrdered className='size-5 text-rose-600 dark:text-rose-400' />
-                    Tiến trình thuê
-                  </div>
-                  <div className='mt-4 space-y-3 text-sm'>
-                    {[
-                      { label: 'Đặt đơn', date: order.placedAt },
-                      {
-                        label: 'Dự kiến giao',
-                        date: order.expectedDeliveryDate,
-                      },
-                      { label: 'Giao thực tế', date: order.actualDeliveryAt },
-                      {
-                        label: 'Bắt đầu thuê',
-                        date: order.actualRentalStartAt,
-                      },
-                      { label: 'Kết thúc thuê', date: order.actualRentalEndAt },
-                      { label: 'Thu hồi', date: order.pickedUpAt },
-                    ]
-                      .filter((s) => s.date)
-                      .map((s) => (
-                        <div
-                          key={s.label}
-                          className='flex justify-between gap-2'
-                        >
-                          <span className='text-muted-foreground'>
-                            {s.label}
-                          </span>
-                          <span className='font-medium text-foreground'>
-                            {formatDateShort(s.date!)}
-                          </span>
+                    {order.depositRefundAmount !== null &&
+                      order.depositRefundAmount > 0 && (
+                        <div className='rounded-lg border border-green-200/80 bg-green-50/80 p-3 text-sm font-medium text-green-800 dark:border-green-900/50 dark:bg-green-950/50 dark:text-green-200'>
+                          Hoàn cọc: {fmt.format(order.depositRefundAmount)}
                         </div>
-                      ))}
+                      )}
                   </div>
-                </SpotlightCard>
+                </SectionCard>
+
+                {/* Timeline */}
+                <SectionCard>
+                  <SectionHeader
+                    icon={<Clock3 className='size-4' />}
+                    iconBg='bg-slate-500'
+                    title='Mốc thời gian'
+                  />
+                  <div className='relative p-5'>
+                    <div
+                      className='absolute bottom-5 left-[29px] top-5 w-px bg-border/80'
+                      aria-hidden
+                    />
+                    <ul className='relative space-y-4 text-sm'>
+                      {[
+                        { label: 'Đặt đơn', date: order.placedAt },
+                        {
+                          label: 'Dự kiến giao',
+                          date: order.expectedDeliveryDate,
+                        },
+                        { label: 'Giao thực tế', date: order.actualDeliveryAt },
+                        {
+                          label: 'Bắt đầu thuê',
+                          date: order.actualRentalStartAt,
+                        },
+                        {
+                          label: 'Kết thúc thuê',
+                          date: order.actualRentalEndAt,
+                        },
+                        { label: 'Thu hồi', date: order.pickedUpAt },
+                      ]
+                        .filter((s) => s.date)
+                        .map((s) => (
+                          <li key={s.label} className='flex items-start gap-3'>
+                            <span className='relative z-1 mt-1 size-2 shrink-0 rounded-full bg-rose-500 ring-4 ring-card' />
+                            <div className='min-w-0 flex-1'>
+                              <p className='text-xs text-muted-foreground'>
+                                {s.label}
+                              </p>
+                              <p className='font-semibold text-foreground'>
+                                {formatDateShort(s.date!)}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                </SectionCard>
               </div>
             </div>
           </>

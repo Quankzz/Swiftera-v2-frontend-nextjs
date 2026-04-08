@@ -9,13 +9,10 @@ import {
   FileText,
   Search,
   X,
-  SlidersHorizontal,
   ArrowUpDown,
-  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SpotlightCard } from '@/components/common/spotlight-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
@@ -25,7 +22,7 @@ import {
 } from '@/api/rentalOrderApi';
 import type { RentalOrderStatus } from '@/api/rentalOrderApi';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 5;
 const MAX_VISIBLE_PAGES = 5;
 
 const SORT_OPTIONS = [
@@ -69,21 +66,21 @@ function formatDate(iso: string) {
 
 function OrderRowSkeleton() {
   return (
-    <div className='flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5'>
-      <div className='flex min-w-0 items-start gap-3'>
-        <Skeleton className='size-11 shrink-0 rounded-xl' />
-        <div className='flex-1 space-y-2'>
-          <Skeleton className='h-4 w-36' />
-          <Skeleton className='h-3 w-48' />
-          <Skeleton className='h-3 w-24' />
-        </div>
+    <div className='flex items-center gap-4 px-5 py-4'>
+      <Skeleton className='size-10 shrink-0 rounded-xl' />
+      <div className='flex-1 space-y-2'>
+        <Skeleton className='h-4 w-36' />
+        <Skeleton className='h-3 w-48' />
       </div>
-      <Skeleton className='h-5 w-24' />
+      <div className='space-y-2 text-right'>
+        <Skeleton className='ml-auto h-4 w-24' />
+        <Skeleton className='ml-auto h-5 w-20' />
+      </div>
     </div>
   );
 }
 
-function StatusFilterBar({
+function StatusTabBar({
   activeFilter,
   onFilterChange,
 }: {
@@ -91,21 +88,23 @@ function StatusFilterBar({
   onFilterChange: (v: string) => void;
 }) {
   return (
-    <div className='flex flex-wrap gap-2'>
-      {STATUS_FILTERS.map((f) => (
-        <button
-          key={f.value || 'all'}
-          onClick={() => onFilterChange(f.value)}
-          className={cn(
-            'rounded-full px-3 py-1.5 text-xs font-medium transition-all',
-            activeFilter === f.value
-              ? 'bg-rose-600 text-white shadow-sm'
-              : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
-          )}
-        >
-          {f.label}
-        </button>
-      ))}
+    <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+      <div className='flex min-w-max border-b border-border/60'>
+        {STATUS_FILTERS.map((f) => (
+          <button
+            key={f.value || 'all'}
+            onClick={() => onFilterChange(f.value)}
+            className={cn(
+              '-mb-px border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+              activeFilter === f.value
+                ? 'border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400'
+                : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -144,7 +143,7 @@ function PaginationControls({
   }
 
   return (
-    <div className='mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between'>
+    <div className='flex flex-col items-center gap-3 border-t border-border/60 px-5 py-4 sm:flex-row sm:justify-between'>
       <p className='text-sm text-muted-foreground'>
         Hiển thị {(page - 1) * PAGE_SIZE + 1}–
         {Math.min(page * PAGE_SIZE, totalItems)} trong{' '}
@@ -155,7 +154,7 @@ function PaginationControls({
         <Button
           variant='outline'
           size='sm'
-          className='h-9 w-9 p-0'
+          className='h-8 w-8 p-0'
           disabled={!hasPrev}
           onClick={() => onPageChange(page - 1)}
         >
@@ -167,7 +166,7 @@ function PaginationControls({
             return (
               <span
                 key={`ellipsis-${idx}`}
-                className='flex h-9 w-9 items-center justify-center text-muted-foreground'
+                className='flex h-8 w-8 items-center justify-center text-sm text-muted-foreground'
               >
                 …
               </span>
@@ -180,8 +179,9 @@ function PaginationControls({
               variant={isActive ? 'default' : 'outline'}
               size='sm'
               className={cn(
-                'h-9 w-9 p-0',
-                isActive ? 'bg-rose-600 hover:bg-rose-700 text-white' : '',
+                'h-8 w-8 p-0 text-sm',
+                isActive &&
+                  'bg-rose-600 hover:bg-rose-700 text-white border-rose-600',
               )}
               onClick={() => onPageChange(p)}
             >
@@ -193,7 +193,7 @@ function PaginationControls({
         <Button
           variant='outline'
           size='sm'
-          className='h-9 w-9 p-0'
+          className='h-8 w-8 p-0'
           disabled={!hasNext}
           onClick={() => onPageChange(page + 1)}
         >
@@ -209,11 +209,9 @@ export default function RentalOrdersPage() {
   const [sort, setSort] = useState(SORT_OPTIONS[0].value);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
 
   const deferredSearch = useDeferredValue(search);
 
-  // Reset page when filter/sort/search changes
   useEffect(() => {
     setPage(1);
   }, [sort, statusFilter, deferredSearch]);
@@ -229,7 +227,6 @@ export default function RentalOrdersPage() {
 
   const orders = data?.items ?? [];
 
-  // Client-side search filter (ID contains)
   const filteredOrders = deferredSearch
     ? orders.filter((o) =>
         o.rentalOrderId.toLowerCase().includes(deferredSearch.toLowerCase()),
@@ -239,65 +236,52 @@ export default function RentalOrdersPage() {
   const hasActiveFilters = statusFilter !== '' || deferredSearch !== '';
 
   return (
-    <div className='min-h-screen bg-white dark:bg-surface-base px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
+    <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28 dark:bg-background'>
       <div className='mx-auto max-w-3xl'>
-        <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>
-          Đơn thuê của tôi
-        </h1>
-        <p className='mt-1 text-sm text-muted-foreground'>
-          Theo dõi tất cả đơn thuê thiết bị của bạn.
-        </p>
+        {/* Page header */}
+        <div className='mb-6'>
+          <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>
+            Đơn thuê của tôi
+          </h1>
+          <p className='mt-1 text-sm text-muted-foreground'>
+            Theo dõi tất cả đơn thuê thiết bị của bạn.
+          </p>
+        </div>
 
-        {/* ── Controls bar ── */}
-        <div className='mt-6 space-y-3'>
-          {/* Search */}
-          <div className='relative'>
-            <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
-            <input
-              type='text'
-              placeholder='Tìm theo mã đơn thuê...'
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className='flex h-10 w-full rounded-xl border border-border/60 bg-card pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 dark:bg-card/80'
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
-              >
-                <X className='size-4' />
-              </button>
-            )}
-          </div>
+        {/* Main card container */}
+        <div className='overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm'>
+          {/* Status tab bar */}
+          <StatusTabBar
+            activeFilter={statusFilter}
+            onFilterChange={(v) => setStatusFilter(v)}
+          />
 
-          {/* Filter + Sort row */}
-          <div className='flex flex-wrap items-center justify-between gap-2'>
-            {/* Filter toggle */}
-            <button
-              onClick={() => setShowFilters((v) => !v)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition-all',
-                showFilters || hasActiveFilters
-                  ? 'bg-rose-600 text-white'
-                  : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
+          {/* Controls row */}
+          <div className='flex items-center gap-3 border-b border-border/60 px-4 py-3 sm:px-5'>
+            <div className='relative flex-1'>
+              <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
+              <input
+                type='text'
+                placeholder='Tìm theo mã đơn thuê...'
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className='h-9 w-full rounded-lg border border-border/60 bg-background pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200/60 dark:bg-card'
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
+                >
+                  <X className='size-3.5' />
+                </button>
               )}
-            >
-              <SlidersHorizontal className='size-4' />
-              Lọc
-              {hasActiveFilters && (
-                <span className='ml-1 flex size-5 items-center justify-center rounded-full bg-white/20 text-xs'>
-                  {statusFilter ? 1 : 0}
-                </span>
-              )}
-            </button>
-
-            {/* Sort */}
-            <div className='flex items-center gap-2'>
-              <ArrowUpDown className='size-4 text-muted-foreground' />
+            </div>
+            <div className='flex shrink-0 items-center gap-2 text-sm text-muted-foreground'>
+              <ArrowUpDown className='size-4' />
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className='rounded-xl border border-border/60 bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-rose-200 dark:bg-card/80'
+                className='rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-rose-200/60 dark:bg-card'
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -308,19 +292,11 @@ export default function RentalOrdersPage() {
             </div>
           </div>
 
-          {/* Status filter chips */}
-          {showFilters && (
-            <StatusFilterBar
-              activeFilter={statusFilter}
-              onFilterChange={(v) => setStatusFilter(v)}
-            />
-          )}
-
           {/* Active filter tags */}
-          {hasActiveFilters && !showFilters && (
-            <div className='flex flex-wrap items-center gap-2'>
+          {hasActiveFilters && (
+            <div className='flex flex-wrap items-center gap-2 border-b border-border/60 bg-muted/30 px-5 py-2'>
               {statusFilter && (
-                <span className='inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'>
+                <span className='inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'>
                   {
                     RENTAL_ORDER_STATUS_LABELS[
                       statusFilter as RentalOrderStatus
@@ -328,18 +304,18 @@ export default function RentalOrdersPage() {
                   }
                   <button
                     onClick={() => setStatusFilter('')}
-                    className='ml-1 hover:text-rose-900'
+                    className='ml-0.5 hover:text-rose-900'
                   >
                     <X className='size-3' />
                   </button>
                 </span>
               )}
               {deferredSearch && (
-                <span className='inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-foreground'>
+                <span className='inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground'>
                   &quot;{deferredSearch}&quot;
                   <button
                     onClick={() => setSearch('')}
-                    className='ml-1 text-muted-foreground hover:text-foreground'
+                    className='ml-0.5 text-muted-foreground hover:text-foreground'
                   >
                     <X className='size-3' />
                   </button>
@@ -356,149 +332,133 @@ export default function RentalOrdersPage() {
               </button>
             </div>
           )}
-        </div>
 
-        {/* Loading */}
-        {isLoading && (
-          <div className='mt-8 space-y-3'>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <SpotlightCard
-                key={i}
-                className='rounded-2xl border border-border/60 bg-card/85 dark:bg-card/70'
-                spotlightColor='rgba(254, 20, 81, 0.08)'
-              >
-                <OrderRowSkeleton />
-              </SpotlightCard>
-            ))}
-          </div>
-        )}
+          {/* Loading */}
+          {isLoading && (
+            <div className='divide-y divide-border/60'>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <OrderRowSkeleton key={i} />
+              ))}
+            </div>
+          )}
 
-        {/* Error */}
-        {isError && (
-          <SpotlightCard
-            className='mt-8 rounded-2xl border border-destructive/30 bg-destructive/5 p-10 text-center'
-            spotlightColor='rgba(254, 20, 81, 0.1)'
-          >
-            <p className='font-semibold text-foreground'>
-              Không tải được đơn thuê
-            </p>
-            <p className='mt-1 text-sm text-muted-foreground'>
-              Vui lòng đăng nhập hoặc thử lại sau.
-            </p>
-            <Button
-              className='mt-6 rounded-xl bg-rose-600 text-white hover:bg-rose-700'
-              render={<Link href='/login?redirect=/rental-orders' />}
-            >
-              Đăng nhập
-            </Button>
-          </SpotlightCard>
-        )}
-
-        {/* Empty */}
-        {!isLoading && !isError && filteredOrders.length === 0 && (
-          <SpotlightCard
-            className='mt-8 rounded-2xl border border-dashed border-border/70 bg-card/80 p-10 text-center'
-            spotlightColor='rgba(254, 20, 81, 0.12)'
-          >
-            <Package className='mx-auto size-12 text-muted-foreground/60' />
-            <p className='mt-4 font-semibold text-foreground'>
-              {hasActiveFilters
-                ? 'Không tìm thấy đơn phù hợp'
-                : 'Chưa có đơn thuê nào'}
-            </p>
-            <p className='mt-1 text-sm text-muted-foreground'>
-              {hasActiveFilters
-                ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.'
-                : 'Thêm sản phẩm vào giỏ hàng để bắt đầu thuê.'}
-            </p>
-            {hasActiveFilters ? (
+          {/* Error */}
+          {isError && (
+            <div className='px-5 py-16 text-center'>
+              <Package className='mx-auto size-10 text-muted-foreground/40' />
+              <p className='mt-4 font-semibold text-foreground'>
+                Không tải được đơn thuê
+              </p>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                Vui lòng đăng nhập hoặc thử lại sau.
+              </p>
               <Button
-                className='mt-6 rounded-xl bg-rose-600 text-white hover:bg-rose-700'
-                onClick={() => {
-                  setStatusFilter('');
-                  setSearch('');
-                }}
+                className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                render={<Link href='/login?redirect=/rental-orders' />}
               >
-                Xóa bộ lọc
+                Đăng nhập
               </Button>
-            ) : (
-              <Button
-                className='mt-6 rounded-xl bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
-                render={<Link href='/cart' />}
-              >
-                Đi tới giỏ hàng
-              </Button>
-            )}
-          </SpotlightCard>
-        )}
+            </div>
+          )}
 
-        {/* Orders list */}
-        {!isLoading && !isError && filteredOrders.length > 0 && (
-          <ul className='mt-6 space-y-3'>
-            {filteredOrders.map((order) => {
-              const status = order.status as RentalOrderStatus;
-              return (
-                <li key={order.rentalOrderId}>
-                  <SpotlightCard
-                    className='rounded-2xl border border-border/60 bg-card/85 shadow-sm transition-shadow hover:shadow-md dark:bg-card/70'
-                    spotlightColor='rgba(254, 20, 81, 0.08)'
-                  >
+          {/* Empty */}
+          {!isLoading && !isError && filteredOrders.length === 0 && (
+            <div className='px-5 py-16 text-center'>
+              <div className='mx-auto flex size-16 items-center justify-center rounded-2xl bg-muted/60'>
+                <Package className='size-8 text-muted-foreground/50' />
+              </div>
+              <p className='mt-4 font-semibold text-foreground'>
+                {hasActiveFilters
+                  ? 'Không tìm thấy đơn phù hợp'
+                  : 'Chưa có đơn thuê nào'}
+              </p>
+              <p className='mt-1 text-sm text-muted-foreground'>
+                {hasActiveFilters
+                  ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.'
+                  : 'Thêm sản phẩm vào giỏ hàng để bắt đầu thuê.'}
+              </p>
+              {hasActiveFilters ? (
+                <Button
+                  className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                  onClick={() => {
+                    setStatusFilter('');
+                    setSearch('');
+                  }}
+                >
+                  Xóa bộ lọc
+                </Button>
+              ) : (
+                <Button
+                  className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                  render={<Link href='/cart' />}
+                >
+                  Đi tới giỏ hàng
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Orders list */}
+          {!isLoading && !isError && filteredOrders.length > 0 && (
+            <ul className='divide-y divide-border/60'>
+              {filteredOrders.map((order) => {
+                const status = order.status as RentalOrderStatus;
+                return (
+                  <li key={order.rentalOrderId}>
                     <Link
                       href={`/rental-orders/${order.rentalOrderId}`}
-                      className='flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5'
+                      className='group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/30'
                     >
-                      <div className='flex min-w-0 items-start gap-3'>
-                        <div className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400'>
-                          <FileText className='size-5' />
-                        </div>
-                        <div className='min-w-0'>
-                          <p className='font-mono text-sm font-bold text-rose-700 dark:text-rose-300'>
-                            {order.rentalOrderId.slice(0, 8).toUpperCase()}
-                          </p>
-                          <p className='text-xs text-muted-foreground'>
-                            {formatDate(order.placedAt)}
-                          </p>
-                          <div className='mt-2 flex flex-wrap items-center gap-2'>
-                            <Badge
-                              className={cn(
-                                'rounded-full text-xs font-medium',
-                                RENTAL_ORDER_STATUS_COLORS[status],
-                              )}
-                            >
-                              {RENTAL_ORDER_STATUS_LABELS[status]}
-                            </Badge>
-                            <span className='text-xs text-muted-foreground'>
-                              {order.rentalOrderLines.length} sản phẩm
-                            </span>
-                          </div>
-                          <p className='mt-1 text-sm text-foreground'>
-                            <span className='font-semibold tabular-nums'>
-                              {fmt.format(order.totalPayableAmount)}
-                            </span>
-                          </p>
-                        </div>
+                      {/* Icon */}
+                      <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400'>
+                        <FileText className='size-4.5' />
                       </div>
-                      <span className='inline-flex items-center gap-1 text-sm font-medium text-rose-600 dark:text-rose-400'>
-                        Chi tiết
-                        <ChevronRight className='size-4' />
-                      </span>
-                    </Link>
-                  </SpotlightCard>
-                </li>
-              );
-            })}
-          </ul>
-        )}
 
-        {/* Pagination */}
-        {!isLoading && !isError && data && data.totalPages > 0 && (
-          <PaginationControls
-            page={data.page}
-            totalPages={data.totalPages}
-            totalItems={data.totalItems}
-            onPageChange={setPage}
-          />
-        )}
+                      {/* Info */}
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <span className='font-mono text-sm font-bold text-foreground'>
+                            #{order.rentalOrderId.slice(0, 8).toUpperCase()}
+                          </span>
+                          <Badge
+                            className={cn(
+                              'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                              RENTAL_ORDER_STATUS_COLORS[status],
+                            )}
+                          >
+                            {RENTAL_ORDER_STATUS_LABELS[status]}
+                          </Badge>
+                        </div>
+                        <p className='mt-0.5 text-xs text-muted-foreground'>
+                          {formatDate(order.placedAt)} &middot;{' '}
+                          {order.rentalOrderLines.length} sản phẩm
+                        </p>
+                      </div>
+
+                      {/* Amount + arrow */}
+                      <div className='flex shrink-0 items-center gap-2'>
+                        <span className='text-sm font-semibold tabular-nums text-foreground'>
+                          {fmt.format(order.totalPayableAmount)}
+                        </span>
+                        <ChevronRight className='size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {/* Pagination */}
+          {!isLoading && !isError && data && data.totalPages > 0 && (
+            <PaginationControls
+              page={data.page}
+              totalPages={data.totalPages}
+              totalItems={data.totalItems}
+              onPageChange={setPage}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

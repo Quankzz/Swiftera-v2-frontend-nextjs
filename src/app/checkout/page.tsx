@@ -33,9 +33,11 @@ import {
   type RentalVoucher,
 } from '@/lib/rental-voucher';
 import type { VoucherResponse } from '@/features/vouchers/types';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const lines = useRentalCartStore((s) => s.lines);
   const updateLineVoucher = useRentalCartStore((s) => s.updateLineVoucher);
   const clearCart = useRentalCartStore((s) => s.clearCart);
@@ -48,10 +50,15 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    // User đã đăng nhập → giỏ hàng thật là /cart (dùng API), không dùng checkout Zustand
+    if (isAuthenticated) {
+      router.replace('/cart');
+      return;
+    }
     if (lines.length === 0) {
       router.replace('/cart');
     }
-  }, [lines.length, router]);
+  }, [isAuthenticated, lines.length, router]);
 
   const totals = useMemo(() => computeCartTotals(lines), [lines]);
 
