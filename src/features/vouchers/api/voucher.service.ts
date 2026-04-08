@@ -1,6 +1,6 @@
 /**
  * Voucher API service — Module 11: VOUCHERS
- * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (API-066 → API-072)
+ * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (API-067 → API-073)
  *
  * Dùng apiService.ts — KHÔNG dùng client.ts.
  * Service chỉ nhận payload đúng format API, không chứa UI logic.
@@ -20,25 +20,22 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * API-070: GET /vouchers?page=1&size=10&filter=...
- * BE dùng 1-based pagination (currentPage bắt đầu từ 1).
- * Frontend dùng 0-based → cộng thêm 1 trước khi gửi lên.
+ * API-071: GET /vouchers?page=1&size=10&filter=...
+ * BE dùng 1-based pagination. Caller phải truyền đúng page (1-based).
  */
 export function getVouchersList(
   params?: VoucherListParams,
 ): Promise<PaginatedVouchersResponse> {
-  const { page, ...rest } = params ?? {};
   return apiGet<PaginatedVouchersResponse>('/vouchers', {
-    params: {
-      ...rest,
-      // 0-based FE → 1-based BE
-      ...(page !== undefined ? { page: page + 1 } : {}),
-    } as Record<string, string | number | boolean | undefined | null>,
+    params: params as Record<
+      string,
+      string | number | boolean | undefined | null
+    >,
   });
 }
 
 /**
- * API-067: GET /vouchers/{voucherId}
+ * API-068: GET /vouchers/{voucherId}
  * Lấy chi tiết voucher theo ID
  */
 export function getVoucherById(voucherId: string): Promise<VoucherResponse> {
@@ -46,7 +43,7 @@ export function getVoucherById(voucherId: string): Promise<VoucherResponse> {
 }
 
 /**
- * API-068: GET /vouchers/code/{code}
+ * API-069: GET /vouchers/code/{code}
  * Lấy voucher theo mã code (dùng ở dashboard để preview)
  */
 export function getVoucherByCode(code: string): Promise<VoucherResponse> {
@@ -58,7 +55,7 @@ export function getVoucherByCode(code: string): Promise<VoucherResponse> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * API-066: POST /vouchers
+ * API-067: POST /vouchers
  * Tạo voucher mới
  */
 export function createVoucher(
@@ -68,7 +65,7 @@ export function createVoucher(
 }
 
 /**
- * API-071: PATCH /vouchers/{voucherId}
+ * API-072: PATCH /vouchers/{voucherId}
  * Cập nhật voucher (partial)
  */
 export function updateVoucher(
@@ -79,7 +76,7 @@ export function updateVoucher(
 }
 
 /**
- * API-072: DELETE /vouchers/{voucherId}
+ * API-073: DELETE /vouchers/{voucherId}
  * Xóa voucher
  */
 export function deleteVoucher(voucherId: string): Promise<null> {

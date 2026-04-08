@@ -123,6 +123,7 @@
       "avatarUrl": null,
       "city": null,
       "nationality": null,
+      "isVerified": true,
       "rolesSecured": [
         {
           "roleId": "...",
@@ -198,6 +199,7 @@
       "avatarUrl": null,
       "city": null,
       "nationality": null,
+      "isVerified": true,
       "rolesSecured": [
         {
           "roleId": "...",
@@ -258,6 +260,7 @@
     "avatarUrl": null,
     "city": null,
     "nationality": null,
+    "isVerified": true,
     "rolesSecured": [
       {
         "roleId": "...",
@@ -457,6 +460,7 @@
     "avatarUrl": null,
     "city": null,
     "nationality": null,
+    "isVerified": true,
     "rolesSecured": [
       {
         "roleId": "...",
@@ -501,6 +505,7 @@
         "lastName": "...",
         "nickname": null,
         "phoneNumber": "...",
+        "isVerified": true,
         "rolesSecured": []
       }
     ]
@@ -1393,7 +1398,7 @@ Ví dụ response:
 {
   "categoryId": "cat-uuid-mirrorless",
   "brand": "Canon",
-  "color": "Black,Silver",
+  "voucherId": "voucher-product-discount-uuid",
   "name": "Canon EOS R50",
   "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
   "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
@@ -1418,13 +1423,13 @@ Ví dụ response:
 }
 ```
 
-| Field                                                                                                        | Bắt buộc |
-| ------------------------------------------------------------------------------------------------------------ | -------- |
-| `categoryId`                                                                                                 | ✓        |
-| `name`                                                                                                       | ✓        |
-| `dailyPrice`                                                                                                 | ✓, > 0   |
-| `depositAmount`                                                                                              | ✓, >= 0  |
-| `brand`, `color`, `shortDescription`, `description`, `oldDailyPrice`, `minRentalDays`, `colors`, `imageUrls` | tùy chọn |
+| Field                                                                                                            | Bắt buộc |
+| ---------------------------------------------------------------------------------------------------------------- | -------- |
+| `categoryId`                                                                                                     | ✓        |
+| `name`                                                                                                           | ✓        |
+| `dailyPrice`                                                                                                     | ✓, > 0   |
+| `depositAmount`                                                                                                  | ✓, >= 0  |
+| `brand`, `voucherId`, `shortDescription`, `description`, `oldDailyPrice`, `minRentalDays`, `colors`, `imageUrls` | tùy chọn |
 
 **Rule giá**:
 
@@ -1439,7 +1444,19 @@ Ví dụ response:
     "categoryId": "cat-uuid-mirrorless",
     "categoryName": "Mirrorless",
     "brand": "Canon",
-    "color": "Black, Silver",
+    "voucherId": "voucher-product-discount-uuid",
+    "voucher": {
+      "voucherId": "voucher-product-discount-uuid",
+      "code": "CAMERA10",
+      "type": "PRODUCT_DISCOUNT",
+      "productName": "Canon EOS R50",
+      "discountType": "PERCENTAGE",
+      "discountValue": 10,
+      "maxDiscountAmount": 200000,
+      "minRentalDays": 1,
+      "expiresAt": "2026-12-31 11:59:59 PM",
+      "isActive": true
+    },
     "colors": [
       {
         "productColorId": "pc-black-r50",
@@ -1477,7 +1494,9 @@ Ví dụ response:
 
 **Lưu ý thêm**:
 
-- `colors[]` là nguồn dữ liệu màu chuẩn cho FE; `color` chỉ là summary string để tương thích ngược.
+- `colors[]` là nguồn dữ liệu màu chuẩn cho FE; `ProductResponse` không còn trả field `color`.
+- FE không gửi `color` ở request create/update product nữa; backend đồng bộ dữ liệu màu từ `colors[]`.
+- `voucherId` là liên kết tùy chọn tới voucher loại `PRODUCT_DISCOUNT`; response trả thêm `voucher` đầy đủ thông tin để FE hiển thị trực tiếp, backend vẫn không tự tính lại `dailyPrice` hoặc `oldDailyPrice`.
 - Nếu update có truyền `colors[]`, backend sẽ sync lại full danh sách màu của product theo payload mới.
 
 ---
@@ -1520,7 +1539,7 @@ Mỗi phần tử `inventoryItems` gồm:
 {
   "categoryId": "cat-uuid-new",
   "brand": "Canon",
-  "color": "Black,Silver,White",
+  "voucherId": "voucher-product-discount-uuid",
   "name": "Canon EOS R50 Silver",
   "shortDescription": "Bản màu bạc, phù hợp chụp vlog",
   "description": "Phiên bản màu bạc",
@@ -1552,8 +1571,11 @@ Mỗi phần tử `inventoryItems` gồm:
 **Rule giá**:
 
 - Khi update, backend cũng kiểm tra `oldDailyPrice >= dailyPrice` trên giá trị cuối cùng sau cập nhật.
+- Muốn bỏ liên kết voucher `PRODUCT_DISCOUNT` hiện tại khỏi product, FE có thể gửi `voucherId` là chuỗi rỗng.
 
 **Response**: `ProductResponse`
+
+**Lưu ý**: `ProductResponse` trả cả `voucherId` và object `voucher` đầy đủ thông tin khi product đang gắn voucher `PRODUCT_DISCOUNT`.
 
 ---
 
@@ -1571,6 +1593,8 @@ Mỗi phần tử `inventoryItems` gồm:
   "data": null
 }
 ```
+
+**Lưu ý**: nếu product đang có voucher liên kết, backend sẽ tự gỡ liên kết voucher trước khi xóa product.
 
 ---
 
@@ -1726,7 +1750,6 @@ Mỗi phần tử `inventoryItems` gồm:
             "voucherId": "v-item-001",
             "code": "CAMERA7",
             "type": "ITEM_VOUCHER",
-            "productId": "f3152824-...",
             "productName": "Canon EOS R50",
             "discountType": "PERCENTAGE",
             "discountValue": 7,
@@ -1847,7 +1870,6 @@ Mỗi phần tử `inventoryItems` gồm:
 {
   "code": "SUMMER30",
   "type": "ITEM_VOUCHER",
-  "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
   "discountType": "PERCENTAGE",
   "discountValue": 30,
   "maxDiscountAmount": 500000,
@@ -1860,7 +1882,6 @@ Mỗi phần tử `inventoryItems` gồm:
 | ------------------- | -------- | -------------------------------------- |
 | `code`              | ✓        | mã voucher duy nhất                    |
 | `type`              | ✓        | `ITEM_VOUCHER` hoặc `PRODUCT_DISCOUNT` |
-| `productId`         | tùy chọn | bắt buộc nếu `type=PRODUCT_DISCOUNT`   |
 | `discountType`      | ✓        | `PERCENTAGE` hoặc `FIXED`              |
 | `discountValue`     | ✓        | > 0                                    |
 | `maxDiscountAmount` | tùy chọn | giới hạn giảm tối đa (cho PERCENTAGE)  |
@@ -1870,7 +1891,7 @@ Mỗi phần tử `inventoryItems` gồm:
 **Validation quan trọng**:
 
 - Nếu `discountType` không phải `PERCENTAGE` hoặc `FIXED`, backend trả `VOUCHER_DISCOUNT_TYPE_INVALID`.
-- Nếu `type=PRODUCT_DISCOUNT` nhưng thiếu `productId`, backend trả `VOUCHER_PRODUCT_REQUIRED`.
+- Nếu muốn gắn voucher `PRODUCT_DISCOUNT` vào product, FE dùng `voucherId` ở API-052/API-055 thay vì truyền `productId` ở đây.
 
 **Response**:
 
@@ -1880,8 +1901,6 @@ Mỗi phần tử `inventoryItems` gồm:
     "voucherId": "v-uuid-001",
     "code": "SUMMER30",
     "type": "ITEM_VOUCHER",
-    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-    "productName": "Canon EOS R50",
     "discountType": "PERCENTAGE",
     "discountValue": 30,
     "maxDiscountAmount": 500000,
@@ -1893,6 +1912,8 @@ Mỗi phần tử `inventoryItems` gồm:
   }
 }
 ```
+
+**Lưu ý**: `VoucherResponse` có thể trả thêm `productName` nếu voucher hiện đã được gắn với một product từ API product.
 
 ---
 
@@ -1970,7 +1991,6 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 ```json
 {
   "type": "PRODUCT_DISCOUNT",
-  "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
   "discountType": "FIXED",
   "discountValue": 200000,
   "maxDiscountAmount": null,
@@ -1981,6 +2001,8 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 ```
 
 **Response**: `VoucherResponse`
+
+**Lưu ý**: API này không còn nhận `productId`; việc gắn/bỏ voucher `PRODUCT_DISCOUNT` với product được thực hiện ở API-052/API-055 thông qua field `voucherId`.
 
 ---
 

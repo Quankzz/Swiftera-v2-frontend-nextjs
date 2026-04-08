@@ -7,13 +7,14 @@
  *   onView(ticket) — open detail modal
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Eye,
   ChevronLeft,
   ChevronRight,
   Loader2,
   AlertCircle,
+  Search,
 } from 'lucide-react';
 import { useTickets } from '../hooks/useTickets';
 import { TICKET_STATUS_LABELS, TICKET_STATUS_STYLES } from '../types';
@@ -65,13 +66,35 @@ export function TicketListTable({ onView }: TicketListTableProps) {
   const [activeStatus, setActiveStatus] = useState<ContactTicketStatus | 'ALL'>(
     'ALL',
   );
-  const [page, setPage] = useState(1); // backend one-indexed (page=1 là trang đầu)
+  const [page, setPage] = useState(1); // backend one-indexed
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce 400ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Build filter — combine status + search
+  const filter = (() => {
+    const parts: string[] = [];
+    if (activeStatus !== 'ALL') parts.push(`status:'${activeStatus}'`);
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.trim();
+      parts.push(`(subject~~'*${term}*' or fullName~~'*${term}*')`);
+    }
+    return parts.length ? parts.join(' and ') : undefined;
+  })();
 
   const { data, isLoading, isError } = useTickets({
     page,
     size: PAGE_SIZE,
-    status: activeStatus === 'ALL' ? undefined : activeStatus,
     sort: 'createdAt,desc',
+    ...(filter ? { filter } : {}),
   });
 
   const tickets = data?.content ?? [];
@@ -88,22 +111,39 @@ export function TicketListTable({ onView }: TicketListTableProps) {
 
   return (
     <div className='flex flex-col gap-0 rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-black/20 overflow-hidden'>
-      {/* Filter tabs */}
-      <div className='flex items-center gap-1 px-4 pt-4 pb-2 border-b border-gray-100 dark:border-white/8 overflow-x-auto'>
-        {FILTER_TABS.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => handleStatusChange(tab.value)}
-            className={cn(
-              'shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
-              activeStatus === tab.value
-                ? 'bg-theme-primary-start text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8',
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Search + Filter tabs */}
+      <div className='flex flex-col gap-2 px-4 pt-4 pb-2 border-b border-gray-100 dark:border-white/8'>
+        {/* Search input */}
+        <div className='relative max-w-xs'>
+          <Search
+            size={14}
+            className='absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none'
+          />
+          <input
+            type='text'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder='Tìm tiêu đề, khách hàng...'
+            className='h-9 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+          />
+        </div>
+        {/* Status filter tabs */}
+        <div className='flex items-center gap-1 overflow-x-auto'>
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => handleStatusChange(tab.value)}
+              className={cn(
+                'shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                activeStatus === tab.value
+                  ? 'bg-theme-primary-start text-white'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table wrapper */}

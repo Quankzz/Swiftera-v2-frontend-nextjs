@@ -3,7 +3,11 @@
 import { useState, useEffect, startTransition } from 'react';
 import { X, Loader2, Tag, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import type { VoucherResponse, DiscountType } from '@/features/vouchers/types';
+import type {
+  VoucherResponse,
+  DiscountType,
+  VoucherType,
+} from '@/features/vouchers/types';
 import {
   useCreateVoucherMutation,
   useUpdateVoucherMutation,
@@ -17,6 +21,7 @@ import { normalizeError } from '@/api/apiService';
 
 interface FormState {
   code: string;
+  type: VoucherType;
   discountType: DiscountType;
   discountValue: string; // string để dễ bind input
   maxDiscountAmount: string;
@@ -56,6 +61,7 @@ function initForm(voucher: VoucherResponse | null): FormState {
   if (!voucher) {
     return {
       code: '',
+      type: 'ITEM_VOUCHER',
       discountType: 'PERCENTAGE',
       discountValue: '',
       maxDiscountAmount: '',
@@ -67,6 +73,7 @@ function initForm(voucher: VoucherResponse | null): FormState {
   }
   return {
     code: voucher.code,
+    type: voucher.type ?? 'ITEM_VOUCHER',
     discountType: voucher.discountType,
     discountValue: String(voucher.discountValue),
     maxDiscountAmount:
@@ -142,6 +149,7 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
         await updateMutation.mutateAsync({
           voucherId: target.voucherId,
           payload: {
+            type: form.type,
             discountType: form.discountType,
             discountValue: Number(form.discountValue),
             maxDiscountAmount: form.maxDiscountAmount
@@ -159,6 +167,7 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
       } else {
         await createMutation.mutateAsync({
           code: form.code.trim().toUpperCase(),
+          type: form.type,
           discountType: form.discountType,
           discountValue: Number(form.discountValue),
           maxDiscountAmount: form.maxDiscountAmount
@@ -249,6 +258,37 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
             {isEdit && (
               <p className='text-xs text-text-sub'>
                 Mã voucher không thể thay đổi sau khi tạo.
+              </p>
+            )}
+          </div>
+
+          {/* Loại voucher */}
+          <div className='space-y-1.5'>
+            <label className='block text-sm font-medium text-text-main'>
+              Loại voucher <span className='text-red-500'>*</span>
+            </label>
+            <div className='flex gap-3'>
+              {(['ITEM_VOUCHER', 'PRODUCT_DISCOUNT'] as VoucherType[]).map(
+                (t) => (
+                  <button
+                    key={t}
+                    type='button'
+                    onClick={() => set('type', t)}
+                    className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+                      form.type === t
+                        ? 'border-theme-primary-start bg-theme-primary-start/10 text-theme-primary-start dark:bg-theme-primary-start/20'
+                        : 'border-gray-200 dark:border-white/8 text-text-sub hover:border-gray-300 dark:hover:border-white/15'
+                    }`}
+                  >
+                    {t === 'ITEM_VOUCHER' ? '🎫 Đơn hàng' : '🏷 Sản phẩm'}
+                  </button>
+                ),
+              )}
+            </div>
+            {form.type === 'PRODUCT_DISCOUNT' && (
+              <p className='text-xs text-text-sub'>
+                Voucher sản phẩm sẽ được gắn với sản phẩm cụ thể sau khi tạo qua
+                trang quản lý sản phẩm.
               </p>
             )}
           </div>
@@ -407,8 +447,7 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
             Hủy bỏ
           </button>
           <button
-            type='submit'
-            form='voucher-form'
+            type='button'
             onClick={handleSubmit}
             disabled={isPending}
             className='inline-flex items-center gap-2 rounded-md bg-theme-primary-start px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60'

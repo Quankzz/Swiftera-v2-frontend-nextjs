@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { UserResponse } from '@/features/users/types';
 import { useUsersQuery } from '@/features/users/hooks/use-user-management';
-import { Pencil, Trash2, Shield } from 'lucide-react';
+import { Pencil, Trash2, Shield, Search } from 'lucide-react';
 
 type UsersTableProps = {
   onEdit?: (user: UserResponse) => void;
@@ -52,10 +52,32 @@ function AvatarCell({ user }: { user: UserResponse }) {
 }
 
 export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
-  const [page, setPage] = useState(0); // BE uses 0-based page
+  const [page, setPage] = useState(0); // 0-based cho DataTable UI; gửi page+1 lên BE
   const [size] = useState(10);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const { data, isLoading, isError } = useUsersQuery({ page, size });
+  // Debounce 400ms — chờ user ngừng gõ mới gọi API
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Build SpringFilter DSL — dùng ~~ cho LIKE/contains
+  const filter = useMemo(() => {
+    const term = debouncedSearch.trim();
+    if (!term) return undefined;
+    return `(firstName~~'*${term}*' or lastName~~'*${term}*' or email~~'*${term}*')`;
+  }, [debouncedSearch]);
+
+  const { data, isLoading, isError } = useUsersQuery({
+    page: page + 1, // BE expects 1-based
+    size,
+    ...(filter ? { filter } : {}),
+  });
 
   const total = data?.meta?.totalElements ?? 0;
   const users = data?.content ?? [];
@@ -199,8 +221,6 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
     <DataTable
       columns={columns}
       data={users}
-      searchPlaceholder='Tìm theo tên...'
-      searchColumn='displayName'
       totalLabel='người dùng'
       isLoading={isLoading}
       isError={isError}
@@ -212,6 +232,21 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
       onPageChange={(p) => setPage(p)}
       pageSize={size}
       totalRows={total}
+      toolbarRight={
+        <div className='relative'>
+          <Search
+            size={14}
+            className='absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none'
+          />
+          <input
+            type='text'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder='Tìm tên, email...'
+            className='h-9 w-52 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+          />
+        </div>
+      }
     />
   );
 }

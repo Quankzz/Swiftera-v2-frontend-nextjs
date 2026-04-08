@@ -42,7 +42,9 @@ interface DataTableProps<TData, TValue> {
   onPageChange?: (page: number) => void;
   pageSize?: number;
   totalRows?: number;
-  /** Thanh toolbar bên phải */
+  /** Thanh toolbar bên trái (search input, v.v.) */
+  toolbarLeft?: React.ReactNode;
+  /** Thanh toolbar bên phải (filters, actions) */
   toolbarRight?: React.ReactNode;
 }
 
@@ -70,6 +72,7 @@ export function DataTable<TData, TValue>({
   onPageChange,
   pageSize = 10,
   totalRows,
+  toolbarLeft,
   toolbarRight,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -124,6 +127,7 @@ export function DataTable<TData, TValue>({
       {/* Toolbar */}
       <div className='flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-3 shadow-sm'>
         <div className='flex items-center gap-2 flex-1 min-w-0'>
+          {toolbarLeft}
           {searchColumn && (
             <div className='relative max-w-xs w-full'>
               <Search

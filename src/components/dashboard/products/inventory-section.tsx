@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import type {
   InventoryItemStatus,
   InventoryItemConditionGrade,
+  ProductColorInput,
 } from '@/features/products/types';
 import type { DraftInventoryItem } from './use-product-form';
 import { HubPickerDialog } from './hub-picker-dialog';
@@ -117,11 +118,13 @@ function StatusBadge({ status }: { status: InventoryItemStatus }) {
 function InventoryItemRow({
   item,
   index,
+  productColors,
   onUpdate,
   onRemove,
 }: {
   item: DraftInventoryItem;
   index: number;
+  productColors: ProductColorInput[];
   onUpdate: (patch: Partial<Omit<DraftInventoryItem, 'draftId'>>) => void;
   onRemove: () => void;
 }) {
@@ -189,6 +192,54 @@ function InventoryItemRow({
       {/* Expanded detail */}
       {expanded && (
         <div className='border-t border-gray-200 dark:border-white/8 px-4 py-4 grid grid-cols-1 gap-3 sm:grid-cols-2'>
+          {/* Color — chỉ hiện khi product có >0 màu */}
+          {productColors.length > 0 && (
+            <div className='flex flex-col gap-1.5 sm:col-span-2'>
+              <label className='text-xs font-medium text-text-sub'>
+                Màu sắc
+                {productColors.length > 1 && (
+                  <span className='ml-1 text-red-500'>*</span>
+                )}
+              </label>
+              <div className='flex flex-wrap items-center gap-2'>
+                {productColors.map((color) => {
+                  const isSelected =
+                    item.productColorId ===
+                    (color.productColorId ?? color.code);
+                  return (
+                    <button
+                      key={color.productColorId ?? color.code}
+                      type='button'
+                      onClick={() =>
+                        onUpdate({
+                          productColorId: color.productColorId ?? color.code,
+                        })
+                      }
+                      title={`${color.name} (${color.code})`}
+                      className={cn(
+                        'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition',
+                        isSelected
+                          ? 'border-theme-primary-start bg-theme-primary-start/10 text-theme-primary-start'
+                          : 'border-gray-200 dark:border-white/8 text-text-sub hover:border-theme-primary-start hover:text-theme-primary-start',
+                      )}
+                    >
+                      <span
+                        className='inline-block h-3 w-3 rounded-full border border-white shadow-sm ring-1 ring-gray-200 dark:ring-white/15'
+                        style={{ backgroundColor: color.code }}
+                      />
+                      {color.name}
+                    </button>
+                  );
+                })}
+              </div>
+              {productColors.length > 1 && !item.productColorId && (
+                <p className='text-[11px] text-amber-500'>
+                  Sản phẩm có nhiều màu — nên chọn màu cho thiết bị này
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Serial Number */}
           <div className='flex flex-col gap-1.5 sm:col-span-2'>
             <label className='text-xs font-medium text-text-sub'>
@@ -391,6 +442,7 @@ function Chip({
 // ─── Main InventorySection export ────────────────────────────────
 interface InventorySectionProps {
   items: DraftInventoryItem[];
+  productColors: ProductColorInput[];
   onAdd: () => void;
   onRemove: (draftId: string) => void;
   onUpdate: (
@@ -401,6 +453,7 @@ interface InventorySectionProps {
 
 export function InventorySection({
   items,
+  productColors,
   onAdd,
   onRemove,
   onUpdate,
@@ -430,6 +483,7 @@ export function InventorySection({
             key={item.draftId}
             item={item}
             index={index}
+            productColors={productColors}
             onUpdate={(patch) => onUpdate(item.draftId, patch)}
             onRemove={() => onRemove(item.draftId)}
           />

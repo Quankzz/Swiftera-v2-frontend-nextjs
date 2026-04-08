@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import { useRentalOrdersQuery } from '@/features/rental-orders/hooks/use-rental-order-management';
@@ -59,45 +59,46 @@ function formatDate(iso: string | null | undefined) {
 }
 
 // ─── Toolbar ────────────────────────────────────────────────────────
-function Toolbar({
+function StatusFilter({
   statusFilter,
   onStatusChange,
-  search,
-  onSearchChange,
 }: {
   statusFilter: RentalOrderStatus | '';
   onStatusChange: (v: RentalOrderStatus | '') => void;
+}) {
+  return (
+    <select
+      value={statusFilter}
+      onChange={(e) => onStatusChange(e.target.value as RentalOrderStatus | '')}
+      className='h-9 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+    >
+      <option value=''>Tất cả trạng thái</option>
+      {STATUS_ORDER.map((status) => (
+        <option key={status} value={status}>
+          {STATUS_LABELS[status]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function SearchInput({
+  search,
+  onSearchChange,
+}: {
   search: string;
   onSearchChange: (v: string) => void;
 }) {
   return (
-    <div className='flex flex-wrap items-center gap-2'>
-      {/* Status filter */}
-      <select
-        value={statusFilter}
-        onChange={(e) =>
-          onStatusChange(e.target.value as RentalOrderStatus | '')
-        }
-        className='h-9 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
-      >
-        <option value=''>Tất cả trạng thái</option>
-        {STATUS_ORDER.map((status) => (
-          <option key={status} value={status}>
-            {STATUS_LABELS[status]}
-          </option>
-        ))}
-      </select>
-      {/* Search */}
-      <div className='relative'>
-        <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-sub' />
-        <input
-          type='text'
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder='Tìm khách hàng, mã đơn...'
-          className='h-9 w-52 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
-        />
-      </div>
+    <div className='relative'>
+      <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-sub pointer-events-none' />
+      <input
+        type='text'
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder='Tìm khách hàng, SĐT...'
+        className='h-9 w-56 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+      />
     </div>
   );
 }
@@ -112,26 +113,36 @@ interface OrdersTableProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
-  const [page, setPage] = useState(0); // BE is 0-indexed
+  const [page, setPage] = useState(0); // 0-based cho DataTable UI; gửi page+1 lên BE
   const [size] = useState(10);
   const [statusFilter, setStatusFilter] = useState<RentalOrderStatus | ''>('');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Build SpringFilter DSL
+  // Debounce 400ms — chờ user ngừng gõ mới gọi API
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Build SpringFilter DSL — dùng ~~ cho LIKE/contains
   const filter = useMemo(() => {
     const parts: string[] = [];
     if (statusFilter) parts.push(`status:'${statusFilter}'`);
-    if (search.trim()) {
-      // Search in deliveryRecipientName or deliveryPhone
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.trim();
       parts.push(
-        `(deliveryRecipientName:'*${search.trim()}*' or deliveryPhone:'*${search.trim()}*')`,
+        `(deliveryRecipientName~~'*${term}*' or deliveryPhone~~'*${term}*')`,
       );
     }
     return parts.length ? parts.join(' and ') : undefined;
-  }, [statusFilter, search]);
+  }, [statusFilter, debouncedSearch]);
 
   const params: RentalOrderListParams = {
-    page,
+    page: page + 1, // BE expects 1-based
     size,
     sort: 'placedAt,desc',
     ...(filter ? { filter } : {}),
@@ -149,7 +160,7 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
 
   const handleSearchChange = (v: string) => {
     setSearch(v);
-    setPage(0);
+    // page reset handled by debounce effect
   };
 
   const columns = useMemo<ColumnDef<RentalOrderResponse>[]>(
@@ -306,9 +317,8 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         header: '',
         cell: ({ row }) => {
           const canAssign =
-            row.original.status === 'PENDING_PAYMENT' ||
             row.original.status === 'PAID' ||
-            row.original.status === 'CONFIRMED';
+            row.original.status === 'PREPARING';
           return (
             <Button
               size='sm'
@@ -338,8 +348,6 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
       isError={isError}
       errorMessage='Không thể tải danh sách đơn thuê. Vui lòng thử lại.'
       emptyMessage='Chưa có đơn thuê nào.'
-      searchPlaceholder='Tìm mã đơn, khách hàng...'
-      searchColumn='rentalOrderId'
       totalLabel='đơn thuê'
       manualPagination
       pageIndex={page}
@@ -347,12 +355,13 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
       onPageChange={(p) => setPage(p)}
       pageSize={size}
       totalRows={data?.meta?.totalElements}
+      toolbarLeft={
+        <SearchInput search={search} onSearchChange={handleSearchChange} />
+      }
       toolbarRight={
-        <Toolbar
+        <StatusFilter
           statusFilter={statusFilter}
           onStatusChange={handleStatusChange}
-          search={search}
-          onSearchChange={handleSearchChange}
         />
       }
     />

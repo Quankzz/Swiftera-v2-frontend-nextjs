@@ -22,19 +22,21 @@ import {
   useCreateProductMutation,
   useUpdateProductMutation,
 } from '@/features/products/hooks/use-product-management';
-import {
-  useCategoryTreeQuery,
-  flattenTree,
-} from '@/features/categories/hooks/use-category-tree';
+import { useCategoryTreeQuery } from '@/features/categories/hooks/use-category-tree';
 import { CategoryTreeSelect } from '../categories/category-tree-select';
 import type { ProductResponse } from '@/features/products/types';
+import { ProductCard } from '@/components/home/product-card';
+import { ColorPickerList } from './color-picker-list';
 import RichEditor from '@/components/feedback/rich-editor';
 import {
   VoucherPriceCalculator,
   type PriceValues,
 } from './voucher-price-calculator';
 import { InventorySection } from './inventory-section';
-import { useCreateInventoryItemMutation } from '@/features/products/hooks/use-inventory-items';
+import {
+  useCreateInventoryItemMutation,
+  useUpdateInventoryItemMutation,
+} from '@/features/products/hooks/use-inventory-items';
 import { useUploadFileMutation } from '@/features/files/hooks/use-files';
 import { toast } from 'sonner';
 
@@ -313,20 +315,14 @@ export function ProductFormPage({
   const createInventoryItemMutation = useCreateInventoryItemMutation(
     form.productId || '',
   );
-
-  // Fetch categories for tree select + preview label
-  const { data: categoryTree = [] } = useCategoryTreeQuery();
-  const flatCategories = flattenTree(categoryTree);
-
-  // Find categoryName for preview
-  const selectedCategoryName = flatCategories.find(
-    (c) => c.categoryId === form.categoryId,
-  )?.name;
-  const previewProduct = draftToProductPreview(
-    form,
-    images,
-    selectedCategoryName,
+  const updateInventoryItemMutation = useUpdateInventoryItemMutation(
+    form.productId || '',
   );
+
+  // Fetch categories for tree select
+  useCategoryTreeQuery();
+
+  const previewProduct = draftToProductPreview(form, images);
 
   const handleSubmit = async () => {
     setSubmitted(true);
@@ -342,8 +338,8 @@ export function ProductFormPage({
       .filter((img) => img.imageUrl)
       .map((img) => img.imageUrl);
 
-    // Màu: lấy thẳng từ form.color (single string, user không còn chọn màu trong UI)
-    const colorString = form.color || undefined;
+    // Màu: lấy từ form.colors (mảng { name, code })
+    const colors = form.colors.length > 0 ? form.colors : undefined;
 
     // Giá: lấy từ VoucherPriceCalculator
     const dailyPrice =
@@ -362,7 +358,7 @@ export function ProductFormPage({
             ? parseFloat(form.depositAmount)
             : 0,
           brand: form.brand || undefined,
-          color: colorString,
+          colors,
           description: form.description || undefined,
           shortDescription: form.shortDescription || undefined,
           oldDailyPrice,
@@ -384,6 +380,7 @@ export function ProductFormPage({
                     serialNumber: item.serialNumber,
                     conditionGrade: item.conditionGrade,
                     staffNote: item.staffNote || undefined,
+                    productColorId: item.productColorId || undefined,
                   }),
                 ),
               ).finally(() => router.push('/dashboard/products'));
@@ -406,7 +403,7 @@ export function ProductFormPage({
               ? parseFloat(form.depositAmount)
               : 0,
             brand: form.brand || undefined,
-            color: colorString,
+            colors,
             description: form.description || undefined,
             shortDescription: form.shortDescription || undefined,
             oldDailyPrice,
@@ -417,23 +414,64 @@ export function ProductFormPage({
         },
         {
           onSuccess: () => {
-            // Tạo các inventory item draft mới (chưa có inventoryItemId)
+            // Phân loại draft items: mới tạo vs đã tồn tại
             const newDraftItems = draftInventoryItems.filter(
               (item) =>
                 !item.inventoryItemId && item.serialNumber && item.hubId,
             );
-            if (newDraftItems.length > 0) {
-              Promise.all(
-                newDraftItems.map((item) =>
-                  createInventoryItemMutation.mutateAsync({
-                    productId: form.productId,
-                    hubId: item.hubId,
-                    serialNumber: item.serialNumber,
-                    conditionGrade: item.conditionGrade,
-                    staffNote: item.staffNote || undefined,
+            const existingItems = draftInventoryItems.filter(
+              (item) => !!item.inventoryItemId,
+            );
+
+            const allOps = [
+              ...newDraftItems.map((item) =>
+                createInventoryItemMutation.mutateAsync({
+                  productId: form.productId,
+                  hubId: item.hubId,
+                  serialNumber: item.serialNumber,
+                  conditionGrade: item.conditionGrade,
+                  staffNote: item.staffNote || undefined,
+                  productColorId: item.productColorId || undefined,
+                }),
+              ),
+              ...existingItems.flatMap((item) => {
+                // Diff against _original — only send changed fields
+                const orig = item._original;
+                const patch: {
+                  hubId?: string;
+                  conditionGrade?: typeof item.conditionGrade;
+                  staffNote?: string;
+                  productColorId?: string;
+                  status?: typeof item.status;
+                } = {};
+
+                if (!orig || item.hubId !== orig.hubId)
+                  patch.hubId = item.hubId || undefined;
+                if (!orig || item.conditionGrade !== orig.conditionGrade)
+                  patch.conditionGrade = item.conditionGrade;
+                if (!orig || item.staffNote !== orig.staffNote)
+                  patch.staffNote = item.staffNote || undefined;
+                if (!orig || item.productColorId !== orig.productColorId)
+                  patch.productColorId = item.productColorId || undefined;
+                if (!orig || item.status !== orig.status)
+                  patch.status = item.status;
+
+                // Nothing changed — skip API call
+                if (Object.keys(patch).length === 0) return [];
+
+                return [
+                  updateInventoryItemMutation.mutateAsync({
+                    inventoryItemId: item.inventoryItemId!,
+                    payload: patch,
                   }),
-                ),
-              ).finally(() => router.push('/dashboard/products'));
+                ];
+              }),
+            ];
+
+            if (allOps.length > 0) {
+              Promise.all(allOps).finally(() =>
+                router.push('/dashboard/products'),
+              );
             } else {
               router.push('/dashboard/products');
             }
@@ -501,13 +539,22 @@ export function ProductFormPage({
               />
             </Field>
 
-            {/* Thương hiệu */}
+            {/* Thương hiệu + Màu sắc */}
             <div className='grid grid-cols-1 gap-4'>
               <Field label='Thương hiệu' hint='VD: Canon, Sony, Fujifilm'>
                 <TextInput
                   value={form.brand}
                   onChange={(v) => setField('brand', v)}
                   placeholder='VD: Canon'
+                />
+              </Field>
+              <Field
+                label='Màu sắc sản phẩm'
+                hint='Chọn hoặc thêm màu — mỗi inventory item sẽ được gắn với một màu'
+              >
+                <ColorPickerList
+                  colors={form.colors}
+                  onChange={(c) => setField('colors', c)}
                 />
               </Field>
             </div>
@@ -703,6 +750,7 @@ export function ProductFormPage({
             </p>
             <InventorySection
               items={draftInventoryItems}
+              productColors={form.colors}
               onAdd={addDraftInventoryItem}
               onRemove={removeDraftInventoryItem}
               onUpdate={updateDraftInventoryItem}
@@ -741,94 +789,12 @@ export function ProductFormPage({
           <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-text-sub'>
             Xem trước
           </p>
-          <ProductPreviewCard product={previewProduct} />
+          <ProductCard product={previewProduct} variant='preview' />
           <p className='mt-2 text-center text-xs text-text-sub'>
             Card hiển thị ngoài trang chủ
           </p>
         </div>
       </aside>
     </div>
-  );
-}
-
-// ─── Inline preview card (dashboard-only) ─────────────────────────
-const vndFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
-
-function ProductPreviewCard({ product }: { product: ProductResponse }) {
-  const primaryImage =
-    product.images.find((img) => img.isPrimary) ?? product.images[0];
-  const salePercent =
-    product.oldDailyPrice && product.oldDailyPrice > product.dailyPrice
-      ? Math.round(
-          ((product.oldDailyPrice - product.dailyPrice) /
-            product.oldDailyPrice) *
-            100,
-        )
-      : null;
-
-  return (
-    <article className='relative flex flex-col overflow-hidden rounded-xl border border-border/75 dark:border-white/6 bg-white dark:bg-surface-card p-5 shadow-sm dark:shadow-black/30'>
-      {salePercent !== null && (
-        <span className='btn-gradient-accent absolute left-3 top-3 z-10 text-xs font-semibold text-white shadow-sm px-2 py-0.5 rounded-full'>
-          -{salePercent}%
-        </span>
-      )}
-
-      <header className='mt-2 mb-3 text-center'>
-        <h3 className='line-clamp-2 text-base font-semibold text-text-main'>
-          {product.name || (
-            <span className='italic text-text-sub opacity-50'>
-              Tên sản phẩm
-            </span>
-          )}
-        </h3>
-        {product.brand && (
-          <p className='mt-0.5 text-xs text-text-sub'>{product.brand}</p>
-        )}
-      </header>
-
-      <div className='relative h-44 w-full'>
-        {primaryImage?.imageUrl ? (
-          <Image
-            src={primaryImage.imageUrl}
-            alt={product.name}
-            fill
-            sizes='280px'
-            className='object-contain'
-          />
-        ) : (
-          <div className='flex h-full w-full items-center justify-center rounded-md bg-gray-100 dark:bg-white/8 text-xs text-text-sub'>
-            Chưa có ảnh
-          </div>
-        )}
-      </div>
-
-      <div className='mt-3 flex flex-col gap-1'>
-        {product.color && (
-          <p className='text-center text-xs text-text-sub'>
-            Màu: {product.color}
-          </p>
-        )}
-        <div className='text-center'>
-          <span className='text-lg font-bold text-theme-accent-start'>
-            {product.dailyPrice ? (
-              vndFormatter.format(product.dailyPrice)
-            ) : (
-              <span className='text-text-sub italic text-sm'>—</span>
-            )}
-          </span>
-          {product.oldDailyPrice != null && (
-            <span className='ml-2 text-sm text-text-sub line-through'>
-              {vndFormatter.format(product.oldDailyPrice)}
-            </span>
-          )}
-          <p className='text-xs text-text-sub'>/ngày</p>
-        </div>
-      </div>
-    </article>
   );
 }
