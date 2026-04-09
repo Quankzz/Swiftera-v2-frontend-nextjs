@@ -13,13 +13,24 @@ import {
   AlertCircle,
   TicketPercent,
   X,
-  CheckSquare,
-  Square,
   Phone,
   Tag,
+  MapPin,
+  User,
+  ChevronDown,
+  Pencil,
+  CheckCircle2,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { HighlightText } from '@/components/ui/highlight-text';
 import { Magnetic } from '@/components/ui/magnetic';
 import { SpotlightCard } from '@/components/common/spotlight-card';
@@ -34,6 +45,7 @@ import {
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
+import { PolicyConsentDialog } from '@/components/checkout/policy-consent-dialog';
 import {
   useCustomerVouchersQuery,
   useValidateVoucherMutation,
@@ -41,7 +53,7 @@ import {
 import { toast } from 'sonner';
 import type { VoucherResponse } from '@/features/vouchers/types';
 import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
-import { useRouter } from 'next/navigation';
+import { useDeliveryInfo } from '@/hooks/use-delivery-info';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -74,10 +86,10 @@ function CartLineSkeleton() {
 
 function calcLineVoucherDiscount(
   lineSubtotal: number,
-  vouchers: CartLineVoucherItem[],
+  vouchers: CartLineVoucherItem[] | undefined,
   code: string,
 ): number {
-  const v = vouchers.find((x) => x.code === code);
+  const v = (vouchers ?? []).find((x) => x.code === code);
   if (!v) return 0;
   if (v.discountType === 'PERCENTAGE') {
     let d = Math.floor((lineSubtotal * v.discountValue) / 100);
@@ -143,14 +155,31 @@ function CartLineRow({
           <button
             type='button'
             onClick={() => onToggle(line.cartLineId)}
-            className='mx-auto flex size-8 shrink-0 items-center justify-center rounded-lg text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30 sm:mx-0'
+            className='mx-auto mt-1 flex shrink-0 items-start sm:mx-0'
             aria-label={isSelected ? 'Bỏ chọn' : 'Chọn'}
           >
-            {isSelected ? (
-              <CheckSquare className='size-5 fill-rose-500 text-rose-500' />
-            ) : (
-              <Square className='size-5 text-muted-foreground/50' />
-            )}
+            <span
+              className={cn(
+                'flex size-[22px] items-center justify-center rounded-full border-2 transition-all duration-150',
+                isSelected
+                  ? 'border-rose-500 bg-rose-500 shadow-sm shadow-rose-200 dark:shadow-rose-900/40'
+                  : 'border-muted-foreground/30 hover:border-rose-400',
+              )}
+            >
+              {isSelected && (
+                <svg
+                  viewBox='0 0 24 24'
+                  className='size-3 text-white'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='3.5'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                >
+                  <polyline points='20 6 9 17 4 12' />
+                </svg>
+              )}
+            </span>
           </button>
 
           {/* Image */}
@@ -321,8 +350,8 @@ function CartLineRow({
                     className='flex items-center gap-1.5 rounded-lg border border-dashed border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-rose-400/60 hover:bg-rose-50/40 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400'
                   >
                     <Tag className='size-3.5' />
-                    {line.availableVouchers.length > 0
-                      ? `${line.availableVouchers.length} voucher khả dụng`
+                    {(line.availableVouchers?.length ?? 0) > 0
+                      ? `${line.availableVouchers?.length} voucher khả dụng`
                       : 'Áp mã voucher'}
                   </button>
                 )}
@@ -479,10 +508,187 @@ function VoucherSection({
   );
 }
 
+/* ─── Delivery Info Dialog ───────────────────────────────────────────────────── */
+
+const inputCls =
+  'h-10 w-full rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/20';
+const labelCls = 'mb-1.5 block text-xs font-semibold text-muted-foreground';
+
+function DeliveryInfoDialog({
+  open,
+  onOpenChange,
+  recipientName,
+  setRecipientName,
+  phone,
+  setPhone,
+  addressLine,
+  setAddressLine,
+  ward,
+  setWard,
+  district,
+  setDistrict,
+  city,
+  setCity,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  recipientName: string;
+  setRecipientName: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
+  addressLine: string;
+  setAddressLine: (v: string) => void;
+  ward: string;
+  setWard: (v: string) => void;
+  district: string;
+  setDistrict: (v: string) => void;
+  city: string;
+  setCity: (v: string) => void;
+  onConfirm: () => void;
+}) {
+  const canConfirm = recipientName.trim() !== '' && phone.trim() !== '';
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className='max-h-[90dvh] overflow-y-auto sm:max-w-md'>
+        <DialogHeader>
+          <DialogTitle className='flex items-center gap-2.5'>
+            <div className='flex size-8 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-950/50'>
+              <Truck className='size-4 text-rose-600 dark:text-rose-400' />
+            </div>
+            Thông tin giao hàng
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className='space-y-5 py-2'>
+          {/* Tên người nhận */}
+          <div>
+            <label htmlFor='d-recipient-name' className={labelCls}>
+              <span className='flex items-center gap-1'>
+                <User className='size-3' />
+                Họ và tên người nhận
+                <span className='ml-0.5 text-rose-500'>*</span>
+              </span>
+            </label>
+            <input
+              id='d-recipient-name'
+              type='text'
+              placeholder='Nguyễn Văn A'
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+              autoComplete='name'
+              className={inputCls}
+            />
+          </div>
+
+          {/* Số điện thoại */}
+          <div>
+            <label htmlFor='d-phone' className={labelCls}>
+              <span className='flex items-center gap-1'>
+                <Phone className='size-3' />
+                Số điện thoại
+                <span className='ml-0.5 text-rose-500'>*</span>
+              </span>
+            </label>
+            <input
+              id='d-phone'
+              type='tel'
+              inputMode='tel'
+              placeholder='09xx xxx xxx'
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              autoComplete='tel'
+              className={inputCls}
+            />
+          </div>
+          {/* Số nhà, đường */}
+          <div>
+            <label htmlFor='d-address-line' className={labelCls}>
+              Số nhà, tên đường
+            </label>
+            <input
+              id='d-address-line'
+              type='text'
+              placeholder='123 Đường Lê Lợi'
+              value={addressLine}
+              onChange={(e) => setAddressLine(e.target.value)}
+              autoComplete='address-line1'
+              className={inputCls}
+            />
+          </div>
+
+          {/* Phường / Xã + Quận / Huyện */}
+          <div className='grid grid-cols-2 gap-3'>
+            <div>
+              <label htmlFor='d-ward' className={labelCls}>
+                Phường / Xã
+              </label>
+              <input
+                id='d-ward'
+                type='text'
+                placeholder='P. Bến Nghé'
+                value={ward}
+                onChange={(e) => setWard(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label htmlFor='d-district' className={labelCls}>
+                Quận / Huyện
+              </label>
+              <input
+                id='d-district'
+                type='text'
+                placeholder='Q. 1'
+                value={district}
+                onChange={(e) => setDistrict(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          </div>
+
+          {/* Tỉnh / Thành phố */}
+          <div>
+            <label htmlFor='d-city' className={labelCls}>
+              Tỉnh / Thành phố
+            </label>
+            <input
+              id='d-city'
+              type='text'
+              placeholder='TP. Hồ Chí Minh'
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              autoComplete='address-level1'
+              className={inputCls}
+            />
+          </div>
+        </div>
+
+        <DialogFooter className='gap-2'>
+          <Button
+            variant='outline'
+            className='flex-1 rounded-xl'
+            onClick={() => onOpenChange(false)}
+          >
+            Hủy
+          </Button>
+          <Button
+            className='flex-1 rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700 disabled:opacity-50'
+            disabled={!canConfirm}
+            onClick={onConfirm}
+          >
+            Xác nhận
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ─── Cart page ────────────────────────────────────────────────────────────── */
 
 export default function CartPage() {
-  const router = useRouter();
   const { data: cart, isLoading, isError } = useCartQuery();
   const removeMutation = useRemoveCartLine();
   const updateQtyMutation = useUpdateCartLineQuantity();
@@ -495,7 +701,23 @@ export default function CartPage() {
 
   // Voucher toàn đơn
   const [voucherCode, setVoucherCode] = useState('');
-  const [phone, setPhone] = useState('');
+
+  // Thông tin giao hàng — lưu vào sessionStorage
+  const {
+    recipientName,
+    setRecipientName,
+    phone,
+    setPhone,
+    addressLine,
+    setAddressLine,
+    ward,
+    setWard,
+    district,
+    setDistrict,
+    city,
+    setCity,
+  } = useDeliveryInfo();
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
 
   // Voucher per-line: cartLineId → voucherCode
   const [lineVouchers, setLineVouchers] = useState<Map<string, string>>(
@@ -504,6 +726,9 @@ export default function CartPage() {
   const [voucherDialogOpen, setVoucherDialogOpen] = useState(false);
   const [voucherDialogLine, setVoucherDialogLine] =
     useState<CartLineResponse | null>(null);
+
+  // Policy consent dialog
+  const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
 
   const lines: CartLineResponse[] = cart?.cartLines ?? [];
 
@@ -620,24 +845,37 @@ export default function CartPage() {
     setVoucherDialogOpen(false);
   }
 
-  async function handleProceedToRent() {
+  /** Bước 1: Validate input rồi mở dialog điều khoản */
+  function handleProceedToRent() {
     if (selectedLines.length === 0) {
       toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
+      return;
+    }
+    if (!recipientName.trim()) {
+      toast.error('Vui lòng nhập tên người nhận hàng.');
       return;
     }
     if (!phone.trim()) {
       toast.error('Vui lòng nhập số điện thoại liên hệ giao hàng.');
       return;
     }
+    setPolicyDialogOpen(true);
+  }
 
+  /** Bước 2: Gọi sau khi user đã đồng ý điều khoản → tạo đơn + thanh toán */
+  async function handleCreateOrder() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const expectedDeliveryDate = tomorrow.toISOString().slice(0, 10);
 
     try {
       const result = await createOrder.mutateAsync({
-        deliveryRecipientName: 'Khách hàng',
+        deliveryRecipientName: recipientName.trim(),
         deliveryPhone: phone.trim(),
+        deliveryAddressLine: addressLine.trim() || undefined,
+        deliveryWard: ward.trim() || undefined,
+        deliveryDistrict: district.trim() || undefined,
+        deliveryCity: city.trim() || undefined,
         expectedDeliveryDate,
         voucherCode: voucherCode || undefined,
         orderLines: selectedLines.map((l) => ({
@@ -810,14 +1048,32 @@ export default function CartPage() {
                       <button
                         type='button'
                         onClick={toggleSelectAll}
-                        className='flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                        className='flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
                       >
-                        {selectedIds.size === lines.length &&
-                        lines.length > 0 ? (
-                          <CheckSquare className='size-3.5 fill-rose-500 text-rose-500' />
-                        ) : (
-                          <Square className='size-3.5' />
-                        )}
+                        <span
+                          className={cn(
+                            'flex size-4 items-center justify-center rounded border-2 transition-all duration-150',
+                            selectedIds.size === lines.length &&
+                              lines.length > 0
+                              ? 'border-rose-500 bg-rose-500'
+                              : 'border-muted-foreground/40',
+                          )}
+                        >
+                          {selectedIds.size === lines.length &&
+                            lines.length > 0 && (
+                              <svg
+                                viewBox='0 0 24 24'
+                                className='size-2.5 text-white'
+                                fill='none'
+                                stroke='currentColor'
+                                strokeWidth='3.5'
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                              >
+                                <polyline points='20 6 9 17 4 12' />
+                              </svg>
+                            )}
+                        </span>
                         {selectedIds.size === lines.length
                           ? 'Bỏ chọn tất cả'
                           : 'Chọn tất cả'}
@@ -891,41 +1147,96 @@ export default function CartPage() {
                   ) : (
                     <div className='space-y-5 p-5 sm:p-6'>
                       <div className='flex items-center gap-2'>
-                        <Sparkles className='size-5 text-rose-600 dark:text-rose-400' />
+                        {/* <Sparkles className='size-5 text-rose-600 dark:text-rose-400' /> */}
                         <h2 className='text-lg font-bold text-foreground'>
                           Tóm tắt thanh toán
                         </h2>
                       </div>
 
-                      {/* Số điện thoại giao hàng */}
+                      {/* Thông tin giao hàng */}
                       <div className='space-y-2'>
-                        <label
-                          htmlFor='delivery-phone'
-                          className='flex items-center gap-1.5 text-sm font-semibold text-foreground'
-                        >
-                          <Phone className='size-4 text-rose-600 dark:text-rose-400' />
-                          Số điện thoại giao hàng
-                        </label>
-                        <input
-                          id='delivery-phone'
-                          type='tel'
-                          inputMode='tel'
-                          placeholder='09xx xxx xxx'
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          autoComplete='tel'
-                          className='h-10 w-full rounded-lg border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200'
-                        />
+                        <div className='flex items-center justify-between'>
+                          <div className='flex items-center gap-1.5'>
+                            <Truck className='size-4 text-rose-600 dark:text-rose-400' />
+                            <span className='text-sm font-semibold text-foreground'>
+                              Thông tin giao hàng
+                            </span>
+                          </div>
+                          {(recipientName || phone) && (
+                            <button
+                              type='button'
+                              onClick={() => setDeliveryDialogOpen(true)}
+                              className='flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                            >
+                              <Pencil className='size-3' />
+                              Sửa
+                            </button>
+                          )}
+                        </div>
+
+                        {recipientName || phone ? (
+                          /* ── Summary khi đã điền ── */
+                          <button
+                            type='button'
+                            onClick={() => setDeliveryDialogOpen(true)}
+                            className='w-full rounded-xl border border-border/60 bg-muted/20 p-3.5 text-left transition-colors hover:border-rose-300/60 hover:bg-rose-50/30 dark:hover:bg-rose-950/10'
+                          >
+                            <div className='flex items-start gap-3'>
+                              <CheckCircle2 className='mt-0.5 size-4 shrink-0 text-emerald-500' />
+                              <div className='min-w-0 space-y-0.5'>
+                                {recipientName && (
+                                  <p className='truncate text-sm font-semibold text-foreground'>
+                                    {recipientName}
+                                  </p>
+                                )}
+                                {phone && (
+                                  <p className='text-xs text-muted-foreground'>
+                                    {phone}
+                                  </p>
+                                )}
+                                {(addressLine || district || city) && (
+                                  <p className='truncate text-xs text-muted-foreground'>
+                                    {[addressLine, ward, district, city]
+                                      .filter(Boolean)
+                                      .join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        ) : (
+                          /* ── CTA khi chưa điền ── */
+                          <button
+                            type='button'
+                            onClick={() => setDeliveryDialogOpen(true)}
+                            className='flex w-full items-center justify-between rounded-xl border border-dashed border-rose-300/60 bg-rose-50/30 px-4 py-3.5 text-left transition-colors hover:border-rose-400/70 hover:bg-rose-50/50 dark:border-rose-800/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20'
+                          >
+                            <div className='flex items-center gap-2.5'>
+                              <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40'>
+                                <User className='size-4 text-rose-600 dark:text-rose-400' />
+                              </div>
+                              <div>
+                                <p className='text-sm font-semibold text-rose-700 dark:text-rose-300'>
+                                  Nhập thông tin giao hàng
+                                </p>
+                                <p className='text-xs text-rose-600/70 dark:text-rose-400/70'>
+                                  Tên người nhận &amp; số điện thoại bắt buộc
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronDown className='-rotate-90 size-4 text-rose-400' />
+                          </button>
+                        )}
                       </div>
 
                       {/* Voucher */}
-                      <VoucherSection
+                      {/* <VoucherSection
                         voucherCode={voucherCode}
                         onApply={handleApplyVoucher}
                         onClear={handleRemoveVoucher}
                         cartRentalSubtotal={selectedTotals.subtotal}
                         cartRentalDays={selectedTotals.maxRentalDays}
-                      />
+                      /> */}
 
                       <div className='space-y-3 text-sm'>
                         <div className='flex items-baseline justify-between gap-3'>
@@ -990,11 +1301,12 @@ export default function CartPage() {
                           disabled={
                             isMutating ||
                             selectedTotals.selectedCount === 0 ||
+                            !recipientName.trim() ||
                             !phone.trim() ||
                             createOrder.isPending ||
                             initiatePayment.isPending
                           }
-                          onClick={() => void handleProceedToRent()}
+                          onClick={handleProceedToRent}
                         >
                           {createOrder.isPending ||
                           initiatePayment.isPending ? (
@@ -1024,6 +1336,32 @@ export default function CartPage() {
           </div>
         )}
       </div>
+
+      {/* Delivery info dialog */}
+      <DeliveryInfoDialog
+        open={deliveryDialogOpen}
+        onOpenChange={setDeliveryDialogOpen}
+        recipientName={recipientName}
+        setRecipientName={setRecipientName}
+        phone={phone}
+        setPhone={setPhone}
+        addressLine={addressLine}
+        setAddressLine={setAddressLine}
+        ward={ward}
+        setWard={setWard}
+        district={district}
+        setDistrict={setDistrict}
+        city={city}
+        setCity={setCity}
+        onConfirm={() => setDeliveryDialogOpen(false)}
+      />
+
+      {/* Policy consent dialog */}
+      <PolicyConsentDialog
+        open={policyDialogOpen}
+        onOpenChange={setPolicyDialogOpen}
+        onAllConsented={() => void handleCreateOrder()}
+      />
 
       {/* Voucher picker dialog — per-line */}
       {voucherDialogLine &&

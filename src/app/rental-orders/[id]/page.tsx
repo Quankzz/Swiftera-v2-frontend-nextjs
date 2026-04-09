@@ -567,6 +567,41 @@ export default function RentalOrderDetailPage() {
                   </Badge>
                 </div>
 
+                {/* ── Pending payment banner ── */}
+                {order.status === 'PENDING_PAYMENT' && (
+                  <div className='mt-4 flex flex-col gap-3 rounded-xl border border-amber-300/70 bg-amber-50/80 p-4 dark:border-amber-700/40 dark:bg-amber-950/30 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className='flex items-start gap-3'>
+                      <div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400'>
+                        <CreditCard className='size-4' />
+                      </div>
+                      <div>
+                        <p className='text-sm font-bold text-amber-800 dark:text-amber-300'>
+                          Đơn hàng chờ thanh toán
+                        </p>
+                        <p className='mt-0.5 text-xs text-amber-700/80 dark:text-amber-400/80'>
+                          Hoàn tất thanh toán qua cổng VNPay để xác nhận đơn
+                          thuê của bạn.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size='sm'
+                      className='shrink-0 gap-2 rounded-xl bg-amber-500 font-bold text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-[0.98] dark:bg-amber-500 dark:hover:bg-amber-600'
+                      onClick={handlePayment}
+                      disabled={initiatePayment.isPending}
+                    >
+                      {initiatePayment.isPending ? (
+                        <Loader2 className='size-4 animate-spin' />
+                      ) : (
+                        <CreditCard className='size-4' />
+                      )}
+                      {initiatePayment.isPending
+                        ? 'Đang xử lý…'
+                        : 'Thanh toán ngay'}
+                    </Button>
+                  </div>
+                )}
+
                 {/* Status stepper */}
                 <div className='mt-5 border-t border-border/60 pt-5'>
                   <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
@@ -602,7 +637,7 @@ export default function RentalOrderDetailPage() {
                         Thao tác
                       </p>
                       <div className='flex flex-wrap gap-2.5'>
-                        {hasPay && (
+                        {/* {hasPay && (
                           <Button
                             size='default'
                             className='gap-2 rounded-xl bg-rose-600 px-5 font-semibold text-white shadow-sm hover:bg-rose-700 active:scale-[0.98]'
@@ -616,7 +651,7 @@ export default function RentalOrderDetailPage() {
                             )}
                             Thanh toán ngay
                           </Button>
-                        )}
+                        )} */}
 
                         {isExtendable && (
                           <Button

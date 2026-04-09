@@ -1,8 +1,21 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ShoppingCart, Minus, Plus, Info, TicketPercent } from 'lucide-react';
 import { ShieldCheck, Truck, Clock, Headphones } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Expand,
+  X as XIcon,
+  ZoomIn,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -50,91 +63,335 @@ interface RentalProductGalleryProps {
   setCurrentImage: (index: number) => void;
 }
 
+/** Lightbox fullscreen overlay */
+function GalleryLightbox({
+  images,
+  initial,
+  onClose,
+}: {
+  images: string[];
+  initial: number;
+  onClose: () => void;
+}) {
+  const [idx, setIdx] = useState(initial);
+  const touchX = useRef<number | null>(null);
+
+  const prev = useCallback(() => setIdx((i) => Math.max(0, i - 1)), []);
+  const next = useCallback(
+    () => setIdx((i) => Math.min(images.length - 1, i + 1)),
+    [images.length],
+  );
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') prev();
+      else if (e.key === 'ArrowRight') next();
+      else if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [prev, next, onClose]);
+
+  return (
+    <div
+      className='fixed inset-0 z-9999 flex items-center justify-center bg-black/92 backdrop-blur-sm'
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button
+        type='button'
+        onClick={onClose}
+        className='absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20'
+        aria-label='Đóng'
+      >
+        <XIcon className='size-5' />
+      </button>
+
+      {/* Counter */}
+      <span className='absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-semibold tabular-nums text-white/80 backdrop-blur-md'>
+        {idx + 1} / {images.length}
+      </span>
+
+      {/* Main image */}
+      <div
+        className='relative mx-auto flex h-full max-h-[80dvh] w-full max-w-4xl items-center justify-center px-16'
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => {
+          touchX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (touchX.current === null) return;
+          const dx = e.changedTouches[0].clientX - touchX.current;
+          if (dx > 50) prev();
+          else if (dx < -50) next();
+          touchX.current = null;
+        }}
+      >
+        {/* Prev */}
+        {idx > 0 && (
+          <button
+            type='button'
+            onClick={prev}
+            className='absolute left-2 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20'
+            aria-label='Ảnh trước'
+          >
+            <ChevronLeft className='size-5' />
+          </button>
+        )}
+
+        <img
+          key={idx}
+          src={images[idx]}
+          alt={`Ảnh ${idx + 1}`}
+          className='max-h-[80dvh] w-full rounded-xl object-contain shadow-2xl'
+          style={{ animation: 'lb-fade .25s ease' }}
+        />
+
+        {/* Next */}
+        {idx < images.length - 1 && (
+          <button
+            type='button'
+            onClick={next}
+            className='absolute right-2 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20'
+            aria-label='Ảnh sau'
+          >
+            <ChevronRight className='size-5' />
+          </button>
+        )}
+      </div>
+
+      {/* Filmstrip */}
+      <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 overflow-x-auto px-4 pb-1'>
+        {images.map((img, i) => (
+          <button
+            key={i}
+            type='button'
+            onClick={(e) => {
+              e.stopPropagation();
+              setIdx(i);
+            }}
+            className={`relative size-12 shrink-0 overflow-hidden rounded-md transition-all duration-200 ${
+              i === idx
+                ? 'ring-2 ring-white ring-offset-1 ring-offset-black/60 opacity-100'
+                : 'opacity-50 hover:opacity-80'
+            }`}
+          >
+            <img src={img} alt='' className='size-full object-cover' />
+          </button>
+        ))}
+      </div>
+
+      <style>{`@keyframes lb-fade{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}`}</style>
+    </div>
+  );
+}
+
 export function RentalProductGallery({
   images,
   currentImage,
   setCurrentImage,
 }: RentalProductGalleryProps) {
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const visibleImages = images.slice(
-    Math.max(0, currentImage - 2),
-    Math.min(images.length, currentImage + 3),
-  );
+  const [lightbox, setLightbox] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const filmstripRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
+  const prev = () => setCurrentImage(Math.max(0, currentImage - 1));
+  const next = () =>
+    setCurrentImage(Math.min(images.length - 1, currentImage + 1));
+
+  // Keyboard nav khi hover vào gallery
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [images.length, currentImage, setCurrentImage]);
-
-  const handleManualChange = (index: number) => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (!isHovered) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') prev();
+      else if (e.key === 'ArrowRight') next();
     }
-    setCurrentImage(index);
-  };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHovered, currentImage, images.length]);
+
+  // Auto-scroll filmstrip khi đổi ảnh
+  useEffect(() => {
+    const strip = filmstripRef.current;
+    if (!strip) return;
+    const btn = strip.children[currentImage] as HTMLElement | undefined;
+    btn?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center',
+    });
+  }, [currentImage]);
+
+  const hasManyImages = images.length > 1;
+
+  if (!images.length) return null;
 
   return (
-    <div className='space-y-3 font-sans sm:space-y-4'>
-      <div className='relative aspect-square overflow-hidden rounded-xl border border-border'>
-        {images.map((img, idx) => (
-          <img
-            key={idx}
-            src={img}
-            alt={`Ảnh sản phẩm ${idx + 1}`}
-            className={`absolute w-full h-full object-cover transition-opacity duration-500 ease-in-out ${
-              currentImage === idx ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
-          />
-        ))}
-      </div>
-      <div className='relative flex items-center justify-center gap-2 sm:gap-4'>
-        {currentImage > 0 && (
-          <button
-            type='button'
-            className='flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-transform duration-300 ease-in-out hover:scale-110 hover:text-foreground sm:size-9'
-            aria-label='Ảnh trước'
-            onClick={() => handleManualChange(currentImage - 1)}
-          >
-            <span className='text-lg'>{'<'}</span>
-          </button>
-        )}
-        <div className='flex min-w-0 flex-1 justify-center gap-1.5 overflow-x-auto overflow-y-hidden pb-1 sm:gap-2'>
-          {visibleImages.map((img, idx) => {
-            const actualIndex = Math.max(0, currentImage - 2) + idx;
-            return (
-              <button
-                key={actualIndex}
-                type='button'
-                onClick={() => handleManualChange(actualIndex)}
-                className={`relative size-14 shrink-0 overflow-hidden rounded-md border transition-transform duration-300 ease-in-out sm:size-16 ${
-                  currentImage === actualIndex
-                    ? 'scale-105 border-rose-600 sm:scale-110 dark:border-rose-400'
-                    : 'border-border'
-                }`}
-              >
-                <img
-                  src={img}
-                  alt={`Thumbnail ${actualIndex + 1}`}
-                  className='object-cover w-full h-full transition-transform duration-300 ease-in-out transform hover:scale-105'
-                />
-              </button>
+    <>
+      <div
+        className='group/gallery select-none space-y-3'
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* ── Main image ── */}
+        <div
+          className='relative aspect-square overflow-hidden rounded-2xl border border-border/60 bg-muted/30 shadow-md'
+          onTouchStart={(e) => {
+            touchStartX.current = e.touches[0].clientX;
+            touchStartY.current = e.touches[0].clientY;
+          }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current === null) return;
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            const dy = Math.abs(
+              e.changedTouches[0].clientY - (touchStartY.current ?? 0),
             );
-          })}
-        </div>
-        {currentImage < images.length - 1 && (
+            if (Math.abs(dx) > 40 && dy < 60) {
+              if (dx > 0) prev();
+              else next();
+            }
+            touchStartX.current = null;
+            touchStartY.current = null;
+          }}
+        >
+          {/* Slides */}
+          {images.map((img, idx) => (
+            <img
+              key={idx}
+              src={img}
+              alt={`Ảnh sản phẩm ${idx + 1}`}
+              draggable={false}
+              className={`absolute inset-0 size-full object-cover transition-all duration-500 ease-out ${
+                currentImage === idx
+                  ? 'z-10 opacity-100 scale-100'
+                  : 'z-0 opacity-0 scale-[1.02]'
+              }`}
+            />
+          ))}
+
+          {/* Left arrow */}
+          {hasManyImages && currentImage > 0 && (
+            <button
+              type='button'
+              aria-label='Ảnh trước'
+              onClick={prev}
+              className='absolute left-3 top-1/2 z-20 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/30 text-white shadow-lg backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95'
+            >
+              <ChevronLeft className='size-5' />
+            </button>
+          )}
+
+          {/* Right arrow */}
+          {hasManyImages && currentImage < images.length - 1 && (
+            <button
+              type='button'
+              aria-label='Ảnh sau'
+              onClick={next}
+              className='absolute right-3 top-1/2 z-20 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/30 text-white shadow-lg backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95'
+            >
+              <ChevronRight className='size-5' />
+            </button>
+          )}
+
+          {/* Image counter */}
+          {hasManyImages && (
+            <div className='absolute bottom-3 left-3 z-20 flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-md'>
+              <span className='text-xs font-semibold tabular-nums text-white/90'>
+                {currentImage + 1}
+              </span>
+              <span className='text-white/40 text-xs'>/</span>
+              <span className='text-xs text-white/60'>{images.length}</span>
+            </div>
+          )}
+
+          {/* Dot indicators */}
+          {hasManyImages && images.length <= 8 && (
+            <div className='absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5'>
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  type='button'
+                  aria-label={`Ảnh ${i + 1}`}
+                  onClick={() => setCurrentImage(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === currentImage
+                      ? 'size-2 bg-white shadow'
+                      : 'size-1.5 bg-white/40 hover:bg-white/70'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Expand button */}
           <button
             type='button'
-            className='flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-transform duration-300 ease-in-out hover:scale-110 hover:text-foreground sm:size-9'
-            aria-label='Ảnh sau'
-            onClick={() => handleManualChange(currentImage + 1)}
+            aria-label='Xem toàn màn hình'
+            onClick={() => setLightbox(true)}
+            className='absolute right-3 top-3 z-20 flex size-8 items-center justify-center rounded-full bg-black/30 text-white shadow backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95'
           >
-            <span className='text-lg'>{'>'}</span>
+            <Expand className='size-3.5' />
           </button>
+        </div>
+
+        {/* ── Filmstrip thumbnails ── */}
+        {hasManyImages && (
+          <div
+            ref={filmstripRef}
+            className='flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide'
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {images.map((img, idx) => {
+              const isActive = currentImage === idx;
+              return (
+                <button
+                  key={idx}
+                  type='button'
+                  aria-label={`Xem ảnh ${idx + 1}`}
+                  onClick={() => setCurrentImage(idx)}
+                  className={`relative aspect-square w-[72px] shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 sm:w-20 ${
+                    isActive
+                      ? 'border-rose-500 shadow-sm shadow-rose-500/20 dark:border-rose-400'
+                      : 'border-transparent opacity-55 hover:border-border hover:opacity-90'
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`Thumbnail ${idx + 1}`}
+                    draggable={false}
+                    className={`size-full object-cover transition-transform duration-300 ${isActive ? 'scale-105' : 'hover:scale-105'}`}
+                  />
+                  {/* Active overlay gradient */}
+                  {isActive && (
+                    <span className='absolute inset-0 rounded-[10px] ring-1 ring-inset ring-rose-500/30' />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Zoom hint (desktop) ── */}
+        {images.length > 0 && (
+          <p className='hidden items-center gap-1 text-xs text-muted-foreground/60 sm:flex'>
+            <ZoomIn className='size-3' />
+            Click để xem ảnh toàn màn hình · Dùng ← → để chuyển ảnh
+          </p>
         )}
       </div>
-    </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <GalleryLightbox
+          images={images}
+          initial={currentImage}
+          onClose={() => setLightbox(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -712,7 +969,7 @@ export function RentalCheckoutCard({
           )}
           {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
         </Button>
-        <Button
+        {/* <Button
           type='button'
           variant='outline'
           onClick={() => setVoucherOpen(true)}
@@ -721,7 +978,7 @@ export function RentalCheckoutCard({
         >
           <TicketPercent className='size-5 sm:mr-1.5' />
           <span className='hidden sm:inline'>Voucher</span>
-        </Button>
+        </Button> */}
       </div>
 
       <Dialog open={voucherOpen} onOpenChange={setVoucherOpen}>

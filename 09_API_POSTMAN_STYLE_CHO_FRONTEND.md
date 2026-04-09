@@ -123,6 +123,7 @@
             "avatarUrl": null,
             "city": null,
             "nationality": null,
+            "isVerified": true,
             "rolesSecured": [
                 {
                     "roleId": "...",
@@ -198,6 +199,7 @@
             "avatarUrl": null,
             "city": null,
             "nationality": null,
+            "isVerified": true,
             "rolesSecured": [
                 {
                     "roleId": "...",
@@ -258,6 +260,7 @@
         "avatarUrl": null,
         "city": null,
         "nationality": null,
+        "isVerified": true,
         "rolesSecured": [
             {
                 "roleId": "...",
@@ -457,6 +460,7 @@
         "avatarUrl": null,
         "city": null,
         "nationality": null,
+        "isVerified": true,
         "rolesSecured": [
             {
                 "roleId": "...",
@@ -501,6 +505,7 @@
                 "lastName": "...",
                 "nickname": null,
                 "phoneNumber": "...",
+                "isVerified": true,
                 "rolesSecured": []
             }
         ]
@@ -1393,7 +1398,7 @@ Ví dụ response:
 {
     "categoryId": "cat-uuid-mirrorless",
     "brand": "Canon",
-    "color": "Black,Silver",
+    "voucherId": "voucher-product-discount-uuid",
     "name": "Canon EOS R50",
     "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
     "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
@@ -1418,13 +1423,13 @@ Ví dụ response:
 }
 ```
 
-| Field                                                                                                        | Bắt buộc |
-| ------------------------------------------------------------------------------------------------------------ | -------- |
-| `categoryId`                                                                                                 | ✓        |
-| `name`                                                                                                       | ✓        |
-| `dailyPrice`                                                                                                 | ✓, > 0   |
-| `depositAmount`                                                                                              | ✓, >= 0  |
-| `brand`, `color`, `shortDescription`, `description`, `oldDailyPrice`, `minRentalDays`, `colors`, `imageUrls` | tùy chọn |
+| Field                                                                                                            | Bắt buộc |
+| ---------------------------------------------------------------------------------------------------------------- | -------- |
+| `categoryId`                                                                                                     | ✓        |
+| `name`                                                                                                           | ✓        |
+| `dailyPrice`                                                                                                     | ✓, > 0   |
+| `depositAmount`                                                                                                  | ✓, >= 0  |
+| `brand`, `voucherId`, `shortDescription`, `description`, `oldDailyPrice`, `minRentalDays`, `colors`, `imageUrls` | tùy chọn |
 
 **Rule giá**:
 
@@ -1439,7 +1444,19 @@ Ví dụ response:
         "categoryId": "cat-uuid-mirrorless",
         "categoryName": "Mirrorless",
         "brand": "Canon",
-        "color": "Black, Silver",
+        "voucherId": "voucher-product-discount-uuid",
+        "voucher": {
+            "voucherId": "voucher-product-discount-uuid",
+            "code": "CAMERA10",
+            "type": "PRODUCT_DISCOUNT",
+            "productName": "Canon EOS R50",
+            "discountType": "PERCENTAGE",
+            "discountValue": 10,
+            "maxDiscountAmount": 200000,
+            "minRentalDays": 1,
+            "expiresAt": "2026-12-31 11:59:59 PM",
+            "isActive": true
+        },
         "colors": [
             {
                 "productColorId": "pc-black-r50",
@@ -1477,7 +1494,9 @@ Ví dụ response:
 
 **Lưu ý thêm**:
 
-- `colors[]` là nguồn dữ liệu màu chuẩn cho FE; `color` chỉ là summary string để tương thích ngược.
+- `colors[]` là nguồn dữ liệu màu chuẩn cho FE; `ProductResponse` không còn trả field `color`.
+- FE không gửi `color` ở request create/update product nữa; backend đồng bộ dữ liệu màu từ `colors[]`.
+- `voucherId` là liên kết tùy chọn tới voucher loại `PRODUCT_DISCOUNT`; response trả thêm `voucher` đầy đủ thông tin để FE hiển thị trực tiếp, backend vẫn không tự tính lại `dailyPrice` hoặc `oldDailyPrice`.
 - Nếu update có truyền `colors[]`, backend sẽ sync lại full danh sách màu của product theo payload mới.
 
 ---
@@ -1520,7 +1539,7 @@ Mỗi phần tử `inventoryItems` gồm:
 {
     "categoryId": "cat-uuid-new",
     "brand": "Canon",
-    "color": "Black,Silver,White",
+    "voucherId": "voucher-product-discount-uuid",
     "name": "Canon EOS R50 Silver",
     "shortDescription": "Bản màu bạc, phù hợp chụp vlog",
     "description": "Phiên bản màu bạc",
@@ -1554,8 +1573,11 @@ Mỗi phần tử `inventoryItems` gồm:
 **Rule giá**:
 
 - Khi update, backend cũng kiểm tra `oldDailyPrice >= dailyPrice` trên giá trị cuối cùng sau cập nhật.
+- Muốn bỏ liên kết voucher `PRODUCT_DISCOUNT` hiện tại khỏi product, FE có thể gửi `voucherId` là chuỗi rỗng.
 
 **Response**: `ProductResponse`
+
+**Lưu ý**: `ProductResponse` trả cả `voucherId` và object `voucher` đầy đủ thông tin khi product đang gắn voucher `PRODUCT_DISCOUNT`.
 
 ---
 
@@ -1573,6 +1595,8 @@ Mỗi phần tử `inventoryItems` gồm:
     "data": null
 }
 ```
+
+**Lưu ý**: nếu product đang có voucher liên kết, backend sẽ tự gỡ liên kết voucher trước khi xóa product.
 
 ---
 
@@ -1728,7 +1752,6 @@ Mỗi phần tử `inventoryItems` gồm:
                         "voucherId": "v-item-001",
                         "code": "CAMERA7",
                         "type": "ITEM_VOUCHER",
-                        "productId": "f3152824-...",
                         "productName": "Canon EOS R50",
                         "discountType": "PERCENTAGE",
                         "discountValue": 7,
@@ -1849,7 +1872,6 @@ Mỗi phần tử `inventoryItems` gồm:
 {
     "code": "SUMMER30",
     "type": "ITEM_VOUCHER",
-    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
     "discountType": "PERCENTAGE",
     "discountValue": 30,
     "maxDiscountAmount": 500000,
@@ -1862,7 +1884,6 @@ Mỗi phần tử `inventoryItems` gồm:
 | ------------------- | -------- | -------------------------------------- |
 | `code`              | ✓        | mã voucher duy nhất                    |
 | `type`              | ✓        | `ITEM_VOUCHER` hoặc `PRODUCT_DISCOUNT` |
-| `productId`         | tùy chọn | bắt buộc nếu `type=PRODUCT_DISCOUNT`   |
 | `discountType`      | ✓        | `PERCENTAGE` hoặc `FIXED`              |
 | `discountValue`     | ✓        | > 0                                    |
 | `maxDiscountAmount` | tùy chọn | giới hạn giảm tối đa (cho PERCENTAGE)  |
@@ -1872,7 +1893,7 @@ Mỗi phần tử `inventoryItems` gồm:
 **Validation quan trọng**:
 
 - Nếu `discountType` không phải `PERCENTAGE` hoặc `FIXED`, backend trả `VOUCHER_DISCOUNT_TYPE_INVALID`.
-- Nếu `type=PRODUCT_DISCOUNT` nhưng thiếu `productId`, backend trả `VOUCHER_PRODUCT_REQUIRED`.
+- Nếu muốn gắn voucher `PRODUCT_DISCOUNT` vào product, FE dùng `voucherId` ở API-052/API-055 thay vì truyền `productId` ở đây.
 
 **Response**:
 
@@ -1882,8 +1903,6 @@ Mỗi phần tử `inventoryItems` gồm:
         "voucherId": "v-uuid-001",
         "code": "SUMMER30",
         "type": "ITEM_VOUCHER",
-        "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-        "productName": "Canon EOS R50",
         "discountType": "PERCENTAGE",
         "discountValue": 30,
         "maxDiscountAmount": 500000,
@@ -1895,6 +1914,8 @@ Mỗi phần tử `inventoryItems` gồm:
     }
 }
 ```
+
+**Lưu ý**: `VoucherResponse` có thể trả thêm `productName` nếu voucher hiện đã được gắn với một product từ API product.
 
 ---
 
@@ -1972,7 +1993,6 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 ```json
 {
     "type": "PRODUCT_DISCOUNT",
-    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
     "discountType": "FIXED",
     "discountValue": 200000,
     "maxDiscountAmount": null,
@@ -1983,6 +2003,8 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 ```
 
 **Response**: `VoucherResponse`
+
+**Lưu ý**: API này không còn nhận `productId`; việc gắn/bỏ voucher `PRODUCT_DISCOUNT` với product được thực hiện ở API-052/API-055 thông qua field `voucherId`.
 
 ---
 
@@ -2509,7 +2531,12 @@ Ví dụ response phần staff:
 
 **Request body**: không có
 
-**Logic**: `amount = totalPayableAmount - totalPaidAmount`. Tạo transaction `RENTAL_FEE` với trạng thái `PENDING`.
+**Điều kiện bắt buộc trước khi tạo link**:
+
+- User phải đã đồng ý **phiên bản RENTAL_TERMS active mới nhất** (`consentType=ACCEPTED`, cùng `policyVersion`).
+- Nếu chưa có consent hợp lệ, backend trả lỗi `CONSENT_NOT_FOUND`.
+
+**Logic**: `amount = totalPayableAmount - totalPaidAmount`. Backend tạo transaction `RENTAL_FEE` với trạng thái `PENDING`.
 
 **Response**:
 
@@ -2538,6 +2565,12 @@ Ví dụ response phần staff:
 - Transaction → `SUCCESS`, ghi `paidAt`
 - `totalPaidAmount += amount`
 - Nếu `totalPaidAmount >= totalPayableAmount` → Order → `PAID`
+- Nếu order vừa đủ điều kiện `PAID`, backend **tự tạo rental contract** cho order (idempotent: mỗi order tối đa 1 contract)
+
+**Side effects khi thất bại**:
+
+- Transaction → `FAILED`
+- Nếu order còn ở `PENDING_PAYMENT`, backend tự chuyển order → `CANCELLED`
 
 **Response** (VNPay-format):
 
@@ -2559,7 +2592,7 @@ Ví dụ response phần staff:
 
 ---
 
-## Module 14: CONTRACTS (3 APIs)
+## Module 14: CONTRACTS (2 APIs)
 
 ---
 
@@ -2578,7 +2611,7 @@ Ví dụ response phần staff:
         "policyDocumentId": "pd-uuid-001",
         "contractNumber": "CONTRACT-2026-001",
         "contractVersion": "v1.0",
-        "acceptMethod": "SIGNATURE",
+        "acceptMethod": "CLICK",
         "acceptedAt": "2026-03-24 10:30:00 AM",
         "contractPdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/contracts/2026/001.pdf",
         "createdAt": "2026-03-24 10:00:00 AM",
@@ -2600,39 +2633,12 @@ Ví dụ response phần staff:
 
 ---
 
-### API-094: Tạo hợp đồng cho đơn thuê [AUTH]
+**Ghi chú runtime**:
 
-- **Method**: `POST`
-- **URL**: `/api/v1/contracts/rental-order/{rentalOrderId}`
-
-**Request body**:
-
-```json
-{
-    "policyDocumentId": "pd-uuid-001",
-    "acceptMethod": "SIGNATURE",
-    "contractVersion": "v1.0",
-    "acceptedIp": "192.168.1.1",
-    "acceptedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "contractPdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/contracts/2026/001.pdf",
-    "contractPdfHash": "sha256:abc123..."
-}
-```
-
-| Field                                                                                     | Bắt buộc |
-| ----------------------------------------------------------------------------------------- | -------- |
-| `policyDocumentId`                                                                        | ✓        |
-| `acceptMethod`                                                                            | ✓        |
-| `contractVersion`, `acceptedIp`, `acceptedUserAgent`, `contractPdfUrl`, `contractPdfHash` | tùy chọn |
-
-**Business rules trước khi tạo contract**:
-
-- Rental order phải ở trạng thái `PAID` hoặc `PREPARING`.
-- Mỗi rental order chỉ được tạo 1 contract.
-- `policyDocumentId` phải là policy đang active và đồng thời là phiên bản active mới nhất theo `code`.
-- User của order phải đã consent policy tương ứng với `consentType=ACCEPTED`.
-
-**Response**: `RentalContractResponse`
+- Backend **không còn API tạo contract thủ công**.
+- Contract được tự động provision sau khi VNPay IPN xác nhận thanh toán thành công và order đủ tiền (`PAID`).
+- Luồng tự động đảm bảo one-order-one-contract (idempotent).
+- File PDF của contract là snapshot hợp đồng điện tử tiếng Việt bám đúng mẫu hợp đồng đã chốt; backend bind dữ liệu order/user/line vào template đó, dùng `swiftera2.contract.issuer.*` cho thông tin pháp lý bên cho thuê và dùng fallback tường minh khi line chưa có serial/phụ kiện cấu trúc riêng; FE vẫn chỉ cần bind `RentalContractResponse` như cũ.
 
 ---
 
@@ -2640,7 +2646,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-095: Tạo đánh giá sản phẩm [AUTH]
+### API-094: Tạo đánh giá sản phẩm [AUTH]
 
 - **Method**: `POST`
 - **URL**: `/api/v1/reviews`
@@ -2687,16 +2693,16 @@ Ví dụ response phần staff:
 
 ---
 
-### API-096: Lấy đánh giá theo ID [AUTH]
+### API-095: Lấy đánh giá theo ID [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/reviews/{reviewId}`
 
-**Response**: `ProductReviewResponse` (xem API-095)
+**Response**: `ProductReviewResponse` (xem API-094)
 
 ---
 
-### API-097: Lấy danh sách đánh giá [AUTH]
+### API-096: Lấy danh sách đánh giá [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/reviews?page=1&size=10&filter=productId:'...'`
@@ -2705,7 +2711,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-098: Lấy đánh giá theo sản phẩm [AUTH]
+### API-097: Lấy đánh giá theo sản phẩm [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/reviews/product/{productId}?page=1&size=10`
@@ -2714,7 +2720,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-099: Xóa đánh giá [AUTH]
+### API-098: Xóa đánh giá [AUTH]
 
 - **Method**: `DELETE`
 - **URL**: `/api/v1/reviews/{reviewId}`
@@ -2735,7 +2741,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-100: Tạo ticket hỗ trợ [PUBLIC]
+### API-099: Tạo ticket hỗ trợ [PUBLIC]
 
 - **Method**: `POST`
 - **URL**: `/api/v1/contact-tickets`
@@ -2792,16 +2798,16 @@ Ví dụ response phần staff:
 
 ---
 
-### API-101: Lấy ticket theo ID [AUTH]
+### API-100: Lấy ticket theo ID [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/contact-tickets/{ticketId}`
 
-**Response**: `ContactTicketResponse` (xem API-100)
+**Response**: `ContactTicketResponse` (xem API-099)
 
 ---
 
-### API-102: Lấy danh sách ticket (admin/staff) [AUTH]
+### API-101: Lấy danh sách ticket (admin/staff) [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/contact-tickets?page=1&size=10&filter=status:'IN_PROGRESS'`
@@ -2810,7 +2816,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-103: Lấy danh sách ticket của tôi [AUTH]
+### API-102: Lấy danh sách ticket của tôi [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/contact-tickets/my-tickets?page=1&size=10`
@@ -2819,7 +2825,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-104: Trả lời ticket [AUTH]
+### API-103: Trả lời ticket [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/contact-tickets/{ticketId}/reply`
@@ -2838,7 +2844,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-105: Đóng ticket [AUTH]
+### API-104: Đóng ticket [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/contact-tickets/{ticketId}/close`
@@ -2855,7 +2861,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-106: Tạo tài liệu chính sách [AUTH]
+### API-105: Tạo tài liệu chính sách [AUTH]
 
 - **Method**: `POST`
 - **URL**: `/api/v1/policies`
@@ -2868,18 +2874,17 @@ Ví dụ response phần staff:
     "policyVersion": 2,
     "title": "Điều khoản thuê thiết bị v2.0",
     "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2.pdf",
-    "pdfHash": "sha256:def456...",
     "effectiveFrom": "2026-04-01T00:00:00Z"
 }
 ```
 
-| Field               | Bắt buộc |
-| ------------------- | -------- |
-| `code`              | ✓        |
-| `policyVersion`     | ✓        |
-| `title`             | ✓        |
-| `effectiveFrom`     | ✓        |
-| `pdfUrl`, `pdfHash` | tùy chọn |
+| Field           | Bắt buộc |
+| --------------- | -------- |
+| `code`          | ✓        |
+| `policyVersion` | ✓        |
+| `title`         | ✓        |
+| `effectiveFrom` | ✓        |
+| `pdfUrl`        | tùy chọn |
 
 **Response**:
 
@@ -2901,16 +2906,16 @@ Ví dụ response phần staff:
 
 ---
 
-### API-107: Lấy chính sách theo ID [PUBLIC]
+### API-106: Lấy chính sách theo ID [PUBLIC]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/policies/{policyId}`
 
-**Response**: `PolicyDocumentResponse` (xem API-106)
+**Response**: `PolicyDocumentResponse` (xem API-105)
 
 ---
 
-### API-108: Lấy phiên bản chính sách mới nhất theo code [PUBLIC]
+### API-107: Lấy phiên bản chính sách mới nhất theo code [PUBLIC]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/policies/code/{code}/latest`
@@ -2921,7 +2926,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-### API-109: Lấy danh sách chính sách [PUBLIC]
+### API-108: Lấy danh sách chính sách [PUBLIC]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/policies?page=1&size=10&filter=isActive:true`
@@ -2930,7 +2935,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-### API-110: Vô hiệu hóa chính sách [AUTH]
+### API-109: Vô hiệu hóa chính sách [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/policies/{policyId}/deactivate`
@@ -2943,12 +2948,32 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-### API-111: Ghi nhận đồng ý chính sách [AUTH]
+### API-110: Ghi nhận đồng ý chính sách [AUTH]
 
 - **Method**: `POST`
 - **URL**: `/api/v1/policies/{policyId}/consent`
 
-**Request body**: không có (backend lấy IP và user agent từ `HttpServletRequest`)
+**Request body**: tùy chọn (nếu không gửi body, backend vẫn tạo consent với giá trị mặc định)
+
+```json
+{
+    "consentType": "ACCEPTED",
+    "consentContext": "CHECKOUT",
+    "ipAddress": "113.161.72.100",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
+```
+
+| Field            | Bắt buộc | Ghi chú                                                           |
+| ---------------- | -------- | ----------------------------------------------------------------- |
+| `consentType`    | tùy chọn | Mặc định `ACCEPTED`                                               |
+| `consentContext` | tùy chọn | Mặc định `ACCOUNT`; enum hỗ trợ `ACCOUNT`, `CHECKOUT`, `CONTRACT` |
+| `ipAddress`      | tùy chọn | Nếu bỏ trống backend lấy từ `HttpServletRequest`                  |
+| `userAgent`      | tùy chọn | Nếu bỏ trống backend lấy từ `HttpServletRequest`                  |
+
+**Idempotent rule**:
+
+- Nếu đã tồn tại consent cùng `user + policyDocument + consentType + consentContext`, backend trả lại record hiện có, không tạo bản ghi trùng.
 
 **Response**:
 
@@ -2958,9 +2983,12 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
         "userConsentId": "uc-uuid-001",
         "userId": "d4f6e5a8-...",
         "policyDocumentId": "pd-uuid-001",
+        "policyCode": "RENTAL_TERMS",
+        "policyVersion": 2,
         "policyTitle": "Điều khoản thuê thiết bị v2.0",
         "consentType": "ACCEPTED",
-        "acceptedAt": "2026-03-24 10:30:00 AM",
+        "consentContext": "CHECKOUT",
+        "consentedAt": "2026-03-24 10:30:00 AM",
         "ipAddress": "113.161.72.100",
         "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
         "createdAt": "2026-03-24 10:30:00 AM",
@@ -2971,7 +2999,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-### API-112: Lấy danh sách đồng ý chính sách của tôi [AUTH]
+### API-111: Lấy danh sách đồng ý chính sách của tôi [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/policies/my-consents`
@@ -2985,9 +3013,12 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
             "userConsentId": "uc-uuid-001",
             "userId": "d4f6e5a8-...",
             "policyDocumentId": "pd-uuid-001",
+            "policyCode": "RENTAL_TERMS",
+            "policyVersion": 2,
             "policyTitle": "Điều khoản thuê thiết bị v2.0",
             "consentType": "ACCEPTED",
-            "acceptedAt": "2026-03-24 10:30:00 AM",
+            "consentContext": "CHECKOUT",
+            "consentedAt": "2026-03-24 10:30:00 AM",
             "ipAddress": "113.161.72.100",
             "userAgent": "Mozilla/5.0...",
             "createdAt": "2026-03-24 10:30:00 AM",
@@ -3003,7 +3034,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-### API-113: Dashboard tổng quan cho ADMIN [AUTH]
+### API-112: Dashboard tổng quan cho ADMIN [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/dashboards/admin`
@@ -3120,7 +3151,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-### API-114: Dashboard tác nghiệp cho STAFF [AUTH]
+### API-113: Dashboard tác nghiệp cho STAFF [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/dashboards/staff`
@@ -3210,7 +3241,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-## Phụ lục A: Tổng hợp 114 APIs
+## Phụ lục A: Tổng hợp 113 APIs
 
 | #   | Method | URL                                                     | Auth            | Module        |
 | --- | ------ | ------------------------------------------------------- | --------------- | ------------- |
@@ -3307,27 +3338,26 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | 091 | GET    | `/api/v1/payments/vnpay/return`                         | PUBLIC          | PAYMENTS      |
 | 092 | GET    | `/api/v1/contracts/{rentalContractId}`                  | AUTH            | CONTRACTS     |
 | 093 | GET    | `/api/v1/contracts/rental-order/{rentalOrderId}`        | AUTH            | CONTRACTS     |
-| 094 | POST   | `/api/v1/contracts/rental-order/{rentalOrderId}`        | AUTH            | CONTRACTS     |
-| 095 | POST   | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
-| 096 | GET    | `/api/v1/reviews/{reviewId}`                            | AUTH            | REVIEWS       |
-| 097 | GET    | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
-| 098 | GET    | `/api/v1/reviews/product/{productId}`                   | AUTH            | REVIEWS       |
-| 099 | DELETE | `/api/v1/reviews/{reviewId}`                            | AUTH            | REVIEWS       |
-| 100 | POST   | `/api/v1/contact-tickets`                               | PUBLIC          | TICKETS       |
-| 101 | GET    | `/api/v1/contact-tickets/{ticketId}`                    | AUTH            | TICKETS       |
-| 102 | GET    | `/api/v1/contact-tickets`                               | AUTH            | TICKETS       |
-| 103 | GET    | `/api/v1/contact-tickets/my-tickets`                    | AUTH            | TICKETS       |
-| 104 | PATCH  | `/api/v1/contact-tickets/{ticketId}/reply`              | AUTH            | TICKETS       |
-| 105 | PATCH  | `/api/v1/contact-tickets/{ticketId}/close`              | AUTH            | TICKETS       |
-| 106 | POST   | `/api/v1/policies`                                      | AUTH            | POLICIES      |
-| 107 | GET    | `/api/v1/policies/{policyId}`                           | PUBLIC          | POLICIES      |
-| 108 | GET    | `/api/v1/policies/code/{code}/latest`                   | PUBLIC          | POLICIES      |
-| 109 | GET    | `/api/v1/policies`                                      | PUBLIC          | POLICIES      |
-| 110 | PATCH  | `/api/v1/policies/{policyId}/deactivate`                | AUTH            | POLICIES      |
-| 111 | POST   | `/api/v1/policies/{policyId}/consent`                   | AUTH            | POLICIES      |
-| 112 | GET    | `/api/v1/policies/my-consents`                          | AUTH            | POLICIES      |
-| 113 | GET    | `/api/v1/dashboards/admin`                              | AUTH            | DASHBOARDS    |
-| 114 | GET    | `/api/v1/dashboards/staff`                              | AUTH            | DASHBOARDS    |
+| 094 | POST   | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
+| 095 | GET    | `/api/v1/reviews/{reviewId}`                            | AUTH            | REVIEWS       |
+| 096 | GET    | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
+| 097 | GET    | `/api/v1/reviews/product/{productId}`                   | AUTH            | REVIEWS       |
+| 098 | DELETE | `/api/v1/reviews/{reviewId}`                            | AUTH            | REVIEWS       |
+| 099 | POST   | `/api/v1/contact-tickets`                               | PUBLIC          | TICKETS       |
+| 100 | GET    | `/api/v1/contact-tickets/{ticketId}`                    | AUTH            | TICKETS       |
+| 101 | GET    | `/api/v1/contact-tickets`                               | AUTH            | TICKETS       |
+| 102 | GET    | `/api/v1/contact-tickets/my-tickets`                    | AUTH            | TICKETS       |
+| 103 | PATCH  | `/api/v1/contact-tickets/{ticketId}/reply`              | AUTH            | TICKETS       |
+| 104 | PATCH  | `/api/v1/contact-tickets/{ticketId}/close`              | AUTH            | TICKETS       |
+| 105 | POST   | `/api/v1/policies`                                      | AUTH            | POLICIES      |
+| 106 | GET    | `/api/v1/policies/{policyId}`                           | PUBLIC          | POLICIES      |
+| 107 | GET    | `/api/v1/policies/code/{code}/latest`                   | PUBLIC          | POLICIES      |
+| 108 | GET    | `/api/v1/policies`                                      | PUBLIC          | POLICIES      |
+| 109 | PATCH  | `/api/v1/policies/{policyId}/deactivate`                | AUTH            | POLICIES      |
+| 110 | POST   | `/api/v1/policies/{policyId}/consent`                   | AUTH            | POLICIES      |
+| 111 | GET    | `/api/v1/policies/my-consents`                          | AUTH            | POLICIES      |
+| 112 | GET    | `/api/v1/dashboards/admin`                              | AUTH            | DASHBOARDS    |
+| 113 | GET    | `/api/v1/dashboards/staff`                              | AUTH            | DASHBOARDS    |
 
 ---
 
@@ -3375,7 +3405,6 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | `TICKET_ALREADY_CLOSED`                  | 2604 | Ticket đã đóng                              |
 | `POLICY_NOT_FOUND`                       | 2701 | Không tìm thấy tài liệu chính sách          |
 | `CONSENT_NOT_FOUND`                      | 2801 | Không tìm thấy bản đồng ý                   |
-| `CONSENT_ALREADY_GIVEN`                  | 2803 | Người dùng đã đồng ý chính sách trước đó    |
 
 Nguồn chuẩn: `src/main/java/com/devloopsx/swiftera2/exception/ErrorCode.java`.
 
@@ -3392,7 +3421,7 @@ Nguồn chuẩn: `src/main/java/com/devloopsx/swiftera2/exception/ErrorCode.java
 - `PaymentTransactionStatus`: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`
 - `PaymentMethod`: `VNPAY`, `BANK_TRANSFER`, `CASH`
 - `ContactTicketStatus`: `IN_PROGRESS`, `RESOLVED`, `CLOSED`
-- `ConsentType`: `OPT_IN`, `ACCEPTED`, `DECLINED`
+- `ConsentType`: `ACCEPTED`, `DECLINED`
 - `AcceptMethod`: `CLICK`, `SIGNATURE`
 - `PhotoPhase`: `CHECKOUT`, `CHECKIN`
 - `HttpMethodType`: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`

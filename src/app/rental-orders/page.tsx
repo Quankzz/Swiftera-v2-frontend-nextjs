@@ -10,17 +10,22 @@ import {
   Search,
   X,
   ArrowUpDown,
+  CreditCard,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
+import { useInitiatePayment } from '@/hooks/api/use-payments';
 import {
   RENTAL_ORDER_STATUS_LABELS,
   RENTAL_ORDER_STATUS_COLORS,
 } from '@/api/rentalOrderApi';
 import type { RentalOrderStatus } from '@/api/rentalOrderApi';
+import { toast } from 'sonner';
 
 const PAGE_SIZE = 5;
 const MAX_VISIBLE_PAGES = 5;
@@ -209,8 +214,27 @@ export default function RentalOrdersPage() {
   const [sort, setSort] = useState(SORT_OPTIONS[0].value);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [payingId, setPayingId] = useState<string | null>(null);
 
   const deferredSearch = useDeferredValue(search);
+
+  const initiatePayment = useInitiatePayment();
+
+  async function handlePay(e: React.MouseEvent, rentalOrderId: string) {
+    e.preventDefault(); // ngăn Link navigate
+    e.stopPropagation();
+    if (payingId) return;
+    setPayingId(rentalOrderId);
+    try {
+      const url = await initiatePayment.mutateAsync(rentalOrderId);
+      window.location.href = url;
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : 'Không thể tạo link thanh toán.';
+      toast.error(msg);
+      setPayingId(null);
+    }
+  }
 
   useEffect(() => {
     setPage(1);
@@ -403,20 +427,38 @@ export default function RentalOrdersPage() {
             <ul className='divide-y divide-border/60'>
               {filteredOrders.map((order) => {
                 const status = order.status as RentalOrderStatus;
-                return (
-                  <li key={order.rentalOrderId}>
-                    <Link
-                      href={`/rental-orders/${order.rentalOrderId}`}
-                      className='group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/30'
-                    >
-                      {/* Icon */}
-                      <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400'>
-                        <FileText className='size-4.5' />
-                      </div>
+                const isPending = status === 'PENDING_PAYMENT';
+                const isPaying = payingId === order.rentalOrderId;
 
-                      {/* Info */}
-                      <div className='min-w-0 flex-1'>
-                        <div className='flex flex-wrap items-center gap-2'>
+                return (
+                  <li
+                    key={order.rentalOrderId}
+                    className={cn(
+                      'relative transition-colors',
+                      isPending && 'bg-amber-50/60 dark:bg-amber-950/15',
+                    )}
+                  >
+                    {/* Pending payment accent strip */}
+                    {isPending && (
+                      <span className='absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-amber-400 dark:bg-amber-500' />
+                    )}
+
+                    <div className='group flex items-center gap-3 px-5 py-4 sm:gap-4'>
+                      {/* Icon */}
+                      <Link
+                        href={`/rental-orders/${order.rentalOrderId}`}
+                        className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-opacity hover:opacity-80 dark:bg-rose-950/50 dark:text-rose-400'
+                        tabIndex={-1}
+                      >
+                        <FileText className='size-[18px]' />
+                      </Link>
+
+                      {/* Info — chiếm phần lớn width, click → detail */}
+                      <Link
+                        href={`/rental-orders/${order.rentalOrderId}`}
+                        className='min-w-0 flex-1'
+                      >
+                        <div className='flex flex-wrap items-center gap-1.5'>
                           <span className='font-mono text-sm font-bold text-foreground'>
                             #{order.rentalOrderId.slice(0, 8).toUpperCase()}
                           </span>
@@ -433,16 +475,74 @@ export default function RentalOrdersPage() {
                           {formatDate(order.placedAt)} &middot;{' '}
                           {order.rentalOrderLines.length} sản phẩm
                         </p>
-                      </div>
 
-                      {/* Amount + arrow */}
-                      <div className='flex shrink-0 items-center gap-2'>
-                        <span className='text-sm font-semibold tabular-nums text-foreground'>
-                          {fmt.format(order.totalPayableAmount)}
-                        </span>
-                        <ChevronRight className='size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
+                        {/* Amount — hiển thị trong info khi có nút Pay để tránh crowding */}
+                        {isPending && (
+                          <p className='mt-1 text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-400'>
+                            {fmt.format(order.totalPayableAmount)}
+                          </p>
+                        )}
+                      </Link>
+
+                      {/* Right side */}
+                      {isPending ? (
+                        /* ── Nút thanh toán cho PENDING_PAYMENT ── */
+                        <button
+                          type='button'
+                          disabled={!!payingId}
+                          onClick={(e) =>
+                            void handlePay(e, order.rentalOrderId)
+                          }
+                          className={cn(
+                            'flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
+                            isPaying
+                              ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                              : payingId
+                                ? 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
+                                : 'bg-amber-500 text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-95 dark:bg-amber-500 dark:hover:bg-amber-600',
+                          )}
+                        >
+                          {isPaying ? (
+                            <>
+                              <Loader2 className='size-3.5 animate-spin' />
+                              <span className='hidden sm:inline'>
+                                Đang xử lý…
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className='size-3.5' />
+                              <span className='hidden sm:inline'>
+                                Thanh toán
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        /* ── Amount + chevron cho status khác ── */
+                        <Link
+                          href={`/rental-orders/${order.rentalOrderId}`}
+                          className='flex shrink-0 items-center gap-2'
+                        >
+                          <span className='text-sm font-semibold tabular-nums text-foreground'>
+                            {fmt.format(order.totalPayableAmount)}
+                          </span>
+                          <ChevronRight className='size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Pending: helper text
+                    {isPending && !isPaying && (
+                      <div className='flex items-center gap-1.5 border-t border-amber-200/60 bg-amber-50/80 px-5 py-2 dark:border-amber-900/30 dark:bg-amber-950/20'>
+                        <AlertCircle className='size-3 shrink-0 text-amber-600 dark:text-amber-400' />
+                        <p className='text-[11px] text-amber-700 dark:text-amber-300'>
+                          Đơn chờ thanh toán — ấn{' '}
+                          <span className='font-semibold'>Thanh toán</span> để
+                          tiếp tục qua cổng VNPay.
+                        </p>
                       </div>
-                    </Link>
+                    )} */}
                   </li>
                 );
               })}
