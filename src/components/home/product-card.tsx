@@ -76,7 +76,7 @@ export function ProductCard({
         </h3>
         <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
           {product.shortDescription}
-        </p>cfcb25f1841b296ff3d9bd4246a2af31cfe59a
+        </p>
       </header>
 
       {/* SLOT 2: Image area (fixed height) */}
