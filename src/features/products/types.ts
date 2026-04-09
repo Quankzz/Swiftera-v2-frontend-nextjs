@@ -30,7 +30,41 @@ export interface ProductImageResponse {
   isPrimary: boolean;
 }
 
-// ── Product response (API-051 / API-052 / API-053 / API-054) ────────────────
+// ── Product color type (API-052 response) ────────────────────────────────────
+
+export interface ProductColorResponse {
+  productColorId: string;
+  name: string;
+  /** Hex color code, e.g. "#111111" */
+  code: string;
+  /** Tổng số serial của màu này */
+  quantity: number;
+  /** Số serial đang AVAILABLE */
+  availableQuantity: number;
+}
+
+// ── Product response (API-052 / API-053 / API-054) ──────────────────────────
+
+export interface ProductInventoryItemResponse {
+  inventoryItemId: string;
+  serialNumber: string;
+  status:
+    | 'AVAILABLE'
+    | 'RESERVED'
+    | 'RENTED'
+    | 'MAINTENANCE'
+    | 'DAMAGED'
+    | 'RETIRED';
+  conditionGrade: 'NEW' | 'GOOD' | 'FAIR' | 'POOR' | null;
+  staffNote: string | null;
+  hubId: string;
+  hubCode: string;
+  hubName: string;
+  /** ID màu của thiết bị này (nếu có) */
+  productColorId: string | null;
+  colorName: string | null;
+  colorCode: string | null;
+}
 
 export interface ProductResponse {
   productId: string;
@@ -38,9 +72,12 @@ export interface ProductResponse {
   categoryName: string;
   /** e.g. "Canon", "Sony" — single string, not array */
   brand: string | null;
-  /** e.g. "Black", "Silver" — single string, not array */
+  /** Summary string để tương thích ngược; dùng colors[] cho FE mới */
   color: string | null;
+  /** Danh sách màu với số lượng — nguồn dữ liệu màu chuẩn cho FE */
+  colors: ProductColorResponse[];
   name: string;
+  shortDescription: string | null;
   description: string | null;
   dailyPrice: number;
   oldDailyPrice: number | null;
@@ -49,6 +86,8 @@ export interface ProductResponse {
   isActive: boolean;
   /** BE field name is `images` (not `productImages`) */
   images: ProductImageResponse[];
+  /** Các thiết bị vật lý (serial) của sản phẩm này */
+  inventoryItems: ProductInventoryItemResponse[];
   availableStock: number;
   averageRating: number | null;
   createdAt: string;
