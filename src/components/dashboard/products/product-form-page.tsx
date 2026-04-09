@@ -307,7 +307,7 @@ export function ProductFormPage({
   const [priceValues, setPriceValues] = useState<PriceValues>({
     dailyPrice: initialProduct ? initialProduct.dailyPrice : 0,
     oldDailyPrice: initialProduct?.oldDailyPrice ?? undefined,
-    selectedVoucherId: undefined,
+    selectedVoucherId: initialProduct?.voucherId ?? undefined,
   });
 
   const createMutation = useCreateProductMutation();
@@ -358,6 +358,7 @@ export function ProductFormPage({
             ? parseFloat(form.depositAmount)
             : 0,
           brand: form.brand || undefined,
+          voucherId: priceValues.selectedVoucherId || undefined,
           colors,
           description: form.description || undefined,
           shortDescription: form.shortDescription || undefined,
@@ -403,6 +404,8 @@ export function ProductFormPage({
               ? parseFloat(form.depositAmount)
               : 0,
             brand: form.brand || undefined,
+            // Empty string = unlink voucher; undefined = no change (but we always send to keep in sync)
+            voucherId: priceValues.selectedVoucherId ?? '',
             colors,
             description: form.description || undefined,
             shortDescription: form.shortDescription || undefined,
@@ -585,12 +588,13 @@ export function ProductFormPage({
                   setField('dailyPrice', v); // sync để validation
                 }}
                 selectedVoucherId={priceValues.selectedVoucherId}
-                onVoucherChange={(id) =>
+                onVoucherChange={(id) => {
                   setPriceValues((prev) => ({
                     ...prev,
                     selectedVoucherId: id,
-                  }))
-                }
+                  }));
+                  setField('voucherId', id ?? '');
+                }}
                 onValueChange={setPriceValues}
               />
             </Field>
@@ -740,23 +744,21 @@ export function ProductFormPage({
           </div>
         </FormSection>
 
-        {/* ── SECTION 3: Inventory Items (chỉ hiện ở edit mode) ── */}
-        {mode === 'edit' && (
-          <FormSection title='Thiết bị vật lý (Inventory Items)'>
-            <p className='mb-4 text-xs text-text-sub'>
-              Thêm từng thiết bị vật lý theo số serial. Mỗi thiết bị cần có Hub
-              ID và Serial Number. Nhấn &quot;Lưu thay đổi&quot; để gửi các
-              thiết bị mới lên server.
-            </p>
-            <InventorySection
-              items={draftInventoryItems}
-              productColors={form.colors}
-              onAdd={addDraftInventoryItem}
-              onRemove={removeDraftInventoryItem}
-              onUpdate={updateDraftInventoryItem}
-            />
-          </FormSection>
-        )}
+        {/* ── SECTION 3: Inventory Items ── */}
+        <FormSection title='Thiết bị vật lý (Inventory Items)'>
+          <p className='mb-4 text-xs text-text-sub'>
+            {mode === 'new'
+              ? 'Thêm thiết bị vật lý ngay khi tạo sản phẩm. Mỗi thiết bị cần có Hub và Serial Number. Các thiết bị này sẽ được tạo sau khi sản phẩm được lưu thành công.'
+              : 'Thêm từng thiết bị vật lý theo số serial. Mỗi thiết bị cần có Hub ID và Serial Number. Nhấn "Lưu thay đổi" để gửi các thiết bị mới lên server.'}
+          </p>
+          <InventorySection
+            items={draftInventoryItems}
+            productColors={form.colors}
+            onAdd={addDraftInventoryItem}
+            onRemove={removeDraftInventoryItem}
+            onUpdate={updateDraftInventoryItem}
+          />
+        </FormSection>
 
         {/* ── Submit ── */}
         <div className='flex items-center justify-end gap-3 pt-2'>

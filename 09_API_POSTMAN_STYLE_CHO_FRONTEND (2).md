@@ -2023,7 +2023,7 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ---
 
-## Module 12: RENTAL ORDERS (12 APIs)
+## Module 12: RENTAL ORDERS (13 APIs)
 
 ---
 
@@ -2180,7 +2180,23 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ---
 
-### API-077: Lấy danh sách đơn thuê của tôi [AUTH]
+### API-077: Lấy danh sách đơn thuê theo hub [AUTH]
+
+- **Method**: `GET`
+- **URL**: `/api/v1/rental-orders/hub/{hubId}?page=1&size=10&sort=placedAt,desc`
+
+**Quy tắc truy cập**:
+
+- `ADMIN`: có thể xem theo mọi hub hợp lệ.
+- `STAFF`: chỉ được xem đơn của hub đang được gán; khác hub trả `UNAUTHORIZED_ACCESS`.
+- `CUSTOMER`: không có quyền truy cập endpoint này.
+- `hubId` không tồn tại: backend trả `HUB_NOT_FOUND`.
+
+**Response**: `PaginationResponse` chứa mảng `RentalOrderResponse`
+
+---
+
+### API-078: Lấy danh sách đơn thuê của tôi [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/rental-orders/my-orders?page=1&size=10`
@@ -2189,7 +2205,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ---
 
-### API-078: Cập nhật trạng thái đơn thuê [AUTH]
+### API-079: Cập nhật trạng thái đơn thuê [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/status`
@@ -2227,18 +2243,18 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 - `PENDING_PAYMENT -> PAID`: chỉ hợp lệ khi tổng `payment_transactions.status = SUCCESS` của đơn đã đủ `totalPayableAmount`.
 - `PAID -> PREPARING`: phải có `rental_contract` cho đơn.
 - `PREPARING -> DELIVERING`: phải có `rental_contract` và đã gán `deliveryStaff`.
-- `DELIVERING -> DELIVERED`: không nên dùng API-078 để nhảy trạng thái; backend yêu cầu dùng API-083 `record-delivery` để ghi nhận thời gian/toạ độ giao hàng.
+- `DELIVERING -> DELIVERED`: không nên dùng API-079 để nhảy trạng thái; backend yêu cầu dùng API-084 `record-delivery` để ghi nhận thời gian/toạ độ giao hàng.
 - `DELIVERED -> IN_USE` và `IN_USE -> PENDING_PICKUP`: chỉ hợp lệ khi đơn đã có dữ liệu giao hàng thực tế (`actualDeliveryAt`, `actualRentalStartAt`).
 - `PENDING_PICKUP -> PICKING_UP`: phải gán `pickupStaff` trước.
-- `PICKING_UP -> PICKED_UP`: không nên dùng API-078 để nhảy trạng thái; backend yêu cầu dùng API-084 `record-pickup` để ghi nhận thời gian/toạ độ thu hồi.
+- `PICKING_UP -> PICKED_UP`: không nên dùng API-079 để nhảy trạng thái; backend yêu cầu dùng API-085 `record-pickup` để ghi nhận thời gian/toạ độ thu hồi.
 - `PICKED_UP -> COMPLETED`: chỉ hợp lệ khi đơn đã có dữ liệu thu hồi thực tế (`pickedUpAt`, `actualRentalEndAt`).
-- Khi chuyển sang `CANCELLED` qua API-078, backend rollback inventory `RESERVED -> AVAILABLE`; không còn semantics rollback bộ đếm voucher toàn cục.
+- Khi chuyển sang `CANCELLED` qua API-079, backend rollback inventory `RESERVED -> AVAILABLE`; không còn semantics rollback bộ đếm voucher toàn cục.
 
 **Response**: `RentalOrderResponse`
 
 ---
 
-### API-079: Hủy đơn thuê [AUTH]
+### API-080: Hủy đơn thuê [AUTH]
 
 - **Method**: `POST`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/cancel`
@@ -2261,7 +2277,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ---
 
-### API-080: Gia hạn đơn thuê [AUTH]
+### API-081: Gia hạn đơn thuê [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/extend`
@@ -2292,7 +2308,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ---
 
-### API-081: Xem chi tiết nhân sự xử lý đơn thuê [AUTH]
+### API-082: Xem chi tiết nhân sự xử lý đơn thuê [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/staff-detail`
@@ -2328,7 +2344,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ---
 
-### API-082: Gán nhân viên cho đơn thuê [AUTH]
+### API-083: Gán nhân viên cho đơn thuê [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/assign-staff`
@@ -2388,7 +2404,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-083: Ghi nhận giao hàng [AUTH]
+### API-084: Ghi nhận giao hàng [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/record-delivery`
@@ -2417,7 +2433,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-084: Ghi nhận thu hồi [AUTH]
+### API-085: Ghi nhận thu hồi [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/record-pickup`
@@ -2445,7 +2461,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-085: Cập nhật phí phạt đơn thuê [AUTH]
+### API-086: Cập nhật phí phạt đơn thuê [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/set-penalty`
@@ -2474,7 +2490,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-086: Lấy giao dịch thanh toán theo ID [AUTH]
+### API-087: Lấy giao dịch thanh toán theo ID [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/payments/{paymentTransactionId}`
@@ -2504,7 +2520,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-087: Lấy danh sách giao dịch [AUTH]
+### API-088: Lấy danh sách giao dịch [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/payments?page=1&size=10&filter=status:'SUCCESS'`
@@ -2513,7 +2529,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-088: Lấy giao dịch theo đơn thuê [AUTH]
+### API-089: Lấy giao dịch theo đơn thuê [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/payments/rental-order/{rentalOrderId}?page=1&size=10`
@@ -2522,14 +2538,19 @@ Ví dụ response phần staff:
 
 ---
 
-### API-089: Tạo link thanh toán VNPay [AUTH]
+### API-090: Tạo link thanh toán VNPay [AUTH]
 
 - **Method**: `POST`
 - **URL**: `/api/v1/payments/{rentalOrderId}/initiate`
 
 **Request body**: không có
 
-**Logic**: `amount = totalPayableAmount - totalPaidAmount`. Tạo transaction `RENTAL_FEE` với trạng thái `PENDING`.
+**Điều kiện bắt buộc trước khi tạo link**:
+
+- User phải đã đồng ý **phiên bản RENTAL_TERMS active mới nhất** (`consentType=ACCEPTED`, cùng `policyVersion`).
+- Nếu chưa có consent hợp lệ, backend trả lỗi `CONSENT_NOT_FOUND`.
+
+**Logic**: `amount = totalPayableAmount - totalPaidAmount`. Backend tạo transaction `RENTAL_FEE` với trạng thái `PENDING`.
 
 **Response**:
 
@@ -2545,7 +2566,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-090: VNPay IPN webhook (server-to-server) [PUBLIC]
+### API-091: VNPay IPN webhook (server-to-server) [PUBLIC]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/payments/vnpay/ipn`
@@ -2558,6 +2579,12 @@ Ví dụ response phần staff:
 - Transaction → `SUCCESS`, ghi `paidAt`
 - `totalPaidAmount += amount`
 - Nếu `totalPaidAmount >= totalPayableAmount` → Order → `PAID`
+- Nếu order vừa đủ điều kiện `PAID`, backend **tự tạo rental contract** cho order (idempotent: mỗi order tối đa 1 contract)
+
+**Side effects khi thất bại**:
+
+- Transaction → `FAILED`
+- Nếu order còn ở `PENDING_PAYMENT`, backend tự chuyển order → `CANCELLED`
 
 **Response** (VNPay-format):
 
@@ -2567,7 +2594,7 @@ Ví dụ response phần staff:
 
 ---
 
-### API-091: VNPay return redirect (browser) [PUBLIC]
+### API-092: VNPay return redirect (browser) [PUBLIC]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/payments/vnpay/return`
@@ -2579,11 +2606,11 @@ Ví dụ response phần staff:
 
 ---
 
-## Module 14: CONTRACTS (3 APIs)
+## Module 14: CONTRACTS (2 APIs)
 
 ---
 
-### API-092: Lấy hợp đồng theo ID [AUTH]
+### API-093: Lấy hợp đồng theo ID [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/contracts/{rentalContractId}`
@@ -2598,7 +2625,7 @@ Ví dụ response phần staff:
     "policyDocumentId": "pd-uuid-001",
     "contractNumber": "CONTRACT-2026-001",
     "contractVersion": "v1.0",
-    "acceptMethod": "SIGNATURE",
+    "acceptMethod": "CLICK",
     "acceptedAt": "2026-03-24 10:30:00 AM",
     "contractPdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/contracts/2026/001.pdf",
     "createdAt": "2026-03-24 10:00:00 AM",
@@ -2611,48 +2638,21 @@ Ví dụ response phần staff:
 
 ---
 
-### API-093: Lấy hợp đồng theo đơn thuê [AUTH]
+### API-094: Lấy hợp đồng theo đơn thuê [AUTH]
 
 - **Method**: `GET`
 - **URL**: `/api/v1/contracts/rental-order/{rentalOrderId}`
 
-**Response**: `RentalContractResponse` (xem API-092)
+**Response**: `RentalContractResponse` (xem API-093)
 
 ---
 
-### API-094: Tạo hợp đồng cho đơn thuê [AUTH]
+**Ghi chú runtime**:
 
-- **Method**: `POST`
-- **URL**: `/api/v1/contracts/rental-order/{rentalOrderId}`
-
-**Request body**:
-
-```json
-{
-  "policyDocumentId": "pd-uuid-001",
-  "acceptMethod": "SIGNATURE",
-  "contractVersion": "v1.0",
-  "acceptedIp": "192.168.1.1",
-  "acceptedUserAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-  "contractPdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/contracts/2026/001.pdf",
-  "contractPdfHash": "sha256:abc123..."
-}
-```
-
-| Field                                                                                     | Bắt buộc |
-| ----------------------------------------------------------------------------------------- | -------- |
-| `policyDocumentId`                                                                        | ✓        |
-| `acceptMethod`                                                                            | ✓        |
-| `contractVersion`, `acceptedIp`, `acceptedUserAgent`, `contractPdfUrl`, `contractPdfHash` | tùy chọn |
-
-**Business rules trước khi tạo contract**:
-
-- Rental order phải ở trạng thái `PAID` hoặc `PREPARING`.
-- Mỗi rental order chỉ được tạo 1 contract.
-- `policyDocumentId` phải là policy đang active và đồng thời là phiên bản active mới nhất theo `code`.
-- User của order phải đã consent policy tương ứng với `consentType=ACCEPTED`.
-
-**Response**: `RentalContractResponse`
+- Backend **không còn API tạo contract thủ công**.
+- Contract được tự động provision sau khi VNPay IPN xác nhận thanh toán thành công và order đủ tiền (`PAID`).
+- Luồng tự động đảm bảo one-order-one-contract (idempotent).
+- File PDF của contract là snapshot hợp đồng điện tử tiếng Việt bám đúng mẫu hợp đồng đã chốt; backend bind dữ liệu order/user/line vào template đó, dùng `swiftera2.contract.issuer.*` cho thông tin pháp lý bên cho thuê và dùng fallback tường minh khi line chưa có serial/phụ kiện cấu trúc riêng; FE vẫn chỉ cần bind `RentalContractResponse` như cũ.
 
 ---
 
@@ -2888,18 +2888,17 @@ Ví dụ response phần staff:
   "policyVersion": 2,
   "title": "Điều khoản thuê thiết bị v2.0",
   "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2.pdf",
-  "pdfHash": "sha256:def456...",
   "effectiveFrom": "2026-04-01T00:00:00Z"
 }
 ```
 
-| Field               | Bắt buộc |
-| ------------------- | -------- |
-| `code`              | ✓        |
-| `policyVersion`     | ✓        |
-| `title`             | ✓        |
-| `effectiveFrom`     | ✓        |
-| `pdfUrl`, `pdfHash` | tùy chọn |
+| Field           | Bắt buộc |
+| --------------- | -------- |
+| `code`          | ✓        |
+| `policyVersion` | ✓        |
+| `title`         | ✓        |
+| `effectiveFrom` | ✓        |
+| `pdfUrl`        | tùy chọn |
 
 **Response**:
 
@@ -2968,7 +2967,27 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 - **Method**: `POST`
 - **URL**: `/api/v1/policies/{policyId}/consent`
 
-**Request body**: không có (backend lấy IP và user agent từ `HttpServletRequest`)
+**Request body**: tùy chọn (nếu không gửi body, backend vẫn tạo consent với giá trị mặc định)
+
+```json
+{
+  "consentType": "ACCEPTED",
+  "consentContext": "CHECKOUT",
+  "ipAddress": "113.161.72.100",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
+```
+
+| Field            | Bắt buộc | Ghi chú                                                           |
+| ---------------- | -------- | ----------------------------------------------------------------- |
+| `consentType`    | tùy chọn | Mặc định `ACCEPTED`                                               |
+| `consentContext` | tùy chọn | Mặc định `ACCOUNT`; enum hỗ trợ `ACCOUNT`, `CHECKOUT`, `CONTRACT` |
+| `ipAddress`      | tùy chọn | Nếu bỏ trống backend lấy từ `HttpServletRequest`                  |
+| `userAgent`      | tùy chọn | Nếu bỏ trống backend lấy từ `HttpServletRequest`                  |
+
+**Idempotent rule**:
+
+- Nếu đã tồn tại consent cùng `user + policyDocument + consentType + consentContext`, backend trả lại record hiện có, không tạo bản ghi trùng.
 
 **Response**:
 
@@ -2978,9 +2997,12 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
     "userConsentId": "uc-uuid-001",
     "userId": "d4f6e5a8-...",
     "policyDocumentId": "pd-uuid-001",
+    "policyCode": "RENTAL_TERMS",
+    "policyVersion": 2,
     "policyTitle": "Điều khoản thuê thiết bị v2.0",
     "consentType": "ACCEPTED",
-    "acceptedAt": "2026-03-24 10:30:00 AM",
+    "consentContext": "CHECKOUT",
+    "consentedAt": "2026-03-24 10:30:00 AM",
     "ipAddress": "113.161.72.100",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
     "createdAt": "2026-03-24 10:30:00 AM",
@@ -3005,9 +3027,12 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
       "userConsentId": "uc-uuid-001",
       "userId": "d4f6e5a8-...",
       "policyDocumentId": "pd-uuid-001",
+      "policyCode": "RENTAL_TERMS",
+      "policyVersion": 2,
       "policyTitle": "Điều khoản thuê thiết bị v2.0",
       "consentType": "ACCEPTED",
-      "acceptedAt": "2026-03-24 10:30:00 AM",
+      "consentContext": "CHECKOUT",
+      "consentedAt": "2026-03-24 10:30:00 AM",
       "ipAddress": "113.161.72.100",
       "userAgent": "Mozilla/5.0...",
       "createdAt": "2026-03-24 10:30:00 AM",
@@ -3310,24 +3335,24 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | 074 | POST   | `/api/v1/rental-orders`                                 | AUTH            | RENTAL_ORDERS |
 | 075 | GET    | `/api/v1/rental-orders/{rentalOrderId}`                 | AUTH            | RENTAL_ORDERS |
 | 076 | GET    | `/api/v1/rental-orders`                                 | AUTH            | RENTAL_ORDERS |
-| 077 | GET    | `/api/v1/rental-orders/my-orders`                       | AUTH            | RENTAL_ORDERS |
-| 078 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/status`          | AUTH            | RENTAL_ORDERS |
-| 079 | POST   | `/api/v1/rental-orders/{rentalOrderId}/cancel`          | AUTH            | RENTAL_ORDERS |
-| 080 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/extend`          | AUTH            | RENTAL_ORDERS |
-| 081 | GET    | `/api/v1/rental-orders/{rentalOrderId}/staff-detail`    | AUTH            | RENTAL_ORDERS |
-| 082 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/assign-staff`    | AUTH            | RENTAL_ORDERS |
-| 083 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-delivery` | AUTH            | RENTAL_ORDERS |
-| 084 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-pickup`   | AUTH            | RENTAL_ORDERS |
-| 085 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/set-penalty`     | AUTH            | RENTAL_ORDERS |
-| 086 | GET    | `/api/v1/payments/{paymentTransactionId}`               | AUTH            | PAYMENTS      |
-| 087 | GET    | `/api/v1/payments`                                      | AUTH            | PAYMENTS      |
-| 088 | GET    | `/api/v1/payments/rental-order/{rentalOrderId}`         | AUTH            | PAYMENTS      |
-| 089 | POST   | `/api/v1/payments/{rentalOrderId}/initiate`             | AUTH            | PAYMENTS      |
-| 090 | GET    | `/api/v1/payments/vnpay/ipn`                            | PUBLIC          | PAYMENTS      |
-| 091 | GET    | `/api/v1/payments/vnpay/return`                         | PUBLIC          | PAYMENTS      |
-| 092 | GET    | `/api/v1/contracts/{rentalContractId}`                  | AUTH            | CONTRACTS     |
-| 093 | GET    | `/api/v1/contracts/rental-order/{rentalOrderId}`        | AUTH            | CONTRACTS     |
-| 094 | POST   | `/api/v1/contracts/rental-order/{rentalOrderId}`        | AUTH            | CONTRACTS     |
+| 077 | GET    | `/api/v1/rental-orders/hub/{hubId}`                     | AUTH            | RENTAL_ORDERS |
+| 078 | GET    | `/api/v1/rental-orders/my-orders`                       | AUTH            | RENTAL_ORDERS |
+| 079 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/status`          | AUTH            | RENTAL_ORDERS |
+| 080 | POST   | `/api/v1/rental-orders/{rentalOrderId}/cancel`          | AUTH            | RENTAL_ORDERS |
+| 081 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/extend`          | AUTH            | RENTAL_ORDERS |
+| 082 | GET    | `/api/v1/rental-orders/{rentalOrderId}/staff-detail`    | AUTH            | RENTAL_ORDERS |
+| 083 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/assign-staff`    | AUTH            | RENTAL_ORDERS |
+| 084 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-delivery` | AUTH            | RENTAL_ORDERS |
+| 085 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-pickup`   | AUTH            | RENTAL_ORDERS |
+| 086 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/set-penalty`     | AUTH            | RENTAL_ORDERS |
+| 087 | GET    | `/api/v1/payments/{paymentTransactionId}`               | AUTH            | PAYMENTS      |
+| 088 | GET    | `/api/v1/payments`                                      | AUTH            | PAYMENTS      |
+| 089 | GET    | `/api/v1/payments/rental-order/{rentalOrderId}`         | AUTH            | PAYMENTS      |
+| 090 | POST   | `/api/v1/payments/{rentalOrderId}/initiate`             | AUTH            | PAYMENTS      |
+| 091 | GET    | `/api/v1/payments/vnpay/ipn`                            | PUBLIC          | PAYMENTS      |
+| 092 | GET    | `/api/v1/payments/vnpay/return`                         | PUBLIC          | PAYMENTS      |
+| 093 | GET    | `/api/v1/contracts/{rentalContractId}`                  | AUTH            | CONTRACTS     |
+| 094 | GET    | `/api/v1/contracts/rental-order/{rentalOrderId}`        | AUTH            | CONTRACTS     |
 | 095 | POST   | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
 | 096 | GET    | `/api/v1/reviews/{reviewId}`                            | AUTH            | REVIEWS       |
 | 097 | GET    | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
@@ -3395,7 +3420,6 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | `TICKET_ALREADY_CLOSED`                  | 2604 | Ticket đã đóng                              |
 | `POLICY_NOT_FOUND`                       | 2701 | Không tìm thấy tài liệu chính sách          |
 | `CONSENT_NOT_FOUND`                      | 2801 | Không tìm thấy bản đồng ý                   |
-| `CONSENT_ALREADY_GIVEN`                  | 2803 | Người dùng đã đồng ý chính sách trước đó    |
 
 Nguồn chuẩn: `src/main/java/com/devloopsx/swiftera2/exception/ErrorCode.java`.
 
@@ -3412,7 +3436,7 @@ Nguồn chuẩn: `src/main/java/com/devloopsx/swiftera2/exception/ErrorCode.java
 - `PaymentTransactionStatus`: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`
 - `PaymentMethod`: `VNPAY`, `BANK_TRANSFER`, `CASH`
 - `ContactTicketStatus`: `IN_PROGRESS`, `RESOLVED`, `CLOSED`
-- `ConsentType`: `OPT_IN`, `ACCEPTED`, `DECLINED`
+- `ConsentType`: `ACCEPTED`, `DECLINED`
 - `AcceptMethod`: `CLICK`, `SIGNATURE`
 - `PhotoPhase`: `CHECKOUT`, `CHECKIN`
 - `HttpMethodType`: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`

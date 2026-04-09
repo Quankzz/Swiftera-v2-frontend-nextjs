@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { UserResponse } from '@/features/users/types';
 import { useUsersQuery } from '@/features/users/hooks/use-user-management';
-import { Pencil, Trash2, Shield, Search } from 'lucide-react';
+import { useRolesListQuery } from '@/features/roles/hooks/use-roles';
+import { Pencil, Trash2, Shield, Search, ChevronDown, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type UsersTableProps = {
   onEdit?: (user: UserResponse) => void;
@@ -51,13 +53,87 @@ function AvatarCell({ user }: { user: UserResponse }) {
   );
 }
 
+// ── Filter Select ──────────────────────────────────────────────────────────
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className='relative'>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(
+          'h-9 appearance-none rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition cursor-pointer',
+          value
+            ? 'text-text-main border-theme-primary-start/40 bg-theme-primary-start/5 dark:bg-theme-primary-start/10'
+            : 'text-text-sub',
+        )}
+        style={{ minWidth: 130 }}
+      >
+        <option value=''>{label}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <span className='pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-sub'>
+        {value ? (
+          <button
+            type='button'
+            className='pointer-events-auto flex items-center'
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange('');
+            }}
+          >
+            <X size={12} />
+          </button>
+        ) : (
+          <ChevronDown size={13} />
+        )}
+      </span>
+    </div>
+  );
+}
+
 export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
   const [page, setPage] = useState(0); // 0-based cho DataTable UI; gửi page+1 lên BE
   const [size] = useState(10);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState(''); // role name (string)
+  const [statusFilter, setStatusFilter] = useState(''); // 'verified' | 'unverified' | ''
 
-  // Debounce 400ms — chờ user ngừng gõ mới gọi API
+  const handleRoleChange = (v: string) => {
+    setRoleFilter(v);
+    setPage(0);
+  };
+  const handleStatusChange = (v: string) => {
+    setStatusFilter(v);
+    setPage(0);
+  };
+
+  // Fetch all roles for filter dropdown
+  const { data: rolesData } = useRolesListQuery({ page: 1, size: 100 });
+  const roleOptions = useMemo(
+    () =>
+      (rolesData?.content ?? []).map((r) => ({
+        value: r.name,
+        label: r.name,
+      })),
+    [rolesData],
+  );
+
+  // Debounce search 400ms
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -66,12 +142,27 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Build SpringFilter DSL — dùng ~~ cho LIKE/contains
+  // Build SpringFilter DSL
   const filter = useMemo(() => {
+    const parts: string[] = [];
+
     const term = debouncedSearch.trim();
-    if (!term) return undefined;
-    return `(firstName~~'*${term}*' or lastName~~'*${term}*' or email~~'*${term}*')`;
-  }, [debouncedSearch]);
+    if (term) {
+      parts.push(
+        `(firstName~~'*${term}*' or lastName~~'*${term}*' or email~~'*${term}*')`,
+      );
+    }
+
+    if (statusFilter === 'verified') parts.push(`isVerified:true`);
+    if (statusFilter === 'unverified') parts.push(`isVerified:false`);
+
+    // Role filter — Spring DSL on roles.name (nested)
+    if (roleFilter) {
+      parts.push(`roles.name:'${roleFilter}'`);
+    }
+
+    return parts.length > 0 ? parts.join(' and ') : undefined;
+  }, [debouncedSearch, statusFilter, roleFilter]);
 
   const { data, isLoading, isError } = useUsersQuery({
     page: page + 1, // BE expects 1-based
@@ -232,7 +323,7 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
       onPageChange={(p) => setPage(p)}
       pageSize={size}
       totalRows={total}
-      toolbarRight={
+      toolbarLeft={
         <div className='relative'>
           <Search
             size={14}
@@ -244,6 +335,25 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
             onChange={(e) => setSearch(e.target.value)}
             placeholder='Tìm tên, email...'
             className='h-9 w-52 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+          />
+        </div>
+      }
+      toolbarRight={
+        <div className='flex items-center gap-2'>
+          <FilterSelect
+            label='Vai trò'
+            value={roleFilter}
+            onChange={handleRoleChange}
+            options={roleOptions}
+          />
+          <FilterSelect
+            label='Trạng thái'
+            value={statusFilter}
+            onChange={handleStatusChange}
+            options={[
+              { value: 'verified', label: 'Đã xác minh' },
+              { value: 'unverified', label: 'Chưa xác minh' },
+            ]}
           />
         </div>
       }

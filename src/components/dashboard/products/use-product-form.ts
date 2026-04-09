@@ -97,6 +97,8 @@ export interface ProductFormData {
   oldDailyPrice: string;
   depositAmount: string;
   minRentalDays: string;
+  /** Voucher ID đã chọn cho sản phẩm (PRODUCT_DISCOUNT) */
+  voucherId: string;
   /** Chỉ có trong edit mode */
   isActive: boolean;
 }
@@ -113,6 +115,7 @@ const EMPTY_FORM: ProductFormData = {
   oldDailyPrice: '',
   depositAmount: '',
   minRentalDays: '1',
+  voucherId: '',
   isActive: true,
 };
 
@@ -134,6 +137,7 @@ function productToForm(p: ProductResponse): ProductFormData {
     oldDailyPrice: p.oldDailyPrice != null ? String(p.oldDailyPrice) : '',
     depositAmount: p.depositAmount != null ? String(p.depositAmount) : '',
     minRentalDays: String(p.minRentalDays),
+    voucherId: p.voucherId ?? '',
     isActive: p.isActive,
   };
 }

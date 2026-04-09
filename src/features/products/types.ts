@@ -87,6 +87,11 @@ export interface ProductResponse {
   /** e.g. "Canon", "Sony" — single string, not array */
   brand: string | null;
   /**
+   * voucherId linked to this product (PRODUCT_DISCOUNT voucher).
+   * Send empty string "" to unlink. Absent or null = no voucher.
+   */
+  voucherId: string | null;
+  /**
    * Legacy summary string, e.g. "Black, Silver".
    * Use `colors[]` for structured data.
    */
@@ -130,6 +135,11 @@ export interface CreateProductInput {
   /** required, >= 0 */
   depositAmount: number;
   brand?: string;
+  /**
+   * Link to a PRODUCT_DISCOUNT voucher.
+   * Send empty string "" to explicitly unlink.
+   */
+  voucherId?: string;
   description?: string;
   shortDescription?: string;
   /** optional, must be >= dailyPrice if provided */
