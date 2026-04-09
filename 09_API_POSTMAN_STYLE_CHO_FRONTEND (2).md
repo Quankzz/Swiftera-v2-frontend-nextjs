@@ -13,10 +13,10 @@
 
 ```json
 {
-  "success": true,
-  "message": "Mô tả kết quả",
-  "data": {},
-  "meta": { "timestamp": "2026-03-24T10:00:00Z", "instance": "/api/v1/..." }
+    "success": true,
+    "message": "Mô tả kết quả",
+    "data": {},
+    "meta": { "timestamp": "2026-03-24T10:00:00Z", "instance": "/api/v1/..." }
 }
 ```
 
@@ -24,9 +24,9 @@
 
 ```json
 {
-  "success": false,
-  "errors": [{ "code": 1001, "message": "Mô tả lỗi" }],
-  "meta": { "timestamp": "...", "instance": "..." }
+    "success": false,
+    "errors": [{ "code": 1001, "message": "Mô tả lỗi" }],
+    "meta": { "timestamp": "...", "instance": "..." }
 }
 ```
 
@@ -59,12 +59,12 @@
 
 ```json
 {
-  "email": "user@gmail.com",
-  "phoneNumber": "0912345678",
-  "password": "Password@123",
-  "confirmPassword": "Password@123",
-  "firstName": "Nguyen",
-  "lastName": "An"
+    "email": "user@gmail.com",
+    "phoneNumber": "0912345678",
+    "password": "Password@123",
+    "confirmPassword": "Password@123",
+    "firstName": "Nguyen",
+    "lastName": "An"
 }
 ```
 
@@ -81,9 +81,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Vui lòng kiểm tra email để xác thực tài khoản",
-  "data": null
+    "success": true,
+    "message": "Vui lòng kiểm tra email để xác thực tài khoản",
+    "data": null
 }
 ```
 
@@ -100,7 +100,7 @@
 
 ```json
 {
-  "token": "<jwt-token-trong-email>"
+    "token": "<jwt-token-trong-email>"
 }
 ```
 
@@ -108,34 +108,34 @@
 
 ```json
 {
-  "success": true,
-  "message": "Email của bạn đã được xác thực thành công",
-  "data": {
-    "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
-    "userSecured": {
-      "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
-      "email": "user@gmail.com",
-      "firstName": "Nguyen",
-      "lastName": "An",
-      "nickname": null,
-      "phoneNumber": "0912345678",
-      "biography": null,
-      "avatarUrl": null,
-      "city": null,
-      "nationality": null,
-      "isVerified": true,
-      "rolesSecured": [
-        {
-          "roleId": "...",
-          "name": "CUSTOMER_ROLE",
-          "description": "...",
-          "active": true
+    "success": true,
+    "message": "Email của bạn đã được xác thực thành công",
+    "data": {
+        "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
+        "userSecured": {
+            "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
+            "email": "user@gmail.com",
+            "firstName": "Nguyen",
+            "lastName": "An",
+            "nickname": null,
+            "phoneNumber": "0912345678",
+            "biography": null,
+            "avatarUrl": null,
+            "city": null,
+            "nationality": null,
+            "isVerified": true,
+            "rolesSecured": [
+                {
+                    "roleId": "...",
+                    "name": "CUSTOMER_ROLE",
+                    "description": "...",
+                    "active": true
+                }
+            ],
+            "createdAt": "2026-03-24 10:00:00 AM",
+            "updatedAt": "2026-03-24 10:00:00 AM"
         }
-      ],
-      "createdAt": "2026-03-24 10:00:00 AM",
-      "updatedAt": "2026-03-24 10:00:00 AM"
     }
-  }
 }
 ```
 
@@ -150,7 +150,7 @@
 
 ```json
 {
-  "email": "user@gmail.com"
+    "email": "user@gmail.com"
 }
 ```
 
@@ -158,9 +158,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư đến",
-  "data": null
+    "success": true,
+    "message": "Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư đến",
+    "data": null
 }
 ```
 
@@ -175,8 +175,8 @@
 
 ```json
 {
-  "email": "user@gmail.com",
-  "password": "Password@123"
+    "email": "user@gmail.com",
+    "password": "Password@123"
 }
 ```
 
@@ -184,34 +184,34 @@
 
 ```json
 {
-  "success": true,
-  "message": "Đăng nhập thành công",
-  "data": {
-    "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
-    "userSecured": {
-      "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
-      "email": "user@gmail.com",
-      "firstName": "Nguyen",
-      "lastName": "An",
-      "nickname": null,
-      "phoneNumber": "0912345678",
-      "biography": null,
-      "avatarUrl": null,
-      "city": null,
-      "nationality": null,
-      "isVerified": true,
-      "rolesSecured": [
-        {
-          "roleId": "...",
-          "name": "CUSTOMER_ROLE",
-          "description": "...",
-          "active": true
+    "success": true,
+    "message": "Đăng nhập thành công",
+    "data": {
+        "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
+        "userSecured": {
+            "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
+            "email": "user@gmail.com",
+            "firstName": "Nguyen",
+            "lastName": "An",
+            "nickname": null,
+            "phoneNumber": "0912345678",
+            "biography": null,
+            "avatarUrl": null,
+            "city": null,
+            "nationality": null,
+            "isVerified": true,
+            "rolesSecured": [
+                {
+                    "roleId": "...",
+                    "name": "CUSTOMER_ROLE",
+                    "description": "...",
+                    "active": true
+                }
+            ],
+            "createdAt": "2026-03-24 10:00:00 AM",
+            "updatedAt": "2026-03-24 10:00:00 AM"
         }
-      ],
-      "createdAt": "2026-03-24 10:00:00 AM",
-      "updatedAt": "2026-03-24 10:00:00 AM"
     }
-  }
 }
 ```
 
@@ -230,9 +230,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Đăng xuất thành công",
-  "data": null
+    "success": true,
+    "message": "Đăng xuất thành công",
+    "data": null
 }
 ```
 
@@ -247,31 +247,31 @@
 
 ```json
 {
-  "success": true,
-  "message": "Lấy thông tin người dùng đã xác thực thành công",
-  "data": {
-    "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
-    "email": "user@gmail.com",
-    "firstName": "Nguyen",
-    "lastName": "An",
-    "nickname": "nguyenan",
-    "phoneNumber": "0912345678",
-    "biography": null,
-    "avatarUrl": null,
-    "city": null,
-    "nationality": null,
-    "isVerified": true,
-    "rolesSecured": [
-      {
-        "roleId": "...",
-        "name": "CUSTOMER_ROLE",
-        "description": "...",
-        "active": true
-      }
-    ],
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "success": true,
+    "message": "Lấy thông tin người dùng đã xác thực thành công",
+    "data": {
+        "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
+        "email": "user@gmail.com",
+        "firstName": "Nguyen",
+        "lastName": "An",
+        "nickname": "nguyenan",
+        "phoneNumber": "0912345678",
+        "biography": null,
+        "avatarUrl": null,
+        "city": null,
+        "nationality": null,
+        "isVerified": true,
+        "rolesSecured": [
+            {
+                "roleId": "...",
+                "name": "CUSTOMER_ROLE",
+                "description": "...",
+                "active": true
+            }
+        ],
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -287,12 +287,12 @@
 
 ```json
 {
-  "success": true,
-  "message": "Lấy thành công refresh token và access token",
-  "data": {
-    "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
-    "userSecured": { "...": "..." }
-  }
+    "success": true,
+    "message": "Lấy thành công refresh token và access token",
+    "data": {
+        "accessToken": "eyJhbGciOiJSUzI1NiJ9...",
+        "userSecured": { "...": "..." }
+    }
 }
 ```
 
@@ -307,7 +307,7 @@
 
 ```json
 {
-  "email": "user@gmail.com"
+    "email": "user@gmail.com"
 }
 ```
 
@@ -315,9 +315,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Vui lòng kiểm tra email để đặt lại mật khẩu",
-  "data": null
+    "success": true,
+    "message": "Vui lòng kiểm tra email để đặt lại mật khẩu",
+    "data": null
 }
 ```
 
@@ -332,9 +332,9 @@
 
 ```json
 {
-  "token": "<jwt-token-trong-email>",
-  "newPassword": "NewPassword@123",
-  "confirmPassword": "NewPassword@123"
+    "token": "<jwt-token-trong-email>",
+    "newPassword": "NewPassword@123",
+    "confirmPassword": "NewPassword@123"
 }
 ```
 
@@ -342,9 +342,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập lại",
-  "data": null
+    "success": true,
+    "message": "Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập lại",
+    "data": null
 }
 ```
 
@@ -363,13 +363,13 @@
 
 ```json
 {
-  "firstName": "Van A",
-  "lastName": "Nguyen",
-  "nickname": "vana2026",
-  "avatarUrl": "https://cdn.example.com/avatar.jpg",
-  "biography": "Yêu công nghệ và phim ảnh",
-  "city": "Ho Chi Minh",
-  "nationality": "Vietnamese"
+    "firstName": "Van A",
+    "lastName": "Nguyen",
+    "nickname": "vana2026",
+    "avatarUrl": "https://cdn.example.com/avatar.jpg",
+    "biography": "Yêu công nghệ và phim ảnh",
+    "city": "Ho Chi Minh",
+    "nationality": "Vietnamese"
 }
 ```
 
@@ -386,9 +386,9 @@
 
 ```json
 {
-  "currentPassword": "OldPassword@123",
-  "newPassword": "NewPassword@456",
-  "confirmPassword": "NewPassword@456"
+    "currentPassword": "OldPassword@123",
+    "newPassword": "NewPassword@456",
+    "confirmPassword": "NewPassword@456"
 }
 ```
 
@@ -405,7 +405,7 @@
 
 ```json
 {
-  "newEmail": "newemail@gmail.com"
+    "newEmail": "newemail@gmail.com"
 }
 ```
 
@@ -413,9 +413,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Vui lòng kiểm tra email mới để xác thực và hoàn tất cập nhật",
-  "data": null
+    "success": true,
+    "message": "Vui lòng kiểm tra email mới để xác thực và hoàn tất cập nhật",
+    "data": null
 }
 ```
 
@@ -430,7 +430,7 @@
 
 ```json
 {
-  "token": "<jwt-token-trong-email>"
+    "token": "<jwt-token-trong-email>"
 }
 ```
 
@@ -447,31 +447,31 @@
 
 ```json
 {
-  "success": true,
-  "message": "Lấy thông tin người dùng thành công",
-  "data": {
-    "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
-    "email": "user@gmail.com",
-    "firstName": "Nguyen",
-    "lastName": "An",
-    "nickname": null,
-    "phoneNumber": "0912345678",
-    "biography": null,
-    "avatarUrl": null,
-    "city": null,
-    "nationality": null,
-    "isVerified": true,
-    "rolesSecured": [
-      {
-        "roleId": "...",
-        "name": "CUSTOMER_ROLE",
-        "description": "...",
-        "active": true
-      }
-    ],
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "success": true,
+    "message": "Lấy thông tin người dùng thành công",
+    "data": {
+        "userId": "d4f6e5a8-43d4-4d08-84d4-57e8f99e0b11",
+        "email": "user@gmail.com",
+        "firstName": "Nguyen",
+        "lastName": "An",
+        "nickname": null,
+        "phoneNumber": "0912345678",
+        "biography": null,
+        "avatarUrl": null,
+        "city": null,
+        "nationality": null,
+        "isVerified": true,
+        "rolesSecured": [
+            {
+                "roleId": "...",
+                "name": "CUSTOMER_ROLE",
+                "description": "...",
+                "active": true
+            }
+        ],
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -486,30 +486,30 @@
 
 ```json
 {
-  "success": true,
-  "message": "Lấy danh sách người dùng thành công với bộ lọc truy vấn",
-  "data": {
-    "meta": {
-      "currentPage": 1,
-      "pageSize": 10,
-      "totalPages": 5,
-      "totalElements": 48,
-      "hasNext": true,
-      "hasPrevious": false
-    },
-    "content": [
-      {
-        "userId": "...",
-        "email": "...",
-        "firstName": "...",
-        "lastName": "...",
-        "nickname": null,
-        "phoneNumber": "...",
-        "isVerified": true,
-        "rolesSecured": []
-      }
-    ]
-  }
+    "success": true,
+    "message": "Lấy danh sách người dùng thành công với bộ lọc truy vấn",
+    "data": {
+        "meta": {
+            "currentPage": 1,
+            "pageSize": 10,
+            "totalPages": 5,
+            "totalElements": 48,
+            "hasNext": true,
+            "hasPrevious": false
+        },
+        "content": [
+            {
+                "userId": "...",
+                "email": "...",
+                "firstName": "...",
+                "lastName": "...",
+                "nickname": null,
+                "phoneNumber": "...",
+                "isVerified": true,
+                "rolesSecured": []
+            }
+        ]
+    }
 }
 ```
 
@@ -524,13 +524,13 @@
 
 ```json
 {
-  "firstName": "Nguyen",
-  "lastName": "B",
-  "email": "newadmin@gmail.com",
-  "phoneNumber": "0987654321",
-  "nickname": "adminb",
-  "isVerified": true,
-  "roleIds": ["role-uuid-1"]
+    "firstName": "Nguyen",
+    "lastName": "B",
+    "email": "newadmin@gmail.com",
+    "phoneNumber": "0987654321",
+    "nickname": "adminb",
+    "isVerified": true,
+    "roleIds": ["role-uuid-1"]
 }
 ```
 
@@ -547,9 +547,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Xóa tài khoản người dùng thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa tài khoản người dùng thành công",
+    "data": null
 }
 ```
 
@@ -564,7 +564,7 @@
 
 ```json
 {
-  "roleIds": ["role-uuid-1", "role-uuid-2"]
+    "roleIds": ["role-uuid-1", "role-uuid-2"]
 }
 ```
 
@@ -572,9 +572,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Loại bỏ vai trò khỏi người dùng thành công",
-  "data": null
+    "success": true,
+    "message": "Loại bỏ vai trò khỏi người dùng thành công",
+    "data": null
 }
 ```
 
@@ -604,10 +604,10 @@
 
 ```json
 {
-  "name": "MODERATOR_ROLE",
-  "description": "Vai trò kiểm duyệt nội dung",
-  "active": true,
-  "permissionIds": ["perm-uuid-1", "perm-uuid-2"]
+    "name": "MODERATOR_ROLE",
+    "description": "Vai trò kiểm duyệt nội dung",
+    "active": true,
+    "permissionIds": ["perm-uuid-1", "perm-uuid-2"]
 }
 ```
 
@@ -615,23 +615,23 @@
 
 ```json
 {
-  "data": {
-    "roleId": "r-uuid-001",
-    "name": "MODERATOR_ROLE",
-    "description": "Vai trò kiểm duyệt nội dung",
-    "active": true,
-    "permissions": [
-      {
-        "permissionId": "...",
-        "name": "...",
-        "apiPath": "...",
-        "httpMethod": "GET",
-        "module": "..."
-      }
-    ],
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "roleId": "r-uuid-001",
+        "name": "MODERATOR_ROLE",
+        "description": "Vai trò kiểm duyệt nội dung",
+        "active": true,
+        "permissions": [
+            {
+                "permissionId": "...",
+                "name": "...",
+                "apiPath": "...",
+                "httpMethod": "GET",
+                "module": "..."
+            }
+        ],
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -664,10 +664,10 @@
 
 ```json
 {
-  "name": "MODERATOR_ROLE_V2",
-  "description": "Cập nhật mô tả",
-  "active": false,
-  "permissionIds": ["perm-uuid-3"]
+    "name": "MODERATOR_ROLE_V2",
+    "description": "Cập nhật mô tả",
+    "active": false,
+    "permissionIds": ["perm-uuid-3"]
 }
 ```
 
@@ -684,7 +684,7 @@
 
 ```json
 {
-  "permissionIds": ["perm-uuid-1"]
+    "permissionIds": ["perm-uuid-1"]
 }
 ```
 
@@ -692,9 +692,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Xóa quyền khỏi vai trò thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa quyền khỏi vai trò thành công",
+    "data": null
 }
 ```
 
@@ -709,9 +709,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Xóa vai trò thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa vai trò thành công",
+    "data": null
 }
 ```
 
@@ -730,8 +730,8 @@
 
 ```json
 {
-  "moduleName": "ANALYTICS",
-  "permissionIds": ["perm-uuid-1", "perm-uuid-2"]
+    "moduleName": "ANALYTICS",
+    "permissionIds": ["perm-uuid-1", "perm-uuid-2"]
 }
 ```
 
@@ -739,15 +739,15 @@
 
 ```json
 {
-  "data": [
-    {
-      "permissionId": "...",
-      "name": "...",
-      "apiPath": "...",
-      "httpMethod": "GET",
-      "module": "ANALYTICS"
-    }
-  ]
+    "data": [
+        {
+            "permissionId": "...",
+            "name": "...",
+            "apiPath": "...",
+            "httpMethod": "GET",
+            "module": "ANALYTICS"
+        }
+    ]
 }
 ```
 
@@ -762,9 +762,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Xóa module thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa module thành công",
+    "data": null
 }
 ```
 
@@ -779,26 +779,26 @@
 
 ```json
 {
-  "data": [
-    "AUTH",
-    "USERS",
-    "ROLES",
-    "PERMISSIONS",
-    "FILES",
-    "HUBS",
-    "CATEGORIES",
-    "PRODUCTS",
-    "INVENTORY",
-    "CART",
-    "VOUCHERS",
-    "RENTAL_ORDERS",
-    "PAYMENTS",
-    "CONTRACTS",
-    "REVIEWS",
-    "TICKETS",
-    "DASHBOARDS",
-    "POLICIES"
-  ]
+    "data": [
+        "AUTH",
+        "USERS",
+        "ROLES",
+        "PERMISSIONS",
+        "FILES",
+        "HUBS",
+        "CATEGORIES",
+        "PRODUCTS",
+        "INVENTORY",
+        "CART",
+        "VOUCHERS",
+        "RENTAL_ORDERS",
+        "PAYMENTS",
+        "CONTRACTS",
+        "REVIEWS",
+        "TICKETS",
+        "DASHBOARDS",
+        "POLICIES"
+    ]
 }
 ```
 
@@ -813,10 +813,10 @@
 
 ```json
 {
-  "name": "Xem báo cáo doanh thu",
-  "apiPath": "/api/v1/reports/revenue",
-  "httpMethod": "GET",
-  "module": "ANALYTICS"
+    "name": "Xem báo cáo doanh thu",
+    "apiPath": "/api/v1/reports/revenue",
+    "httpMethod": "GET",
+    "module": "ANALYTICS"
 }
 ```
 
@@ -824,15 +824,15 @@
 
 ```json
 {
-  "data": {
-    "permissionId": "p-uuid-001",
-    "name": "Xem báo cáo doanh thu",
-    "apiPath": "/api/v1/reports/revenue",
-    "httpMethod": "GET",
-    "module": "ANALYTICS",
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "permissionId": "p-uuid-001",
+        "name": "Xem báo cáo doanh thu",
+        "apiPath": "/api/v1/reports/revenue",
+        "httpMethod": "GET",
+        "module": "ANALYTICS",
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -847,10 +847,10 @@
 
 ```json
 {
-  "name": "Tên mới",
-  "apiPath": "/api/v1/new-path",
-  "httpMethod": "POST",
-  "module": "ANALYTICS"
+    "name": "Tên mới",
+    "apiPath": "/api/v1/new-path",
+    "httpMethod": "POST",
+    "module": "ANALYTICS"
 }
 ```
 
@@ -885,9 +885,9 @@
 
 ```json
 {
-  "success": true,
-  "message": "Xóa quyền thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa quyền thành công",
+    "data": null
 }
 ```
 
@@ -914,12 +914,12 @@ folderName: "products"   (tùy chọn, mặc định AZURE_STORAGE_CONTAINER_NAM
 
 ```json
 {
-  "success": true,
-  "message": "Tải lên tệp đơn thành công",
-  "data": {
-    "fileName": "canon-r50.jpg",
-    "fileUrl": "https://<storage-account>.blob.core.windows.net/<container>/products/canon-r50.jpg"
-  }
+    "success": true,
+    "message": "Tải lên tệp đơn thành công",
+    "data": {
+        "fileName": "canon-r50.jpg",
+        "fileUrl": "https://<storage-account>.blob.core.windows.net/<container>/products/canon-r50.jpg"
+    }
 }
 ```
 
@@ -943,12 +943,12 @@ folderName: "products"
 
 ```json
 {
-  "data": {
-    "files": [
-      { "fileName": "img1.jpg", "fileUrl": "https://..." },
-      { "fileName": "img2.jpg", "fileUrl": "https://..." }
-    ]
-  }
+    "data": {
+        "files": [
+            { "fileName": "img1.jpg", "fileUrl": "https://..." },
+            { "fileName": "img2.jpg", "fileUrl": "https://..." }
+        ]
+    }
 }
 ```
 
@@ -963,9 +963,9 @@ folderName: "products"
 
 ```json
 {
-  "success": true,
-  "message": "Xóa tệp thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa tệp thành công",
+    "data": null
 }
 ```
 
@@ -980,7 +980,7 @@ folderName: "products"
 
 ```json
 {
-  "filePaths": ["products/img1.jpg", "products/img2.jpg"]
+    "filePaths": ["products/img1.jpg", "products/img2.jpg"]
 }
 ```
 
@@ -988,9 +988,9 @@ folderName: "products"
 
 ```json
 {
-  "success": true,
-  "message": "Xóa nhiều tệp thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa nhiều tệp thành công",
+    "data": null
 }
 ```
 
@@ -1005,8 +1005,8 @@ folderName: "products"
 
 ```json
 {
-  "sourceKey": "temp/img1.jpg",
-  "destinationFolder": "products"
+    "sourceKey": "temp/img1.jpg",
+    "destinationFolder": "products"
 }
 ```
 
@@ -1014,9 +1014,9 @@ folderName: "products"
 
 ```json
 {
-  "success": true,
-  "message": "Di chuyển tệp thành công",
-  "data": "Tệp đã được di chuyển từ: temp/img1.jpg đến thư mục: products"
+    "success": true,
+    "message": "Di chuyển tệp thành công",
+    "data": "Tệp đã được di chuyển từ: temp/img1.jpg đến thư mục: products"
 }
 ```
 
@@ -1031,8 +1031,8 @@ folderName: "products"
 
 ```json
 {
-  "sourceKeys": ["temp/img1.jpg", "temp/img2.jpg"],
-  "destinationFolder": "products"
+    "sourceKeys": ["temp/img1.jpg", "temp/img2.jpg"],
+    "destinationFolder": "products"
 }
 ```
 
@@ -1040,9 +1040,9 @@ folderName: "products"
 
 ```json
 {
-  "success": true,
-  "message": "Di chuyển nhiều tệp thành công",
-  "data": "Các tệp đã được di chuyển tới thư mục: products"
+    "success": true,
+    "message": "Di chuyển nhiều tệp thành công",
+    "data": "Các tệp đã được di chuyển tới thư mục: products"
 }
 ```
 
@@ -1061,15 +1061,15 @@ folderName: "products"
 
 ```json
 {
-  "code": "HCM-01",
-  "name": "Hub Hồ Chí Minh - Quận 1",
-  "addressLine": "123 Lê Lợi",
-  "ward": "Phường Bến Nghé",
-  "district": "Quận 1",
-  "city": "Hồ Chí Minh",
-  "latitude": 10.7769,
-  "longitude": 106.7009,
-  "phone": "02812345678"
+    "code": "HCM-01",
+    "name": "Hub Hồ Chí Minh - Quận 1",
+    "addressLine": "123 Lê Lợi",
+    "ward": "Phường Bến Nghé",
+    "district": "Quận 1",
+    "city": "Hồ Chí Minh",
+    "latitude": 10.7769,
+    "longitude": 106.7009,
+    "phone": "02812345678"
 }
 ```
 
@@ -1085,21 +1085,21 @@ folderName: "products"
 
 ```json
 {
-  "data": {
-    "hubId": "h1a2b3c4-...",
-    "code": "HCM-01",
-    "name": "Hub Hồ Chí Minh - Quận 1",
-    "addressLine": "123 Lê Lợi",
-    "ward": "Phường Bến Nghé",
-    "district": "Quận 1",
-    "city": "Hồ Chí Minh",
-    "latitude": 10.7769,
-    "longitude": 106.7009,
-    "phone": "02812345678",
-    "isActive": true,
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "hubId": "h1a2b3c4-...",
+        "code": "HCM-01",
+        "name": "Hub Hồ Chí Minh - Quận 1",
+        "addressLine": "123 Lê Lợi",
+        "ward": "Phường Bến Nghé",
+        "district": "Quận 1",
+        "city": "Hồ Chí Minh",
+        "latitude": 10.7769,
+        "longitude": 106.7009,
+        "phone": "02812345678",
+        "isActive": true,
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -1144,21 +1144,21 @@ Ví dụ response:
 
 ```json
 {
-  "data": [
-    {
-      "userId": "staff-uuid-001",
-      "email": "staff1@swiftera2.io.vn",
-      "firstName": "Nguyen",
-      "lastName": "A",
-      "nickname": "shipper-a",
-      "phoneNumber": "+84901234567",
-      "avatarUrl": null,
-      "isVerified": true,
-      "hubId": "h1a2b3c4-...",
-      "hubCode": "HCM-01",
-      "hubName": "Hub Hồ Chí Minh - Quận 1"
-    }
-  ]
+    "data": [
+        {
+            "userId": "staff-uuid-001",
+            "email": "staff1@swiftera2.io.vn",
+            "firstName": "Nguyen",
+            "lastName": "A",
+            "nickname": "shipper-a",
+            "phoneNumber": "+84901234567",
+            "avatarUrl": null,
+            "isVerified": true,
+            "hubId": "h1a2b3c4-...",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Hồ Chí Minh - Quận 1"
+        }
+    ]
 }
 ```
 
@@ -1173,15 +1173,15 @@ Ví dụ response:
 
 ```json
 {
-  "name": "Hub Q1 Updated",
-  "addressLine": "456 Nguyễn Huệ",
-  "ward": "Phường Bến Nghé",
-  "district": "Quận 1",
-  "city": "Hồ Chí Minh",
-  "latitude": 10.779,
-  "longitude": 106.7,
-  "phone": "02888888888",
-  "isActive": false
+    "name": "Hub Q1 Updated",
+    "addressLine": "456 Nguyễn Huệ",
+    "ward": "Phường Bến Nghé",
+    "district": "Quận 1",
+    "city": "Hồ Chí Minh",
+    "latitude": 10.779,
+    "longitude": 106.7,
+    "phone": "02888888888",
+    "isActive": false
 }
 ```
 
@@ -1200,9 +1200,9 @@ Ví dụ response:
 
 ```json
 {
-  "success": true,
-  "message": "Xóa hub thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa hub thành công",
+    "data": null
 }
 ```
 
@@ -1221,10 +1221,10 @@ Ví dụ response:
 
 ```json
 {
-  "parentId": null,
-  "name": "Máy ảnh",
-  "imageUrl": "https://cdn.example.com/categories/camera.jpg",
-  "sortOrder": 1
+    "parentId": null,
+    "name": "Máy ảnh",
+    "imageUrl": "https://cdn.example.com/categories/camera.jpg",
+    "sortOrder": 1
 }
 ```
 
@@ -1248,17 +1248,17 @@ Ví dụ response:
 
 ```json
 {
-  "data": {
-    "categoryId": "cat-uuid-001",
-    "parentId": null,
-    "name": "Máy ảnh",
-    "imageUrl": "https://cdn.example.com/categories/camera.jpg",
-    "sortOrder": 1,
-    "isActive": true,
-    "children": [],
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "categoryId": "cat-uuid-001",
+        "parentId": null,
+        "name": "Máy ảnh",
+        "imageUrl": "https://cdn.example.com/categories/camera.jpg",
+        "sortOrder": 1,
+        "isActive": true,
+        "children": [],
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -1296,24 +1296,24 @@ Ví dụ response:
 
 ```json
 {
-  "data": [
-    {
-      "categoryId": "cat-uuid-001",
-      "name": "Máy ảnh",
-      "imageUrl": "https://cdn.example.com/categories/camera.jpg",
-      "sortOrder": 1,
-      "isActive": true,
-      "children": [
+    "data": [
         {
-          "categoryId": "cat-uuid-002",
-          "name": "Mirrorless",
-          "imageUrl": "https://cdn.example.com/categories/mirrorless.jpg",
-          "isActive": true,
-          "children": []
+            "categoryId": "cat-uuid-001",
+            "name": "Máy ảnh",
+            "imageUrl": "https://cdn.example.com/categories/camera.jpg",
+            "sortOrder": 1,
+            "isActive": true,
+            "children": [
+                {
+                    "categoryId": "cat-uuid-002",
+                    "name": "Mirrorless",
+                    "imageUrl": "https://cdn.example.com/categories/mirrorless.jpg",
+                    "isActive": true,
+                    "children": []
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
 ```
 
@@ -1328,11 +1328,11 @@ Ví dụ response:
 
 ```json
 {
-  "parentId": "parent-uuid",
-  "name": "Máy ảnh & Camcorder",
-  "imageUrl": "https://cdn.example.com/categories/camera-camcorder.jpg",
-  "sortOrder": 2,
-  "isActive": true
+    "parentId": "parent-uuid",
+    "name": "Máy ảnh & Camcorder",
+    "imageUrl": "https://cdn.example.com/categories/camera-camcorder.jpg",
+    "sortOrder": 2,
+    "isActive": true
 }
 ```
 
@@ -1369,9 +1369,9 @@ Ví dụ response:
 
 ```json
 {
-  "success": true,
-  "message": "Xóa danh mục thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa danh mục thành công",
+    "data": null
 }
 ```
 
@@ -1396,30 +1396,30 @@ Ví dụ response:
 
 ```json
 {
-  "categoryId": "cat-uuid-mirrorless",
-  "brand": "Canon",
-  "voucherId": "voucher-product-discount-uuid",
-  "name": "Canon EOS R50",
-  "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
-  "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
-  "dailyPrice": 250000,
-  "oldDailyPrice": 300000,
-  "depositAmount": 5000000,
-  "minRentalDays": 1,
-  "colors": [
-    {
-      "name": "Black",
-      "code": "#111111"
-    },
-    {
-      "name": "Silver",
-      "code": "#C0C0C0"
-    }
-  ],
-  "imageUrls": [
-    "https://cdn.example.com/products/canon-r50-front.jpg",
-    "https://cdn.example.com/products/canon-r50-back.jpg"
-  ]
+    "categoryId": "cat-uuid-mirrorless",
+    "brand": "Canon",
+    "voucherId": "voucher-product-discount-uuid",
+    "name": "Canon EOS R50",
+    "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
+    "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
+    "dailyPrice": 250000,
+    "oldDailyPrice": 300000,
+    "depositAmount": 5000000,
+    "minRentalDays": 1,
+    "colors": [
+        {
+            "name": "Black",
+            "code": "#111111"
+        },
+        {
+            "name": "Silver",
+            "code": "#C0C0C0"
+        }
+    ],
+    "imageUrls": [
+        "https://cdn.example.com/products/canon-r50-front.jpg",
+        "https://cdn.example.com/products/canon-r50-back.jpg"
+    ]
 }
 ```
 
@@ -1439,54 +1439,54 @@ Ví dụ response:
 
 ```json
 {
-  "data": {
-    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-    "categoryId": "cat-uuid-mirrorless",
-    "categoryName": "Mirrorless",
-    "brand": "Canon",
-    "voucherId": "voucher-product-discount-uuid",
-    "voucher": {
-      "voucherId": "voucher-product-discount-uuid",
-      "code": "CAMERA10",
-      "type": "PRODUCT_DISCOUNT",
-      "productName": "Canon EOS R50",
-      "discountType": "PERCENTAGE",
-      "discountValue": 10,
-      "maxDiscountAmount": 200000,
-      "minRentalDays": 1,
-      "expiresAt": "2026-12-31 11:59:59 PM",
-      "isActive": true
-    },
-    "colors": [
-      {
-        "productColorId": "pc-black-r50",
-        "name": "Black",
-        "code": "#111111",
-        "quantity": 4,
-        "availableQuantity": 3
-      },
-      {
-        "productColorId": "pc-silver-r50",
-        "name": "Silver",
-        "code": "#C0C0C0",
-        "quantity": 2,
-        "availableQuantity": 1
-      }
-    ],
-    "name": "Canon EOS R50",
-    "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
-    "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
-    "dailyPrice": 250000,
-    "oldDailyPrice": 300000,
-    "depositAmount": 5000000,
-    "minRentalDays": 1,
-    "isActive": true,
-    "images": [],
-    "availableStock": 0,
-    "averageRating": 0.0,
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+        "categoryId": "cat-uuid-mirrorless",
+        "categoryName": "Mirrorless",
+        "brand": "Canon",
+        "voucherId": "voucher-product-discount-uuid",
+        "voucher": {
+            "voucherId": "voucher-product-discount-uuid",
+            "code": "CAMERA10",
+            "type": "PRODUCT_DISCOUNT",
+            "productName": "Canon EOS R50",
+            "discountType": "PERCENTAGE",
+            "discountValue": 10,
+            "maxDiscountAmount": 200000,
+            "minRentalDays": 1,
+            "expiresAt": "2026-12-31 11:59:59 PM",
+            "isActive": true
+        },
+        "colors": [
+            {
+                "productColorId": "pc-black-r50",
+                "name": "Black",
+                "code": "#111111",
+                "quantity": 4,
+                "availableQuantity": 3
+            },
+            {
+                "productColorId": "pc-silver-r50",
+                "name": "Silver",
+                "code": "#C0C0C0",
+                "quantity": 2,
+                "availableQuantity": 1
+            }
+        ],
+        "name": "Canon EOS R50",
+        "shortDescription": "Mirrorless APS-C nhỏ gọn, phù hợp đi du lịch",
+        "description": "Máy ảnh mirrorless APS-C 24.2MP dành cho người mới bắt đầu",
+        "dailyPrice": 250000,
+        "oldDailyPrice": 300000,
+        "depositAmount": 5000000,
+        "minRentalDays": 1,
+        "isActive": true,
+        "images": [],
+        "availableStock": 0,
+        "averageRating": 0.0,
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -1537,34 +1537,36 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "categoryId": "cat-uuid-new",
-  "brand": "Canon",
-  "voucherId": "voucher-product-discount-uuid",
-  "name": "Canon EOS R50 Silver",
-  "shortDescription": "Bản màu bạc, phù hợp chụp vlog",
-  "description": "Phiên bản màu bạc",
-  "dailyPrice": 270000,
-  "oldDailyPrice": 300000,
-  "depositAmount": 5500000,
-  "minRentalDays": 2,
-  "colors": [
-    {
-      "productColorId": "pc-black-r50",
-      "name": "Black",
-      "code": "#111111"
-    },
-    {
-      "productColorId": "pc-silver-r50",
-      "name": "Silver",
-      "code": "#C0C0C0"
-    },
-    {
-      "name": "White",
-      "code": "#F5F5F5"
-    }
-  ],
-  "imageUrls": ["https://cdn.example.com/products/canon-r50-silver-front.jpg"],
-  "isActive": true
+    "categoryId": "cat-uuid-new",
+    "brand": "Canon",
+    "voucherId": "voucher-product-discount-uuid",
+    "name": "Canon EOS R50 Silver",
+    "shortDescription": "Bản màu bạc, phù hợp chụp vlog",
+    "description": "Phiên bản màu bạc",
+    "dailyPrice": 270000,
+    "oldDailyPrice": 300000,
+    "depositAmount": 5500000,
+    "minRentalDays": 2,
+    "colors": [
+        {
+            "productColorId": "pc-black-r50",
+            "name": "Black",
+            "code": "#111111"
+        },
+        {
+            "productColorId": "pc-silver-r50",
+            "name": "Silver",
+            "code": "#C0C0C0"
+        },
+        {
+            "name": "White",
+            "code": "#F5F5F5"
+        }
+    ],
+    "imageUrls": [
+        "https://cdn.example.com/products/canon-r50-silver-front.jpg"
+    ],
+    "isActive": true
 }
 ```
 
@@ -1588,9 +1590,9 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "success": true,
-  "message": "Xóa sản phẩm thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa sản phẩm thành công",
+    "data": null
 }
 ```
 
@@ -1611,12 +1613,12 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-  "hubId": "h1a2b3c4-...",
-  "productColorId": "pc-black-r50",
-  "serialNumber": "CANON-R50-001",
-  "conditionGrade": "NEW",
-  "staffNote": "Mới nhập kho tháng 3/2026"
+    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+    "hubId": "h1a2b3c4-...",
+    "productColorId": "pc-black-r50",
+    "serialNumber": "CANON-R50-001",
+    "conditionGrade": "NEW",
+    "staffNote": "Mới nhập kho tháng 3/2026"
 }
 ```
 
@@ -1633,22 +1635,22 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "data": {
-    "inventoryItemId": "inv-uuid-001",
-    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-    "productName": "Canon EOS R50",
-    "productColorId": "pc-black-r50",
-    "colorName": "Black",
-    "colorCode": "#111111",
-    "hubId": "h1a2b3c4-...",
-    "hubName": "Hub Hồ Chí Minh - Quận 1",
-    "serialNumber": "CANON-R50-001",
-    "status": "AVAILABLE",
-    "conditionGrade": "NEW",
-    "staffNote": "Mới nhập kho tháng 3/2026",
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "inventoryItemId": "inv-uuid-001",
+        "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+        "productName": "Canon EOS R50",
+        "productColorId": "pc-black-r50",
+        "colorName": "Black",
+        "colorCode": "#111111",
+        "hubId": "h1a2b3c4-...",
+        "hubName": "Hub Hồ Chí Minh - Quận 1",
+        "serialNumber": "CANON-R50-001",
+        "status": "AVAILABLE",
+        "conditionGrade": "NEW",
+        "staffNote": "Mới nhập kho tháng 3/2026",
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -1683,11 +1685,11 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "hubId": "hub-uuid-new",
-  "productColorId": "pc-silver-r50",
-  "status": "MAINTENANCE",
-  "conditionGrade": "FAIR",
-  "staffNote": "Còn vết xước nhẹ trên thân máy"
+    "hubId": "hub-uuid-new",
+    "productColorId": "pc-silver-r50",
+    "status": "MAINTENANCE",
+    "conditionGrade": "FAIR",
+    "staffNote": "Còn vết xước nhẹ trên thân máy"
 }
 ```
 
@@ -1704,9 +1706,9 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "success": true,
-  "message": "Xóa phần tử kho thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa phần tử kho thành công",
+    "data": null
 }
 ```
 
@@ -1727,43 +1729,43 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "success": true,
-  "message": "Lấy giỏ hàng thành công",
-  "data": {
-    "cartId": "c4ad3f0d-...",
-    "userId": "d4f6e5a8-...",
-    "cartLines": [
-      {
-        "cartLineId": "e6dcdf5e-...",
-        "productId": "f3152824-...",
-        "productColorId": "pc-black-r50",
-        "colorName": "Black",
-        "colorCode": "#111111",
-        "productName": "Canon EOS R50",
-        "productImageUrl": "https://cdn.example.com/canon-r50.jpg",
-        "dailyPrice": 250000,
-        "rentalDurationDays": 5,
-        "quantity": 2,
-        "lineTotal": 2500000,
-        "availableVouchers": [
-          {
-            "voucherId": "v-item-001",
-            "code": "CAMERA7",
-            "type": "ITEM_VOUCHER",
-            "productName": "Canon EOS R50",
-            "discountType": "PERCENTAGE",
-            "discountValue": 7,
-            "maxDiscountAmount": 200000,
-            "minRentalDays": 3,
-            "expiresAt": "2026-12-31 11:59:59 PM",
-            "isActive": true
-          }
-        ]
-      }
-    ],
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "success": true,
+    "message": "Lấy giỏ hàng thành công",
+    "data": {
+        "cartId": "c4ad3f0d-...",
+        "userId": "d4f6e5a8-...",
+        "cartLines": [
+            {
+                "cartLineId": "e6dcdf5e-...",
+                "productId": "f3152824-...",
+                "productColorId": "pc-black-r50",
+                "colorName": "Black",
+                "colorCode": "#111111",
+                "productName": "Canon EOS R50",
+                "productImageUrl": "https://cdn.example.com/canon-r50.jpg",
+                "dailyPrice": 250000,
+                "rentalDurationDays": 5,
+                "quantity": 2,
+                "lineTotal": 2500000,
+                "availableVouchers": [
+                    {
+                        "voucherId": "v-item-001",
+                        "code": "CAMERA7",
+                        "type": "ITEM_VOUCHER",
+                        "productName": "Canon EOS R50",
+                        "discountType": "PERCENTAGE",
+                        "discountValue": 7,
+                        "maxDiscountAmount": 200000,
+                        "minRentalDays": 3,
+                        "expiresAt": "2026-12-31 11:59:59 PM",
+                        "isActive": true
+                    }
+                ]
+            }
+        ],
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -1780,10 +1782,10 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-  "productColorId": "pc-black-r50",
-  "rentalDurationDays": 7,
-  "quantity": 1
+    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+    "productColorId": "pc-black-r50",
+    "rentalDurationDays": 7,
+    "quantity": 1
 }
 ```
 
@@ -1811,9 +1813,9 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "productColorId": "pc-silver-r50",
-  "rentalDurationDays": 10,
-  "quantity": 3
+    "productColorId": "pc-silver-r50",
+    "rentalDurationDays": 10,
+    "quantity": 3
 }
 ```
 
@@ -1830,9 +1832,9 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "success": true,
-  "message": "Xóa sản phẩm khỏi giỏ hàng thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa sản phẩm khỏi giỏ hàng thành công",
+    "data": null
 }
 ```
 
@@ -1847,9 +1849,9 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "success": true,
-  "message": "Xóa giỏ hàng thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa giỏ hàng thành công",
+    "data": null
 }
 ```
 
@@ -1868,13 +1870,13 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "code": "SUMMER30",
-  "type": "ITEM_VOUCHER",
-  "discountType": "PERCENTAGE",
-  "discountValue": 30,
-  "maxDiscountAmount": 500000,
-  "minRentalDays": 3,
-  "expiresAt": "2026-12-31T16:59:59Z"
+    "code": "SUMMER30",
+    "type": "ITEM_VOUCHER",
+    "discountType": "PERCENTAGE",
+    "discountValue": 30,
+    "maxDiscountAmount": 500000,
+    "minRentalDays": 3,
+    "expiresAt": "2026-12-31T16:59:59Z"
 }
 ```
 
@@ -1897,19 +1899,19 @@ Mỗi phần tử `inventoryItems` gồm:
 
 ```json
 {
-  "data": {
-    "voucherId": "v-uuid-001",
-    "code": "SUMMER30",
-    "type": "ITEM_VOUCHER",
-    "discountType": "PERCENTAGE",
-    "discountValue": 30,
-    "maxDiscountAmount": 500000,
-    "minRentalDays": 3,
-    "expiresAt": "2026-12-31 11:59:59 PM",
-    "isActive": true,
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "voucherId": "v-uuid-001",
+        "code": "SUMMER30",
+        "type": "ITEM_VOUCHER",
+        "discountType": "PERCENTAGE",
+        "discountValue": 30,
+        "maxDiscountAmount": 500000,
+        "minRentalDays": 3,
+        "expiresAt": "2026-12-31 11:59:59 PM",
+        "isActive": true,
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -1953,18 +1955,18 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ```json
 {
-  "data": {
-    "voucherId": "v-uuid-001",
-    "code": "SUMMER30",
-    "type": "ITEM_VOUCHER",
-    "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-    "valid": true,
-    "rentalSubtotalAmount": 3500000,
-    "discountAmount": 500000,
-    "rentalFeeAmount": 3000000,
-    "rentalDurationDays": 7,
-    "expiresAt": "2026-12-31T16:59:59Z"
-  }
+    "data": {
+        "voucherId": "v-uuid-001",
+        "code": "SUMMER30",
+        "type": "ITEM_VOUCHER",
+        "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+        "valid": true,
+        "rentalSubtotalAmount": 3500000,
+        "discountAmount": 500000,
+        "rentalFeeAmount": 3000000,
+        "rentalDurationDays": 7,
+        "expiresAt": "2026-12-31T16:59:59Z"
+    }
 }
 ```
 
@@ -1990,13 +1992,13 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ```json
 {
-  "type": "PRODUCT_DISCOUNT",
-  "discountType": "FIXED",
-  "discountValue": 200000,
-  "maxDiscountAmount": null,
-  "minRentalDays": 5,
-  "expiresAt": "2027-06-30T16:59:59Z",
-  "isActive": true
+    "type": "PRODUCT_DISCOUNT",
+    "discountType": "FIXED",
+    "discountValue": 200000,
+    "maxDiscountAmount": null,
+    "minRentalDays": 5,
+    "expiresAt": "2027-06-30T16:59:59Z",
+    "isActive": true
 }
 ```
 
@@ -2015,9 +2017,9 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ```json
 {
-  "success": true,
-  "message": "Xóa voucher thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa voucher thành công",
+    "data": null
 }
 ```
 
@@ -2036,22 +2038,22 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ```json
 {
-  "deliveryRecipientName": "Nguyen Van A",
-  "deliveryPhone": "0988888888",
-  "deliveryAddressLine": "123 Nguyen Trai",
-  "deliveryWard": "Phường 2",
-  "deliveryDistrict": "Quận 5",
-  "deliveryCity": "Hồ Chí Minh",
-  "expectedDeliveryDate": "2026-03-26",
-  "orderLines": [
-    {
-      "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
-      "productColorId": "pc-black-r50",
-      "voucherCode": "CAMERA7",
-      "quantity": 1,
-      "rentalDurationDays": 5
-    }
-  ]
+    "deliveryRecipientName": "Nguyen Van A",
+    "deliveryPhone": "0988888888",
+    "deliveryAddressLine": "123 Nguyen Trai",
+    "deliveryWard": "Phường 2",
+    "deliveryDistrict": "Quận 5",
+    "deliveryCity": "Hồ Chí Minh",
+    "expectedDeliveryDate": "2026-03-26",
+    "orderLines": [
+        {
+            "productId": "f3152824-15dd-4c17-af69-c92089e86d22",
+            "productColorId": "pc-black-r50",
+            "voucherCode": "CAMERA7",
+            "quantity": 1,
+            "rentalDurationDays": 5
+        }
+    ]
 }
 ```
 
@@ -2076,68 +2078,68 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ```json
 {
-  "success": true,
-  "message": "Tạo đơn thuê thành công",
-  "data": {
-    "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
-    "userId": "d4f6e5a8-...",
-    "hubId": null,
-    "hubName": null,
-    "deliveryRecipientName": "Nguyen Van A",
-    "deliveryPhone": "0988888888",
-    "deliveryAddressLine": "123 Nguyen Trai",
-    "deliveryWard": "Phường 2",
-    "deliveryDistrict": "Quận 5",
-    "deliveryCity": "Hồ Chí Minh",
-    "deliveryLatitude": null,
-    "deliveryLongitude": null,
-    "expectedDeliveryDate": "2026-03-26",
-    "expectedRentalEndDate": "2026-04-02",
-    "plannedDeliveryAt": null,
-    "actualDeliveryAt": null,
-    "actualRentalStartAt": null,
-    "deliveredLatitude": null,
-    "deliveredLongitude": null,
-    "plannedPickupAt": null,
-    "actualRentalEndAt": null,
-    "pickedUpAt": null,
-    "pickedUpLatitude": null,
-    "pickedUpLongitude": null,
-    "status": "PENDING_PAYMENT",
-    "rentalSubtotalAmount": 1250000,
-    "voucherCodeSnapshot": "CAMERA7",
-    "voucherDiscountAmount": 87500,
-    "rentalFeeAmount": 1162500,
-    "depositHoldAmount": 5000000,
-    "totalPayableAmount": 6162500,
-    "penaltyChargeAmount": null,
-    "depositRefundAmount": null,
-    "totalPaidAmount": 0,
-    "placedAt": "2026-03-24 10:00:00 AM",
-    "rentalOrderLines": [
-      {
-        "rentalOrderLineId": "rol-uuid-001",
-        "productId": "f3152824-...",
-        "productColorId": "pc-black-r50",
-        "colorNameSnapshot": "Black",
-        "colorCodeSnapshot": "#111111",
-        "productNameSnapshot": "Canon EOS R50",
-        "inventoryItemId": "inv-uuid-001",
-        "inventorySerialNumber": "CANON-R50-001",
-        "dailyPriceSnapshot": 250000,
-        "depositAmountSnapshot": 5000000,
-        "rentalDurationDays": 5,
+    "success": true,
+    "message": "Tạo đơn thuê thành công",
+    "data": {
+        "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
+        "userId": "d4f6e5a8-...",
+        "hubId": null,
+        "hubName": null,
+        "deliveryRecipientName": "Nguyen Van A",
+        "deliveryPhone": "0988888888",
+        "deliveryAddressLine": "123 Nguyen Trai",
+        "deliveryWard": "Phường 2",
+        "deliveryDistrict": "Quận 5",
+        "deliveryCity": "Hồ Chí Minh",
+        "deliveryLatitude": null,
+        "deliveryLongitude": null,
+        "expectedDeliveryDate": "2026-03-26",
+        "expectedRentalEndDate": "2026-04-02",
+        "plannedDeliveryAt": null,
+        "actualDeliveryAt": null,
+        "actualRentalStartAt": null,
+        "deliveredLatitude": null,
+        "deliveredLongitude": null,
+        "plannedPickupAt": null,
+        "actualRentalEndAt": null,
+        "pickedUpAt": null,
+        "pickedUpLatitude": null,
+        "pickedUpLongitude": null,
+        "status": "PENDING_PAYMENT",
+        "rentalSubtotalAmount": 1250000,
         "voucherCodeSnapshot": "CAMERA7",
         "voucherDiscountAmount": 87500,
-        "checkoutConditionNote": null,
-        "checkinConditionNote": null,
-        "itemPenaltyAmount": 0,
-        "photos": []
-      }
-    ],
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+        "rentalFeeAmount": 1162500,
+        "depositHoldAmount": 5000000,
+        "totalPayableAmount": 6162500,
+        "penaltyChargeAmount": null,
+        "depositRefundAmount": null,
+        "totalPaidAmount": 0,
+        "placedAt": "2026-03-24 10:00:00 AM",
+        "rentalOrderLines": [
+            {
+                "rentalOrderLineId": "rol-uuid-001",
+                "productId": "f3152824-...",
+                "productColorId": "pc-black-r50",
+                "colorNameSnapshot": "Black",
+                "colorCodeSnapshot": "#111111",
+                "productNameSnapshot": "Canon EOS R50",
+                "inventoryItemId": "inv-uuid-001",
+                "inventorySerialNumber": "CANON-R50-001",
+                "dailyPriceSnapshot": 250000,
+                "depositAmountSnapshot": 5000000,
+                "rentalDurationDays": 5,
+                "voucherCodeSnapshot": "CAMERA7",
+                "voucherDiscountAmount": 87500,
+                "checkoutConditionNote": null,
+                "checkinConditionNote": null,
+                "itemPenaltyAmount": 0,
+                "photos": []
+            }
+        ],
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -2214,7 +2216,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ```json
 {
-  "status": "PREPARING"
+    "status": "PREPARING"
 }
 ```
 
@@ -2269,9 +2271,9 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ```json
 {
-  "success": true,
-  "message": "Hủy đơn thuê thành công",
-  "data": null
+    "success": true,
+    "message": "Hủy đơn thuê thành công",
+    "data": null
 }
 ```
 
@@ -2286,7 +2288,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ```json
 {
-  "additionalRentalDays": 3
+    "additionalRentalDays": 3
 }
 ```
 
@@ -2317,26 +2319,26 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ```json
 {
-  "data": {
-    "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
-    "status": "PREPARING",
-    "hubId": "h1a2b3c4-...",
-    "hubName": "Hub Hồ Chí Minh - Quận 1",
-    "deliveryStaff": {
-      "userId": "staff-uuid-001",
-      "email": "staff1@swiftera2.io.vn",
-      "firstName": "Nguyen",
-      "lastName": "A",
-      "nickname": "shipper-a",
-      "phoneNumber": "+84901234567",
-      "avatarUrl": null,
-      "isVerified": true,
-      "hubId": "h1a2b3c4-...",
-      "hubCode": "HCM-01",
-      "hubName": "Hub Hồ Chí Minh - Quận 1"
-    },
-    "pickupStaff": null
-  }
+    "data": {
+        "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
+        "status": "PREPARING",
+        "hubId": "h1a2b3c4-...",
+        "hubName": "Hub Hồ Chí Minh - Quận 1",
+        "deliveryStaff": {
+            "userId": "staff-uuid-001",
+            "email": "staff1@swiftera2.io.vn",
+            "firstName": "Nguyen",
+            "lastName": "A",
+            "nickname": "shipper-a",
+            "phoneNumber": "+84901234567",
+            "avatarUrl": null,
+            "isVerified": true,
+            "hubId": "h1a2b3c4-...",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Hồ Chí Minh - Quận 1"
+        },
+        "pickupStaff": null
+    }
 }
 ```
 
@@ -2353,8 +2355,8 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ```json
 {
-  "deliveryStaffId": "user-uuid-staff1",
-  "pickupStaffId": "user-uuid-staff2"
+    "deliveryStaffId": "user-uuid-staff1",
+    "pickupStaffId": "user-uuid-staff2"
 }
 ```
 
@@ -2370,35 +2372,35 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "data": {
-    "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
-    "deliveryStaff": {
-      "userId": "staff-uuid-001",
-      "email": "staff1@swiftera2.io.vn",
-      "firstName": "Nguyen",
-      "lastName": "A",
-      "nickname": "shipper-a",
-      "phoneNumber": "+84901234567",
-      "avatarUrl": null,
-      "isVerified": true,
-      "hubId": "h1a2b3c4-...",
-      "hubCode": "HCM-01",
-      "hubName": "Hub Hồ Chí Minh - Quận 1"
-    },
-    "pickupStaff": {
-      "userId": "staff-uuid-002",
-      "email": "staff2@swiftera2.io.vn",
-      "firstName": "Tran",
-      "lastName": "B",
-      "nickname": "shipper-b",
-      "phoneNumber": "+84908888888",
-      "avatarUrl": null,
-      "isVerified": true,
-      "hubId": "h1a2b3c4-...",
-      "hubCode": "HCM-01",
-      "hubName": "Hub Hồ Chí Minh - Quận 1"
+    "data": {
+        "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
+        "deliveryStaff": {
+            "userId": "staff-uuid-001",
+            "email": "staff1@swiftera2.io.vn",
+            "firstName": "Nguyen",
+            "lastName": "A",
+            "nickname": "shipper-a",
+            "phoneNumber": "+84901234567",
+            "avatarUrl": null,
+            "isVerified": true,
+            "hubId": "h1a2b3c4-...",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Hồ Chí Minh - Quận 1"
+        },
+        "pickupStaff": {
+            "userId": "staff-uuid-002",
+            "email": "staff2@swiftera2.io.vn",
+            "firstName": "Tran",
+            "lastName": "B",
+            "nickname": "shipper-b",
+            "phoneNumber": "+84908888888",
+            "avatarUrl": null,
+            "isVerified": true,
+            "hubId": "h1a2b3c4-...",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Hồ Chí Minh - Quận 1"
+        }
     }
-  }
 }
 ```
 
@@ -2413,9 +2415,9 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "deliveredAt": "2026-03-26T09:15:00Z",
-  "deliveredLatitude": 10.7769,
-  "deliveredLongitude": 106.7009
+    "deliveredAt": "2026-03-26T09:15:00Z",
+    "deliveredLatitude": 10.7769,
+    "deliveredLongitude": 106.7009
 }
 ```
 
@@ -2442,9 +2444,9 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "pickedUpAt": "2026-04-03T11:00:00Z",
-  "pickedUpLatitude": 10.7765,
-  "pickedUpLongitude": 106.6998
+    "pickedUpAt": "2026-04-03T11:00:00Z",
+    "pickedUpLatitude": 10.7765,
+    "pickedUpLongitude": 106.6998
 }
 ```
 
@@ -2470,8 +2472,8 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "penaltyTotal": 500000,
-  "note": "Máy bị xước nhẹ, đền bù phụ kiện"
+    "penaltyTotal": 500000,
+    "note": "Máy bị xước nhẹ, đền bù phụ kiện"
 }
 ```
 
@@ -2499,19 +2501,19 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "data": {
-    "paymentTransactionId": "pt-uuid-001",
-    "rentalOrderId": "6cc84ef6-...",
-    "transactionType": "RENTAL_FEE",
-    "amount": 13750000,
-    "paymentMethod": "VNPAY",
-    "status": "PENDING",
-    "vnpTxnRef": "6cc84ef620260324",
-    "description": "Thanh toan don thue 6cc84ef6",
-    "paidAt": null,
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "paymentTransactionId": "pt-uuid-001",
+        "rentalOrderId": "6cc84ef6-...",
+        "transactionType": "RENTAL_FEE",
+        "amount": 13750000,
+        "paymentMethod": "VNPAY",
+        "status": "PENDING",
+        "vnpTxnRef": "6cc84ef620260324",
+        "description": "Thanh toan don thue 6cc84ef6",
+        "paidAt": null,
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -2556,9 +2558,9 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "success": true,
-  "message": "Tạo liên kết thanh toán VNPay thành công",
-  "data": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=137500000&vnp_Command=pay&..."
+    "success": true,
+    "message": "Tạo liên kết thanh toán VNPay thành công",
+    "data": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=137500000&vnp_Command=pay&..."
 }
 ```
 
@@ -2619,18 +2621,18 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "data": {
-    "rentalContractId": "rc-uuid-001",
-    "rentalOrderId": "6cc84ef6-...",
-    "policyDocumentId": "pd-uuid-001",
-    "contractNumber": "CONTRACT-2026-001",
-    "contractVersion": "v1.0",
-    "acceptMethod": "CLICK",
-    "acceptedAt": "2026-03-24 10:30:00 AM",
-    "contractPdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/contracts/2026/001.pdf",
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "rentalContractId": "rc-uuid-001",
+        "rentalOrderId": "6cc84ef6-...",
+        "policyDocumentId": "pd-uuid-001",
+        "contractNumber": "CONTRACT-2026-001",
+        "contractVersion": "v1.0",
+        "acceptMethod": "CLICK",
+        "acceptedAt": "2026-03-24 10:30:00 AM",
+        "contractPdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/contracts/2026/001.pdf",
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -2669,10 +2671,10 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "rentalOrderId": "6cc84ef6-...",
-  "productId": "f3152824-...",
-  "rating": 5,
-  "content": "Máy ảnh rất tốt, giao hàng nhanh, đóng gói cẩn thận!"
+    "rentalOrderId": "6cc84ef6-...",
+    "productId": "f3152824-...",
+    "rating": 5,
+    "content": "Máy ảnh rất tốt, giao hàng nhanh, đóng gói cẩn thận!"
 }
 ```
 
@@ -2687,21 +2689,21 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "data": {
-    "productReviewId": "rv-uuid-001",
-    "rentalOrderId": "6cc84ef6-...",
-    "userId": "d4f6e5a8-...",
-    "userNickname": "nguyenan",
-    "productId": "f3152824-...",
-    "productName": "Canon EOS R50",
-    "rating": 5,
-    "content": "Máy ảnh rất tốt, giao hàng nhanh...",
-    "staffRating": null,
-    "sellerReply": null,
-    "helpfulCount": 0,
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "productReviewId": "rv-uuid-001",
+        "rentalOrderId": "6cc84ef6-...",
+        "userId": "d4f6e5a8-...",
+        "userNickname": "nguyenan",
+        "productId": "f3152824-...",
+        "productName": "Canon EOS R50",
+        "rating": 5,
+        "content": "Máy ảnh rất tốt, giao hàng nhanh...",
+        "staffRating": null,
+        "sellerReply": null,
+        "helpfulCount": 0,
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -2743,9 +2745,9 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "success": true,
-  "message": "Xóa đánh giá thành công",
-  "data": null
+    "success": true,
+    "message": "Xóa đánh giá thành công",
+    "data": null
 }
 ```
 
@@ -2765,13 +2767,13 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "rentalOrderId": "6cc84ef6-...",
-  "fullName": "Nguyen Van A",
-  "email": "user@gmail.com",
-  "phone": "0988888888",
-  "subject": "Thiết bị bị hỏng sau khi nhận",
-  "message": "Tôi nhận máy ảnh Canon EOS R50 nhưng thấy nút chụp bị kẹt...",
-  "attachmentUrl": "https://cdn.example.com/evidence.jpg"
+    "rentalOrderId": "6cc84ef6-...",
+    "fullName": "Nguyen Van A",
+    "email": "user@gmail.com",
+    "phone": "0988888888",
+    "subject": "Thiết bị bị hỏng sau khi nhận",
+    "message": "Tôi nhận máy ảnh Canon EOS R50 nhưng thấy nút chụp bị kẹt...",
+    "attachmentUrl": "https://cdn.example.com/evidence.jpg"
 }
 ```
 
@@ -2785,24 +2787,24 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "data": {
-    "contactTicketId": "ct-uuid-001",
-    "userId": "d4f6e5a8-...",
-    "rentalOrderId": "6cc84ef6-...",
-    "fullName": "Nguyen Van A",
-    "email": "user@gmail.com",
-    "phone": "0988888888",
-    "subject": "Thiết bị bị hỏng sau khi nhận",
-    "message": "Tôi nhận máy ảnh...",
-    "attachmentUrl": "https://...",
-    "status": "IN_PROGRESS",
-    "handledByUserId": null,
-    "sellerReply": null,
-    "repliedAt": null,
-    "closedAt": null,
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "contactTicketId": "ct-uuid-001",
+        "userId": "d4f6e5a8-...",
+        "rentalOrderId": "6cc84ef6-...",
+        "fullName": "Nguyen Van A",
+        "email": "user@gmail.com",
+        "phone": "0988888888",
+        "subject": "Thiết bị bị hỏng sau khi nhận",
+        "message": "Tôi nhận máy ảnh...",
+        "attachmentUrl": "https://...",
+        "status": "IN_PROGRESS",
+        "handledByUserId": null,
+        "sellerReply": null,
+        "repliedAt": null,
+        "closedAt": null,
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -2848,7 +2850,7 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "sellerReply": "Cảm ơn bạn đã phản ánh. Chúng tôi sẽ liên hệ trong vòng 24 giờ."
+    "sellerReply": "Cảm ơn bạn đã phản ánh. Chúng tôi sẽ liên hệ trong vòng 24 giờ."
 }
 ```
 
@@ -2884,11 +2886,11 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "code": "RENTAL_TERMS",
-  "policyVersion": 2,
-  "title": "Điều khoản thuê thiết bị v2.0",
-  "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2.pdf",
-  "effectiveFrom": "2026-04-01T00:00:00Z"
+    "code": "RENTAL_TERMS",
+    "policyVersion": 2,
+    "title": "Điều khoản thuê thiết bị v2.0",
+    "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2.pdf",
+    "effectiveFrom": "2026-04-01T00:00:00Z"
 }
 ```
 
@@ -2904,17 +2906,17 @@ Ví dụ response phần staff:
 
 ```json
 {
-  "data": {
-    "policyDocumentId": "pd-uuid-001",
-    "code": "RENTAL_TERMS",
-    "policyVersion": 2,
-    "title": "Điều khoản thuê thiết bị v2.0",
-    "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2.pdf",
-    "effectiveFrom": "2026-04-01 07:00:00 AM",
-    "isActive": true,
-    "createdAt": "2026-03-24 10:00:00 AM",
-    "updatedAt": "2026-03-24 10:00:00 AM"
-  }
+    "data": {
+        "policyDocumentId": "pd-uuid-001",
+        "code": "RENTAL_TERMS",
+        "policyVersion": 2,
+        "title": "Điều khoản thuê thiết bị v2.0",
+        "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2.pdf",
+        "effectiveFrom": "2026-04-01 07:00:00 AM",
+        "isActive": true,
+        "createdAt": "2026-03-24 10:00:00 AM",
+        "updatedAt": "2026-03-24 10:00:00 AM"
+    }
 }
 ```
 
@@ -2971,10 +2973,10 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ```json
 {
-  "consentType": "ACCEPTED",
-  "consentContext": "CHECKOUT",
-  "ipAddress": "113.161.72.100",
-  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    "consentType": "ACCEPTED",
+    "consentContext": "CHECKOUT",
+    "ipAddress": "113.161.72.100",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 ```
 
@@ -2993,21 +2995,21 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ```json
 {
-  "data": {
-    "userConsentId": "uc-uuid-001",
-    "userId": "d4f6e5a8-...",
-    "policyDocumentId": "pd-uuid-001",
-    "policyCode": "RENTAL_TERMS",
-    "policyVersion": 2,
-    "policyTitle": "Điều khoản thuê thiết bị v2.0",
-    "consentType": "ACCEPTED",
-    "consentContext": "CHECKOUT",
-    "consentedAt": "2026-03-24 10:30:00 AM",
-    "ipAddress": "113.161.72.100",
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
-    "createdAt": "2026-03-24 10:30:00 AM",
-    "updatedAt": "2026-03-24 10:30:00 AM"
-  }
+    "data": {
+        "userConsentId": "uc-uuid-001",
+        "userId": "d4f6e5a8-...",
+        "policyDocumentId": "pd-uuid-001",
+        "policyCode": "RENTAL_TERMS",
+        "policyVersion": 2,
+        "policyTitle": "Điều khoản thuê thiết bị v2.0",
+        "consentType": "ACCEPTED",
+        "consentContext": "CHECKOUT",
+        "consentedAt": "2026-03-24 10:30:00 AM",
+        "ipAddress": "113.161.72.100",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+        "createdAt": "2026-03-24 10:30:00 AM",
+        "updatedAt": "2026-03-24 10:30:00 AM"
+    }
 }
 ```
 
@@ -3022,23 +3024,23 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ```json
 {
-  "data": [
-    {
-      "userConsentId": "uc-uuid-001",
-      "userId": "d4f6e5a8-...",
-      "policyDocumentId": "pd-uuid-001",
-      "policyCode": "RENTAL_TERMS",
-      "policyVersion": 2,
-      "policyTitle": "Điều khoản thuê thiết bị v2.0",
-      "consentType": "ACCEPTED",
-      "consentContext": "CHECKOUT",
-      "consentedAt": "2026-03-24 10:30:00 AM",
-      "ipAddress": "113.161.72.100",
-      "userAgent": "Mozilla/5.0...",
-      "createdAt": "2026-03-24 10:30:00 AM",
-      "updatedAt": "2026-03-24 10:30:00 AM"
-    }
-  ]
+    "data": [
+        {
+            "userConsentId": "uc-uuid-001",
+            "userId": "d4f6e5a8-...",
+            "policyDocumentId": "pd-uuid-001",
+            "policyCode": "RENTAL_TERMS",
+            "policyVersion": 2,
+            "policyTitle": "Điều khoản thuê thiết bị v2.0",
+            "consentType": "ACCEPTED",
+            "consentContext": "CHECKOUT",
+            "consentedAt": "2026-03-24 10:30:00 AM",
+            "ipAddress": "113.161.72.100",
+            "userAgent": "Mozilla/5.0...",
+            "createdAt": "2026-03-24 10:30:00 AM",
+            "updatedAt": "2026-03-24 10:30:00 AM"
+        }
+    ]
 }
 ```
 
@@ -3064,84 +3066,84 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ```json
 {
-  "data": {
-    "orderKpi": {
-      "completedToday": 12,
-      "completedYesterday": 9,
-      "completedThisWeek": 58,
-      "completedThisMonth": 241,
-      "dailyCompletedLast7Days": [
-        { "date": "2026-04-01", "count": 6 },
-        { "date": "2026-04-02", "count": 8 },
-        { "date": "2026-04-03", "count": 9 },
-        { "date": "2026-04-04", "count": 11 },
-        { "date": "2026-04-05", "count": 7 },
-        { "date": "2026-04-06", "count": 12 },
-        { "date": "2026-04-07", "count": 5 }
-      ]
-    },
-    "orderStatusCounts": {
-      "pendingPayment": 3,
-      "paid": 15,
-      "preparing": 6,
-      "delivering": 4,
-      "delivered": 2,
-      "inUse": 11,
-      "pendingPickup": 5,
-      "pickingUp": 3,
-      "pickedUp": 2,
-      "completed": 241,
-      "cancelled": 7,
-      "urgentTotal": 22
-    },
-    "overdueOrders": {
-      "count": 8,
-      "topItems": [
-        {
-          "rentalOrderId": "ro-uuid-001",
-          "orderCode": "RO-7D6A12B0",
-          "status": "IN_USE",
-          "expectedRentalEndDate": "2026-04-03",
-          "renterFullName": "Nguyen Van A",
-          "renterPhone": "0901234567",
-          "itemCount": 2
+    "data": {
+        "orderKpi": {
+            "completedToday": 12,
+            "completedYesterday": 9,
+            "completedThisWeek": 58,
+            "completedThisMonth": 241,
+            "dailyCompletedLast7Days": [
+                { "date": "2026-04-01", "count": 6 },
+                { "date": "2026-04-02", "count": 8 },
+                { "date": "2026-04-03", "count": 9 },
+                { "date": "2026-04-04", "count": 11 },
+                { "date": "2026-04-05", "count": 7 },
+                { "date": "2026-04-06", "count": 12 },
+                { "date": "2026-04-07", "count": 5 }
+            ]
+        },
+        "orderStatusCounts": {
+            "pendingPayment": 3,
+            "paid": 15,
+            "preparing": 6,
+            "delivering": 4,
+            "delivered": 2,
+            "inUse": 11,
+            "pendingPickup": 5,
+            "pickingUp": 3,
+            "pickedUp": 2,
+            "completed": 241,
+            "cancelled": 7,
+            "urgentTotal": 22
+        },
+        "overdueOrders": {
+            "count": 8,
+            "topItems": [
+                {
+                    "rentalOrderId": "ro-uuid-001",
+                    "orderCode": "RO-7D6A12B0",
+                    "status": "IN_USE",
+                    "expectedRentalEndDate": "2026-04-03",
+                    "renterFullName": "Nguyen Van A",
+                    "renterPhone": "0901234567",
+                    "itemCount": 2
+                }
+            ]
+        },
+        "inventoryStats": {
+            "totalItems": 320,
+            "available": 140,
+            "rented": 126,
+            "reserved": 21,
+            "maintenance": 18,
+            "damaged": 9,
+            "retired": 6
+        },
+        "revenueStats": {
+            "rentalFeeToday": 12800000,
+            "rentalFeeThisMonth": 241700000,
+            "depositHeldActive": 96500000,
+            "penaltyThisMonth": 3900000
+        },
+        "ticketStats": {
+            "inProgress": 9,
+            "resolved": 9,
+            "closed": 6,
+            "activeTotal": 18
+        },
+        "voucherStats": {
+            "totalActive": 11,
+            "expired": 4,
+            "usedThisMonth": 37
+        },
+        "hubSummary": {
+            "hubId": "hub-001",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Ho Chi Minh Quan 1",
+            "totalStaff": 14,
+            "activeStaff": 11
         }
-      ]
-    },
-    "inventoryStats": {
-      "totalItems": 320,
-      "available": 140,
-      "rented": 126,
-      "reserved": 21,
-      "maintenance": 18,
-      "damaged": 9,
-      "retired": 6
-    },
-    "revenueStats": {
-      "rentalFeeToday": 12800000,
-      "rentalFeeThisMonth": 241700000,
-      "depositHeldActive": 96500000,
-      "penaltyThisMonth": 3900000
-    },
-    "ticketStats": {
-      "inProgress": 9,
-      "resolved": 9,
-      "closed": 6,
-      "activeTotal": 18
-    },
-    "voucherStats": {
-      "totalActive": 11,
-      "expired": 4,
-      "usedThisMonth": 37
-    },
-    "hubSummary": {
-      "hubId": "hub-001",
-      "hubCode": "HCM-01",
-      "hubName": "Hub Ho Chi Minh Quan 1",
-      "totalStaff": 14,
-      "activeStaff": 11
     }
-  }
 }
 ```
 
@@ -3181,47 +3183,47 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ```json
 {
-  "data": {
-    "hubInfo": {
-      "hubId": "hub-001",
-      "hubCode": "HCM-01",
-      "hubName": "Hub Ho Chi Minh Quan 1"
-    },
-    "todayTasks": {
-      "deliveriesDueToday": 6,
-      "pickupsDueToday": 4,
-      "total": 10
-    },
-    "urgentOverdue": {
-      "count": 3,
-      "items": [
-        {
-          "rentalOrderId": "ro-uuid-001",
-          "orderCode": "RO-7D6A12B0",
-          "status": "IN_USE",
-          "expectedRentalEndDate": "2026-04-03",
-          "renterFullName": "Nguyen Van A",
-          "renterPhone": "0901234567",
-          "itemCount": 2,
-          "daysOverdue": 4
+    "data": {
+        "hubInfo": {
+            "hubId": "hub-001",
+            "hubCode": "HCM-01",
+            "hubName": "Hub Ho Chi Minh Quan 1"
+        },
+        "todayTasks": {
+            "deliveriesDueToday": 6,
+            "pickupsDueToday": 4,
+            "total": 10
+        },
+        "urgentOverdue": {
+            "count": 3,
+            "items": [
+                {
+                    "rentalOrderId": "ro-uuid-001",
+                    "orderCode": "RO-7D6A12B0",
+                    "status": "IN_USE",
+                    "expectedRentalEndDate": "2026-04-03",
+                    "renterFullName": "Nguyen Van A",
+                    "renterPhone": "0901234567",
+                    "itemCount": 2,
+                    "daysOverdue": 4
+                }
+            ]
+        },
+        "hubInventoryStats": {
+            "totalItems": 96,
+            "available": 31,
+            "rented": 44,
+            "reserved": 8,
+            "maintenance": 7,
+            "damaged": 4,
+            "retired": 2
+        },
+        "assignedTickets": {
+            "inProgressAssignedToMe": 2,
+            "resolvedAssignedToMe": 1,
+            "totalActiveAssignedToMe": 3
         }
-      ]
-    },
-    "hubInventoryStats": {
-      "totalItems": 96,
-      "available": 31,
-      "rented": 44,
-      "reserved": 8,
-      "maintenance": 7,
-      "damaged": 4,
-      "retired": 2
-    },
-    "assignedTickets": {
-      "inProgressAssignedToMe": 2,
-      "resolvedAssignedToMe": 1,
-      "totalActiveAssignedToMe": 3
     }
-  }
 }
 ```
 

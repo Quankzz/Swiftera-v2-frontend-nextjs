@@ -126,7 +126,7 @@ function productToForm(p: ProductResponse): ProductFormData {
     categoryId: p.categoryId,
     name: p.name,
     description: p.description ?? '',
-    shortDescription: p.shortDescription,
+    shortDescription: p.shortDescription ?? '',
     brand: p.brand ?? '',
     colors: (p.colors ?? []).map((c) => ({
       productColorId: c.productColorId,

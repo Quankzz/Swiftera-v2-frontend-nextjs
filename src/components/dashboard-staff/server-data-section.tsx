@@ -1,5 +1,3 @@
-import { getPost } from '@/api/apiService';
-
 /**
  * Server Component - Sử dụng Native Fetch
  * Component này chạy trên server, fetch data trực tiếp không cần client JS
@@ -10,7 +8,9 @@ export async function ServerDataSection() {
   let error: string | null = null;
 
   try {
-    data = await getPost(1);
+    const res = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+    if (!res.ok) throw new Error('Failed to fetch post');
+    data = await res.json();
   } catch (e) {
     error = e instanceof Error ? e.message : 'Không thể tải dữ liệu';
   }

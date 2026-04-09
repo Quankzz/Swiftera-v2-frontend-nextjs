@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Palette,
 } from 'lucide-react';
-import type { ProductInventoryItemResponse } from '@/features/products/types';
+import type { InventoryItemInProduct as ProductInventoryItemResponse } from '@/features/products/types';
 
 interface RentalStockSectionProps {
   inventoryItems: ProductInventoryItemResponse[];

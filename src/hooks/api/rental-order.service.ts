@@ -14,6 +14,7 @@ import type {
   RentalOrderStaffDetailResponse,
   RentalOrderResponse,
 } from '@/api/rentalOrderApi';
+import type { AssignOrderInput } from '@/types/dashboard';
 
 const authOpts = { requireToken: true as const };
 
@@ -99,11 +100,43 @@ export async function extendRentalOrder(
   return res.data.data;
 }
 
+export async function getRentalOrders(params?: {
+  page?: number;
+  size?: number;
+  sort?: string;
+  filter?: string;
+}): Promise<NormalizedPaginatedOrders> {
+  const res = await httpService.get<PaginatedRentalOrdersResponse>(
+    '/rental-orders',
+    { ...authOpts, params },
+  );
+  const raw = res.data.data;
+  return {
+    items: raw.content ?? [],
+    page: raw.meta?.currentPage ?? 1,
+    size: raw.meta?.pageSize ?? 20,
+    totalItems: raw.meta?.totalElements ?? 0,
+    totalPages: raw.meta?.totalPages ?? 1,
+  };
+}
+
 export async function getRentalOrderStaffDetail(
   rentalOrderId: string,
 ): Promise<RentalOrderStaffDetailResponse['data']> {
   const res = await httpService.get<RentalOrderStaffDetailResponse>(
     `/rental-orders/${rentalOrderId}/staff-detail`,
+    authOpts,
+  );
+  return res.data.data;
+}
+
+export async function assignRentalOrder(
+  rentalOrderId: string,
+  input: AssignOrderInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.patch<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/assign-staff`,
+    input,
     authOpts,
   );
   return res.data.data;

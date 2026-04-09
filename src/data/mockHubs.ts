@@ -1,6 +1,4 @@
-﻿import type { Hub } from '@/types/map.types';
-
-export const MOCK_HUBS: Hub[] = [
+﻿export const MOCK_HUBS = [
   {
     hub_id: 'hub-001',
     name: 'Swiftera Hub Quận 1',

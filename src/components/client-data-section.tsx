@@ -3,7 +3,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCounterStore } from '@/stores/use-counter-store';
 
-import { getPost } from '@/api/apiService';
+async function fetchDemoPost(id: number) {
+  const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch post');
+  return res.json() as Promise<{ title: string; body: string }>;
+}
 
 /**
  * Client Component - Sử dụng TanStack Query, Zustand, React Context
@@ -13,7 +17,7 @@ export function ClientDataSection() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['post', 2],
-    queryFn: () => getPost(2),
+    queryFn: () => fetchDemoPost(2),
   });
 
   return (

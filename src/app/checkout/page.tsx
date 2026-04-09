@@ -354,15 +354,14 @@ export default function CheckoutPage() {
             const rv: RentalVoucher = {
               id: v.voucherId,
               code: v.code,
-              title: v.maxDiscountAmount
-                ? `Giảm ${v.discountType === 'PERCENTAGE' ? `${v.discountValue}%` : `${v.discountValue.toLocaleString('vi-VN')}₫`}`
-                : v.discountType === 'FIXED_AMOUNT'
-                  ? `Giảm ${v.discountValue.toLocaleString('vi-VN')}₫`
-                  : `Giảm ${v.discountValue}%`,
+              title:
+                v.discountType === 'PERCENTAGE'
+                  ? `Giảm ${v.discountValue}%${v.maxDiscountAmount ? ` (tối đa ${v.maxDiscountAmount.toLocaleString('vi-VN')}₫)` : ''}`
+                  : `Giảm ${v.discountValue.toLocaleString('vi-VN')}₫`,
               description: v.minRentalDays
                 ? `Áp dụng từ ${v.minRentalDays} ngày`
                 : 'Voucher Swiftera',
-              kind: v.discountType === 'FIXED_AMOUNT' ? 'fixed' : 'percent',
+              kind: v.discountType === 'FIXED' ? 'fixed' : 'percent',
               value: v.discountValue,
             };
             updateLineVoucher(editingLine.lineId, rv);

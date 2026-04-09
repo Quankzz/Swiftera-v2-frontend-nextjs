@@ -44,8 +44,12 @@ import {
 } from '@/hooks/api/use-cart';
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
+import dynamic from 'next/dynamic';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
-import { PolicyConsentDialog } from '@/components/checkout/policy-consent-dialog';
+const PolicyConsentDialog = dynamic(
+  () => import('@/components/checkout/policy-consent-dialog').then((m) => m.PolicyConsentDialog),
+  { ssr: false },
+);
 import {
   useCustomerVouchersQuery,
   useValidateVoucherMutation,

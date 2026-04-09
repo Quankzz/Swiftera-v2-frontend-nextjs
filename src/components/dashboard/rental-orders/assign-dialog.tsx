@@ -300,7 +300,7 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
                   </option>
                   {deliveryStaff.map((s) => (
                     <option key={s.userId} value={s.userId}>
-                      {s.fullName} — {s.phone}
+                      {s.firstName} {s.lastName} — {s.phoneNumber}
                     </option>
                   ))}
                 </select>
@@ -323,7 +323,7 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
                   <option value=''>— Chưa phân công —</option>
                   {pickupStaff.map((s) => (
                     <option key={s.userId} value={s.userId}>
-                      {s.fullName} — {s.phone}
+                      {s.firstName} {s.lastName} — {s.phoneNumber}
                     </option>
                   ))}
                 </select>
