@@ -1,9 +1,9 @@
 import { Layout } from '@/components/Layout';
 
-export default function ProductSectionLayout({
+export default function RentalOrdersLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <Layout stickyHeader>{children}</Layout>;
+  return <Layout>{children}</Layout>;
 }

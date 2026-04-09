@@ -231,6 +231,9 @@ async function request<T>(
   // Auto-attach Authorization header
   if (!skipAuth) {
     const token = getAccessToken();
+
+    // const token =
+    //   'eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJwcml6aXEiLCJzdWIiOiJhODVhMWU1MC0zNGVkLTRkZjItYjM1ZC1hYTE1MmZlZDdiYmMiLCJleHAiOjE3NzUzMDYyNTAsImlhdCI6MTc3NTI5OTA1MCwiZW1haWwiOiJ0ZG1nMTgwOUBnbWFpbC5jb20iLCJqdGkiOiIwYmNiM2Y2Yy04ZTY0LTQ3NWEtYTU2NC01MzFiYzFlMWJjM2YifQ.A4BtWSX5g4yUrWBaOhStgiaE7h8pJUbEhD9EbuihbPQ3WnPd7QHlxPZdBD5vY5JbE9QzhENRg96DIa9JVY62gQ';
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

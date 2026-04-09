@@ -50,6 +50,47 @@ export function getVoucherByCode(code: string): Promise<VoucherResponse> {
   return apiGet<VoucherResponse>(`/vouchers/code/${encodeURIComponent(code)}`);
 }
 
+/**
+ * API-070: GET /vouchers/validate
+ * Kiểm tra & tính giảm giá voucher theo mã — dùng cho khách hàng
+ *
+ * Query params:
+ *   - code                 (bắt buộc) mã voucher
+ *   - rentalDurationDays   (bắt buộc) số ngày thuê của line/product target
+ *   - rentalSubtotalAmount (bắt buộc) subtotal trước giảm của line/product target
+ *   - productId            (tùy chọn) product target để check scope ITEM_VOUCHER / PRODUCT_DISCOUNT
+ */
+export interface VoucherValidateResponse {
+  voucherId: string;
+  code: string;
+  /** ITEM_VOUCHER | PRODUCT_DISCOUNT */
+  type: string;
+  /** productId mà voucher scope đến (nếu là ITEM_VOUCHER) */
+  productId: string | null;
+  valid: boolean;
+  rentalSubtotalAmount: number;
+  discountAmount: number;
+  rentalFeeAmount: number;
+  rentalDurationDays: number;
+  expiresAt: string | null;
+}
+
+export function validateVoucher(params: {
+  code: string;
+  rentalDurationDays: number;
+  rentalSubtotalAmount: number;
+  /** Truyền productId khi validate voucher thuộc loại ITEM_VOUCHER / PRODUCT_DISCOUNT */
+  productId?: string;
+}): Promise<VoucherValidateResponse> {
+  const { productId, ...rest } = params;
+  return apiGet<VoucherValidateResponse>('/vouchers/validate', {
+    params: {
+      ...rest,
+      ...(productId ? { productId } : {}),
+    },
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Mutations
 // ─────────────────────────────────────────────────────────────────────────────

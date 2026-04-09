@@ -38,6 +38,7 @@ export interface ProductColorInput {
   /** Only present when updating an existing color (edit mode) */
   productColorId?: string;
   name: string;
+  /** Hex color code, e.g. "#111111" */
   code: string;
 }
 
@@ -45,8 +46,11 @@ export interface ProductColorInput {
 export interface ProductColorResponse {
   productColorId: string;
   name: string;
+  /** Hex color code, e.g. "#111111" */
   code: string;
+  /** Tổng số serial của màu này */
   quantity: number;
+  /** Số serial đang AVAILABLE */
   availableQuantity: number;
 }
 
@@ -77,7 +81,7 @@ export interface InventoryItemInProduct {
 
 // ── Product response (API-051 / API-052 / API-053 / API-054) ────────────────
 //
-// API-052 (GET /api/v1/products/{productId}) returns inventoryItems embedded
+// API-053 (GET /api/v1/products/{productId}) returns inventoryItems embedded
 // in the product detail response — no separate inventory API call needed.
 
 export interface ProductResponse {
@@ -99,8 +103,8 @@ export interface ProductResponse {
   /** Structured color list — canonical source for UI */
   colors: ProductColorResponse[];
   name: string;
+  shortDescription: string | null;
   description: string | null;
-  shortDescription: string;
   dailyPrice: number;
   oldDailyPrice: number | null;
   depositAmount: number | null;
@@ -109,8 +113,8 @@ export interface ProductResponse {
   /** BE field name is `images` (not `productImages`) */
   images: ProductImageResponse[];
   /**
-   * Embedded inventory items — only present in detail responses (API-052).
-   * List responses (API-053) do NOT include inventoryItems.
+   * Embedded inventory items — only present in detail responses (API-053).
+   * List responses (API-054) do NOT include inventoryItems.
    */
   inventoryItems?: InventoryItemInProduct[];
   availableStock: number;

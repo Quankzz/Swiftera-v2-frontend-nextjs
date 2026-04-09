@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { CloudCog, Heart } from 'lucide-react';
+import Link from 'next/link';
+import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/types/catalog';
 
@@ -41,7 +42,8 @@ export function ProductCard({
   const displayColors = product.colors ?? [];
   const hasColors = displayColors.length > 0;
   return (
-    <article
+    <Link
+      href={`/product/${product.productId}`}
       className={cn(
         'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border/75 dark:border-white/6 bg-white dark:bg-surface-card p-7 shadow-sm dark:shadow-black/30',
         !isPreview &&
@@ -49,7 +51,10 @@ export function ProductCard({
       )}
     >
       {!isPreview && (
-        <div className='absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-white/10 p-2 shadow-sm'>
+        <div
+          className='absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-white/10 p-2 shadow-sm'
+          onClick={(e) => e.preventDefault()}
+        >
           <Heart className='size-4 text-muted-foreground' />
         </div>
       )}
@@ -60,7 +65,7 @@ export function ProductCard({
         </span>
       )}
 
-      {/* SLOT 1: Title + description (fixed block height) */}
+      {/* SLOT 1: Title */}
       <header className='mt-2.5 mb-3.5 flex flex-col items-center justify-start text-center'>
         <h3 className='line-clamp-2 min-h-12 text-lg font-semibold text-text-main'>
           {product.name || (
@@ -71,7 +76,7 @@ export function ProductCard({
         </h3>
         <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
           {product.shortDescription}
-        </p>
+        </p>cfcb25f1841b296ff3d9bd4246a2af31cfe59a
       </header>
 
       {/* SLOT 2: Image area (fixed height) */}
@@ -138,6 +143,6 @@ export function ProductCard({
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
