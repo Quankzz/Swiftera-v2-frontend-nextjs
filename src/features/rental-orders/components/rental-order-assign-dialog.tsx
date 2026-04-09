@@ -8,8 +8,10 @@
  * Flow:
  *  1. Mở dialog này khi bấm "Gán đơn" ở bảng.
  *  2. Hiển thị thông tin đơn hàng (hub, địa chỉ, ngày, tài chính, sản phẩm).
- *  3. Hai ô "Nhân viên giao hàng" và "Nhân viên thu hồi" — bấm vào mỗi ô
- *     sẽ mở StaffPickerDialog để chọn nhân viên.
+ *  3. Phân công nhân viên tuỳ theo trạng thái đơn:
+ *     - PAID     → chỉ hiện ô "Nhân viên giao hàng"  (deliveryStaff)
+ *     - IN_USE   → chỉ hiện ô "Nhân viên thu hồi"    (pickupStaff)
+ *     - Khác     → không thể gán (section ẩn)
  *  4. Bấm "Xác nhận" → gọi API-081 PATCH /assign-staff.
  */
 
@@ -197,8 +199,29 @@ export function RentalOrderAssignDialog({
     cls: 'text-gray-600 bg-gray-100 border-gray-200',
   };
 
+  /**
+   * Xác định các slot được phép phân công theo trạng thái đơn:
+   *  - PAID                                          → delivery + pickup
+   *  - PREPARING | DELIVERING | DELIVERED | IN_USE   → chỉ pickup
+   *  - Khác                                          → không thể gán (mảng rỗng)
+   */
+  const PICKUP_ONLY_STATUSES = new Set([
+    'PREPARING',
+    'DELIVERING',
+    'DELIVERED',
+    'IN_USE',
+  ] as const);
+
+  const canAssignDelivery = order.status === 'PAID';
+  const canAssignPickup =
+    order.status === 'PAID' || PICKUP_ONLY_STATUSES.has(order.status as never);
+
+  const canSubmit =
+    (canAssignDelivery && !!deliveryStaff) ||
+    (canAssignPickup && !!pickupStaff);
+
   const handleConfirm = async () => {
-    if (!deliveryStaff && !pickupStaff) {
+    if (!canSubmit) {
       toast.warning('Vui lòng chọn ít nhất một nhân viên trước khi xác nhận.');
       return;
     }
@@ -206,8 +229,13 @@ export function RentalOrderAssignDialog({
       await assignMutation.mutateAsync({
         rentalOrderId: order.rentalOrderId,
         payload: {
-          deliveryStaffId: deliveryStaff?.userId ?? undefined,
-          pickupStaffId: pickupStaff?.userId ?? undefined,
+          // Chỉ gửi field khi slot đó được phép và đã chọn nhân viên
+          deliveryStaffId: canAssignDelivery
+            ? (deliveryStaff?.userId ?? undefined)
+            : undefined,
+          pickupStaffId: canAssignPickup
+            ? (pickupStaff?.userId ?? undefined)
+            : undefined,
         },
       });
       toast.success('Gán nhân viên thành công!');
@@ -425,22 +453,67 @@ export function RentalOrderAssignDialog({
             {/* ── Staff assignment ── */}
             <div>
               <SectionLabel>Phân công nhân viên</SectionLabel>
-              <div className='space-y-2.5'>
-                <StaffSlot
-                  role='delivery'
-                  staff={deliveryStaff}
-                  onClick={() => setPickerOpen('delivery')}
-                />
-                <StaffSlot
-                  role='pickup'
-                  staff={pickupStaff}
-                  onClick={() => setPickerOpen('pickup')}
-                />
-              </div>
-              {!deliveryStaff && !pickupStaff && (
-                <p className='mt-2 text-xs text-text-sub text-center'>
-                  Bấm vào ô trên để chọn nhân viên phụ trách
-                </p>
+
+              {!canAssignDelivery && !canAssignPickup ? (
+                /* Trạng thái không hỗ trợ gán */
+                <div className='flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3'>
+                  <CircleDot className='w-4 h-4 text-amber-500 shrink-0' />
+                  <p className='text-sm text-amber-700 dark:text-amber-400'>
+                    Đơn ở trạng thái{' '}
+                    <span className='font-semibold'>
+                      {STATUS_LABELS[order.status]}
+                    </span>{' '}
+                    — không thể phân công nhân viên.
+                  </p>
+                </div>
+              ) : (
+                <div className='space-y-2.5'>
+                  {/* PAID → hiện cả 2 slot */}
+                  {canAssignDelivery && (
+                    <>
+                      <p className='text-xs text-text-sub'>
+                        Đơn đã thanh toán — chọn nhân viên{' '}
+                        <span className='font-medium text-indigo-600 dark:text-indigo-400'>
+                          giao hàng
+                        </span>{' '}
+                        {canAssignPickup && (
+                          <>
+                            và{' '}
+                            <span className='font-medium text-emerald-600 dark:text-emerald-400'>
+                              thu hồi
+                            </span>{' '}
+                          </>
+                        )}
+                        cho đơn này.
+                      </p>
+                      <StaffSlot
+                        role='delivery'
+                        staff={deliveryStaff}
+                        onClick={() => setPickerOpen('delivery')}
+                      />
+                    </>
+                  )}
+
+                  {/* PAID / PREPARING / DELIVERING / DELIVERED / IN_USE → hiện slot thu hồi */}
+                  {canAssignPickup && (
+                    <>
+                      {!canAssignDelivery && (
+                        <p className='text-xs text-text-sub'>
+                          Chọn nhân viên{' '}
+                          <span className='font-medium text-emerald-600 dark:text-emerald-400'>
+                            thu hồi
+                          </span>{' '}
+                          cho đơn này.
+                        </p>
+                      )}
+                      <StaffSlot
+                        role='pickup'
+                        staff={pickupStaff}
+                        onClick={() => setPickerOpen('pickup')}
+                      />
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -448,13 +521,13 @@ export function RentalOrderAssignDialog({
           {/* ── Footer ── */}
           <div className='px-6 py-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between gap-3 bg-gray-50 dark:bg-white/4 shrink-0'>
             <div className='flex items-center gap-2 text-xs text-text-sub'>
-              {deliveryStaff && (
+              {canAssignDelivery && deliveryStaff && (
                 <span className='flex items-center gap-1 text-indigo-600 dark:text-indigo-400'>
                   <BadgeCheck className='w-3.5 h-3.5' />
                   Giao: {deliveryStaff.firstName} {deliveryStaff.lastName}
                 </span>
               )}
-              {pickupStaff && (
+              {canAssignPickup && pickupStaff && (
                 <span className='flex items-center gap-1 text-emerald-600 dark:text-emerald-400'>
                   <BadgeCheck className='w-3.5 h-3.5' />
                   Thu hồi: {pickupStaff.firstName} {pickupStaff.lastName}
@@ -472,9 +545,7 @@ export function RentalOrderAssignDialog({
               <button
                 type='button'
                 onClick={handleConfirm}
-                disabled={
-                  assignMutation.isPending || (!deliveryStaff && !pickupStaff)
-                }
+                disabled={assignMutation.isPending || !canSubmit}
                 className='px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2'
               >
                 {assignMutation.isPending ? (
@@ -490,7 +561,7 @@ export function RentalOrderAssignDialog({
       </div>
 
       {/* ── Staff picker (nested) ──────────────────────────────────────── */}
-      {pickerOpen && (
+      {pickerOpen && (canAssignDelivery || canAssignPickup) && (
         <StaffPickerDialog
           role={pickerOpen}
           hubId={order.hubId ?? ''}
