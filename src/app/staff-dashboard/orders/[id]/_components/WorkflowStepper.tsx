@@ -24,7 +24,7 @@ export const DELIVERY_STEPS: {
   { key: 'DELIVERED', label: 'Đã giao', icon: CheckCircle2 },
 ];
 
-// ── Pickup workflow steps: PENDING_PICKUP → PICKING_UP → PICKED_UP → INSPECTING → COMPLETED ─
+// ── Pickup workflow steps: PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED ─
 export const PICKUP_STEPS: {
   key: OrderStatus;
   label: string;
@@ -32,8 +32,7 @@ export const PICKUP_STEPS: {
 }[] = [
   { key: 'PENDING_PICKUP', label: 'Chờ thu hồi', icon: ClipboardList },
   { key: 'PICKING_UP', label: 'Đang thu hồi', icon: RotateCcw },
-  { key: 'PICKED_UP', label: 'Đã lấy', icon: Package },
-  { key: 'INSPECTING', label: 'Kiểm định', icon: Warehouse },
+  { key: 'PICKED_UP', label: 'Kiểm định', icon: Package },
   { key: 'COMPLETED', label: 'Hoàn thành', icon: CheckCircle2 },
 ];
 
@@ -52,7 +51,6 @@ const PICKUP_STATUSES: OrderStatus[] = [
   'PENDING_PICKUP',
   'PICKING_UP',
   'PICKED_UP',
-  'INSPECTING',
   'COMPLETED',
 ];
 
@@ -62,7 +60,7 @@ export function getDeliveryStepIndex(status: OrderStatus): number {
 }
 
 export function getPickupStepIndex(status: OrderStatus): number {
-  // IN_USE and OVERDUE map to step 0 (before PENDING_PICKUP) — show as "upcoming"
+  // IN_USE and OVERDUE map to step -1 (before PENDING_PICKUP) — show as "upcoming"
   if (status === 'IN_USE' || status === 'OVERDUE') return -1;
   const idx = PICKUP_STEPS.findIndex((s) => s.key === status);
   return idx === -1 ? 0 : idx;
@@ -78,7 +76,9 @@ function StepperRow({
   isOverdue: boolean;
 }) {
   return (
-    <div className="flex items-start mx-auto w-max min-w-full justify-center">
+    // Đổi items-start thành items-center để đường nối tự động căn giữa hình tròn.
+    // Thêm pb-8 để chừa không gian trống cho chữ hiển thị phía dưới (do dùng absolute).
+    <div className="flex items-center mx-auto w-full min-w-max justify-between pb-8 pt-2 px-2 sm:px-4">
       {steps.map((step, idx) => {
         const StepIcon = step.icon;
         const isCircleCompleted = idx < currentIdx;
@@ -91,15 +91,17 @@ function StepperRow({
             {!isFirst && (
               <div
                 className={cn(
-                  'h-0.75 mt-5 rounded-full transition-all duration-300 ease-in-out flex-1 min-w-10 -mx-1',
+                  'h-0.75 transition-all duration-300 ease-in-out flex-1 min-w-4 sm:min-w-8', // Đã bỏ mt-5 và rounded-full để 2 đầu đường vuông vức, chạm sát hoàn toàn viền tròn.
                   idx <= currentIdx ? 'bg-success' : 'bg-border',
                 )}
               />
             )}
-            <div className="flex flex-col items-center gap-2 shrink-0 relative z-10 bg-card px-1">
+
+            {/* Wrapper giờ chỉ còn bọc sát vòng tròn, không bọc chữ */}
+            <div className="relative shrink-0 flex items-center justify-center z-10">
               <div
                 className={cn(
-                  'flex size-10 items-center justify-center rounded-full border-2 transition-all duration-300',
+                  'flex size-10 items-center justify-center rounded-full border-2 transition-all duration-300 bg-card', // Thêm bg-card làm base để đường line (nếu có) bị đè lên không bị lộ
                   isCircleCompleted && 'border-success bg-success/10',
                   isCircleCurrent &&
                     !isOverdue &&
@@ -122,9 +124,11 @@ function StepperRow({
                   />
                 )}
               </div>
+
+              {/* Chữ được đưa ra khỏi luồng dàn trang bằng absolute, giúp đường nối không bị cách xa */}
               <p
                 className={cn(
-                  'text-center text-xs font-semibold leading-tight max-w-20',
+                  'absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 w-20 sm:w-24 text-center text-[11px] sm:text-xs font-semibold leading-tight',
                   isCircleCompleted && 'text-success',
                   isCircleCurrent &&
                     !isOverdue &&
@@ -142,10 +146,8 @@ function StepperRow({
     </div>
   );
 }
-
 export function WorkflowStepper({
   status,
-  staffRole,
 }: {
   status: OrderStatus;
   /** Which workflow role to display. Defaults to auto-detecting from status. */
@@ -164,15 +166,11 @@ export function WorkflowStepper({
 
   const isOverdue = status === 'OVERDUE';
 
-  // Determine which stepper(s) to show
-  const showDelivery =
-    staffRole === 'delivery' ||
-    staffRole === 'both' ||
-    (!staffRole && DELIVERY_STATUSES.includes(status));
-  const showPickup =
-    staffRole === 'pickup' ||
-    staffRole === 'both' ||
-    (!staffRole && PICKUP_STATUSES.includes(status));
+  // UI rule: one order detail page should only show the workflow that matches
+  // the CURRENT status of the order. Even if the same staff is assigned for
+  // both delivery and pickup, showing both flows at once is confusing.
+  const showDelivery = DELIVERY_STATUSES.includes(status);
+  const showPickup = PICKUP_STATUSES.includes(status);
 
   const deliveryIdx = DELIVERY_STATUSES.includes(status)
     ? getDeliveryStepIndex(status)

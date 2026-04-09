@@ -9,6 +9,7 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, className }: CategoryCardProps) {
+  console.log('ca', category);
   return (
     <Link
       href={`/catalog?category=${category.categoryId}`}
@@ -18,9 +19,9 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
       )}
     >
       <div className='relative h-36 w-full overflow-hidden'>
-        {category.image ? (
+        {category.imageUrl ? (
           <Image
-            src={category.image}
+            src={category.imageUrl}
             alt={category.name}
             fill
             sizes='(min-width: 1024px) 200px, 50vw'

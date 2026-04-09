@@ -51,7 +51,7 @@ export default function ProductsPage() {
   );
 
   // Stats — use a lightweight query with size=1 just to get totalElements
-  const { data: statsData } = useProductsQuery({ page: 0, size: 1 });
+  const { data: statsData } = useProductsQuery({ page: 1, size: 1 });
   const totalProducts = statsData?.meta.totalElements ?? 0;
 
   const deleteProductMutation = useDeleteProductMutation();

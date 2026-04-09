@@ -5,7 +5,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, MapPin, Phone } from 'lucide-react';
+import { Pencil, Trash2, MapPin, Phone, Eye, Search } from 'lucide-react';
 import type { HubResponse } from '@/features/hubs/types';
 import { useHubsQuery } from '@/features/hubs/hooks/use-hub-management';
 
@@ -141,6 +141,7 @@ export interface HubTableMeta {
 interface HubTableProps {
   onEdit: (hub: HubResponse) => void;
   onDelete: (hub: HubResponse) => void;
+  onView?: (hub: HubResponse) => void;
   onMetaChange?: (meta: HubTableMeta) => void;
 }
 
@@ -148,27 +149,48 @@ interface HubTableProps {
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function HubTable({ onEdit, onDelete, onMetaChange }: HubTableProps) {
-  const [page, setPage] = useState(0); // 0-based FE; service +1 trước khi gửi BE
+export function HubTable({
+  onEdit,
+  onDelete,
+  onView,
+  onMetaChange,
+}: HubTableProps) {
+  const [page, setPage] = useState(0); // 0-based for DataTable UI; send page+1 to API
   const [activeFilter, setActiveFilter] = useState<
     'all' | 'active' | 'inactive'
   >('all');
   const [sort, setSort] = useState('');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const pageSize = 10;
 
+  // Debounce 400ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   // Build filter param theo SpringFilter DSL
   const filterParam = useMemo(() => {
-    if (activeFilter === 'active') return 'isActive:true';
-    if (activeFilter === 'inactive') return 'isActive:false';
-    return undefined;
-  }, [activeFilter]);
+    const parts: string[] = [];
+    if (activeFilter === 'active') parts.push('isActive:true');
+    if (activeFilter === 'inactive') parts.push('isActive:false');
+    if (debouncedSearch.trim()) {
+      const term = debouncedSearch.trim();
+      parts.push(`(name~~'*${term}*' or code~~'*${term}*')`);
+    }
+    return parts.length ? parts.join(' and ') : undefined;
+  }, [activeFilter, debouncedSearch]);
 
   // Build sort param
   const sortParam = sort || undefined;
 
   const { data, isLoading, isError, error } = useHubsQuery({
-    page,
+    page: page + 1, // DataTable is 0-based; BE expects 1-based
     size: pageSize,
     filter: filterParam,
     sort: sortParam,
@@ -276,6 +298,17 @@ export function HubTable({ onEdit, onDelete, onMetaChange }: HubTableProps) {
         header: '',
         cell: ({ row }) => (
           <div className='flex items-center justify-end gap-1'>
+            {onView && (
+              <Button
+                variant='ghost'
+                size='icon'
+                className='size-8 text-text-sub hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30'
+                onClick={() => onView(row.original)}
+                title='Xem chi tiết'
+              >
+                <Eye size={14} />
+              </Button>
+            )}
             <Button
               variant='ghost'
               size='icon'
@@ -298,7 +331,7 @@ export function HubTable({ onEdit, onDelete, onMetaChange }: HubTableProps) {
         ),
       },
     ],
-    [onEdit, onDelete],
+    [onEdit, onDelete, onView],
   );
 
   const errorMessage =
@@ -308,8 +341,6 @@ export function HubTable({ onEdit, onDelete, onMetaChange }: HubTableProps) {
     <DataTable
       columns={columns}
       data={hubs}
-      searchColumn='name'
-      searchPlaceholder='Tìm theo tên hub...'
       totalLabel='hub'
       isLoading={isLoading}
       isError={isError}
@@ -321,6 +352,21 @@ export function HubTable({ onEdit, onDelete, onMetaChange }: HubTableProps) {
       onPageChange={setPage}
       pageSize={pageSize}
       totalRows={totalElements}
+      toolbarLeft={
+        <div className='relative'>
+          <Search
+            size={14}
+            className='absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none'
+          />
+          <input
+            type='text'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder='Tìm tên, mã hub...'
+            className='h-9 w-48 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+          />
+        </div>
+      }
       toolbarRight={
         <FilterBar
           activeFilter={activeFilter}

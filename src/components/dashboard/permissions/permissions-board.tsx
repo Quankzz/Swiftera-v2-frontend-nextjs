@@ -299,7 +299,7 @@ export function PermissionsBoard({
   onEditModule,
   onDeleteModule,
 }: PermissionTreeProps) {
-  const params = { page: 0, size: 1000 } as const;
+  const params = { page: 1, size: 1000 } as const;
   const { data, isLoading } = usePermissionsListQuery(params);
   const { data: modulesData } = useModulesQuery();
   const queryClient = useQueryClient();

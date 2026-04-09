@@ -5,12 +5,8 @@
  * Falls back to mock data when USE_MOCK=true.
  */
 
-import { apiGet } from '@/api/client';
-import type {
-  ApiResponse,
-  HubResponse,
-  PaginationResponse,
-} from '@/types/api.types';
+import { apiGet } from '@/api/apiService';
+import type { HubResponse, PaginationResponse } from '@/types/api.types';
 
 export type { HubResponse };
 
@@ -21,14 +17,13 @@ export interface HubQueryParams {
 }
 
 export async function getHubs(): Promise<HubResponse[]> {
-  const res =
-    await apiGet<ApiResponse<PaginationResponse<HubResponse>>>(`/hubs`);
-  return res.data?.content ?? [];
+  const res = await apiGet<PaginationResponse<HubResponse>>(`/hubs`);
+  return res?.content ?? [];
 }
 
 export async function getHubById(hubId: string): Promise<HubResponse | null> {
-  const res = await apiGet<ApiResponse<HubResponse>>(`/hubs/${hubId}`);
-  return res.data;
+  const res = await apiGet<HubResponse>(`/hubs/${hubId}`);
+  return res ?? null;
 }
 
 export async function getActiveHubs(): Promise<HubResponse[]> {

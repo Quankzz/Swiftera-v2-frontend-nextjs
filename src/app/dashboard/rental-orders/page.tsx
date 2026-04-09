@@ -1,75 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  ClipboardList,
-  Clock,
-  Truck,
-  PackageCheck,
-  CheckCircle2,
-  CreditCard,
-} from 'lucide-react';
-import { useRentalOrdersQuery } from '@/features/rental-orders/hooks/use-rental-order-management';
+import { ClipboardList } from 'lucide-react';
 import { RentalOrdersTable } from '@/components/dashboard/rental-orders/rental-order-table';
 import { RentalOrderAssignDialog } from '@/features/rental-orders/components/rental-order-assign-dialog';
 import type { RentalOrderResponse } from '@/features/rental-orders/types';
-import { cn } from '@/lib/utils';
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  colorCls,
-  isLoading,
-}: {
-  label: string;
-  value: number;
-  icon: React.ElementType;
-  colorCls: string;
-  isLoading?: boolean;
-}) {
-  return (
-    <div className='flex items-center gap-3 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-5 py-4 shadow-sm'>
-      <span
-        className={cn(
-          'flex size-10 items-center justify-center rounded-xl',
-          colorCls,
-        )}
-      >
-        <Icon size={18} />
-      </span>
-      <div>
-        {isLoading ? (
-          <div className='h-7 w-10 bg-gray-200 dark:bg-white/10 rounded animate-pulse' />
-        ) : (
-          <p className='text-2xl font-bold text-text-main'>{value}</p>
-        )}
-        <p className='text-xs text-text-sub'>{label}</p>
-      </div>
-    </div>
-  );
-}
 
 export default function RentalOrdersPage() {
   const [selectedOrder, setSelectedOrder] =
     useState<RentalOrderResponse | null>(null);
-
-  // Load orders for stats (high page size, no filter)
-  const { data: allData, isLoading: statsLoading } = useRentalOrdersQuery({
-    page: 0,
-    size: 200,
-  });
-  const allOrders = allData?.content ?? [];
-
-  const stats = {
-    total: allData?.meta?.totalElements ?? 0,
-    pendingPayment: allOrders.filter((o) => o.status === 'PENDING_PAYMENT')
-      .length,
-    paid: allOrders.filter((o) => o.status === 'PAID').length,
-    delivering: allOrders.filter((o) => o.status === 'DELIVERING').length,
-    active: allOrders.filter((o) => o.status === 'ACTIVE').length,
-    completed: allOrders.filter((o) => o.status === 'COMPLETED').length,
-  };
 
   return (
     <div className='flex flex-col gap-6 w-full p-6'>
@@ -89,52 +28,6 @@ export default function RentalOrdersPage() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'>
-        <StatCard
-          label='Tổng đơn'
-          value={stats.total}
-          icon={ClipboardList}
-          colorCls='bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label='Chờ thanh toán'
-          value={stats.pendingPayment}
-          icon={Clock}
-          colorCls='bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label='Đã thanh toán'
-          value={stats.paid}
-          icon={CreditCard}
-          colorCls='bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400'
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label='Đang giao'
-          value={stats.delivering}
-          icon={Truck}
-          colorCls='bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label='Đang thuê'
-          value={stats.active}
-          icon={PackageCheck}
-          colorCls='bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-          isLoading={statsLoading}
-        />
-        <StatCard
-          label='Hoàn thành'
-          value={stats.completed}
-          icon={CheckCircle2}
-          colorCls='bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400'
-          isLoading={statsLoading}
-        />
       </div>
 
       {/* Table */}

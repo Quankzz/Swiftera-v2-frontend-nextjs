@@ -18,7 +18,6 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Search,
-  Tag,
   CheckCircle2,
   Percent,
   DollarSign,
@@ -30,7 +29,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVouchersQuery } from '@/features/vouchers/hooks/use-voucher-management';
-import type { VoucherResponse, DiscountType } from '@/features/vouchers/types';
+import type { VoucherResponse } from '@/features/vouchers/types';
 
 // ─── Helpers ─────────────────────────────────────────────────────
 const vndFmt = new Intl.NumberFormat('vi-VN', {
@@ -96,7 +95,7 @@ function VoucherTicket({
       {/* Ticket shell */}
       <div
         className={cn(
-          'relative flex overflow-hidden rounded-xl border-2 border-dashed',
+          'relative flex min-h-22 overflow-hidden rounded-xl border-2 border-dashed',
           selected
             ? 'border-theme-primary-start bg-theme-primary-start/5 dark:bg-theme-primary-start/10'
             : unavailable
@@ -107,7 +106,7 @@ function VoucherTicket({
         {/* Left side — big discount value */}
         <div
           className={cn(
-            'flex min-w-20 shrink-0 flex-col items-center justify-center px-3 py-4 border-r-2 border-dashed',
+            'flex w-36 shrink-0 flex-col items-center justify-center px-3 py-4 border-r-2 border-dashed',
             selected
               ? 'border-theme-primary-start/40 bg-theme-primary-start/10 dark:bg-theme-primary-start/15'
               : 'border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5',
@@ -132,13 +131,13 @@ function VoucherTicket({
           )}
           <span
             className={cn(
-              'text-2xl font-black leading-none',
+              'text-xl font-black leading-none',
               selected ? 'text-theme-primary-start' : 'text-text-main',
             )}
           >
             {discountText}
           </span>
-          <span className='mt-0.5 text-[9px] text-text-sub font-medium uppercase tracking-wide'>
+          <span className='mt-0.5 text-[9px] text-text-sub font-medium uppercase tracking-wide text-center truncate w-full'>
             {discountSub}
           </span>
         </div>
@@ -245,7 +244,6 @@ export function VoucherPickerDialog({
   onClear,
 }: VoucherPickerDialogProps) {
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState<DiscountType | ''>('');
   const [activeOnly, setActiveOnly] = useState(true);
   const [sort, setSort] = useState<SortOpt>('newest');
   const [showFilters, setShowFilters] = useState(false);
@@ -260,8 +258,9 @@ export function VoucherPickerDialog({
   }, [open, onClose]);
 
   const { data, isLoading, isError } = useVouchersQuery({
-    page: 0,
+    page: 1,
     size: 200,
+    filter: "type:'PRODUCT_DISCOUNT'",
   });
   const allVouchers = useMemo(() => data?.content ?? [], [data]);
 
@@ -269,7 +268,6 @@ export function VoucherPickerDialog({
     let list = allVouchers;
 
     if (activeOnly) list = list.filter((v) => v.isActive);
-    if (typeFilter) list = list.filter((v) => v.discountType === typeFilter);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter((v) => v.code.toLowerCase().includes(q));
@@ -293,7 +291,7 @@ export function VoucherPickerDialog({
     });
 
     return list;
-  }, [allVouchers, search, typeFilter, activeOnly, sort]);
+  }, [allVouchers, search, activeOnly, sort]);
 
   const selectedVoucher = allVouchers.find(
     (v) => v.voucherId === selectedVoucherId,
@@ -382,22 +380,6 @@ export function VoucherPickerDialog({
                 Chỉ hiện voucher đang hiệu lực
               </label>
 
-              {/* Discount type filter */}
-              <div className='flex items-center gap-1'>
-                <Tag size={11} className='text-text-sub' />
-                <select
-                  value={typeFilter}
-                  onChange={(e) =>
-                    setTypeFilter(e.target.value as DiscountType | '')
-                  }
-                  className='h-7 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-2 text-xs text-text-main focus:border-theme-primary-start focus:outline-none'
-                >
-                  <option value=''>Tất cả loại</option>
-                  <option value='PERCENTAGE'>% Phần trăm</option>
-                  <option value='FIXED_AMOUNT'>₫ Cố định</option>
-                </select>
-              </div>
-
               {/* Sort */}
               <select
                 value={sort}
@@ -457,12 +439,11 @@ export function VoucherPickerDialog({
             <div className='flex flex-col items-center gap-2 py-12 text-text-sub'>
               <Ticket size={32} className='opacity-20' />
               <p className='text-sm'>Không tìm thấy voucher nào phù hợp.</p>
-              {(search || typeFilter) && (
+              {search && (
                 <button
                   type='button'
                   onClick={() => {
                     setSearch('');
-                    setTypeFilter('');
                   }}
                   className='text-xs text-theme-primary-start hover:underline'
                 >

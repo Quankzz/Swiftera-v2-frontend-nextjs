@@ -22,23 +22,25 @@ import { STATUS_CFG } from '@/lib/order-status';
 import { fmt, fmtDateShort } from '@/lib/formatters';
 import { getStaffOrders } from '@/api/staff-orders';
 import { useAuthStore } from '@/stores/auth-store';
+import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
-// Staff only sees orders that have been paid and assigned — PENDING_PAYMENT
-// is a customer-facing status and never appears in the staff dashboard.
+// Default landing view for "Đơn hàng": show the two queues that require staff
+// confirmation right now.
+const DEFAULT_QUEUE_STATUSES: OrderStatus[] = ['PAID', 'PENDING_PICKUP'];
+
+// Full staff workflow statuses must remain available so the shipper can re-open
+// an in-progress order after leaving the page by mistake.
 const ALL_STATUSES: OrderStatus[] = [
   'PAID',
   'PREPARING',
   'DELIVERING',
   'DELIVERED',
-  'IN_USE',
-  'OVERDUE',
   'PENDING_PICKUP',
   'PICKING_UP',
   'PICKED_UP',
-  'INSPECTING',
   'COMPLETED',
 ];
 
@@ -64,39 +66,76 @@ function OrdersPageInner() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const staffId = user?.userId ?? null;
+  const setCounts = useStaffOrderCounts((s) => s.setCounts);
 
   useEffect(() => {
-    const staffId = user?.userId;
+    // Auth bootstrap not finished yet — keep showing spinner
+    if (!isAuthenticated && user === null) return;
+
+    // Bootstrap done but no user → not logged in
     if (!staffId) {
-      setAllOrders([]);
-      setLoadError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
       setIsLoading(false);
+      setLoadError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
       return;
     }
-    setIsLoading(true);
-    setLoadError(null);
-    getStaffOrders(staffId)
-      .then(setAllOrders)
-      .catch((err: Error) => setLoadError(err.message))
-      .finally(() => setIsLoading(false));
-  }, [user?.userId]);
 
-  // 1. Logic lọc NHIỀU trạng thái (Multi-select)
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+      setLoadError(null);
+      try {
+        const orders = await getStaffOrders(staffId);
+        if (cancelled) return;
+        console.log('[OrdersPage] orders loaded:', orders.length);
+        setAllOrders(orders);
+        // Populate sidebar counts
+        const counts: Partial<Record<OrderStatus, number>> = {};
+        for (const o of orders) {
+          counts[o.status] = (counts[o.status] ?? 0) + 1;
+        }
+        setCounts(counts);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('[OrdersPage] load error:', err);
+        setLoadError(
+          err instanceof Error ? err.message : 'Không thể tải dữ liệu',
+        );
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [staffId, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Multi-select filter across the full workflow. If the route has no status,
+  // fall back to the default confirmation queues (PAID + PENDING_PICKUP).
   const activeStatuses = useMemo<OrderStatus[]>(() => {
     const s = searchParams.get('status');
-    if (!s) return [];
-    return s
+    if (!s) return DEFAULT_QUEUE_STATUSES;
+
+    const parsed = s
       .split(',')
       .filter((val) =>
         ALL_STATUSES.includes(val as OrderStatus),
       ) as OrderStatus[];
+
+    return parsed.length > 0 ? parsed : DEFAULT_QUEUE_STATUSES;
   }, [searchParams]);
 
   const toggleStatusFilter = useCallback(
     (status: OrderStatus | 'ALL') => {
       if (status === 'ALL') {
-        router.replace(`/staff-dashboard/orders`, { scroll: false });
+        router.replace(
+          `/staff-dashboard/orders?status=${DEFAULT_QUEUE_STATUSES.join(',')}`,
+          { scroll: false },
+        );
         return;
       }
 
@@ -108,7 +147,10 @@ function OrdersPageInner() {
       }
 
       if (newStatuses.length === 0) {
-        router.replace(`/staff-dashboard/orders`, { scroll: false });
+        router.replace(
+          `/staff-dashboard/orders?status=${DEFAULT_QUEUE_STATUSES.join(',')}`,
+          { scroll: false },
+        );
       } else {
         router.replace(
           `/staff-dashboard/orders?status=${newStatuses.join(',')}`,
@@ -167,7 +209,7 @@ function OrdersPageInner() {
   };
 
   const urgentCount = myOrders.filter((o) =>
-    ['PAID', 'OVERDUE', 'PENDING_PICKUP'].includes(o.status),
+    ['PAID', 'PENDING_PICKUP'].includes(o.status),
   ).length;
 
   if (isLoading) {
@@ -284,7 +326,10 @@ function OrdersPageInner() {
                   onClick={() => toggleStatusFilter('ALL')}
                   className={cn(
                     'px-4 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm',
-                    activeStatuses.length === 0
+                    activeStatuses.length === DEFAULT_QUEUE_STATUSES.length &&
+                      DEFAULT_QUEUE_STATUSES.every((status) =>
+                        activeStatuses.includes(status),
+                      )
                       ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
                   )}

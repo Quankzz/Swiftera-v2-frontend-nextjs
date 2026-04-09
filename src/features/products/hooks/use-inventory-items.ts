@@ -52,7 +52,7 @@ export function useInventoryItemsQuery(
 ) {
   const filter = productId ? `productId:'${productId}'` : undefined;
   const fullParams: InventoryItemListParams = {
-    page: 0,
+    page: 1,
     size: 50,
     ...params,
     filter,

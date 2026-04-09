@@ -44,6 +44,18 @@ export function getRentalOrders(
 }
 
 /**
+ * API-077: Lấy danh sách đơn thuê của user hiện tại
+ * GET /rental-orders/my-orders?page=0&size=10 [AUTH]
+ */
+export function getMyRentalOrders(
+  params?: RentalOrderListParams,
+): Promise<PaginatedRentalOrdersResponse> {
+  return apiGet<PaginatedRentalOrdersResponse>('/rental-orders/my-orders', {
+    params: params as Record<string, string | number | boolean | undefined>,
+  });
+}
+
+/**
  * API-074: Lấy đơn thuê theo ID
  * GET /rental-orders/{rentalOrderId} [AUTH]
  */

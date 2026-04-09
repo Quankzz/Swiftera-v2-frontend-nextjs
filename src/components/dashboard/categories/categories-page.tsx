@@ -35,10 +35,7 @@ import { CategoryFormDialog } from './category-form-dialog';
 import { CategoryDeleteDialog } from './category-delete-dialog';
 
 // ─── Filter tree by search query ─────────────────────────────────────────────
-function filterTree(
-  nodes: CategoryTreeNode[],
-  q: string,
-): CategoryTreeNode[] {
+function filterTree(nodes: CategoryTreeNode[], q: string): CategoryTreeNode[] {
   if (!q.trim()) return nodes;
   const lower = q.toLowerCase();
   return nodes
@@ -159,22 +156,13 @@ export function CategoriesPage() {
 
     const oldIdx = siblings.findIndex((n) => n.categoryId === draggedId);
     const newIdx = siblings.findIndex((n) => n.categoryId === overId);
-    if (oldIdx === -1 || newIdx === -1) return;
+    if (oldIdx === -1 || newIdx === -1 || oldIdx === newIdx) return;
 
-    // Reassign sortOrder for affected nodes
-    const reordered = [...siblings];
-    const [moved] = reordered.splice(oldIdx, 1);
-    reordered.splice(newIdx, 0, moved);
-
-    // Persist updated sortOrder for each moved item
-    reordered.forEach((node, idx) => {
-      const newOrder = idx + 1;
-      if (node.sortOrder !== newOrder) {
-        updateMutation.mutate({
-          categoryId: node.categoryId,
-          payload: { sortOrder: newOrder },
-        });
-      }
+    // BE tự tính lại sortOrder các item còn lại — chỉ gửi sortOrder mới của item được kéo
+    const newSortOrder = newIdx + 1;
+    updateMutation.mutate({
+      categoryId: draggedId,
+      payload: { sortOrder: newSortOrder },
     });
   };
 
@@ -307,9 +295,9 @@ export function CategoriesPage() {
 
       {/* Hint */}
       <p className='text-xs text-text-sub'>
-        💡 Kéo icon <span className='font-medium'>⠿</span> để sắp xếp lại thứ
-        tự hoặc chuyển sang danh mục cha khác. Thả lên một node để trở thành
-        con của node đó.
+        💡 Kéo icon <span className='font-medium'>⠿</span> để sắp xếp lại thứ tự
+        hoặc chuyển sang danh mục cha khác. Thả lên một node để trở thành con
+        của node đó.
       </p>
 
       {/* Dialogs — use key prop so form state fully resets on each open */}
@@ -324,7 +312,9 @@ export function CategoriesPage() {
       {dialog.type === 'edit' && (
         <CategoryFormDialog
           key={`edit-${dialog.node.categoryId}`}
-          target={dialog.node as unknown as import('@/features/categories/types').CategoryResponse}
+          target={
+            dialog.node as unknown as import('@/features/categories/types').CategoryResponse
+          }
           onClose={() => setDialog({ type: 'idle' })}
         />
       )}

@@ -2,11 +2,13 @@
 
 import { useState, useCallback } from 'react';
 import type { ProductResponse } from '@/features/products/types';
+import type { Product } from '@/types/catalog';
 import type {
   InventoryItemConditionGrade,
   InventoryItemStatus,
+  InventoryItemInProduct,
+  ProductColorInput,
 } from '@/features/products/types';
-
 /** Dạng draft của một ảnh trong form (chưa có productImageId từ BE) */
 export interface DraftImage {
   /** id tạm thời dùng trong UI */
@@ -28,10 +30,53 @@ export interface DraftInventoryItem {
   inventoryItemId?: string;
   serialNumber: string;
   hubId: string;
+  /** Tên hub để hiển thị trong UI — không gửi lên BE */
+  hubName: string;
+  hubCode?: string;
   conditionGrade: InventoryItemConditionGrade;
   staffNote: string;
   /** status chỉ dùng trong edit/display, không gửi khi create */
   status: InventoryItemStatus;
+  /** UUID màu đã chọn — maps to productColorId từ product.colors[] */
+  productColorId: string;
+  /**
+   * Snapshot của các trường updatable khi item được load từ BE.
+   * Dùng để so sánh dirty-check trước khi gọi update API.
+   * Không bao giờ bị thay đổi sau khi khởi tạo.
+   */
+  _original?: {
+    hubId: string;
+    conditionGrade: InventoryItemConditionGrade;
+    staffNote: string;
+    status: InventoryItemStatus;
+    productColorId: string;
+  };
+}
+
+/** Map một InventoryItemInProduct (từ product detail response) về DraftInventoryItem */
+function inventoryItemToDraft(
+  item: InventoryItemInProduct,
+): DraftInventoryItem {
+  const colorId = item.productColorId ?? '';
+  return {
+    draftId: item.inventoryItemId,
+    inventoryItemId: item.inventoryItemId,
+    serialNumber: item.serialNumber,
+    hubId: item.hubId,
+    hubName: item.hubName,
+    hubCode: item.hubCode,
+    conditionGrade: item.conditionGrade ?? 'NEW',
+    staffNote: item.staffNote ?? '',
+    status: item.status,
+    productColorId: colorId,
+    _original: {
+      hubId: item.hubId,
+      conditionGrade: item.conditionGrade ?? 'NEW',
+      staffNote: item.staffNote ?? '',
+      status: item.status,
+      productColorId: colorId,
+    },
+  };
 }
 
 /**
@@ -44,13 +89,16 @@ export interface ProductFormData {
   categoryId: string;
   name: string;
   description: string;
+  shortDescription: string;
   brand: string;
-  /** Màu sắc — single string (không phải mảng), e.g. "Đen", "Bạc" */
-  color: string;
+  /** Danh sách màu — mảng { name, code } */
+  colors: ProductColorInput[];
   dailyPrice: string;
   oldDailyPrice: string;
   depositAmount: string;
   minRentalDays: string;
+  /** Voucher ID đã chọn cho sản phẩm (PRODUCT_DISCOUNT) */
+  voucherId: string;
   /** Chỉ có trong edit mode */
   isActive: boolean;
 }
@@ -60,12 +108,14 @@ const EMPTY_FORM: ProductFormData = {
   categoryId: '',
   name: '',
   description: '',
+  shortDescription: '',
   brand: '',
-  color: '',
+  colors: [],
   dailyPrice: '',
   oldDailyPrice: '',
   depositAmount: '',
   minRentalDays: '1',
+  voucherId: '',
   isActive: true,
 };
 
@@ -76,12 +126,18 @@ function productToForm(p: ProductResponse): ProductFormData {
     categoryId: p.categoryId,
     name: p.name,
     description: p.description ?? '',
+    shortDescription: p.shortDescription,
     brand: p.brand ?? '',
-    color: p.color ?? '',
+    colors: (p.colors ?? []).map((c) => ({
+      productColorId: c.productColorId,
+      name: c.name,
+      code: c.code,
+    })),
     dailyPrice: String(p.dailyPrice),
     oldDailyPrice: p.oldDailyPrice != null ? String(p.oldDailyPrice) : '',
     depositAmount: p.depositAmount != null ? String(p.depositAmount) : '',
     minRentalDays: String(p.minRentalDays),
+    voucherId: p.voucherId ?? '',
     isActive: p.isActive,
   };
 }
@@ -97,37 +153,39 @@ function imagesToDrafts(images: ProductResponse['images']): DraftImage[] {
 }
 
 /**
- * Chuyển DraftImage[] + form về dạng gần với ProductResponse
- * để truyền cho live preview card.
+ * Chuyển DraftImage[] + form về dạng Product (catalog type)
+ * để truyền cho live preview card (ProductCard variant='preview').
  */
 export function draftToProductPreview(
   form: ProductFormData,
   images: DraftImage[],
-  categoryName?: string,
-): ProductResponse {
+): Product {
   return {
     productId: form.productId || 'preview',
     categoryId: form.categoryId,
-    categoryName: categoryName ?? '',
-    brand: form.brand || null,
-    color: form.color || null,
     name: form.name,
-    description: form.description || null,
+    description: form.description || '',
+    shortDescription: form.shortDescription,
     dailyPrice: parseFloat(form.dailyPrice) || 0,
-    oldDailyPrice: form.oldDailyPrice ? parseFloat(form.oldDailyPrice) : null,
-    depositAmount: form.depositAmount ? parseFloat(form.depositAmount) : null,
+    oldDailyPrice: form.oldDailyPrice
+      ? parseFloat(form.oldDailyPrice)
+      : undefined,
+    depositAmount: form.depositAmount
+      ? parseFloat(form.depositAmount)
+      : undefined,
     minRentalDays: parseInt(form.minRentalDays) || 1,
-    isActive: form.isActive,
-    images: images.map((img) => ({
+    productImages: images.map((img) => ({
       productImageId: img.draftId,
+      productId: form.productId || 'preview',
       imageUrl: img.imageUrl,
       sortOrder: img.sortOrder,
       isPrimary: img.isPrimary,
     })),
-    availableStock: 0,
-    averageRating: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    colors: form.colors.map((c, i) => ({
+      colorId: c.productColorId ?? `preview-color-${i}`,
+      name: c.name,
+      value: c.code,
+    })),
   };
 }
 
@@ -140,7 +198,12 @@ export function useProductForm(initial?: ProductResponse) {
   );
   const [draftInventoryItems, setDraftInventoryItems] = useState<
     DraftInventoryItem[]
-  >([]);
+  >(
+    // Pre-populate from product detail response if inventoryItems are embedded
+    initial?.inventoryItems
+      ? initial.inventoryItems.map(inventoryItemToDraft)
+      : [],
+  );
 
   /* ─── Form field handler ─── */
   const setField = useCallback(
@@ -191,6 +254,11 @@ export function useProductForm(initial?: ProductResponse) {
     );
   }, []);
 
+  /** Reorder images after a drag-and-drop event (pass new ordered array) */
+  const reorderImages = useCallback((newOrder: DraftImage[]) => {
+    setImages(newOrder.map((img, i) => ({ ...img, sortOrder: i + 1 })));
+  }, []);
+
   /* ─── Inventory Item handlers (edit mode only) ─── */
   const addDraftInventoryItem = useCallback(() => {
     setDraftInventoryItems((prev) => [
@@ -199,9 +267,11 @@ export function useProductForm(initial?: ProductResponse) {
         draftId: `inv-draft-${Date.now()}`,
         serialNumber: '',
         hubId: '',
+        hubName: '',
         conditionGrade: 'NEW' as InventoryItemConditionGrade,
         staffNote: '',
         status: 'AVAILABLE' as InventoryItemStatus,
+        productColorId: '',
       },
     ]);
   }, []);
@@ -261,6 +331,7 @@ export function useProductForm(initial?: ProductResponse) {
     removeImage,
     setPrimary,
     updateImageUrl,
+    reorderImages,
     draftInventoryItems,
     addDraftInventoryItem,
     updateDraftInventoryItem,

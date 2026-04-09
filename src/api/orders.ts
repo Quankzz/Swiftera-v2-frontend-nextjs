@@ -1,184 +1,176 @@
-import { mockOr, apiPatch, apiPost, USE_MOCK } from './client';
-import {
-  MOCK_ORDERS,
-  MOCK_STATS,
-  MOCK_CURRENT_STAFF,
-  MOCK_ACTIVITY,
-} from '@/data/mockDashboard';
-import type {
-  DashboardOrder,
-  DashboardStats,
-  OrderStatus,
-  StaffLocationUpdate,
-  ActivityLog,
-} from '@/types/dashboard.types';
+import type { AxiosResponse } from 'axios';
+import { httpService } from '@/api/http';
 
-// ─── Fetch all orders (staff hub) ─────────────────────────────────────────────
-export async function getOrders(): Promise<DashboardOrder[]> {
-  return mockOr('/orders', MOCK_ORDERS);
+const authOpts = { requireToken: true as const };
+
+// ─── Dashboard Types ──────────────────────────────────────────────────────────
+
+export interface DailyCompletedPoint {
+  date: string;
+  count: number;
 }
 
-// ─── Fetch single order ───────────────────────────────────────────────────────
-export async function getOrderById(id: string): Promise<DashboardOrder> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find((o) => o.rental_order_id === id);
-    if (!order) throw new Error(`Order ${id} not found`);
-    return Promise.resolve(order);
-  }
-  return import('./client').then(({ apiGet }) =>
-    apiGet<DashboardOrder>(`/orders/${id}`),
-  );
+export interface OrderKpi {
+  completedToday: number;
+  completedYesterday: number;
+  completedThisWeek: number;
+  completedThisMonth: number;
+  /** Luôn đủ 7 điểm, ngày không có dữ liệu trả count = 0 */
+  dailyCompletedLast7Days: DailyCompletedPoint[];
 }
 
-// ─── Update order status ──────────────────────────────────────────────────────
-export async function updateOrderStatus(
-  id: string,
-  status: OrderStatus,
-): Promise<DashboardOrder> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find((o) => o.rental_order_id === id);
-    if (!order) throw new Error(`Order ${id} not found`);
-    order.status = status;
-    return Promise.resolve({ ...order });
-  }
-  return apiPatch<DashboardOrder>(`/orders/${id}/status`, { status });
+export interface OrderStatusCounts {
+  pendingPayment: number;
+  paid: number;
+  preparing: number;
+  delivering: number;
+  delivered: number;
+  inUse: number;
+  pendingPickup: number;
+  pickingUp: number;
+  pickedUp: number;
+  completed: number;
+  cancelled: number;
+  /** = paid + pendingPickup + overdueOrders.count */
+  urgentTotal: number;
 }
 
-// ─── Staff confirm check-in (before handover to customer) ────────────────────
-export async function confirmCheckin(
-  orderId: string,
-  staffId: string,
-): Promise<DashboardOrder> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
-    if (!order) throw new Error(`Order ${orderId} not found`);
-    order.staff_checkin_id = staffId;
-    order.status = 'DELIVERING';
-    return Promise.resolve({ ...order });
-  }
-  return apiPost<DashboardOrder>(`/orders/${orderId}/checkin`, {
-    staff_id: staffId,
-  });
+export interface OverdueOrderItem {
+  rentalOrderId: string;
+  orderCode: string;
+  status: string;
+  expectedRentalEndDate: string;
+  renterFullName: string;
+  renterPhone: string;
+  itemCount: number;
+  /** Chỉ có trong staff dashboard */
+  daysOverdue?: number;
 }
 
-// ─── Staff confirm check-out (after return from customer) ────────────────────
-export async function confirmCheckout(
-  orderId: string,
-  staffId: string,
-): Promise<DashboardOrder> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
-    if (!order) throw new Error(`Order ${orderId} not found`);
-    order.staff_checkout_id = staffId;
-    order.status = 'COMPLETED';
-    return Promise.resolve({ ...order });
-  }
-  return apiPost<DashboardOrder>(`/orders/${orderId}/checkout`, {
-    staff_id: staffId,
-  });
+export interface InventoryStats {
+  totalItems: number;
+  available: number;
+  rented: number;
+  reserved: number;
+  maintenance: number;
+  damaged: number;
+  retired: number;
 }
 
-// ─── Upload item photo (checkin or checkout) ──────────────────────────────────
-export async function uploadItemPhoto(payload: {
-  order_id: string;
-  item_id: string;
-  photo_type: 'checkin' | 'checkout';
-  photo_url: string;
-  condition?: string;
-  staff_note?: string;
-  penalty_amount?: number;
-}): Promise<void> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find(
-      (o) => o.rental_order_id === payload.order_id,
-    );
-    if (order) {
-      const item = order.items.find(
-        (i) => i.rental_order_item_id === payload.item_id,
-      );
-      if (item) {
-        if (payload.photo_type === 'checkin') {
-          item.checkin_photo_url = payload.photo_url;
-          if (payload.condition)
-            item.checkin_condition = payload.condition as never;
-        } else {
-          item.checkout_photo_url = payload.photo_url;
-          if (payload.condition)
-            item.checkout_condition = payload.condition as never;
-          if (payload.penalty_amount)
-            item.item_penalty_amount = payload.penalty_amount;
-        }
-        if (payload.staff_note) item.staff_note = payload.staff_note;
-      }
-    }
-    return Promise.resolve();
-  }
-  return apiPost<void>(
-    `/orders/${payload.order_id}/items/${payload.item_id}/photo`,
-    payload,
-  );
+export interface RevenueStats {
+  rentalFeeToday: number;
+  rentalFeeThisMonth: number;
+  depositHeldActive: number;
+  penaltyThisMonth: number;
 }
 
-// ─── Update staff delivery location ──────────────────────────────────────────
-export async function updateStaffLocation(
-  payload: StaffLocationUpdate,
-): Promise<void> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find(
-      (o) => o.rental_order_id === payload.order_id,
-    );
-    if (order) {
-      order.staff_current_latitude = payload.latitude;
-      order.staff_current_longitude = payload.longitude;
-      order.staff_location_updated_at = payload.updated_at;
-    }
-    return Promise.resolve();
-  }
-  return apiPost<void>(`/orders/${payload.order_id}/staff-location`, payload);
+export interface TicketStats {
+  inProgress: number;
+  resolved: number;
+  closed: number;
+  activeTotal: number;
 }
 
-// ─── Confirm deposit refunded ─────────────────────────────────────────────────
-export async function confirmDepositRefund(
-  orderId: string,
-): Promise<DashboardOrder> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
-    if (!order) throw new Error(`Order ${orderId} not found`);
-    order.deposit_refund_status = 'REFUNDED';
-    return Promise.resolve({ ...order });
-  }
-  return apiPost<DashboardOrder>(`/orders/${orderId}/refund-deposit`, {});
+export interface VoucherStats {
+  totalActive: number;
+  expired: number;
+  usedThisMonth: number;
 }
 
-// ─── Apply penalty fee ────────────────────────────────────────────────────────
-export async function applyPenalty(
-  orderId: string,
-  amount: number,
-  reason: string,
-): Promise<DashboardOrder> {
-  if (USE_MOCK) {
-    const order = MOCK_ORDERS.find((o) => o.rental_order_id === orderId);
-    if (!order) throw new Error(`Order ${orderId} not found`);
-    order.total_penalty_amount = (order.total_penalty_amount ?? 0) + amount;
-    return Promise.resolve({ ...order });
-  }
-  return apiPost<DashboardOrder>(`/orders/${orderId}/penalty`, {
-    amount,
-    reason,
-  });
+export interface HubSummary {
+  hubId: string;
+  hubCode: string;
+  hubName: string;
+  totalStaff?: number;
+  activeStaff?: number;
 }
 
-// ─── Stats ────────────────────────────────────────────────────────────────────
-export async function getDashboardStats(): Promise<DashboardStats> {
-  return mockOr('/dashboard/stats', MOCK_STATS);
+/** Response của API-113: GET /dashboards/admin */
+export interface AdminDashboardData {
+  orderKpi: OrderKpi;
+  orderStatusCounts: OrderStatusCounts;
+  overdueOrders: {
+    count: number;
+    topItems: OverdueOrderItem[];
+  };
+  inventoryStats: InventoryStats;
+  revenueStats: RevenueStats;
+  ticketStats: TicketStats;
+  voucherStats: VoucherStats;
+  /** null khi không truyền hubId */
+  hubSummary: HubSummary | null;
 }
 
-// ─── Activity log ─────────────────────────────────────────────────────────────
-export async function getActivityLog(): Promise<ActivityLog[]> {
-  return mockOr('/dashboard/activity', MOCK_ACTIVITY);
+export interface AdminDashboardResponse {
+  success: boolean;
+  message?: string;
+  data: AdminDashboardData;
+  meta?: { timestamp: string; instance: string };
 }
 
-// ─── Current staff ────────────────────────────────────────────────────────────
-export async function getCurrentStaff() {
-  return mockOr('/staff/me', MOCK_CURRENT_STAFF);
+export interface TodayTasks {
+  deliveriesDueToday: number;
+  pickupsDueToday: number;
+  total: number;
 }
+
+export interface AssignedTickets {
+  inProgressAssignedToMe: number;
+  resolvedAssignedToMe: number;
+  totalActiveAssignedToMe: number;
+}
+
+/** Response của API-114: GET /dashboards/staff */
+export interface StaffDashboardData {
+  hubInfo: Pick<HubSummary, 'hubId' | 'hubCode' | 'hubName'>;
+  todayTasks: TodayTasks;
+  urgentOverdue: {
+    count: number;
+    items: OverdueOrderItem[];
+  };
+  hubInventoryStats: InventoryStats;
+  assignedTickets: AssignedTickets;
+}
+
+export interface StaffDashboardResponse {
+  success: boolean;
+  message?: string;
+  data: StaffDashboardData;
+  meta?: { timestamp: string; instance: string };
+}
+
+// ─── API ─────────────────────────────────────────────────────────────────────
+
+export const dashboardApi = {
+  /**
+   * API-113: Dashboard tổng quan cho ADMIN [AUTH]
+   *
+   * @param hubId - (tùy chọn) lọc theo hub; không truyền → toàn hệ thống
+   *
+   * Lỗi: HUB_NOT_FOUND
+   */
+  getAdminDashboard(
+    hubId?: string,
+  ): Promise<AxiosResponse<AdminDashboardResponse>> {
+    return httpService.get<AdminDashboardResponse>('/dashboards/admin', {
+      ...authOpts,
+      params: hubId ? { hubId } : undefined,
+    });
+  },
+
+  /**
+   * API-114: Dashboard tác nghiệp cho STAFF [AUTH]
+   *
+   * @param hubId - (tùy chọn) mặc định dùng hub đang gán cho staff hiện tại
+   *
+   * Lỗi: USER_NOT_STAFF_ROLE, UNAUTHORIZED_ACCESS (hubId khác hub của staff)
+   */
+  getStaffDashboard(
+    hubId?: string,
+  ): Promise<AxiosResponse<StaffDashboardResponse>> {
+    return httpService.get<StaffDashboardResponse>('/dashboards/staff', {
+      ...authOpts,
+      params: hubId ? { hubId } : undefined,
+    });
+  },
+};

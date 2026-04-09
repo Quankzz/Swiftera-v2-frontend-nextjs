@@ -2,9 +2,18 @@
 
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Phone, Navigation2 } from 'lucide-react';
+import { X, MapPin, Phone, Navigation2, Package, Loader2 } from 'lucide-react';
 import { useMapStore } from '@/stores/use-map-store';
 import type { Hub } from '@/types/map.types';
+import { useHubAvailableProducts } from '@/features/products/hooks/use-hub-products';
+
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0,
+  }).format(price);
+}
 
 const HubModal = ({
   onNavigateToHub,
@@ -12,6 +21,13 @@ const HubModal = ({
   onNavigateToHub?: (hub: Hub) => void;
 }) => {
   const { isHubModalOpen, selectedHub, closeHubModal } = useMapStore();
+
+  const { data, isLoading } = useHubAvailableProducts(
+    selectedHub?.hub_id,
+    isHubModalOpen,
+  );
+  const hubProducts = data?.hubProducts ?? [];
+  const totalAvailable = data?.totalAvailable ?? 0;
 
   useEffect(() => {
     if (!isHubModalOpen) return;
@@ -88,7 +104,7 @@ const HubModal = ({
             </button>
 
             {/* Info strip */}
-            <div className="px-5 py-5 space-y-3">
+            <div className="px-5 py-4 shrink-0 space-y-2 border-b border-border">
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
                 <MapPin
                   size={14}
@@ -111,6 +127,116 @@ const HubModal = ({
                   >
                     {selectedHub.phone}
                   </a>
+                </div>
+              )}
+            </div>
+
+            {/* Products section */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Section header */}
+              <div className="px-5 py-3 flex items-center gap-2 sticky top-0 bg-card/95 backdrop-blur-sm z-10 border-b border-border/50">
+                <Package
+                  size={15}
+                  className="text-theme-primary-start shrink-0"
+                />
+                <span className="text-sm font-semibold text-foreground">
+                  Thiết bị có sẵn
+                </span>
+                {!isLoading && (
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {totalAvailable > 0
+                      ? `${totalAvailable} chiếc · ${hubProducts.length} loại`
+                      : 'Không có thiết bị'}
+                  </span>
+                )}
+              </div>
+
+              {/* Loading */}
+              {isLoading && (
+                <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
+                  <Loader2 size={28} className="animate-spin opacity-60" />
+                  <span className="text-sm">Đang tải thiết bị…</span>
+                </div>
+              )}
+
+              {/* Empty */}
+              {!isLoading && hubProducts.length === 0 && (
+                <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
+                  <Package size={36} strokeWidth={1.2} className="opacity-30" />
+                  <span className="text-sm">Hub chưa có thiết bị khả dụng</span>
+                </div>
+              )}
+
+              {/* Product list */}
+              {!isLoading && hubProducts.length > 0 && (
+                <div className="divide-y divide-border/60">
+                  {hubProducts.map(({ product, items }) => {
+                    const primaryImage =
+                      product.images.find((img) => img.isPrimary)?.imageUrl ??
+                      product.images[0]?.imageUrl;
+
+                    return (
+                      <div
+                        key={product.productId}
+                        className="flex gap-4 px-5 py-4 hover:bg-muted/40 transition-colors"
+                      >
+                        {/* Thumbnail */}
+                        <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
+                          {primaryImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={primaryImage}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Package
+                              size={24}
+                              strokeWidth={1.4}
+                              className="opacity-30"
+                            />
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm font-semibold text-foreground leading-tight line-clamp-2">
+                              {product.name}
+                            </p>
+                            <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              {items.length} chiếc
+                            </span>
+                          </div>
+
+                          {(product.brand ?? product.color) && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {[product.brand, product.color]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </p>
+                          )}
+
+                          {product.dailyPrice > 0 && (
+                            <div className="flex items-baseline gap-2 mt-1">
+                              <span className="text-sm font-bold text-theme-primary-start">
+                                {formatPrice(product.dailyPrice)}
+                                <span className="text-xs font-normal text-muted-foreground">
+                                  /ngày
+                                </span>
+                              </span>
+                              {product.oldDailyPrice &&
+                                product.oldDailyPrice > product.dailyPrice && (
+                                  <span className="text-xs text-muted-foreground line-through">
+                                    {formatPrice(product.oldDailyPrice)}
+                                  </span>
+                                )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

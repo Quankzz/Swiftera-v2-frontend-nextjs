@@ -27,7 +27,9 @@ function buildQuery(
       q.set(key, String(val));
     }
   }
-  const str = q.toString();
+  // Replace `+` (form-encoded space) with `%20` so Spring's filter DSL
+  // receives proper spaces in RSQL expressions.
+  const str = q.toString().replace(/\+/g, '%20');
   return str ? `?${str}` : '';
 }
 

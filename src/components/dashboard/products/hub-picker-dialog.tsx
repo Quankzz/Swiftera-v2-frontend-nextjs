@@ -151,7 +151,7 @@ export function HubPickerDialog({
   }, [open, onClose]);
 
   // Fetch all hubs (large page — danh sách hub không quá nhiều)
-  const { data, isLoading, isError } = useHubsQuery({ page: 0, size: 200 });
+  const { data, isLoading, isError } = useHubsQuery({ page: 1, size: 200 });
   const allHubs = useMemo(() => data?.content ?? [], [data]);
 
   // Unique cities for filter dropdown

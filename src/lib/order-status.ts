@@ -2,8 +2,8 @@
  * Canonical order-status configuration — single source of truth used by both
  * the order list page and the order detail components.
  *
- * Status flow (actual backend):
- *   PAID → PREPARING → DELIVERING → DELIVERED → IN_USE/PENDING_PICKUP → PICKING_UP → PICKED_UP → INSPECTING → COMPLETED
+ * Status flow (doc 09 Appendix C, authoritative):
+ *   PAID → PREPARING → DELIVERING → DELIVERED → IN_USE/PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED
  *   OVERDUE is a UI-only state derived from IN_USE + past expectedRentalEndDate
  */
 import { type ElementType } from 'react';
@@ -16,7 +16,6 @@ import {
   XCircle,
   AlertCircle,
   Package,
-  ClipboardList,
 } from 'lucide-react';
 import type { OrderStatus } from '@/types/dashboard.types';
 
@@ -105,14 +104,6 @@ export const STATUS_CFG: Record<OrderStatus, StatusConfig> = {
     dot: 'bg-indigo-500',
     icon: Package,
   },
-  INSPECTING: {
-    label: 'Đang kiểm định',
-    color: 'text-yellow-600 dark:text-yellow-400',
-    bg: 'bg-yellow-50 dark:bg-yellow-950/30',
-    border: 'border-yellow-200 dark:border-yellow-700/30',
-    dot: 'bg-yellow-500 animate-pulse',
-    icon: ClipboardList,
-  },
   // ── Terminal ───────────────────────────────────────────────────────────────
   COMPLETED: {
     label: 'Hoàn thành',
@@ -152,7 +143,6 @@ export const ALL_ORDER_STATUSES: OrderStatus[] = [
   'PENDING_PICKUP',
   'PICKING_UP',
   'PICKED_UP',
-  'INSPECTING',
   'COMPLETED',
   'CANCELLED',
 ];

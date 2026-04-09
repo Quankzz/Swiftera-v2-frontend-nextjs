@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ProductResponse } from '@/features/products/types';
 import { useProductsQuery } from '@/features/products/hooks/use-product-management';
-import { useCategoriesQuery } from '@/features/categories/hooks/use-category-management';
 import { ProductCardDashboard } from './product-card-dashboard';
 import { ProductsToolbar, type SortOption } from './products-toolbar';
 
@@ -25,12 +25,12 @@ function toBESort(sort: SortOption): string {
   }
 }
 
-// Build RSQL filter string
+// Build SpringFilter filter string
 function toFilter(search: string, categoryId: string): string | undefined {
   const parts: string[] = [];
-  if (search.trim()) parts.push(`name=="${search.trim()}*"`);
-  if (categoryId) parts.push(`categoryId=="${categoryId}"`);
-  return parts.length > 0 ? parts.join(';') : undefined;
+  if (search.trim()) parts.push(`name~~'*${search.trim()}*'`);
+  if (categoryId) parts.push(`categoryId:'${categoryId}'`);
+  return parts.length > 0 ? parts.join(' and ') : undefined;
 }
 
 interface ProductsGridProps {
@@ -47,28 +47,28 @@ export function ProductsGrid({
   onDeleteMany,
 }: ProductsGridProps) {
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [sort, setSort] = useState<SortOption>('name-asc');
-  // BE uses 0-based page index
-  const [page, setPage] = useState(0);
+  // BE uses 1-based page index
+  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // ── Fetch categories for filter dropdown ──
-  const { data: categoriesData } = useCategoriesQuery({
-    page: 0,
-    size: 100,
-  });
-  const categoryOptions = (categoriesData?.content ?? []).map((c) => ({
-    id: c.categoryId,
-    name: c.name,
-  }));
+  // Debounce: chờ 400ms sau khi user ngừng gõ mới gọi API
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // ── Fetch products from BE ──
   const { data, isLoading, isError } = useProductsQuery({
     page,
     size: PAGE_SIZE,
     sort: toBESort(sort),
-    filter: toFilter(search, categoryFilter),
+    filter: toFilter(debouncedSearch, categoryFilter),
   });
 
   const products = useMemo(() => data?.content ?? [], [data?.content]);
@@ -79,17 +79,17 @@ export function ProductsGrid({
   // ── Toolbar handlers (reset page + selection on filter change) ──
   const safeSetSearch = useCallback((v: string) => {
     setSearch(v);
-    setPage(0);
+    // page reset is handled by the debounce effect
     setSelectedIds(new Set());
   }, []);
   const safeSetCategory = useCallback((v: string) => {
     setCategoryFilter(v);
-    setPage(0);
+    setPage(1);
     setSelectedIds(new Set());
   }, []);
   const safeSetSort = useCallback((v: SortOption) => {
     setSort(v);
-    setPage(0);
+    setPage(1);
   }, []);
 
   // ── Selection helpers ──
@@ -122,10 +122,6 @@ export function ProductsGrid({
     setSelectedIds(new Set());
   }, [selectedIds, onDeleteMany]);
 
-  // ── Toolbar uses 1-based page display ──
-  const displayPage = page + 1;
-  const handlePageChange = useCallback((p: number) => setPage(p - 1), []);
-
   return (
     <div className='flex flex-col gap-6'>
       {/* Toolbar */}
@@ -134,7 +130,6 @@ export function ProductsGrid({
         onSearchChange={safeSetSearch}
         categoryFilter={categoryFilter}
         onCategoryFilterChange={safeSetCategory}
-        categoryOptions={categoryOptions}
         sort={sort}
         onSortChange={safeSetSort}
         selectedCount={selectedIds.size}
@@ -143,9 +138,6 @@ export function ProductsGrid({
         onSelectAll={handleSelectAll}
         onClearSelection={handleClearSelection}
         onDeleteSelected={handleDeleteSelected}
-        page={displayPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
       />
 
       {/* Results count */}
@@ -208,6 +200,44 @@ export function ProductsGrid({
             </div>
           )}
         </>
+      )}
+
+      {/* Pagination — bottom of grid */}
+      {totalPages > 1 && (
+        <div className='flex items-center justify-center gap-1'>
+          <button
+            type='button'
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className='flex size-8 items-center justify-center rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-40'
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              type='button'
+              onClick={() => setPage(p)}
+              className={`flex size-8 items-center justify-center rounded-lg border text-sm font-medium transition ${
+                p === page
+                  ? 'border-theme-primary-start bg-theme-primary-start text-white'
+                  : 'border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card text-text-main hover:bg-gray-50 dark:hover:bg-white/8'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+
+          <button
+            type='button'
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className='flex size-8 items-center justify-center rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card text-text-sub transition hover:bg-gray-50 dark:hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-40'
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       )}
     </div>
   );

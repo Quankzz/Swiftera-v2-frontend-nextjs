@@ -27,8 +27,6 @@ export function UserEmailForm({ email }: UserEmailFormProps) {
   const [dialogMessage, setDialogMessage] = useState('');
   const [error, setError] = useState('');
 
-  const requestChangeEmail = useRequestChangeEmailMutation();
-
   const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -165,7 +165,7 @@ export function ContactTicketsTable({ onUpdateStatus }: TicketsTableProps) {
       searchColumn='subject'
       totalLabel={`phản hồi`} //${data?.total ?? 0}
       manualPagination
-      pageIndex={page - 1}
+      pageIndex={page}
       pageCount={totalPages}
       onPageChange={(p) => setPage(p + 1)}
       pageSize={limit}

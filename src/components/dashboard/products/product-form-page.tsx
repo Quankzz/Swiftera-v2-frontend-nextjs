@@ -13,7 +13,6 @@ import {
   Link as LinkIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ImageCropModal } from './image-crop-modal';
 import {
   useProductForm,
   draftToProductPreview,
@@ -23,16 +22,21 @@ import {
   useCreateProductMutation,
   useUpdateProductMutation,
 } from '@/features/products/hooks/use-product-management';
-import { useCategoriesQuery } from '@/features/categories/hooks/use-category-management';
+import { useCategoryTreeQuery } from '@/features/categories/hooks/use-category-tree';
+import { CategoryTreeSelect } from '../categories/category-tree-select';
 import type { ProductResponse } from '@/features/products/types';
-import RichEditor from '@/components/feedback/rich-editor';
+import { ProductCard } from '@/components/home/product-card';
 import { ColorPickerList } from './color-picker-list';
+import RichEditor from '@/components/feedback/rich-editor';
 import {
   VoucherPriceCalculator,
   type PriceValues,
 } from './voucher-price-calculator';
 import { InventorySection } from './inventory-section';
-import { useCreateInventoryItemMutation } from '@/features/products/hooks/use-inventory-items';
+import {
+  useCreateInventoryItemMutation,
+  useUpdateInventoryItemMutation,
+} from '@/features/products/hooks/use-inventory-items';
 import { useUploadFileMutation } from '@/features/files/hooks/use-files';
 import { toast } from 'sonner';
 
@@ -119,15 +123,6 @@ function TextInput({
 }
 
 // ─── Image item inside Section 3 ──────────────────────────────────
-function dataUrlToFile(dataUrl: string, filename: string): File {
-  const [header, base64] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-  const binaryStr = atob(base64);
-  const bytes = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-  return new File([bytes], filename, { type: mime });
-}
-
 function ImageItem({
   img,
   onSetPrimary,
@@ -140,50 +135,32 @@ function ImageItem({
   onUpdateUrl: (url: string) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [urlMode, setUrlMode] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const uploadMutation = useUploadFileMutation();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setCropSrc(reader.result as string);
-    reader.readAsDataURL(file);
     // reset input để có thể upload lại cùng file
     e.target.value = '';
+    setIsUploading(true);
+    try {
+      const result = await uploadMutation.mutateAsync({
+        file,
+        folder: 'products',
+      });
+      onUpdateUrl(result.fileUrl);
+      setUrlMode(false);
+    } catch {
+      toast.error('Tải ảnh lên thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
     <>
-      {cropSrc && (
-        <ImageCropModal
-          imageSrc={cropSrc}
-          onCancel={() => setCropSrc(null)}
-          onComplete={async (dataUrl) => {
-            setCropSrc(null);
-            setIsUploading(true);
-            try {
-              const file = dataUrlToFile(
-                dataUrl,
-                `product-image-${Date.now()}.jpg`,
-              );
-              const result = await uploadMutation.mutateAsync({
-                file,
-                folder: 'products',
-              });
-              onUpdateUrl(result.fileUrl);
-              setUrlMode(false);
-            } catch {
-              toast.error('Tải ảnh lên thất bại. Vui lòng thử lại.');
-            } finally {
-              setIsUploading(false);
-            }
-          }}
-        />
-      )}
-
       <div className='flex gap-3 rounded-md border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/4 p-3'>
         {/* Preview thumbnail */}
         <div className='relative size-20 shrink-0 overflow-hidden rounded-md bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8'>
@@ -240,7 +217,7 @@ function ImageItem({
               )}
             >
               <Upload size={12} />
-              Tải lên + Cắt
+              Tải lên
             </button>
             <input
               ref={fileRef}
@@ -326,21 +303,11 @@ export function ProductFormPage({
 
   const [submitted, setSubmitted] = useState(false);
 
-  // ── Color picker state (multi-color UI, BE only needs first/joined string) ──
-  // Initialize from initialProduct.color (comma-split if stored as comma-joined)
-  const [colors, setColors] = useState<string[]>(() => {
-    if (!initialProduct?.color) return [];
-    return initialProduct.color
-      .split(',')
-      .map((c) => c.trim())
-      .filter(Boolean);
-  });
-
   // ── Voucher price state (tracks computed dailyPrice from calculator) ──
   const [priceValues, setPriceValues] = useState<PriceValues>({
     dailyPrice: initialProduct ? initialProduct.dailyPrice : 0,
     oldDailyPrice: initialProduct?.oldDailyPrice ?? undefined,
-    selectedVoucherId: undefined,
+    selectedVoucherId: initialProduct?.voucherId ?? undefined,
   });
 
   const createMutation = useCreateProductMutation();
@@ -348,32 +315,31 @@ export function ProductFormPage({
   const createInventoryItemMutation = useCreateInventoryItemMutation(
     form.productId || '',
   );
-
-  // Fetch categories for dropdown
-  const { data: categoriesData, isLoading: loadingCategories } =
-    useCategoriesQuery({ page: 0, size: 100 });
-  const categoryList = categoriesData?.content ?? [];
-
-  // Find categoryName for preview
-  const selectedCategory = categoryList.find(
-    (c) => c.categoryId === form.categoryId,
+  const updateInventoryItemMutation = useUpdateInventoryItemMutation(
+    form.productId || '',
   );
-  const previewProduct = draftToProductPreview(
-    form,
-    images,
-    selectedCategory?.name,
-  );
+
+  // Fetch categories for tree select
+  useCategoryTreeQuery();
+
+  const previewProduct = draftToProductPreview(form, images);
 
   const handleSubmit = async () => {
     setSubmitted(true);
     if (!isValid) return;
 
-    const imageUrls = images
+    // Ảnh: sort primary lên đầu, sau đó theo sortOrder → BE coi phần tử đầu tiên là primary
+    const imageUrls = [...images]
+      .sort((a, b) => {
+        if (a.isPrimary && !b.isPrimary) return -1;
+        if (!a.isPrimary && b.isPrimary) return 1;
+        return a.sortOrder - b.sortOrder;
+      })
       .filter((img) => img.imageUrl)
       .map((img) => img.imageUrl);
 
-    // Màu: join nhiều màu thành 1 string (BE nhận single string)
-    const colorString = colors.length > 0 ? colors.join(',') : undefined;
+    // Màu: lấy từ form.colors (mảng { name, code })
+    const colors = form.colors.length > 0 ? form.colors : undefined;
 
     // Giá: lấy từ VoucherPriceCalculator
     const dailyPrice =
@@ -392,8 +358,10 @@ export function ProductFormPage({
             ? parseFloat(form.depositAmount)
             : 0,
           brand: form.brand || undefined,
-          color: colorString,
+          voucherId: priceValues.selectedVoucherId || undefined,
+          colors,
           description: form.description || undefined,
+          shortDescription: form.shortDescription || undefined,
           oldDailyPrice,
           minRentalDays: parseInt(form.minRentalDays) || 1,
           imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
@@ -413,6 +381,7 @@ export function ProductFormPage({
                     serialNumber: item.serialNumber,
                     conditionGrade: item.conditionGrade,
                     staffNote: item.staffNote || undefined,
+                    productColorId: item.productColorId || undefined,
                   }),
                 ),
               ).finally(() => router.push('/dashboard/products'));
@@ -435,8 +404,11 @@ export function ProductFormPage({
               ? parseFloat(form.depositAmount)
               : 0,
             brand: form.brand || undefined,
-            color: colorString,
+            // Empty string = unlink voucher; undefined = no change (but we always send to keep in sync)
+            voucherId: priceValues.selectedVoucherId ?? '',
+            colors,
             description: form.description || undefined,
+            shortDescription: form.shortDescription || undefined,
             oldDailyPrice,
             minRentalDays: parseInt(form.minRentalDays) || 1,
             imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
@@ -445,23 +417,64 @@ export function ProductFormPage({
         },
         {
           onSuccess: () => {
-            // Tạo các inventory item draft mới (chưa có inventoryItemId)
+            // Phân loại draft items: mới tạo vs đã tồn tại
             const newDraftItems = draftInventoryItems.filter(
               (item) =>
                 !item.inventoryItemId && item.serialNumber && item.hubId,
             );
-            if (newDraftItems.length > 0) {
-              Promise.all(
-                newDraftItems.map((item) =>
-                  createInventoryItemMutation.mutateAsync({
-                    productId: form.productId,
-                    hubId: item.hubId,
-                    serialNumber: item.serialNumber,
-                    conditionGrade: item.conditionGrade,
-                    staffNote: item.staffNote || undefined,
+            const existingItems = draftInventoryItems.filter(
+              (item) => !!item.inventoryItemId,
+            );
+
+            const allOps = [
+              ...newDraftItems.map((item) =>
+                createInventoryItemMutation.mutateAsync({
+                  productId: form.productId,
+                  hubId: item.hubId,
+                  serialNumber: item.serialNumber,
+                  conditionGrade: item.conditionGrade,
+                  staffNote: item.staffNote || undefined,
+                  productColorId: item.productColorId || undefined,
+                }),
+              ),
+              ...existingItems.flatMap((item) => {
+                // Diff against _original — only send changed fields
+                const orig = item._original;
+                const patch: {
+                  hubId?: string;
+                  conditionGrade?: typeof item.conditionGrade;
+                  staffNote?: string;
+                  productColorId?: string;
+                  status?: typeof item.status;
+                } = {};
+
+                if (!orig || item.hubId !== orig.hubId)
+                  patch.hubId = item.hubId || undefined;
+                if (!orig || item.conditionGrade !== orig.conditionGrade)
+                  patch.conditionGrade = item.conditionGrade;
+                if (!orig || item.staffNote !== orig.staffNote)
+                  patch.staffNote = item.staffNote || undefined;
+                if (!orig || item.productColorId !== orig.productColorId)
+                  patch.productColorId = item.productColorId || undefined;
+                if (!orig || item.status !== orig.status)
+                  patch.status = item.status;
+
+                // Nothing changed — skip API call
+                if (Object.keys(patch).length === 0) return [];
+
+                return [
+                  updateInventoryItemMutation.mutateAsync({
+                    inventoryItemId: item.inventoryItemId!,
+                    payload: patch,
                   }),
-                ),
-              ).finally(() => router.push('/dashboard/products'));
+                ];
+              }),
+            ];
+
+            if (allOps.length > 0) {
+              Promise.all(allOps).finally(() =>
+                router.push('/dashboard/products'),
+              );
             } else {
               router.push('/dashboard/products');
             }
@@ -501,21 +514,11 @@ export function ProductFormPage({
           <div className='flex flex-col gap-4'>
             {/* Danh mục */}
             <Field label='Danh mục' required error={showError('categoryId')}>
-              <select
+              <CategoryTreeSelect
                 value={form.categoryId}
-                onChange={(e) => setField('categoryId', e.target.value)}
-                disabled={loadingCategories}
-                className='h-11 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 disabled:opacity-60'
-              >
-                <option value=''>
-                  {loadingCategories ? 'Đang tải...' : '— Chọn danh mục —'}
-                </option>
-                {categoryList.map((c) => (
-                  <option key={c.categoryId} value={c.categoryId}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => setField('categoryId', id)}
+                placeholder='— Chọn danh mục —'
+              />
             </Field>
 
             {/* Tên sản phẩm */}
@@ -527,8 +530,20 @@ export function ProductFormPage({
               />
             </Field>
 
-            {/* Thương hiệu + Màu sắc (2 cột) */}
-            <div className='grid grid-cols-2 gap-4'>
+            {/* Mô tả ngắn */}
+            <Field
+              label='Mô tả ngắn (shortDescription)'
+              hint='Dòng giới thiệu ngắn hiển thị trên card sản phẩm, VD: "Mã MACBOOK-05 - MacBook Air cho công việc sáng tạo"'
+            >
+              <TextInput
+                value={form.shortDescription}
+                onChange={(v) => setField('shortDescription', v)}
+                placeholder='VD: Mã CAM-001 - Canon EOS R50 dành cho người mới bắt đầu'
+              />
+            </Field>
+
+            {/* Thương hiệu + Màu sắc */}
+            <div className='grid grid-cols-1 gap-4'>
               <Field label='Thương hiệu' hint='VD: Canon, Sony, Fujifilm'>
                 <TextInput
                   value={form.brand}
@@ -537,13 +552,12 @@ export function ProductFormPage({
                 />
               </Field>
               <Field
-                label='Màu sắc'
-                hint='Chọn 1 hoặc nhiều màu (BE nhận màu đầu tiên / các màu join bằng dấu phẩy)'
+                label='Màu sắc sản phẩm'
+                hint='Chọn hoặc thêm màu — mỗi inventory item sẽ được gắn với một màu'
               >
                 <ColorPickerList
-                  colors={colors}
-                  onChange={setColors}
-                  maxColors={5}
+                  colors={form.colors}
+                  onChange={(c) => setField('colors', c)}
                 />
               </Field>
             </div>
@@ -553,6 +567,7 @@ export function ProductFormPage({
               <RichEditor
                 placeholder='Mô tả ngắn gọn về sản phẩm...'
                 minHeight='160px'
+                initialContent={form.description}
                 onChange={(html) =>
                   setField('description', html === '<br>' ? '' : html)
                 }
@@ -573,12 +588,13 @@ export function ProductFormPage({
                   setField('dailyPrice', v); // sync để validation
                 }}
                 selectedVoucherId={priceValues.selectedVoucherId}
-                onVoucherChange={(id) =>
+                onVoucherChange={(id) => {
                   setPriceValues((prev) => ({
                     ...prev,
                     selectedVoucherId: id,
-                  }))
-                }
+                  }));
+                  setField('voucherId', id ?? '');
+                }}
                 onValueChange={setPriceValues}
               />
             </Field>
@@ -713,7 +729,7 @@ export function ProductFormPage({
                 img={img}
                 onSetPrimary={() => setPrimary(img.draftId)}
                 onRemove={() => removeImage(img.draftId)}
-                onUpdateUrl={(url) => updateImageUrl(img.draftId, url)}
+                onUpdateUrl={(url: string) => updateImageUrl(img.draftId, url)}
               />
             ))}
 
@@ -728,22 +744,21 @@ export function ProductFormPage({
           </div>
         </FormSection>
 
-        {/* ── SECTION 3: Inventory Items (chỉ hiện ở edit mode) ── */}
-        {mode === 'edit' && (
-          <FormSection title='Thiết bị vật lý (Inventory Items)'>
-            <p className='mb-4 text-xs text-text-sub'>
-              Thêm từng thiết bị vật lý theo số serial. Mỗi thiết bị cần có Hub
-              ID và Serial Number. Nhấn &quot;Lưu thay đổi&quot; để gửi các
-              thiết bị mới lên server.
-            </p>
-            <InventorySection
-              items={draftInventoryItems}
-              onAdd={addDraftInventoryItem}
-              onRemove={removeDraftInventoryItem}
-              onUpdate={updateDraftInventoryItem}
-            />
-          </FormSection>
-        )}
+        {/* ── SECTION 3: Inventory Items ── */}
+        <FormSection title='Thiết bị vật lý (Inventory Items)'>
+          <p className='mb-4 text-xs text-text-sub'>
+            {mode === 'new'
+              ? 'Thêm thiết bị vật lý ngay khi tạo sản phẩm. Mỗi thiết bị cần có Hub và Serial Number. Các thiết bị này sẽ được tạo sau khi sản phẩm được lưu thành công.'
+              : 'Thêm từng thiết bị vật lý theo số serial. Mỗi thiết bị cần có Hub ID và Serial Number. Nhấn "Lưu thay đổi" để gửi các thiết bị mới lên server.'}
+          </p>
+          <InventorySection
+            items={draftInventoryItems}
+            productColors={form.colors}
+            onAdd={addDraftInventoryItem}
+            onRemove={removeDraftInventoryItem}
+            onUpdate={updateDraftInventoryItem}
+          />
+        </FormSection>
 
         {/* ── Submit ── */}
         <div className='flex items-center justify-end gap-3 pt-2'>
@@ -776,94 +791,12 @@ export function ProductFormPage({
           <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-text-sub'>
             Xem trước
           </p>
-          <ProductPreviewCard product={previewProduct} />
+          <ProductCard product={previewProduct} variant='preview' />
           <p className='mt-2 text-center text-xs text-text-sub'>
             Card hiển thị ngoài trang chủ
           </p>
         </div>
       </aside>
     </div>
-  );
-}
-
-// ─── Inline preview card (dashboard-only) ─────────────────────────
-const vndFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
-
-function ProductPreviewCard({ product }: { product: ProductResponse }) {
-  const primaryImage =
-    product.images.find((img) => img.isPrimary) ?? product.images[0];
-  const salePercent =
-    product.oldDailyPrice && product.oldDailyPrice > product.dailyPrice
-      ? Math.round(
-          ((product.oldDailyPrice - product.dailyPrice) /
-            product.oldDailyPrice) *
-            100,
-        )
-      : null;
-
-  return (
-    <article className='relative flex flex-col overflow-hidden rounded-xl border border-border/75 dark:border-white/6 bg-white dark:bg-surface-card p-5 shadow-sm dark:shadow-black/30'>
-      {salePercent !== null && (
-        <span className='btn-gradient-accent absolute left-3 top-3 z-10 text-xs font-semibold text-white shadow-sm px-2 py-0.5 rounded-full'>
-          -{salePercent}%
-        </span>
-      )}
-
-      <header className='mt-2 mb-3 text-center'>
-        <h3 className='line-clamp-2 text-base font-semibold text-text-main'>
-          {product.name || (
-            <span className='italic text-text-sub opacity-50'>
-              Tên sản phẩm
-            </span>
-          )}
-        </h3>
-        {product.brand && (
-          <p className='mt-0.5 text-xs text-text-sub'>{product.brand}</p>
-        )}
-      </header>
-
-      <div className='relative h-44 w-full'>
-        {primaryImage?.imageUrl ? (
-          <Image
-            src={primaryImage.imageUrl}
-            alt={product.name}
-            fill
-            sizes='280px'
-            className='object-contain'
-          />
-        ) : (
-          <div className='flex h-full w-full items-center justify-center rounded-md bg-gray-100 dark:bg-white/8 text-xs text-text-sub'>
-            Chưa có ảnh
-          </div>
-        )}
-      </div>
-
-      <div className='mt-3 flex flex-col gap-1'>
-        {product.color && (
-          <p className='text-center text-xs text-text-sub'>
-            Màu: {product.color}
-          </p>
-        )}
-        <div className='text-center'>
-          <span className='text-lg font-bold text-theme-accent-start'>
-            {product.dailyPrice ? (
-              vndFormatter.format(product.dailyPrice)
-            ) : (
-              <span className='text-text-sub italic text-sm'>—</span>
-            )}
-          </span>
-          {product.oldDailyPrice != null && (
-            <span className='ml-2 text-sm text-text-sub line-through'>
-              {vndFormatter.format(product.oldDailyPrice)}
-            </span>
-          )}
-          <p className='text-xs text-text-sub'>/ngày</p>
-        </div>
-      </div>
-    </article>
   );
 }

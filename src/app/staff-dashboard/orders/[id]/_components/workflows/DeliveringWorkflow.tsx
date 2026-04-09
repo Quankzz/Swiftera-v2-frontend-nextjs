@@ -1,36 +1,111 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import {
   Truck,
-  MapPin,
-  User,
-  Phone,
-  LocateFixed,
-  BadgeCheck,
-  Locate,
-  ArrowLeft,
-  PackageCheck,
   QrCode,
-  Hash,
-  ScanLine,
-  AlertCircle,
-  Loader2,
+  Camera,
   CheckCircle2,
-  XCircle,
-  Mail,
-  ClipboardList,
+  Loader2,
   Package,
+  Wifi,
+  Circle,
+  Info,
+  Navigation2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import type { DashboardOrder } from '@/types/dashboard.types';
+import type { DashboardOrder, OrderItem } from '@/types/dashboard.types';
 import { WorkflowBanner } from '../WorkflowBanner';
-import { InfoRow } from '../InfoRow';
-import { fmtDatetime } from '../utils';
-import { haversineKm } from '../DeliveryMiniMap';
-import { QrScanner } from '../QrScanner';
 import { CameraCapture } from '../CameraCapture';
+import { QrScanner } from '../QrScanner';
+
+interface DeliveringWorkflowProps {
+  order: DashboardOrder;
+  onConfirmDelivery: () => void;
+  loading?: boolean;
+  staffLat?: number;
+  staffLng?: number;
+  staffLocAt?: string;
+}
+
+type Step = 'qr' | 'photos' | 'confirm';
+
+const STEPS: { key: Step; label: string; icon: React.ElementType }[] = [
+  { key: 'qr', label: 'Xác minh đơn', icon: QrCode },
+  { key: 'photos', label: 'Chụp bằng chứng', icon: Camera },
+  { key: 'confirm', label: 'Xác nhận giao', icon: CheckCircle2 },
+];
+
+function ItemDeliveryCard({
+  item,
+  photos,
+  onAdd,
+  onRemove,
+}: {
+  item: OrderItem;
+  photos: string[];
+  onAdd: (url: string) => void;
+  onRemove: (idx: number) => void;
+}) {
+  const hasPhoto = photos.length > 0;
+  return (
+    <div
+      className={cn(
+        'rounded-2xl border p-4 transition-colors',
+        hasPhoto
+          ? 'border-success/40 bg-success/5 dark:bg-success/5'
+          : 'border-border bg-card',
+      )}
+    >
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative size-12 shrink-0 rounded-xl overflow-hidden bg-muted border border-border">
+          {item.image_url ? (
+            <Image
+              src={item.image_url}
+              alt={item.product_name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="size-full flex items-center justify-center">
+              <Package className="size-5 text-muted-foreground/40" />
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-foreground truncate">
+            {item.product_name}
+          </p>
+          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+            {item.serial_number || '—'}
+          </p>
+        </div>
+        <div
+          className={cn(
+            'size-7 rounded-full flex items-center justify-center shrink-0 transition-colors',
+            hasPhoto
+              ? 'bg-success text-white'
+              : 'border-2 border-dashed border-border',
+          )}
+        >
+          {hasPhoto ? (
+            <CheckCircle2 className="size-4" />
+          ) : (
+            <Camera className="size-3.5 text-muted-foreground/50" />
+          )}
+        </div>
+      </div>
+      <CameraCapture
+        photos={photos}
+        onAdd={onAdd}
+        onRemove={onRemove}
+        label="Chụp ảnh bàn giao thiết bị"
+      />
+    </div>
+  );
+}
 
 export function DeliveringWorkflow({
   order,
@@ -39,219 +114,177 @@ export function DeliveringWorkflow({
   staffLat,
   staffLng,
   staffLocAt,
-}: {
-  order: DashboardOrder;
-  onConfirmDelivery: () => void;
-  loading: boolean;
-  staffLat?: number;
-  staffLng?: number;
-  staffLocAt?: string;
-}) {
-  const [phase, setPhase] = useState<'transit' | 'arrived'>('transit');
+}: DeliveringWorkflowProps) {
   const [qrVerified, setQrVerified] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
-  const [qrSimulate, setQrSimulate] = useState<
-    'confirmed' | 'failed' | undefined
-  >(undefined);
-  const [manualCode, setManualCode] = useState('');
-  const [manualError, setManualError] = useState('');
-  const [showManualFallback, setShowManualFallback] = useState(false);
-  const [deliveryPhotos, setDeliveryPhotos] = useState<string[]>([]);
+  const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(order.items.map((i) => [i.rental_order_item_id, []])),
+  );
 
-  const expectedCode = order.confirmation_code ?? order.order_code;
+  const itemsDone = order.items.filter(
+    (i) => (itemPhotos[i.rental_order_item_id]?.length ?? 0) > 0,
+  ).length;
+  const allPhotographed = itemsDone === order.items.length;
+  const hasGps = staffLat != null && staffLng != null;
+  const allReady = qrVerified && allPhotographed;
 
-  const isNearDestination =
-    staffLat != null &&
-    staffLng != null &&
-    order.delivery_latitude != null &&
-    order.delivery_longitude != null &&
-    haversineKm(
-      staffLat,
-      staffLng,
-      order.delivery_latitude,
-      order.delivery_longitude,
-    ) < 0.35;
+  const currentStep: Step = !qrVerified
+    ? 'qr'
+    : !allPhotographed
+      ? 'photos'
+      : 'confirm';
 
-  const handleManualVerify = () => {
-    if (manualCode.trim().toUpperCase() === expectedCode.toUpperCase()) {
-      setQrVerified(true);
-      setManualError('');
-      setShowManualFallback(false);
-    } else {
-      setManualError('Mã không khớp — kiểm tra lại.');
-    }
-  };
+  const handleAdd = useCallback((itemId: string, url: string) => {
+    setItemPhotos((prev) => ({
+      ...prev,
+      [itemId]: [...(prev[itemId] ?? []), url],
+    }));
+  }, []);
 
-  const canConfirm = qrVerified && deliveryPhotos.length > 0;
+  const handleRemove = useCallback((itemId: string, idx: number) => {
+    setItemPhotos((prev) => ({
+      ...prev,
+      [itemId]: (prev[itemId] ?? []).filter((_, j) => j !== idx),
+    }));
+  }, []);
 
-  /* ── Phase: In transit ─────────────────────────────────────────────────── */
-  if (phase === 'transit') {
-    return (
-      <div className="flex flex-col gap-4">
-        <WorkflowBanner
-          icon={Truck}
-          variant="primary"
-          title="Đang trên đường giao hàng"
-          desc="Theo dõi tuyến đường trên bản đồ bên cạnh. Khi tới nơi, nhấn nút bên dưới để bắt đầu bàn giao."
-        />
+  const expectedCode = order.confirmation_code ?? order.rental_order_id;
 
-        {/* ── Customer & Delivery Info ── */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-xl">
-                <User className="size-5 text-blue-500 shrink-0" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground">Thông tin người nhận</h3>
-                <p className="text-xs text-muted-foreground">Khách hàng yêu cầu giao hàng</p>
-              </div>
-            </div>
-            <a
-              href={`tel:${order.renter.phone_number}`}
-              className="flex items-center justify-center gap-1.5 text-sm font-bold text-white bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:opacity-90 px-3 py-2 rounded-xl shadow-sm transition-all active:scale-95"
-            >
-              <Phone className="size-3.5" />
-              Gọi nhanh
-            </a>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-y-3 gap-x-4 border-t border-border pt-4">
-            <div className="space-y-3">
-              <InfoRow icon={User} label="Họ và tên" value={order.renter.full_name} strong />
-              <InfoRow icon={Phone} label="Điện thoại" value={order.renter.phone_number} />
-              <InfoRow icon={Mail} label="Email" value={order.renter.email} />
-            </div>
-            <div className="space-y-3">
-              <InfoRow icon={ClipboardList} label="Số CCCD" value={order.renter.cccd_number} mono />
-              <InfoRow icon={MapPin} label="Nơi giao" value={order.delivery_address || order.renter.address} />
-            </div>
-          </div>
-
-          {staffLocAt && (
-            <div className="mt-4 flex items-center gap-1.5 text-xs text-blue-500 bg-blue-50/50 dark:bg-blue-950/20 px-3 py-2.5 rounded-xl border border-blue-100 dark:border-blue-900/50">
-              <LocateFixed className="size-3.5 shrink-0" />
-              <span>Cập nhật GPS theo MAP: {fmtDatetime(staffLocAt)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* ── Order Items ── */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm flex flex-col flex-1">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 bg-orange-50 dark:bg-orange-950/30 rounded-xl">
-              <Package className="size-5 text-orange-500 shrink-0" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-foreground">Sản phẩm bàn giao</h3>
-              <p className="text-xs text-muted-foreground">{order.items.length} món hàng</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-3">
-            {order.items.map((item) => (
-              <div
-                key={item.rental_order_item_id}
-                className="flex gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 items-center hover:bg-muted/40 transition-colors"
-              >
-                <div className="relative size-12 shrink-0 rounded-lg overflow-hidden border border-border bg-muted">
-                  <Image
-                    src={item.image_url}
-                    alt={item.product_name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {item.product_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                    SN: {item.serial_number}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Arrived CTA ── */}
-        <div className="rounded-2xl border border-border bg-card p-5">
-          {isNearDestination && (
-            <div className="flex items-center gap-2.5 rounded-xl border border-success-border bg-success-muted px-4 py-3 mb-4">
-              <BadgeCheck className="size-4.5 text-success shrink-0" />
-              <p className="text-sm font-bold text-success">
-                GPS xác nhận bạn đang ở gần điểm giao!
-              </p>
-            </div>
-          )}
-          <Button
-            size="default"
-            onClick={() => setPhase('arrived')}
-            className={cn(
-              'w-full gap-2 h-12 text-sm font-bold text-white shadow-md transition-all',
-              isNearDestination
-                ? 'bg-success hover:bg-success/90 shadow-success/20'
-                : 'bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:opacity-90 shadow-theme-primary-start/20',
-            )}
-          >
-            <Locate className="size-4.5" />
-            Tôi đã đến nơi
-          </Button>
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Nhấn khi bạn đã đến nơi
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  /* ── Phase: Arrived — QR + Photo verification ──────────────────────────── */
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
+      {/* Status banner */}
       <WorkflowBanner
-        icon={PackageCheck}
-        variant="success"
-        title="Đã đến nơi — Xác nhận bàn giao"
-        desc="Quét mã QR trên điện thoại của khách để xác nhận đúng người & địa điểm, sau đó chụp ảnh minh chứng."
+        icon={Truck}
+        title="Đang trên đường giao hàng"
+        desc="Xác minh đơn hàng bằng mã QR, chụp ảnh bàn giao từng thiết bị, sau đó xác nhận hoàn tất giao hàng."
+        variant="primary"
       />
 
-      <button
-        type="button"
-        onClick={() => setPhase('transit')}
-        className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground self-start transition-colors"
-      >
-        <ArrowLeft className="size-3.5" /> Quay lại bản đồ
-      </button>
+      {/* Progress stepper */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4">
+        <div className="flex items-center justify-between gap-2">
+          {STEPS.map((step, idx) => {
+            const StepIcon = step.icon;
+            const stepOrder: Step[] = ['qr', 'photos', 'confirm'];
+            const stepIdx = stepOrder.indexOf(step.key);
+            const currentIdx = stepOrder.indexOf(currentStep);
+            const isDone = stepIdx < currentIdx;
+            const isCurrent = step.key === currentStep;
 
-      {/* ── Step 1: QR Scan ── */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-          <span className="size-8 rounded-full bg-linear-to-br from-theme-primary-start to-theme-primary-end flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm">
-            1
+            return (
+              <React.Fragment key={step.key}>
+                {idx > 0 && (
+                  <div
+                    className={cn(
+                      'flex-1 h-0.5 rounded-full transition-colors',
+                      isDone ? 'bg-success' : 'bg-border',
+                    )}
+                  />
+                )}
+                <div className="flex flex-col items-center gap-1.5 shrink-0">
+                  <div
+                    className={cn(
+                      'size-9 rounded-full flex items-center justify-center transition-colors',
+                      isDone
+                        ? 'bg-success text-white'
+                        : isCurrent
+                          ? 'bg-sky-500 text-white ring-4 ring-sky-500/20'
+                          : 'bg-muted text-muted-foreground',
+                    )}
+                  >
+                    <StepIcon className="size-4" />
+                  </div>
+                  <span
+                    className={cn(
+                      'text-[10px] font-bold text-center',
+                      isDone
+                        ? 'text-success'
+                        : isCurrent
+                          ? 'text-sky-600 dark:text-sky-400'
+                          : 'text-muted-foreground',
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* GPS status */}
+      <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
+        <div
+          className={cn(
+            'size-2.5 rounded-full shrink-0',
+            staffLat != null
+              ? 'bg-success animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]'
+              : 'bg-muted-foreground/40',
+          )}
+        />
+        <Navigation2 className="size-4 text-muted-foreground shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="text-xs font-semibold text-foreground">
+            {staffLat != null
+              ? 'GPS đang theo dõi vị trí'
+              : 'Đang lấy vị trí GPS…'}
           </span>
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-foreground">
-              Quét mã QR của khách
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Yêu cầu khách mở màn hình mã QR đơn hàng trên ứng dụng
-            </p>
+          {staffLocAt && (
+            <span className="text-xs text-muted-foreground ml-2">
+              · {new Date(staffLocAt).toLocaleTimeString('vi-VN')}
+            </span>
+          )}
+        </div>
+        <Wifi
+          className={cn(
+            'size-4 shrink-0',
+            staffLat != null ? 'text-success' : 'text-muted-foreground',
+          )}
+        />
+      </div>
+
+      {/* Step 1: QR Scan */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div
+          className={cn(
+            'px-5 py-3.5 border-b border-border flex items-center justify-between',
+            qrVerified ? 'bg-success/8' : 'bg-muted/30',
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                'size-6 rounded-full flex items-center justify-center text-xs font-black shrink-0',
+                qrVerified ? 'bg-success text-white' : 'bg-sky-500 text-white',
+              )}
+            >
+              {qrVerified ? <CheckCircle2 className="size-3.5" /> : '1'}
+            </div>
+            <h3 className="text-sm font-bold text-foreground">
+              Xác minh mã QR đơn hàng
+            </h3>
           </div>
+          {qrVerified && (
+            <span className="text-xs font-bold text-success flex items-center gap-1">
+              <CheckCircle2 className="size-3.5" /> Đã xác minh
+            </span>
+          )}
         </div>
         <div className="p-5">
           {qrVerified ? (
-            <div className="flex items-center gap-3 rounded-xl border border-success-border bg-success-muted px-4 py-4">
-              <div className="size-10 rounded-full bg-success/15 flex items-center justify-center shrink-0">
-                <BadgeCheck className="size-5 text-success" />
+            <div className="flex items-center gap-3 py-2">
+              <div className="size-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="size-5 text-success" />
               </div>
               <div>
                 <p className="text-sm font-bold text-success">
-                  Xác minh thành công!
+                  Đơn hàng đã được xác minh
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Đã xác nhận đúng khách hàng ·{' '}
-                  <span className="font-mono font-bold">
-                    {expectedCode.toUpperCase()}
+                  Mã đơn:{' '}
+                  <span className="font-mono font-semibold">
+                    {order.order_code}
                   </span>
                 </p>
               </div>
@@ -259,191 +292,191 @@ export function DeliveringWorkflow({
           ) : showQrScanner ? (
             <QrScanner
               expectedCode={expectedCode}
-              order={order}
-              simulate={qrSimulate}
               onSuccess={() => {
                 setQrVerified(true);
                 setShowQrScanner(false);
               }}
               onCancel={() => setShowQrScanner(false)}
+              order={order}
             />
           ) : (
-            <div className="flex flex-col gap-3">
-              {/* Real QR scan */}
-              <Button
-                size="default"
-                onClick={() => {
-                  setQrSimulate(undefined);
-                  setShowQrScanner(true);
-                }}
-                className="w-full gap-2 h-12 text-sm font-bold bg-linear-to-r from-theme-primary-start to-theme-primary-end hover:opacity-90 text-white shadow-md shadow-theme-primary-start/20"
-              >
-                <QrCode className="size-4.5" />
-                Mở máy quét QR
-              </Button>
-              {/* Dev simulation buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setQrSimulate('confirmed');
-                    setShowQrScanner(true);
-                  }}
-                  className="flex-1 gap-1.5 text-xs h-9 border-success/50 text-success hover:bg-success/5"
-                >
-                  <CheckCircle2 className="size-3.5" /> Mock: Thành công
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setQrSimulate('failed');
-                    setShowQrScanner(true);
-                  }}
-                  className="flex-1 gap-1.5 text-xs h-9 border-destructive/50 text-destructive hover:bg-destructive/5"
-                >
-                  <XCircle className="size-3.5" /> Mock: Thất bại
-                </Button>
+            <div className="flex flex-col items-center gap-3 py-4">
+              <div className="size-14 rounded-2xl bg-sky-500/10 flex items-center justify-center">
+                <QrCode className="size-7 text-sky-500" />
               </div>
-
-              {/* Manual fallback */}
-              {!showManualFallback ? (
-                <button
-                  type="button"
-                  onClick={() => setShowManualFallback(true)}
-                  className="text-xs text-muted-foreground hover:text-foreground text-center underline underline-offset-2 transition-colors"
-                >
-                  Không quét được? Nhập mã thủ công
-                </button>
-              ) : (
-                <div className="flex flex-col gap-2.5 rounded-xl border border-border bg-muted/30 p-4">
-                  <p className="text-xs font-bold text-foreground">
-                    Nhập mã xác nhận thủ công
-                  </p>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                      <Input
-                        placeholder="Nhập mã..."
-                        value={manualCode}
-                        onChange={(e) => {
-                          setManualCode(e.target.value);
-                          setManualError('');
-                        }}
-                        onKeyDown={(e) =>
-                          e.key === 'Enter' && handleManualVerify()
-                        }
-                        className="pl-9 h-10 text-sm font-mono tracking-widest"
-                        autoCapitalize="characters"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleManualVerify}
-                      disabled={!manualCode.trim()}
-                      className="h-10 shrink-0"
-                    >
-                      Xác nhận
-                    </Button>
-                  </div>
-                  {manualError && (
-                    <p className="text-xs text-destructive font-semibold flex items-center gap-1.5">
-                      <AlertCircle className="size-3.5 shrink-0" />{' '}
-                      {manualError}
-                    </p>
-                  )}
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <ScanLine className="size-3 shrink-0" />
-                    <span>Mã đơn:</span>
-                    <span className="font-mono font-bold text-foreground">
-                      {expectedCode}
-                    </span>
-                    <span className="opacity-60">(chỉ nhân viên thấy)</span>
-                  </p>
-                </div>
-              )}
+              <div className="text-center">
+                <p className="text-sm font-bold text-foreground">
+                  Quét mã QR để xác minh đơn hàng
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sử dụng camera để quét mã QR trên phiếu đơn hàng.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowQrScanner(true)}
+                className="h-11 gap-2 rounded-xl px-5 text-sm font-semibold"
+              >
+                <QrCode className="size-4" />
+                Mở camera quét QR
+              </Button>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Step 2: Delivery photo ── */}
+      {/* Step 2: Photos */}
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-          <span
-            className={cn(
-              'size-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm',
-              qrVerified
-                ? 'bg-linear-to-br from-theme-primary-start to-theme-primary-end text-white'
-                : 'bg-muted text-muted-foreground',
-            )}
-          >
-            2
-          </span>
-          <div className="min-w-0">
-            <p
+        <div
+          className={cn(
+            'px-5 py-3.5 border-b border-border flex items-center justify-between',
+            allPhotographed
+              ? 'bg-success/8'
+              : qrVerified
+                ? 'bg-muted/30'
+                : 'bg-muted/20',
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <div
               className={cn(
-                'text-sm font-bold',
-                qrVerified ? 'text-foreground' : 'text-muted-foreground',
+                'size-6 rounded-full flex items-center justify-center text-xs font-black shrink-0',
+                allPhotographed
+                  ? 'bg-success text-white'
+                  : qrVerified
+                    ? 'bg-sky-500 text-white'
+                    : 'bg-muted text-muted-foreground',
               )}
             >
-              Chụp ảnh minh chứng bàn giao
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {qrVerified
-                ? 'Chụp ảnh sản phẩm và khách đang cầm hàng tại địa chỉ'
-                : 'Hoàn thành bước 1 trước'}
-            </p>
+              {allPhotographed ? <CheckCircle2 className="size-3.5" /> : '2'}
+            </div>
+            <h3 className="text-sm font-bold text-foreground">
+              Chụp ảnh bàn giao thiết bị
+            </h3>
           </div>
+          <span className="text-xs font-bold text-muted-foreground">
+            {itemsDone}/{order.items.length}
+          </span>
         </div>
-        <div
-          className={cn('p-5', !qrVerified && 'opacity-50 pointer-events-none')}
-        >
-          <CameraCapture
-            photos={deliveryPhotos}
-            onAdd={(url) => setDeliveryPhotos((p) => [...p, url])}
-            onRemove={(i) =>
-              setDeliveryPhotos((p) => p.filter((_, j) => j !== i))
-            }
-            label="Chụp ảnh bàn giao tại địa chỉ khách"
-          />
-        </div>
-      </div>
 
-      {/* ── Confirm CTA ── */}
-      <div className="rounded-2xl border border-border bg-card p-5">
-        {!canConfirm && (
-          <div className="flex flex-col gap-1.5 mb-4">
-            {!qrVerified && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="size-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">
-                  1
-                </span>
-                Cần quét QR xác nhận khách hàng
-              </p>
-            )}
-            {deliveryPhotos.length === 0 && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="size-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold shrink-0">
-                  2
-                </span>
-                Cần chụp ít nhất 1 ảnh minh chứng
-              </p>
-            )}
+        {!qrVerified && (
+          <div className="px-5 py-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <Circle className="size-4 shrink-0" />
+            Hoàn tất xác minh QR để mở bước này.
           </div>
         )}
+
+        {qrVerified && (
+          <div className="p-4 space-y-3">
+            {/* Progress */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-all duration-500',
+                    allPhotographed ? 'bg-success' : 'bg-sky-500',
+                  )}
+                  style={{
+                    width: `${order.items.length > 0 ? (itemsDone / order.items.length) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+              <span
+                className={cn(
+                  'text-xs font-bold shrink-0',
+                  allPhotographed
+                    ? 'text-success'
+                    : 'text-sky-600 dark:text-sky-400',
+                )}
+              >
+                {itemsDone}/{order.items.length}
+              </span>
+            </div>
+            {!allPhotographed && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Info className="size-3.5 shrink-0" />
+                Chụp ảnh từng thiết bị trước khi bàn giao cho khách.
+              </p>
+            )}
+            {allPhotographed && !hasGps && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <Info className="size-3.5 shrink-0" />
+                GPS chưa sẵn sàng. Hệ thống vẫn có thể ghi nhận giao hàng nhưng
+                sẽ không kèm tọa độ hiện tại.
+              </p>
+            )}
+            {/* Items grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {order.items.map((item) => (
+                <ItemDeliveryCard
+                  key={item.rental_order_item_id}
+                  item={item}
+                  photos={itemPhotos[item.rental_order_item_id] ?? []}
+                  onAdd={(url) => handleAdd(item.rental_order_item_id, url)}
+                  onRemove={(idx) =>
+                    handleRemove(item.rental_order_item_id, idx)
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Action footer */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="text-sm text-muted-foreground">
+          {allReady ? (
+            <span className="flex items-center gap-2 text-success font-semibold">
+              <CheckCircle2 className="size-4" />
+              Sẵn sàng xác nhận giao hàng thành công.
+            </span>
+          ) : !qrVerified ? (
+            <span className="flex items-center gap-2">
+              <QrCode className="size-4 shrink-0" />
+              Bước 1: Quét mã QR xác minh đơn hàng.
+            </span>
+          ) : (
+            <span
+              className={cn(
+                'flex items-center gap-2',
+                allPhotographed &&
+                  !hasGps &&
+                  'text-amber-600 dark:text-amber-400 font-semibold',
+              )}
+            >
+              {allPhotographed && !hasGps ? (
+                <Navigation2 className="size-4 shrink-0" />
+              ) : (
+                <Camera className="size-4 shrink-0" />
+              )}
+              {allPhotographed && !hasGps
+                ? 'GPS chưa sẵn sàng, vẫn có thể xác nhận giao hàng.'
+                : `Bước 2: Còn ${order.items.length - itemsDone} thiết bị chưa chụp ảnh.`}
+            </span>
+          )}
+        </div>
         <Button
-          size="default"
           onClick={onConfirmDelivery}
-          disabled={!canConfirm || loading}
-          className="bg-linear-to-br from-theme-primary-start to-theme-primary-end text-white w-full gap-2 h-12 text-sm font-bold"
+          disabled={!allReady || loading}
+          className={cn(
+            'h-12 gap-2 rounded-xl px-7 text-[15px] font-bold shrink-0 min-w-52',
+            allReady
+              ? 'bg-teal-600 hover:bg-teal-700 text-white dark:bg-teal-600 dark:hover:bg-teal-700'
+              : '',
+          )}
         >
           {loading ? (
-            <Loader2 className="size-4.5 animate-spin" />
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Đang xử lý…
+            </>
           ) : (
-            <PackageCheck className="size-4.5" />
+            <>
+              <Truck className="size-4" />
+              Xác nhận giao hàng thành công
+            </>
           )}
-          Xác nhận đã bàn giao thành công
         </Button>
       </div>
     </div>

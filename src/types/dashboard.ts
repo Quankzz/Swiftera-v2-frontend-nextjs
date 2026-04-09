@@ -126,3 +126,82 @@ export interface UpdateContactTicketStatusInput {
   status: ContactTicketStatus;
   handledByUserId?: string | null;
 }
+
+// ─── Rental Orders ────────────────────────────────────────────────
+
+export type RentalOrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'DELIVERING'
+  | 'ACTIVE'
+  | 'RETURNING'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export interface RentalOrderItem {
+  rentalOrderItemId: string;
+  rentalOrderId: string;
+  inventoryItemId: string;
+  productId: string;
+  productName: string;
+  serialNumber: string;
+  dailyPriceSnapshot: number;
+  depositSnapshot: number;
+  rentalDays: number;
+  subtotalFee: number;
+}
+
+export interface RentalOrder {
+  rentalOrderId: string;
+  userId: string;
+  deliveryStaffId: string | null;
+  pickupStaffId: string | null;
+  voucherId: string | null;
+  deliveryRecipientName: string;
+  deliveryPhone: string;
+  deliveryAddressLine: string;
+  deliveryWard: string;
+  deliveryDistrict: string;
+  deliveryCity: string;
+  deliveryNote: string | null;
+  startDate: string;
+  endDate: string;
+  plannedDeliveryAt: string | null;
+  deliveredAt: string | null;
+  plannedPickupAt: string | null;
+  pickedUpAt: string | null;
+  placedAt: string;
+  status: RentalOrderStatus;
+  subtotalRentalFee: number;
+  voucherCodeSnapshot: string | null;
+  voucherDiscountAmount: number;
+  totalRentalFee: number;
+  totalDeposit: number;
+  penaltyTotal: number;
+  depositRefundedAmount: number;
+  grandTotalPaid: number;
+  // Enriched / joined fields
+  userFullName?: string | null;
+  userEmail?: string | null;
+  userPhone?: string | null;
+  hubId?: string | null;
+  hubName?: string | null;
+  deliveryStaffName?: string | null;
+  pickupStaffName?: string | null;
+  items: RentalOrderItem[];
+}
+
+export interface RentalOrderListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: RentalOrderStatus | '';
+}
+
+export interface AssignOrderInput {
+  hubId?: string | null;
+  deliveryStaffId?: string | null;
+  pickupStaffId?: string | null;
+  plannedDeliveryAt?: string | null;
+  plannedPickupAt?: string | null;
+}

@@ -30,7 +30,59 @@ export interface ProductImageResponse {
   isPrimary: boolean;
 }
 
+// ── Product color types ─────────────────────────────────────────────────────
+// API-052: colors[] is the canonical color list. `color` string is legacy.
+
+/** Input item for creating/updating product colors */
+export interface ProductColorInput {
+  /** Only present when updating an existing color (edit mode) */
+  productColorId?: string;
+  name: string;
+  /** Hex color code, e.g. "#111111" */
+  code: string;
+}
+
+/** Color as returned from BE (has productColorId + stock info) */
+export interface ProductColorResponse {
+  productColorId: string;
+  name: string;
+  /** Hex color code, e.g. "#111111" */
+  code: string;
+  /** Tổng số serial của màu này */
+  quantity: number;
+  /** Số serial đang AVAILABLE */
+  availableQuantity: number;
+}
+
+/**
+ * Inventory item as embedded in a product detail response (API-053).
+ * Subset of InventoryItemResponse — productId/productName are omitted
+ * because they're implicit (you're already in the product context).
+ * The full InventoryItemResponse (with productId/productName) is used
+ * by the standalone inventory-items API (API-057..061).
+ */
+export interface InventoryItemInProduct {
+  inventoryItemId: string;
+  serialNumber: string;
+  status: InventoryItemStatus;
+  conditionGrade: InventoryItemConditionGrade | null;
+  staffNote: string | null;
+  hubId: string;
+  hubCode: string;
+  hubName: string;
+  /** Color this serial is associated with (optional if product has 1 color) */
+  productColorId: string | null;
+  colorName: string | null;
+  colorCode: string | null;
+}
+
+// InventoryItemStatus / InventoryItemConditionGrade are declared later in
+// the Inventory Item Types section — forward references are fine in TS.
+
 // ── Product response (API-051 / API-052 / API-053 / API-054) ────────────────
+//
+// API-053 (GET /api/v1/products/{productId}) returns inventoryItems embedded
+// in the product detail response — no separate inventory API call needed.
 
 export interface ProductResponse {
   productId: string;
@@ -38,9 +90,20 @@ export interface ProductResponse {
   categoryName: string;
   /** e.g. "Canon", "Sony" — single string, not array */
   brand: string | null;
-  /** e.g. "Black", "Silver" — single string, not array */
+  /**
+   * voucherId linked to this product (PRODUCT_DISCOUNT voucher).
+   * Send empty string "" to unlink. Absent or null = no voucher.
+   */
+  voucherId: string | null;
+  /**
+   * Legacy summary string, e.g. "Black, Silver".
+   * Use `colors[]` for structured data.
+   */
   color: string | null;
+  /** Structured color list — canonical source for UI */
+  colors: ProductColorResponse[];
   name: string;
+  shortDescription: string | null;
   description: string | null;
   dailyPrice: number;
   oldDailyPrice: number | null;
@@ -49,10 +112,17 @@ export interface ProductResponse {
   isActive: boolean;
   /** BE field name is `images` (not `productImages`) */
   images: ProductImageResponse[];
+  /**
+   * Embedded inventory items — only present in detail responses (API-053).
+   * List responses (API-054) do NOT include inventoryItems.
+   */
+  inventoryItems?: InventoryItemInProduct[];
   availableStock: number;
   averageRating: number | null;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export type PaginatedProductsResponse = PaginatedResponse<ProductResponse>;
@@ -69,17 +139,23 @@ export interface CreateProductInput {
   /** required, >= 0 */
   depositAmount: number;
   brand?: string;
-  /** single color string, e.g. "Black" */
-  color?: string;
+  /**
+   * Link to a PRODUCT_DISCOUNT voucher.
+   * Send empty string "" to explicitly unlink.
+   */
+  voucherId?: string;
   description?: string;
+  shortDescription?: string;
   /** optional, must be >= dailyPrice if provided */
   oldDailyPrice?: number;
   minRentalDays?: number;
+  /** Structured color list — preferred over legacy `color` string */
+  colors?: ProductColorInput[];
   /** array of image URL strings (upload first, then pass URLs) */
   imageUrls?: string[];
 }
 
-// ── Update product input (API-054 PATCH /api/v1/products/{productId}) ───────
+// ── Update product input (API-055 PATCH /api/v1/products/{productId}) ───────
 // Same as create but all fields optional + isActive flag
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {
@@ -95,6 +171,8 @@ export interface ProductListParams {
   size?: number;
   sort?: string;
   filter?: string;
+  /** API-054: include products from descendant categories when filtering by categoryId */
+  includeDescendants?: boolean;
 }
 
 // ── Inventory Item Types (Module 9: INVENTORY ITEMS — API-056 to API-060) ──
@@ -110,12 +188,16 @@ export type InventoryItemStatus =
 
 export type InventoryItemConditionGrade = 'NEW' | 'GOOD' | 'FAIR' | 'POOR';
 
-/** Response shape from API-056 / API-057 / API-058 / API-059 */
+/** Response shape from API-057 / API-058 / API-059 / API-060 */
 export interface InventoryItemResponse {
   inventoryItemId: string;
   productId: string;
   productName: string;
+  productColorId: string | null;
+  colorName: string | null;
+  colorCode: string | null;
   hubId: string;
+  hubCode: string;
   hubName: string;
   serialNumber: string;
   status: InventoryItemStatus;
@@ -128,7 +210,7 @@ export interface InventoryItemResponse {
 export type PaginatedInventoryItemsResponse =
   PaginatedResponse<InventoryItemResponse>;
 
-/** Body for API-056: POST /api/v1/inventory-items */
+/** Body for API-057: POST /api/v1/inventory-items */
 export interface CreateInventoryItemInput {
   /** required */
   productId: string;
@@ -136,13 +218,19 @@ export interface CreateInventoryItemInput {
   hubId: string;
   /** required */
   serialNumber: string;
+  /**
+   * UUID của màu thuộc product; bắt buộc nếu product có >1 màu.
+   * API-057 docs: "productColorId: tùy chọn; bắt buộc nếu product có >1 màu"
+   */
+  productColorId?: string;
   conditionGrade?: InventoryItemConditionGrade;
   staffNote?: string;
 }
 
-/** Body for API-059: PATCH /api/v1/inventory-items/{inventoryItemId} */
+/** Body for API-060: PATCH /api/v1/inventory-items/{inventoryItemId} */
 export interface UpdateInventoryItemInput {
   hubId?: string;
+  productColorId?: string;
   status?: InventoryItemStatus;
   conditionGrade?: InventoryItemConditionGrade;
   staffNote?: string;
