@@ -1,58 +1,133 @@
 'use client';
 
-/**
- * ConfirmedWorkflow — Trạng thái PREPARING
- *
- * DELIVERY WORKFLOW - STEP 2/4
- *
- * Staff đã xác nhận nhận đơn từ trạng thái PAID.
- * Bây giờ staff đến hub/kho để:
- * 1. Lấy đúng thiết bị theo danh sách (kiểm tra serial numbers)
- * 2. Chụp ảnh CHECKOUT của từng thiết bị (bằng chứng nó ở tình trạng tốt trước khi giao)
- * 3. Chuẩn bị bao bì/vận chuyển
- *
- * Sau khi xác nhận, staff bấm "Bắt đầu giao hàng" → DELIVERING
- * API: updateOrderStatus(orderId, 'DELIVERING')
- */
-
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import {
   Warehouse,
-  MapPin,
-  Phone,
   Package,
-  Truck,
-  Loader2,
   Camera,
   CheckCircle2,
-  Hash,
-  Navigation,
+  Loader2,
+  MapPin,
+  Building2,
+  Info,
+  Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { WorkflowBanner } from '../WorkflowBanner';
-import { Section } from '../Section';
-import { InfoRow } from '../InfoRow';
-import { CameraCapture } from '../CameraCapture';
 import { cn } from '@/lib/utils';
-import type { DashboardOrder } from '@/types/dashboard.types';
+import type { DashboardOrder, OrderItem } from '@/types/dashboard.types';
+import { WorkflowBanner } from '../WorkflowBanner';
+import { CameraCapture } from '../CameraCapture';
 import type { HubResponse } from '@/api/hubs';
-import { fmt } from '../utils';
+
+interface ConfirmedWorkflowProps {
+  order: DashboardOrder;
+  hubInfo?: HubResponse | null;
+  onStartDelivery: () => void;
+  loading?: boolean;
+}
+
+function ItemPickupCard({
+  item,
+  photos,
+  onAdd,
+  onRemove,
+}: {
+  item: OrderItem;
+  photos: string[];
+  onAdd: (url: string) => void;
+  onRemove: (idx: number) => void;
+}) {
+  const hasPhoto = photos.length > 0;
+
+  return (
+    <div
+      className={cn(
+        'rounded-2xl border p-4 transition-colors',
+        hasPhoto
+          ? 'border-success/40 bg-success/5 dark:bg-success/5'
+          : 'border-border bg-card',
+      )}
+    >
+      {/* Item header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative size-12 shrink-0 rounded-xl overflow-hidden bg-muted border border-border">
+          {item.image_url ? (
+            <Image
+              src={item.image_url}
+              alt={item.product_name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="size-full flex items-center justify-center">
+              <Package className="size-5 text-muted-foreground/40" />
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-foreground truncate">
+            {item.product_name}
+          </p>
+          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+            {item.serial_number || '—'}
+          </p>
+        </div>
+        <div
+          className={cn(
+            'size-7 rounded-full flex items-center justify-center shrink-0 transition-colors',
+            hasPhoto
+              ? 'bg-success text-white'
+              : 'border-2 border-dashed border-border',
+          )}
+        >
+          {hasPhoto ? (
+            <CheckCircle2 className="size-4" />
+          ) : (
+            <Camera className="size-3.5 text-muted-foreground/50" />
+          )}
+        </div>
+      </div>
+
+      {/* Camera capture */}
+      <CameraCapture
+        photos={photos}
+        onAdd={onAdd}
+        onRemove={onRemove}
+        label="Chụp ảnh kiểm tra tại kho"
+      />
+    </div>
+  );
+}
 
 export function ConfirmedWorkflow({
   order,
   hubInfo,
   onStartDelivery,
   loading,
-}: {
-  order: DashboardOrder;
-  hubInfo: HubResponse | null;
-  onStartDelivery: () => void;
-  loading: boolean;
-}) {
-  // Per-item photos: record<itemId, string[]>
-  const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>({});
-  const [checkedOut, setCheckedOut] = useState(false);
+}: ConfirmedWorkflowProps) {
+  const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(order.items.map((i) => [i.rental_order_item_id, []])),
+  );
+
+  const itemsDone = order.items.filter(
+    (i) => (itemPhotos[i.rental_order_item_id]?.length ?? 0) > 0,
+  ).length;
+  const allPhotographed = itemsDone === order.items.length;
+
+  const handleAdd = useCallback((itemId: string, url: string) => {
+    setItemPhotos((prev) => ({
+      ...prev,
+      [itemId]: [...(prev[itemId] ?? []), url],
+    }));
+  }, []);
+
+  const handleRemove = useCallback((itemId: string, idx: number) => {
+    setItemPhotos((prev) => ({
+      ...prev,
+      [itemId]: (prev[itemId] ?? []).filter((_, j) => j !== idx),
+    }));
+  }, []);
 
   const hubAddress = hubInfo
     ? [hubInfo.addressLine, hubInfo.ward, hubInfo.district, hubInfo.city]
@@ -60,188 +135,163 @@ export function ConfirmedWorkflow({
         .join(', ')
     : null;
 
-  const addPhoto = (itemId: string, url: string) =>
-    setItemPhotos((prev) => ({
-      ...prev,
-      [itemId]: [...(prev[itemId] ?? []), url],
-    }));
-
-  const removePhoto = (itemId: string, idx: number) =>
-    setItemPhotos((prev) => ({
-      ...prev,
-      [itemId]: (prev[itemId] ?? []).filter((_, j) => j !== idx),
-    }));
-
-  const photographedCount = order.items.filter(
-    (i) => (itemPhotos[i.rental_order_item_id]?.length ?? 0) > 0,
-  ).length;
-
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
+      {/* Status banner */}
       <WorkflowBanner
         icon={Warehouse}
-        title="Đến hub lấy hàng để giao"
-        desc="Lấy đúng thiết bị theo danh sách bên dưới, chụp ảnh tình trạng từng thiết bị trước khi rời hub."
+        title="Chuẩn bị hàng tại kho hub"
+        desc="Đến hub lấy thiết bị và chụp ảnh kiểm tra từng sản phẩm. Tất cả thiết bị phải được chụp ảnh trước khi xuất kho."
         variant="primary"
       />
 
-      {/* ── Hub Info ── */}
-      {hubInfo ? (
-        <Section title={`Hub: ${hubInfo.name}`} icon={Warehouse} defaultOpen>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-3">
-            <InfoRow icon={Warehouse} label="Tên hub" value={hubInfo.name} />
+      {/* Hub info */}
+      {hubInfo && (
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
+            <Building2 className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thông tin kho hub
+            </h3>
+          </div>
+          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <Building2 className="size-4 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Tên hub
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {hubInfo.name}
+                </p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {hubInfo.code}
+                </p>
+              </div>
+            </div>
             {hubAddress && (
-              <InfoRow icon={MapPin} label="Địa chỉ" value={hubAddress} />
-            )}
-            {hubInfo.phone && (
-              <InfoRow
-                icon={Phone}
-                label="Điện thoại hub"
-                value={hubInfo.phone}
-              />
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2 mt-4">
-            {hubInfo.phone && (
-              <a
-                href={`tel:${hubInfo.phone}`}
-                className="inline-flex items-center gap-2 rounded-xl border border-success/30 bg-success/5 px-4 py-2.5 text-sm font-semibold text-success hover:bg-success/10 transition-colors"
-              >
-                <Phone className="size-4" /> Gọi Hub
-              </a>
-            )}
-            {hubInfo.latitude != null && hubInfo.longitude != null && (
-              <a
-                href={`https://maps.google.com/?q=${hubInfo.latitude},${hubInfo.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-              >
-                <Navigation className="size-4" /> Điều hướng đến Hub
-              </a>
+              <div className="flex items-start gap-3">
+                <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                  <MapPin className="size-4 text-theme-primary-start" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                    Địa chỉ
+                  </p>
+                  <p className="text-sm font-medium text-foreground leading-relaxed">
+                    {hubAddress}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
-        </Section>
-      ) : (
-        <div className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3 text-muted-foreground">
-          <Warehouse className="size-5 shrink-0" />
-          <p className="text-sm">Đang tải thông tin hub…</p>
         </div>
       )}
 
-      {/* ── Items + Photo capture ── */}
-      <Section
-        title={`Lấy hàng tại Hub (${order.items.length} thiết bị)`}
-        icon={Package}
-        defaultOpen
-        badge={
-          photographedCount > 0 ? (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-bold text-success">
-              <CheckCircle2 className="size-3" />
-              {photographedCount}/{order.items.length} đã chụp
+      {/* Progress indicator */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Camera className="size-4 text-theme-primary-start" />
+            <span className="text-sm font-bold text-foreground">
+              Tiến độ chụp ảnh kiểm kho
             </span>
-          ) : undefined
-        }
-      >
-        <div className="flex flex-col gap-5 pt-3">
-          {order.items.map((item) => {
-            const photos = itemPhotos[item.rental_order_item_id] ?? [];
-            const isPhotographed = photos.length > 0;
-
-            return (
-              <div
-                key={item.rental_order_item_id}
-                className={cn(
-                  'rounded-2xl border p-4 flex flex-col gap-3 transition-colors',
-                  isPhotographed
-                    ? 'border-success/30 bg-success/3 dark:bg-success/5'
-                    : 'border-border bg-muted/20',
-                )}
-              >
-                {/* Item header */}
-                <div className="flex items-center gap-3">
-                  <div className="relative size-12 shrink-0 rounded-xl overflow-hidden border border-border bg-muted">
-                    {item.image_url ? (
-                      <Image
-                        src={item.image_url}
-                        alt={item.product_name}
-                        fill
-                        className="object-cover"
-                        sizes="48px"
-                      />
-                    ) : (
-                      <div className="size-full flex items-center justify-center">
-                        <Camera className="size-4 text-muted-foreground/40" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground leading-snug">
-                      {item.product_name}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <Hash className="size-3 text-muted-foreground shrink-0" />
-                      <p className="text-xs font-mono text-muted-foreground">
-                        {item.serial_number || '—'}
-                      </p>
-                    </div>
-                    <p className="text-xs text-theme-primary-start font-semibold mt-0.5">
-                      {fmt(item.daily_price)}/ngày · Cọc:{' '}
-                      {fmt(item.deposit_amount)}
-                    </p>
-                  </div>
-                  {isPhotographed && (
-                    <CheckCircle2 className="size-5 text-success shrink-0 animate-in zoom-in-50 duration-200" />
-                  )}
-                </div>
-
-                {/* Camera */}
-                <CameraCapture
-                  photos={photos}
-                  onAdd={(url) => addPhoto(item.rental_order_item_id, url)}
-                  onRemove={(idx) =>
-                    removePhoto(item.rental_order_item_id, idx)
-                  }
-                  label="Chụp ảnh thiết bị tại hub (CHECKOUT)"
-                />
-              </div>
-            );
-          })}
+          </div>
+          <span
+            className={cn(
+              'text-sm font-black tabular-nums',
+              allPhotographed ? 'text-success' : 'text-muted-foreground',
+            )}
+          >
+            {itemsDone}/{order.items.length}
+          </span>
         </div>
-      </Section>
-
-      {/* ── Checklist ── */}
-      <label className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 cursor-pointer hover:bg-accent/40 transition-colors select-none">
-        <input
-          type="checkbox"
-          checked={checkedOut}
-          onChange={(e) => setCheckedOut(e.target.checked)}
-          className="mt-0.5 size-4 shrink-0 rounded accent-theme-primary-start"
-        />
-        <span className="text-sm text-muted-foreground leading-relaxed">
-          Tôi đã lấy đủ{' '}
-          <strong className="text-foreground">
-            {order.items.length} thiết bị
-          </strong>{' '}
-          khỏi hub, kiểm tra tình trạng và sẵn sàng bắt đầu giao hàng cho khách.
-        </span>
-      </label>
-
-      {/* ── CTA ── */}
-      <Button
-        onClick={onStartDelivery}
-        disabled={loading || !checkedOut}
-        size="lg"
-        className="w-full h-14 text-base font-bold gap-2 rounded-2xl disabled:opacity-50"
-      >
-        {loading ? (
-          <Loader2 className="size-5 animate-spin" />
-        ) : (
-          <Truck className="size-5" />
+        <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className={cn(
+              'h-full rounded-full transition-all duration-500',
+              allPhotographed ? 'bg-success' : 'bg-theme-primary-start',
+            )}
+            style={{
+              width: `${order.items.length > 0 ? (itemsDone / order.items.length) * 100 : 0}%`,
+            }}
+          />
+        </div>
+        {!allPhotographed && (
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
+            <Info className="size-3.5 shrink-0" />
+            Chụp ảnh tất cả {order.items.length} thiết bị để kích hoạt nút xuất
+            kho.
+          </p>
         )}
-        Bắt đầu giao hàng →
-      </Button>
+      </div>
+
+      {/* Items grid */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Kiểm tra thiết bị trước xuất kho
+            </h3>
+          </div>
+          <span className="text-xs font-bold bg-muted text-muted-foreground px-2.5 py-1 rounded-lg">
+            {order.items.length} thiết bị
+          </span>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {order.items.map((item) => (
+            <ItemPickupCard
+              key={item.rental_order_item_id}
+              item={item}
+              photos={itemPhotos[item.rental_order_item_id] ?? []}
+              onAdd={(url) => handleAdd(item.rental_order_item_id, url)}
+              onRemove={(idx) => handleRemove(item.rental_order_item_id, idx)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Action footer */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="text-sm text-muted-foreground">
+          {allPhotographed ? (
+            <span className="flex items-center gap-2 text-success font-semibold">
+              <CheckCircle2 className="size-4" />
+              Đã hoàn tất kiểm kho — sẵn sàng xuất hàng.
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <Camera className="size-4 shrink-0 text-muted-foreground" />
+              Còn {order.items.length - itemsDone} thiết bị chưa được chụp ảnh.
+            </span>
+          )}
+        </div>
+        <Button
+          onClick={onStartDelivery}
+          disabled={!allPhotographed || loading}
+          className={cn(
+            'h-12 gap-2 rounded-xl px-7 text-[15px] font-bold shrink-0 min-w-52',
+            allPhotographed
+              ? 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700'
+              : '',
+          )}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Đang xử lý…
+            </>
+          ) : (
+            <>
+              <Truck className="size-4" />
+              Xuất kho & Bắt đầu giao
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

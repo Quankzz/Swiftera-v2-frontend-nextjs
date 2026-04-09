@@ -133,6 +133,20 @@ export function normalizeError(error: unknown): AppError {
   return new AppError('UNKNOWN', 'Đã xảy ra lỗi không xác định.');
 }
 
+async function shouldAttemptSilentRefresh(res: Response): Promise<boolean> {
+  if (res.status !== 401) return false;
+
+  try {
+    const body = await res.clone().json();
+    const errors: Array<{ code?: number }> = Array.isArray(body?.errors)
+      ? body.errors
+      : [];
+    return errors.some((error) => error.code === 1005);
+  } catch {
+    return false;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth Token Helper
 // ─────────────────────────────────────────────────────────────────────────────
@@ -164,15 +178,22 @@ export function registerTokenAccessors(
 }
 
 function getAccessToken(): string | null {
-  // 1. Prefer in-memory Zustand token (most up-to-date, set after login / refresh)
   const storeToken = _getToken?.();
-  if (storeToken) return storeToken;
-  // 2. Fallback: localStorage token populated by the existing Axios/AuthContext auth system
-  //    This covers the brief window before Zustand is hydrated on page load.
+
+  // After silent refresh, localStorage is updated immediately, while Zustand may
+  // still hold the previous token for a short window. If both exist but differ,
+  // prefer the localStorage token to avoid retrying with stale credentials.
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('accessToken');
+    const storageToken = localStorage.getItem('accessToken');
+    if (storageToken && storageToken !== storeToken) {
+      return storageToken;
+    }
+    if (storageToken) {
+      return storageToken;
+    }
   }
-  return null;
+
+  return storeToken ?? null;
 }
 
 // ─── Silent token refresh ─────────────────────────────────────────────────────
@@ -329,6 +350,7 @@ async function request<T>(
   endpoint: string,
   options: ApiRequestOptions = {},
   _isRetry = false,
+  _retryToken?: string,
 ): Promise<T> {
   const { params, body, headers: extraHeaders, signal, skipAuth } = options;
 
@@ -341,7 +363,7 @@ async function request<T>(
 
   // Auto-attach Authorization header
   if (!skipAuth) {
-    const token = getAccessToken();
+    const token = _retryToken ?? getAccessToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -379,6 +401,11 @@ async function request<T>(
 
   // ── 401 handling: attempt silent token refresh then retry once ──────────────
   if (res.status === 401 && !skipAuth && !_isRetry) {
+    const canRefresh = await shouldAttemptSilentRefresh(res);
+    if (!canRefresh) {
+      throw await mapApiError(res);
+    }
+
     console.log('[request] got 401, attempting silent refresh...');
 
     // Attempt refresh: this is a singleton promise, so concurrent 401s
@@ -387,10 +414,7 @@ async function request<T>(
 
     if (refreshResult?.token) {
       console.log('[request] refresh succeeded, retrying with new token');
-      // CRITICAL: After refresh, retry the original request
-      // The new token is now in localStorage and Zustand, so getAccessToken()
-      // will return the fresh token in the next request() call
-      return request<T>(method, endpoint, options, true);
+      return request<T>(method, endpoint, options, true, refreshResult.token);
     }
 
     // Refresh failed — clear auth and throw so UI redirects to login

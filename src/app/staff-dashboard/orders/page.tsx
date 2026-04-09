@@ -22,6 +22,7 @@ import { STATUS_CFG } from '@/lib/order-status';
 import { fmt, fmtDateShort } from '@/lib/formatters';
 import { getStaffOrders } from '@/api/staff-orders';
 import { useAuthStore } from '@/stores/auth-store';
+import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ function OrdersPageInner() {
 
   const { user, isAuthenticated } = useAuthStore();
   const staffId = user?.userId ?? null;
+  const setCounts = useStaffOrderCounts((s) => s.setCounts);
 
   useEffect(() => {
     // Auth bootstrap not finished yet — keep showing spinner
@@ -89,6 +91,12 @@ function OrdersPageInner() {
         if (cancelled) return;
         console.log('[OrdersPage] orders loaded:', orders.length);
         setAllOrders(orders);
+        // Populate sidebar counts
+        const counts: Partial<Record<OrderStatus, number>> = {};
+        for (const o of orders) {
+          counts[o.status] = (counts[o.status] ?? 0) + 1;
+        }
+        setCounts(counts);
       } catch (err) {
         if (cancelled) return;
         console.error('[OrdersPage] load error:', err);

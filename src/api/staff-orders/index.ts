@@ -1,15 +1,3 @@
-/**
- * Staff Orders API
- *
- * Handles all rental-order operations needed by the staff dashboard:
- *  - Listing orders assigned to the current staff member
- *  - Fetching a single order by ID
- *  - Transition actions: confirm, start delivery, record delivery, record pickup, set penalty
- *
- * Includes an adapter that maps backend RentalOrderResponse → DashboardOrder
- * so the existing UI components remain unchanged.
- */
-
 import { apiGet, apiPatch, apiPost } from '@/api/apiService';
 import type {
   PaginationResponse,
@@ -47,6 +35,25 @@ export interface RecordPickupRequest {
 
 export interface SetPenaltyRequest {
   penaltyTotal: number;
+  note?: string;
+}
+
+export type StaffTransitionTargetStatus = Extract<
+  OrderStatus,
+  | 'PREPARING'
+  | 'DELIVERING'
+  | 'DELIVERED'
+  | 'PICKING_UP'
+  | 'PICKED_UP'
+  | 'COMPLETED'
+>;
+
+export interface ApplyStaffOrderTransitionRequest {
+  orderId: string;
+  targetStatus: StaffTransitionTargetStatus;
+  latitude?: number;
+  longitude?: number;
+  penaltyTotal?: number;
   note?: string;
 }
 
@@ -355,13 +362,14 @@ export async function getStaffOrderById(
  * Staff transitions (doc 09 API-078):
  *   PAID → PREPARING  (staff confirms and starts preparing)
  *   PREPARING → DELIVERING  (staff picks up from hub, starts delivery)
- *   IN_USE / PENDING_PICKUP → PICKING_UP  (staff starts pickup)
+ *   PENDING_PICKUP → PICKING_UP  (staff starts pickup)
  *   PICKED_UP → COMPLETED  (inspection done at hub, order finalized)
  */
 export async function updateOrderStatus(
   orderId: string,
   status: RentalOrderApiStatus,
 ): Promise<DashboardOrder | null> {
+  console.log('[staff-orders] PATCH status', { orderId, status });
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/status`,
     { status } satisfies UpdateStatusRequest,
@@ -379,6 +387,7 @@ export async function recordDelivery(
   orderId: string,
   data: RecordDeliveryRequest = {},
 ): Promise<DashboardOrder | null> {
+  console.log('[staff-orders] PATCH record-delivery', { orderId, data });
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/record-delivery`,
     data,
@@ -396,6 +405,7 @@ export async function recordPickup(
   orderId: string,
   data: RecordPickupRequest = {},
 ): Promise<DashboardOrder | null> {
+  console.log('[staff-orders] PATCH record-pickup', { orderId, data });
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/record-pickup`,
     data,
@@ -412,11 +422,73 @@ export async function setPenalty(
   orderId: string,
   data: SetPenaltyRequest,
 ): Promise<DashboardOrder | null> {
+  console.log('[staff-orders] PATCH set-penalty', { orderId, data });
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/set-penalty`,
     data,
   );
   return res ? adaptOrder(res) : null;
+}
+
+/**
+ * Resolve one staff workflow step to the correct backend endpoint.
+ * This keeps UI code from spreading transition-specific API knowledge.
+ */
+export async function applyStaffOrderTransition({
+  orderId,
+  targetStatus,
+  latitude,
+  longitude,
+  penaltyTotal,
+  note,
+}: ApplyStaffOrderTransitionRequest): Promise<DashboardOrder | null> {
+  console.log('[staff-orders] apply transition', {
+    orderId,
+    targetStatus,
+    latitude,
+    longitude,
+    penaltyTotal,
+    note,
+  });
+
+  switch (targetStatus) {
+    case 'DELIVERED':
+      return recordDelivery(orderId, {
+        deliveredLatitude: latitude,
+        deliveredLongitude: longitude,
+      });
+
+    case 'PICKED_UP':
+      if (penaltyTotal !== undefined || note) {
+        await setPenalty(orderId, {
+          penaltyTotal: penaltyTotal ?? 0,
+          note,
+        });
+      }
+      return recordPickup(orderId, {
+        pickedUpLatitude: latitude,
+        pickedUpLongitude: longitude,
+      });
+
+    case 'COMPLETED':
+      if (penaltyTotal !== undefined || note) {
+        await setPenalty(orderId, {
+          penaltyTotal: penaltyTotal ?? 0,
+          note,
+        });
+      }
+      return updateOrderStatus(orderId, 'COMPLETED');
+
+    case 'PREPARING':
+    case 'DELIVERING':
+    case 'PICKING_UP':
+      return updateOrderStatus(orderId, targetStatus);
+
+    default:
+      throw new Error(
+        `Transition không được hỗ trợ cho staff: ${targetStatus}`,
+      );
+  }
 }
 
 /**

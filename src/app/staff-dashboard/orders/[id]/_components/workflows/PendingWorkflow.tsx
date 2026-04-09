@@ -1,244 +1,253 @@
 'use client';
 
-/**
- * PendingWorkflow — Trạng thái PAID
- *
- * DELIVERY WORKFLOW - STEP 1/4
- *
- * Đơn hàng đã được thanh toán và được phân công cho shipper (staff).
- * Staff xem kỹ thông tin đơn hàng:
- * - Thông tin khách hàng
- * - Danh sách sản phẩm cần chuẩn bị
- * - Thời hạn thuê
- * - Yêu cầu đặc biệt từ khách
- *
- * Sau khi xác nhận, staff bấm "Nhận đơn & Chuẩn bị hàng" → PREPARING
- * API: updateOrderStatus(orderId, 'PREPARING')
- */
-
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import {
-  ClipboardList,
+  ClipboardCheck,
   User,
   Phone,
   MapPin,
   Calendar,
   Package,
-  CheckCircle2,
-  Loader2,
   Banknote,
-  Camera,
-  Hash,
+  Clock,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { WorkflowBanner } from '../WorkflowBanner';
-import { Section } from '../Section';
-import { InfoRow } from '../InfoRow';
 import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { fmt, fmtDate } from '../utils';
+import { WorkflowBanner } from '../WorkflowBanner';
+
+interface PendingWorkflowProps {
+  order: DashboardOrder;
+  onConfirm: () => void;
+  loading?: boolean;
+}
 
 export function PendingWorkflow({
   order,
   onConfirm,
   loading,
-}: {
-  order: DashboardOrder;
-  onConfirm: () => void;
-  loading: boolean;
-}) {
-  const [checked, setChecked] = useState(false);
-
+}: PendingWorkflowProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
+      {/* Status banner */}
       <WorkflowBanner
-        icon={ClipboardList}
-        title="Đơn hàng chờ bạn xác nhận"
-        desc="Kiểm tra kỹ thông tin đơn hàng và danh sách sản phẩm trước khi nhận đơn và bắt đầu chuẩn bị hàng tại hub."
+        icon={ClipboardCheck}
+        title="Xác nhận tiếp nhận đơn hàng"
+        desc="Đơn hàng đã được thanh toán và chờ nhân viên xác nhận. Kiểm tra thông tin khách hàng, địa chỉ giao và danh sách sản phẩm trước khi tiến hành."
         variant="warning"
       />
 
-      {/* ── Customer Info ── */}
-      <Section title="Thông tin khách hàng" icon={User} defaultOpen>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-3">
-          <InfoRow
-            icon={User}
-            label="Người nhận hàng"
-            value={order.renter.full_name}
-          />
-          <InfoRow
-            icon={Phone}
-            label="Số điện thoại"
-            value={order.renter.phone_number}
-          />
-          <div className="sm:col-span-2">
-            <InfoRow
-              icon={MapPin}
-              label="Địa chỉ giao hàng"
-              value={order.delivery_address ?? order.renter.address ?? '—'}
-            />
+      {/* Main info grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Customer & Delivery info */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
+            <User className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thông tin khách hàng & giao hàng
+            </h3>
           </div>
-          <InfoRow
-            icon={Calendar}
-            label="Ngày bắt đầu thuê"
-            value={fmtDate(order.start_date)}
-          />
-          <InfoRow
-            icon={Calendar}
-            label="Ngày kết thúc thuê"
-            value={fmtDate(order.end_date)}
-          />
-          <InfoRow
-            icon={Banknote}
-            label="Phí thuê"
-            value={fmt(order.total_rental_fee)}
-          />
-          <InfoRow
-            icon={Banknote}
-            label="Tiền đặt cọc"
-            value={fmt(order.total_deposit)}
-          />
+          <div className="p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <User className="size-4 text-theme-primary-start" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Người nhận
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {order.renter.full_name}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <Phone className="size-4 text-theme-primary-start" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Điện thoại
+                </p>
+                <p className="text-sm font-semibold text-foreground font-mono">
+                  {order.renter.phone_number}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <MapPin className="size-4 text-theme-primary-start" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Địa chỉ giao hàng
+                </p>
+                <p className="text-sm font-medium text-foreground leading-relaxed">
+                  {order.delivery_address || order.renter.address || '—'}
+                </p>
+              </div>
+            </div>
+            {order.notes && (
+              <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30 px-4 py-3">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">
+                  Ghi chú giao hàng
+                </p>
+                <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
+                  {order.notes}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-        {order.notes && (
-          <div className="mt-3 rounded-xl border border-yellow-200/60 dark:border-yellow-800/40 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
-            <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400 mb-1 uppercase tracking-widest">
-              Ghi chú của khách
-            </p>
-            <p className="text-sm text-foreground leading-relaxed">
-              {order.notes}
-            </p>
-          </div>
-        )}
-      </Section>
 
-      {/* ── Items List ── */}
-      <Section
-        title={`Sản phẩm cần chuẩn bị (${order.items.length} thiết bị)`}
-        icon={Package}
-        defaultOpen
-      >
-        <div className="flex flex-col divide-y divide-border/40 pt-2">
+        {/* Order Summary */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
+            <Calendar className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Tóm tắt đơn hàng
+            </h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-muted/50 px-4 py-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Ngày bắt đầu
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {fmtDate(order.start_date)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-muted/50 px-4 py-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Ngày kết thúc
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {fmtDate(order.end_date)}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Package className="size-3.5" /> Số lượng sản phẩm
+                </span>
+                <span className="text-sm font-bold text-foreground">
+                  {order.items.length} thiết bị
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Banknote className="size-3.5" /> Phí thuê
+                </span>
+                <span className="text-sm font-bold text-foreground">
+                  {fmt(order.total_rental_fee)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Banknote className="size-3.5" /> Tiền đặt cọc
+                </span>
+                <span className="text-sm font-bold text-foreground">
+                  {fmt(order.total_deposit)}
+                </span>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-border/50">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">
+                  Tổng thanh toán
+                </span>
+                <span className="text-base font-black text-theme-primary-start">
+                  {fmt(order.total_rental_fee + order.total_deposit)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Items list */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Danh sách thiết bị
+            </h3>
+          </div>
+          <span className="text-xs font-bold bg-muted text-muted-foreground px-2.5 py-1 rounded-lg">
+            {order.items.length} thiết bị
+          </span>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {order.items.map((item) => (
             <div
               key={item.rental_order_item_id}
-              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition-colors"
             >
-              {/* Thumbnail */}
-              <div className="relative size-14 shrink-0 rounded-xl overflow-hidden border border-border bg-muted">
+              <div className="relative size-12 shrink-0 rounded-xl overflow-hidden bg-muted border border-border">
                 {item.image_url ? (
                   <Image
                     src={item.image_url}
                     alt={item.product_name}
                     fill
                     className="object-cover"
-                    sizes="56px"
                   />
                 ) : (
                   <div className="size-full flex items-center justify-center">
-                    <Camera className="size-5 text-muted-foreground/40" />
+                    <Package className="size-5 text-muted-foreground/40" />
                   </div>
                 )}
               </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-foreground leading-snug truncate">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground truncate">
                   {item.product_name}
                 </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <Hash className="size-3 text-muted-foreground shrink-0" />
-                  <p className="text-xs font-mono text-muted-foreground truncate">
-                    {item.serial_number || 'Chưa có serial'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Pricing */}
-              <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-theme-primary-start tabular-nums">
-                  {fmt(item.daily_price)}/ng
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {item.serial_number || '—'}
                 </p>
-                <p className="text-xs text-muted-foreground tabular-nums">
-                  Cọc: {fmt(item.deposit_amount)}
+                <p className="text-xs font-semibold text-theme-primary-start mt-1">
+                  Cọc {fmt(item.deposit_amount)}
                 </p>
               </div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* ── Financial Summary ── */}
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">
-          Tổng quan tài chính
-        </p>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          {[
-            {
-              label: 'Phí thuê',
-              value: fmt(order.total_rental_fee),
-              color: 'text-foreground',
-            },
-            {
-              label: 'Tiền cọc',
-              value: fmt(order.total_deposit),
-              color: 'text-info',
-            },
-            {
-              label: 'Tổng cộng',
-              value: fmt(order.total_rental_fee + order.total_deposit),
-              color: 'text-theme-primary-start',
-            },
-          ].map((row) => (
-            <div
-              key={row.label}
-              className="rounded-xl bg-muted/40 px-2 py-3 flex flex-col items-center"
-            >
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                {row.label}
-              </p>
-              <p
-                className={cn(
-                  'text-base font-black tabular-nums leading-none',
-                  row.color,
-                )}
-              >
-                {row.value}
-              </p>
+              <ChevronRight className="size-4 text-muted-foreground shrink-0" />
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Confirm Checklist ── */}
-      <label className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 cursor-pointer hover:bg-accent/40 transition-colors select-none">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => setChecked(e.target.checked)}
-          className="mt-0.5 size-4 shrink-0 rounded accent-amber-500"
-        />
-        <span className="text-sm text-muted-foreground leading-relaxed">
-          Tôi đã kiểm tra thông tin đơn hàng, xác nhận danh sách sản phẩm và sẽ
-          chuẩn bị giao đơn này.
-        </span>
-      </label>
-
-      {/* ── CTA ── */}
-      <Button
-        onClick={onConfirm}
-        disabled={loading || !checked}
-        size="lg"
-        className="w-full h-14 text-base font-bold gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50"
-      >
-        {loading ? (
-          <Loader2 className="size-5 animate-spin" />
-        ) : (
-          <CheckCircle2 className="size-5" />
-        )}
-        Xác nhận nhận đơn → Bắt đầu chuẩn bị hàng
-      </Button>
+      {/* Action footer */}
+      <div className="rounded-2xl border border-border bg-card px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Clock className="size-4 shrink-0" />
+          <span>Xác nhận để bắt đầu chuẩn bị hàng tại kho hub.</span>
+        </div>
+        <Button
+          onClick={onConfirm}
+          disabled={loading}
+          className={cn(
+            'h-12 gap-2 rounded-xl px-7 text-[15px] font-bold shrink-0 min-w-50',
+            'bg-amber-500 hover:bg-amber-600 text-white dark:bg-amber-500 dark:hover:bg-amber-600',
+          )}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Đang xử lý…
+            </>
+          ) : (
+            <>
+              <ClipboardCheck className="size-4" />
+              Xác nhận tiếp nhận
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

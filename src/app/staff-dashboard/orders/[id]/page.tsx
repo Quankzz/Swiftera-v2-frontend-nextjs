@@ -19,10 +19,8 @@ import { cn } from '@/lib/utils';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import {
   getStaffOrderById,
-  updateOrderStatus,
-  recordDelivery,
-  recordPickup,
-  setPenalty,
+  applyStaffOrderTransition,
+  type StaffTransitionTargetStatus,
 } from '@/api/staff-orders';
 import { getHubById } from '@/api/hubs';
 import type { HubResponse } from '@/api/hubs';
@@ -40,7 +38,6 @@ import { DeliveringWorkflow } from './_components/workflows/DeliveringWorkflow';
 import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
 import { ActiveWorkflow } from './_components/workflows/ActiveWorkflow';
 import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
-import { PickedUpWorkflow } from './_components/workflows/PickedUpWorkflow';
 import { CompletedWorkflow } from './_components/workflows/CompletedWorkflow';
 
 export default function OrderDetailPage({
@@ -56,14 +53,6 @@ export default function OrderDetailPage({
   const [pageError, setPageError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-  const [pickupInspectionSaved, setPickupInspectionSaved] =
-    useState<boolean>(false);
-
-  useEffect(() => {
-    if (order?.status !== 'PICKED_UP') {
-      setPickupInspectionSaved(false);
-    }
-  }, [order?.status]);
 
   useEffect(() => {
     if (!user?.userId) {
@@ -142,39 +131,38 @@ export default function OrderDetailPage({
   }, [order?.status]);
 
   const handleStatusChange = useCallback(
-    async (newStatus: OrderStatus, extra?: Partial<DashboardOrder>) => {
+    async (
+      newStatus: StaffTransitionTargetStatus,
+      options?: {
+        extra?: Partial<DashboardOrder>;
+        penaltyTotal?: number;
+        note?: string;
+      },
+    ) => {
       if (!order) return;
       setStatusLoading(true);
       setActionError(null);
       try {
-        let updated: DashboardOrder | null = null;
-        if (newStatus === 'DELIVERED') {
-          // DELIVERING → DELIVERED: use record-delivery endpoint
-          updated = await recordDelivery(order.rental_order_id, {
-            deliveredLatitude: localLat,
-            deliveredLongitude: localLng,
-          });
-        } else if (newStatus === 'PICKED_UP') {
-          // PICKING_UP → PICKED_UP: use record-pickup endpoint
-          updated = await recordPickup(order.rental_order_id, {
-            pickedUpLatitude: localLat,
-            pickedUpLongitude: localLng,
-          });
-        } else {
-          // All other transitions via PATCH /status
-          updated = await updateOrderStatus(
-            order.rental_order_id,
-            newStatus as Parameters<typeof updateOrderStatus>[1],
+        console.log('[order-detail] handleStatusChange', {
+          orderId: order.rental_order_id,
+          currentStatus: order.status,
+          nextStatus: newStatus,
+          options,
+        });
+        const updated = await applyStaffOrderTransition({
+          orderId: order.rental_order_id,
+          targetStatus: newStatus,
+          latitude: localLat,
+          longitude: localLng,
+          penaltyTotal: options?.penaltyTotal,
+          note: options?.note,
+        });
+        if (!updated) {
+          throw new Error(
+            'API không trả về dữ liệu cập nhật trạng thái đơn hàng',
           );
         }
-        if (updated) {
-          setOrder({ ...updated, ...extra });
-        } else {
-          // Optimistic fallback if API returns null
-          setOrder((prev) =>
-            prev ? { ...prev, status: newStatus, ...extra } : prev,
-          );
-        }
+        setOrder({ ...updated, ...options?.extra });
       } catch (err) {
         setActionError(
           err instanceof Error ? err.message : 'Không thể cập nhật trạng thái',
@@ -186,75 +174,20 @@ export default function OrderDetailPage({
     [order, localLat, localLng],
   );
 
-  const handleDepositRefund = useCallback(async () => {
-    if (!order) return;
-    setStatusLoading(true);
-    setActionError(null);
-    try {
-      const updated = await setPenalty(order.rental_order_id, {
+  const handleSettlementUpdate = useCallback(
+    async (refundNote?: string) => {
+      if (!order) return;
+      await handleStatusChange('COMPLETED', {
         penaltyTotal: order.total_penalty_amount ?? 0,
+        note: refundNote,
+        extra: {
+          total_penalty_amount: order.total_penalty_amount ?? 0,
+          deposit_refund_status: 'REFUNDED',
+        },
       });
-      setOrder((prev) =>
-        prev
-          ? { ...(updated ?? prev), deposit_refund_status: 'REFUNDED' }
-          : prev,
-      );
-    } catch (err) {
-      setActionError(
-        err instanceof Error
-          ? err.message
-          : 'Không thể xác nhận hoàn tiền/chi phí',
-      );
-    } finally {
-      setStatusLoading(false);
-    }
-  }, [order]);
-
-  /**
-   * PICKED_UP → COMPLETED (doc 09: direct transition, no intermediate INSPECTING):
-   * 1. setPenalty with the final penalty total from PickedUpWorkflow
-   * 2. updateOrderStatus('COMPLETED')
-   */
-  const handleSavePickupInspection = useCallback(async () => {
-    if (!order) return;
-    setStatusLoading(true);
-    setActionError(null);
-    try {
-      await setPenalty(order.rental_order_id, {
-        penaltyTotal: order.total_penalty_amount ?? 0,
-      });
-      setPickupInspectionSaved(true);
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : 'Không thể lưu dữ liệu kiểm chứng',
-      );
-    } finally {
-      setStatusLoading(false);
-    }
-  }, [order]);
-
-  const handleFinalizeCompleted = useCallback(async () => {
-    if (!order) return;
-    setStatusLoading(true);
-    setActionError(null);
-    try {
-      const updated = await updateOrderStatus(
-        order.rental_order_id,
-        'COMPLETED',
-      );
-      if (updated) {
-        setOrder(updated);
-      } else {
-        setOrder((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev));
-      }
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : 'Không thể hoàn tất đơn hàng',
-      );
-    } finally {
-      setStatusLoading(false);
-    }
-  }, [order]);
+    },
+    [order, handleStatusChange],
+  );
 
   if (pageLoading) {
     return (
@@ -476,7 +409,9 @@ export default function OrderDetailPage({
                   order={order}
                   onConfirm={() =>
                     handleStatusChange('PREPARING', {
-                      staff_checkin_id: user?.userId,
+                      extra: {
+                        staff_checkin_id: user?.userId,
+                      },
                     })
                   }
                   loading={statusLoading}
@@ -504,11 +439,7 @@ export default function OrderDetailPage({
             )}
 
             {order.status === 'DELIVERED' && (
-              <DeliveredWorkflow
-                order={order}
-                loading={statusLoading}
-                onConfirmHandover={() => handleStatusChange('IN_USE')}
-              />
+              <DeliveredWorkflow order={order} loading={statusLoading} />
             )}
 
             {/* ── Pickup staff workflows ─── */}
@@ -532,11 +463,23 @@ export default function OrderDetailPage({
             {order.status === 'PICKING_UP' && (
               <ReturningWorkflow
                 order={order}
-                onCompleteReturn={() =>
-                  handleStatusChange('PICKED_UP', {
-                    staff_checkout_id: user?.userId,
-                  })
-                }
+                onCompleteReturn={async (penaltyTotal?: number) => {
+                  try {
+                    await handleStatusChange('PICKED_UP', {
+                      extra: {
+                        staff_checkout_id: user?.userId,
+                        total_penalty_amount: penaltyTotal ?? 0,
+                      },
+                      penaltyTotal,
+                    });
+                  } catch (err) {
+                    setActionError(
+                      err instanceof Error
+                        ? err.message
+                        : 'Lỗi khi lưu dữ liệu hoàn trả',
+                    );
+                  }
+                }}
                 loading={statusLoading}
                 staffLat={localLat}
                 staffLng={localLng}
@@ -545,24 +488,18 @@ export default function OrderDetailPage({
             )}
 
             {order.status === 'PICKED_UP' && (
-              <PickedUpWorkflow
-                order={order}
-                onSaveInspection={handleSavePickupInspection}
-                loading={statusLoading}
-              />
-            )}
-
-            {order.status === 'PICKED_UP' && pickupInspectionSaved && (
               <CompletedWorkflow
                 order={order}
-                onDepositRefund={handleFinalizeCompleted}
+                onDepositRefund={handleSettlementUpdate}
+                loading={statusLoading}
               />
             )}
 
             {order.status === 'COMPLETED' && (
               <CompletedWorkflow
                 order={order}
-                onDepositRefund={handleDepositRefund}
+                onDepositRefund={handleSettlementUpdate}
+                loading={statusLoading}
               />
             )}
 

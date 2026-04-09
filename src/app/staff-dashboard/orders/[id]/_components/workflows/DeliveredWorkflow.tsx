@@ -1,214 +1,228 @@
 'use client';
 
-/**
- * DeliveredWorkflow — Trạng thái DELIVERED
- *
- * DELIVERY WORKFLOW - STEP 4/4 (END OF DELIVERY STAFF WORKFLOW)
- *
- * Staff đã giao hàng thành công cho khách. Bây giờ chờ khách xác nhận trên ứng dụng.
- *
- * Quy trình tiếp theo (diễn ra ở phía KHÁCH, KHÔNG hiển thị ở dashboard staff):
- * 1. Khách xác nhận đã nhận được hàng → Đơn chuyển sang IN_USE (Đang thuê)
- * 2. Khách sử dụng sản phẩm trong thời hạn thuê
- * 3. Khi hết hạn hoặc khách muốn trả sớm → Khách bấm "Trả hàng"
- *    → Đơn chuyển sang PENDING_PICKUP (Staff sẽ thấy trong mục "Thu hồi")
- *
- * Lưu ý: Staff có thể chụp ảnh bàn giao để làm bằng chứng giao hàng thành công
- * (local state, không gửi lên server).
- */
-
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   CheckCircle2,
-  Package,
-  Camera,
-  Info,
+  MapPin,
   User,
   Phone,
   Calendar,
-  Hash,
-  Loader2,
+  Package,
+  Banknote,
+  ArrowRight,
+  Clock,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { WorkflowBanner } from '../WorkflowBanner';
-import { Section } from '../Section';
-import { InfoRow } from '../InfoRow';
-import { CameraCapture } from '../CameraCapture';
+import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
-import { fmtDate } from '../utils';
+import { fmt, fmtDate } from '../utils';
 
-export function DeliveredWorkflow({
-  order,
-  onConfirmHandover,
-  loading,
-}: {
+interface DeliveredWorkflowProps {
   order: DashboardOrder;
-  onConfirmHandover: () => void;
-  loading: boolean;
-}) {
-  const [handoverPhotos, setHandoverPhotos] = useState<string[]>([]);
-  const [checked, setChecked] = useState(false);
+  /** kept for compat but unused — customer-side confirmation is not required */
+  onConfirmHandover?: () => void;
+  loading?: boolean;
+}
 
+export function DeliveredWorkflow({ order }: DeliveredWorkflowProps) {
   return (
-    <div className="flex flex-col gap-4">
-      <WorkflowBanner
-        icon={CheckCircle2}
-        title="Đã giao hàng thành công"
-        desc="Thiết bị đã được bàn giao cho khách hàng. Đang chờ khách xác nhận đã nhận hàng trên ứng dụng."
-        variant="success"
-      />
-
-      {/* ── Handover Photo Evidence ── */}
-      <Section
-        title="Ảnh bàn giao (bằng chứng giao hàng)"
-        icon={Camera}
-        defaultOpen
-      >
-        <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-          Chụp ảnh xác nhận bàn giao thiết bị cho khách để lưu làm bằng chứng.
-          Bao gồm ảnh thiết bị đang được cầm/nhận bởi khách, ảnh hóa đơn (nếu
-          có).
-        </p>
-        <CameraCapture
-          photos={handoverPhotos}
-          onAdd={(url) => setHandoverPhotos((p) => [...p, url])}
-          onRemove={(i) =>
-            setHandoverPhotos((p) => p.filter((_, j) => j !== i))
-          }
-          label="Chụp ảnh bàn giao cho khách"
-        />
-        {handoverPhotos.length > 0 && (
-          <p className="text-xs text-success font-semibold flex items-center gap-1.5 mt-3">
-            <CheckCircle2 className="size-3.5" />
-            {handoverPhotos.length} ảnh bằng chứng đã chụp
+    <div className="space-y-4">
+      {/* Success banner */}
+      <div className="rounded-2xl border border-success/30 bg-success/8 dark:bg-success/5 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+        <div className="size-16 rounded-2xl bg-success/15 flex items-center justify-center shrink-0">
+          <CheckCircle2 className="size-8 text-success" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-black text-success mb-1 leading-tight">
+            Giao hàng thành công
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Đơn hàng{' '}
+            <span className="font-mono font-bold text-foreground">
+              {order.order_code}
+            </span>{' '}
+            đã được giao đến khách hàng. Hệ thống sẽ tự động cập nhật trạng thái
+            thuê khi khách xác nhận.
           </p>
-        )}
-      </Section>
-
-      <label className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 cursor-pointer hover:bg-accent/40 transition-colors select-none">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => setChecked(e.target.checked)}
-          className="mt-0.5 size-4 shrink-0 rounded accent-teal-600"
-        />
-        <span className="text-sm text-muted-foreground leading-relaxed">
-          Tôi đã bàn giao xong và lưu ảnh bằng chứng. Xác nhận chuyển đơn sang
-          trạng thái Đang thuê (IN_USE).
-        </span>
-      </label>
-
-      <Button
-        onClick={onConfirmHandover}
-        disabled={loading || !checked}
-        size="lg"
-        className="w-full h-14 text-base font-bold gap-2 rounded-2xl bg-success hover:bg-success/90 text-white disabled:opacity-50"
-      >
-        {loading ? (
-          <Loader2 className="size-5 animate-spin" />
-        ) : (
-          <CheckCircle2 className="size-5" />
-        )}
-        Xác nhận bàn giao xong → chuyển IN_USE
-      </Button>
-
-      {/* ── Next Step Info ── */}
-      <div className="rounded-2xl border border-info/30 bg-info/5 p-4 flex items-start gap-3">
-        <Info className="size-5 text-info shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-bold text-foreground mb-1.5">
-            Quy trình tiếp theo
-          </p>
-          <ol className="text-sm text-muted-foreground leading-relaxed space-y-1.5 list-none">
-            <li className="flex items-start gap-2">
-              <span className="size-4 rounded-full bg-info/20 text-info text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                1
-              </span>
-              Khách hàng sẽ xác nhận đã nhận được hàng trên ứng dụng → Đơn
-              chuyển sang <strong className="text-foreground">Đang thuê</strong>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="size-4 rounded-full bg-info/20 text-info text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                2
-              </span>
-              Khi khách nhấn &quot;Trả hàng&quot; → Đơn chuyển sang{' '}
-              <strong className="text-foreground">Chờ thu hồi</strong> và xuất
-              hiện trong mục thu hồi của bạn
-            </li>
-          </ol>
         </div>
       </div>
 
-      {/* ── Order Summary ── */}
-      <Section title="Thông tin đơn hàng" icon={User} defaultOpen={false}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-3">
-          <InfoRow
-            icon={User}
-            label="Khách hàng"
-            value={order.renter.full_name}
-          />
-          <InfoRow
-            icon={Phone}
-            label="Điện thoại"
-            value={order.renter.phone_number}
-          />
-          <InfoRow
-            icon={Calendar}
-            label="Ngày bắt đầu"
-            value={fmtDate(order.start_date)}
-          />
-          <InfoRow
-            icon={Calendar}
-            label="Hạn trả"
-            value={fmtDate(order.end_date)}
-          />
+      {/* Delivery summary grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Customer info */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
+            <User className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thông tin giao hàng
+            </h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <User className="size-4 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Người nhận
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {order.renter.full_name}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <Phone className="size-4 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Điện thoại
+                </p>
+                <p className="text-sm font-semibold text-foreground font-mono">
+                  {order.renter.phone_number}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <MapPin className="size-4 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Địa chỉ đã giao
+                </p>
+                <p className="text-sm font-medium text-foreground leading-relaxed">
+                  {order.delivery_address || order.renter.address || '—'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </Section>
 
-      {/* ── Items Delivered ── */}
-      <Section
-        title={`Thiết bị đã giao (${order.items.length})`}
-        icon={Package}
-        defaultOpen={false}
-      >
-        <div className="flex flex-col divide-y divide-border/40 pt-2">
+        {/* Order financials */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
+            <Banknote className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thông tin thanh toán
+            </h3>
+          </div>
+          <div className="p-5 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-muted/50 px-4 py-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  <Calendar className="size-3 inline mr-1" />
+                  Bắt đầu
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {fmtDate(order.start_date)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-muted/50 px-4 py-3">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  <Calendar className="size-3 inline mr-1" />
+                  Kết thúc dự kiến
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {fmtDate(order.end_date)}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2.5 pt-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Phí thuê</span>
+                <span className="font-bold text-foreground">
+                  {fmt(order.total_rental_fee)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Tiền đặt cọc (đang giữ)
+                </span>
+                <span className="font-bold text-foreground">
+                  {fmt(order.total_deposit)}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-border/50 flex items-center justify-between">
+                <span className="text-sm font-semibold text-foreground">
+                  Tổng đã thanh toán
+                </span>
+                <span className="text-base font-black text-theme-primary-start">
+                  {fmt(order.total_rental_fee + order.total_deposit)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Delivered items grid */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thiết bị đã bàn giao
+            </h3>
+          </div>
+          <span className="text-xs font-bold bg-success/15 text-success px-2.5 py-1 rounded-lg">
+            {order.items.length} thiết bị
+          </span>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {order.items.map((item) => (
             <div
               key={item.rental_order_item_id}
-              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/20"
             >
-              <div className="relative size-10 shrink-0 rounded-lg overflow-hidden border border-border bg-muted">
+              <div className="relative size-12 shrink-0 rounded-xl overflow-hidden bg-muted border border-border">
                 {item.image_url ? (
                   <Image
                     src={item.image_url}
                     alt={item.product_name}
                     fill
                     className="object-cover"
-                    sizes="40px"
                   />
                 ) : (
                   <div className="size-full flex items-center justify-center">
-                    <Camera className="size-3.5 text-muted-foreground/40" />
+                    <Package className="size-5 text-muted-foreground/40" />
                   </div>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-foreground truncate">
                   {item.product_name}
                 </p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <Hash className="size-3 text-muted-foreground" />
-                  <p className="text-xs font-mono text-muted-foreground">
-                    {item.serial_number}
-                  </p>
-                </div>
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {item.serial_number || '—'}
+                </p>
               </div>
-              <CheckCircle2 className="size-5 text-success shrink-0" />
+              <CheckCircle2 className="size-4 text-success shrink-0" />
             </div>
           ))}
         </div>
-      </Section>
+      </div>
+
+      {/* Info footer */}
+      <div className="rounded-2xl border border-border bg-muted/20 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Clock className="size-4 shrink-0" />
+          <span>
+            Đơn hàng đang trong giai đoạn thuê. Hệ thống sẽ tự động chuyển khi
+            khách hàng xác nhận nhận hàng.
+          </span>
+        </div>
+        <Link
+          href="/staff-dashboard/orders"
+          className={cn(
+            'inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold text-foreground hover:bg-accent transition-colors shrink-0',
+          )}
+        >
+          Về danh sách <ArrowRight className="size-4" />
+        </Link>
+      </div>
     </div>
   );
 }

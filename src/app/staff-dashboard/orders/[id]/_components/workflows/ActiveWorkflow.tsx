@@ -1,260 +1,302 @@
 'use client';
 
-/**
- * ActiveWorkflow — Trạng thái PENDING_PICKUP, IN_USE, hoặc OVERDUE
- *
- * RETURN WORKFLOW - STEP 1/4
- *
- * Hiển thị 3 tình huống khác nhau:
- *
- * 1. PENDING_PICKUP (Chờ thu hồi)
- *    - Khách đã yêu cầu trả hàng trên ứng dụng
- *    - Staff nhấn "Xác nhận & Bắt đầu thu hồi" → PICKING_UP
- *    - API: updateOrderStatus(orderId, 'PICKING_UP')
- *
- * 2. IN_USE (Đang thuê)
- *    - Khách đang sử dụng sản phẩm
- *    - Staff không cần hành động gì
- *    - Chỉ hiển thị thông tin cho tham khảo
- *    - Sẽ chuyển sang PENDING_PICKUP khi khách bấm "Trả hàng" trên ứng dụng
- *
- * 3. OVERDUE (Quá hạn)
- *    - Khách đã vượt quá ngày hẹn trả
- *    - Staff cần liên hệ ngay khách để sắp xếp thu hồi
- *    - Nhấn "Xác nhận & Bắt đầu thu hồi" → PICKING_UP
- *    - API: updateOrderStatus(orderId, 'PICKING_UP')
- *
- * Lưu ý: IN_USE không lại hiển thị một nút "Bắt đầu thu hồi". Staff sẽ thấy
- * PENDING_PICKUP khi khách yêu cầu trả.
- */
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import {
   RotateCcw,
   User,
   Phone,
   MapPin,
-  Package,
-  Loader2,
-  Camera,
   Calendar,
-  AlertCircle,
+  Package,
+  Banknote,
+  AlertTriangle,
+  Loader2,
   Clock,
-  Hash,
-  Navigation,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { WorkflowBanner } from '../WorkflowBanner';
-import { Section } from '../Section';
-import { InfoRow } from '../InfoRow';
 import { cn } from '@/lib/utils';
 import type { DashboardOrder } from '@/types/dashboard.types';
 import { fmt, fmtDate } from '../utils';
+import { WorkflowBanner } from '../WorkflowBanner';
+
+interface ActiveWorkflowProps {
+  order: DashboardOrder;
+  onStartPickup: () => void;
+  loading?: boolean;
+  /** true when status is PENDING_PICKUP (vs IN_USE / OVERDUE) */
+  isPendingPickup?: boolean;
+}
 
 export function ActiveWorkflow({
   order,
   onStartPickup,
   loading,
   isPendingPickup,
-}: {
-  order: DashboardOrder;
-  onStartPickup: () => void;
-  loading: boolean;
-  isPendingPickup?: boolean;
-}) {
-  const [confirmed, setConfirmed] = useState(false);
-  const [now] = useState(() => Date.now());
+}: ActiveWorkflowProps) {
   const isOverdue = order.status === 'OVERDUE';
-  const canAct = isPendingPickup || isOverdue;
-
-  // How many days overdue
+  const now = new Date().getTime();
   const daysOverdue = isOverdue
-    ? Math.max(
-        0,
-        Math.floor((now - new Date(order.end_date).getTime()) / 86_400_000),
-      )
+    ? Math.floor((now - new Date(order.end_date).getTime()) / 86400000)
     : 0;
 
+  const bannerVariant = isOverdue
+    ? 'danger'
+    : isPendingPickup
+      ? 'warning'
+      : 'primary';
+
+  const bannerDesc = isOverdue
+    ? `Đơn hàng quá hạn ${daysOverdue} ngày. Cần được thu hồi ngay lập tức.`
+    : isPendingPickup
+      ? 'Khách hàng đã yêu cầu trả hàng. Xác nhận để bắt đầu quy trình thu hồi.'
+      : 'Đơn hàng đang trong thời gian thuê. Bắt đầu thu hồi khi đến hạn trả.';
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
+      {/* Status banner */}
       <WorkflowBanner
-        icon={isOverdue ? AlertCircle : canAct ? RotateCcw : Clock}
+        icon={isOverdue ? AlertTriangle : RotateCcw}
         title={
           isOverdue
-            ? `Đơn quá hạn ${daysOverdue > 0 ? `${daysOverdue} ngày` : ''} — Cần thu hồi ngay`
+            ? 'Đơn hàng quá hạn — Thu hồi khẩn cấp'
             : isPendingPickup
-              ? 'Khách đã trả hàng — Sẵn sàng thu hồi'
-              : 'Thiết bị đang được khách hàng sử dụng'
+              ? 'Yêu cầu thu hồi đang chờ xử lý'
+              : 'Đơn hàng đang được thuê'
         }
-        desc={
-          isOverdue
-            ? 'Đơn đã vượt quá ngày hẹn trả. Liên hệ ngay với khách hàng để sắp xếp thu hồi thiết bị.'
-            : isPendingPickup
-              ? 'Khách hàng đã xác nhận trả hàng. Xác nhận rồi đến lấy thiết bị về hub.'
-              : 'Đơn đang trong thời gian thuê hợp lệ. Hệ thống sẽ thông báo khi khách trả hàng.'
-        }
-        variant={isOverdue ? 'danger' : isPendingPickup ? 'warning' : 'primary'}
+        desc={bannerDesc}
+        variant={bannerVariant}
       />
 
-      {/* ── Customer Info ── */}
-      <Section title="Thông tin khách hàng" icon={User} defaultOpen>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 pt-3">
-          <InfoRow
-            icon={User}
-            label="Tên khách"
-            value={order.renter.full_name}
-          />
-          <InfoRow
-            icon={Phone}
-            label="Điện thoại"
-            value={order.renter.phone_number}
-          />
-          <div className="sm:col-span-2">
-            <InfoRow
-              icon={MapPin}
-              label="Địa chỉ lấy hàng"
-              value={order.delivery_address ?? order.renter.address ?? '—'}
-            />
+      {/* Overdue alert */}
+      {isOverdue && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/8 px-5 py-4 flex items-center gap-4">
+          <div className="size-10 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0">
+            <AlertTriangle className="size-5 text-destructive" />
           </div>
-          <InfoRow
-            icon={Calendar}
-            label="Ngày bắt đầu"
-            value={fmtDate(order.start_date)}
-          />
-          <InfoRow
-            icon={Calendar}
-            label="Hạn trả"
-            value={
-              <span className={cn(isOverdue && 'text-destructive font-bold')}>
-                {fmtDate(order.end_date)}
-                {isOverdue && ` (quá ${daysOverdue} ngày)`}
-              </span>
-            }
-          />
+          <div>
+            <p className="text-sm font-bold text-destructive">
+              Quá hạn {daysOverdue} ngày
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Ngày kết thúc dự kiến:{' '}
+              <span className="font-semibold">{fmtDate(order.end_date)}</span>
+            </p>
+          </div>
+          <div className="ml-auto px-3 py-1.5 rounded-xl bg-destructive/15 border border-destructive/25">
+            <span className="text-sm font-black text-destructive">
+              +{daysOverdue}d
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Main info grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Customer info */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
+            <User className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thông tin khách hàng
+            </h3>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <User className="size-4 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Người thuê
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {order.renter.full_name}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <Phone className="size-4 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Điện thoại
+                </p>
+                <p className="text-sm font-semibold text-foreground font-mono">
+                  {order.renter.phone_number}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
+                <MapPin className="size-4 text-theme-primary-start" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                  Địa chỉ thu hồi
+                </p>
+                <p className="text-sm font-medium text-foreground leading-relaxed">
+                  {order.delivery_address || order.renter.address || '—'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {canAct && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            <a
-              href={`tel:${order.renter.phone_number}`}
-              className="inline-flex items-center gap-2 rounded-xl border border-success/30 bg-success/5 px-4 py-2.5 text-sm font-semibold text-success hover:bg-success/10 transition-colors"
-            >
-              <Phone className="size-4" /> Gọi khách hàng
-            </a>
-            {order.delivery_latitude != null &&
-              order.delivery_longitude != null && (
-                <a
-                  href={`https://maps.google.com/?q=${order.delivery_latitude},${order.delivery_longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                >
-                  <Navigation className="size-4" /> Điều hướng đến khách
-                </a>
-              )}
+        {/* Rental period */}
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
+            <Calendar className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thông tin đơn thuê
+            </h3>
           </div>
-        )}
-      </Section>
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div
+                className={cn(
+                  'rounded-xl px-4 py-3',
+                  isOverdue ? 'bg-destructive/10' : 'bg-muted/50',
+                )}
+              >
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Ngày bắt đầu
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {fmtDate(order.start_date)}
+                </p>
+              </div>
+              <div
+                className={cn(
+                  'rounded-xl px-4 py-3',
+                  isOverdue ? 'bg-destructive/10' : 'bg-muted/50',
+                )}
+              >
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Ngày kết thúc
+                </p>
+                <p
+                  className={cn(
+                    'text-sm font-bold',
+                    isOverdue ? 'text-destructive' : 'text-foreground',
+                  )}
+                >
+                  {fmtDate(order.end_date)}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2.5 pt-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <Package className="size-3.5" /> Số thiết bị
+                </span>
+                <span className="font-bold text-foreground">
+                  {order.items.length} thiết bị
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  <Banknote className="size-3.5" /> Tiền đặt cọc
+                </span>
+                <span className="font-bold text-foreground">
+                  {fmt(order.total_deposit)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* ── Items to Collect ── */}
-      <Section
-        title={`Thiết bị cần thu hồi (${order.items.length})`}
-        icon={Package}
-        defaultOpen
-      >
-        <div className="flex flex-col divide-y divide-border/40 pt-2">
+      {/* Items to recover */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="size-4 text-theme-primary-start" />
+            <h3 className="text-sm font-bold text-foreground">
+              Thiết bị cần thu hồi
+            </h3>
+          </div>
+          <span className="text-xs font-bold bg-muted text-muted-foreground px-2.5 py-1 rounded-lg">
+            {order.items.length} thiết bị
+          </span>
+        </div>
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {order.items.map((item) => (
             <div
               key={item.rental_order_item_id}
-              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              className="flex items-center gap-3 p-3 rounded-xl border border-border bg-muted/20"
             >
-              <div className="relative size-12 shrink-0 rounded-xl overflow-hidden border border-border bg-muted">
+              <div className="relative size-12 shrink-0 rounded-xl overflow-hidden bg-muted border border-border">
                 {item.image_url ? (
                   <Image
                     src={item.image_url}
                     alt={item.product_name}
                     fill
                     className="object-cover"
-                    sizes="48px"
                   />
                 ) : (
                   <div className="size-full flex items-center justify-center">
-                    <Camera className="size-4 text-muted-foreground/40" />
+                    <Package className="size-5 text-muted-foreground/40" />
                   </div>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-foreground truncate">
                   {item.product_name}
                 </p>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <Hash className="size-3 text-muted-foreground" />
-                  <p className="text-xs font-mono text-muted-foreground">
-                    {item.serial_number}
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Tiền cọc: {fmt(item.deposit_amount)}
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                  {item.serial_number || '—'}
+                </p>
+                <p className="text-xs font-semibold text-theme-primary-start mt-1">
+                  Cọc {fmt(item.deposit_amount)}
                 </p>
               </div>
-              <RotateCcw
-                className={cn(
-                  'size-4 shrink-0',
-                  isOverdue
-                    ? 'text-destructive animate-spin'
-                    : 'text-orange-500',
-                )}
-              />
             </div>
           ))}
         </div>
-      </Section>
+      </div>
 
-      {/* ── Action section (only for PENDING_PICKUP or OVERDUE) ── */}
-      {canAct && (
-        <>
-          <label className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 cursor-pointer hover:bg-accent/40 transition-colors select-none">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-              className="mt-0.5 size-4 shrink-0 rounded accent-orange-500"
-            />
-            <span className="text-sm text-muted-foreground leading-relaxed">
-              Tôi xác nhận sẽ đến{' '}
-              <strong className="text-foreground">
-                {order.delivery_address ??
-                  order.renter.address ??
-                  'địa chỉ khách'}
-              </strong>{' '}
-              để thu hồi{' '}
-              <strong className="text-foreground">
-                {order.items.length} thiết bị
-              </strong>
-              .
-            </span>
-          </label>
-
-          <Button
-            onClick={onStartPickup}
-            disabled={loading || !confirmed}
-            size="lg"
-            className={cn(
-              'w-full h-14 text-base font-bold gap-2 rounded-2xl text-white disabled:opacity-50',
-              isOverdue
-                ? 'bg-destructive hover:bg-destructive/90'
-                : 'bg-orange-500 hover:bg-orange-600',
-            )}
-          >
-            {loading ? (
-              <Loader2 className="size-5 animate-spin" />
-            ) : (
-              <RotateCcw className="size-5" />
-            )}
-            Xác nhận → Bắt đầu đến lấy hàng
-          </Button>
-        </>
-      )}
+      {/* Action footer */}
+      <div
+        className={cn(
+          'rounded-2xl border bg-card px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3',
+          isOverdue ? 'border-destructive/30' : 'border-border',
+        )}
+      >
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Clock className="size-4 shrink-0" />
+          <span>
+            {isPendingPickup
+              ? 'Xác nhận để bắt đầu hành trình đến lấy hàng tại địa chỉ khách.'
+              : 'Bắt đầu thu hồi khi đến địa điểm của khách hàng.'}
+          </span>
+        </div>
+        <Button
+          onClick={onStartPickup}
+          disabled={loading || !isPendingPickup}
+          className={cn(
+            'h-12 gap-2 rounded-xl px-7 text-[15px] font-bold shrink-0 min-w-50',
+            isPendingPickup && isOverdue
+              ? 'bg-destructive hover:bg-destructive/90 text-white'
+              : isPendingPickup
+                ? 'bg-orange-500 hover:bg-orange-600 text-white dark:bg-orange-500 dark:hover:bg-orange-600'
+                : 'bg-muted text-muted-foreground',
+          )}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Đang xử lý…
+            </>
+          ) : (
+            <>
+              <RotateCcw className="size-4" />
+              {isPendingPickup ? 'Bắt đầu thu hồi' : 'Chờ yêu cầu thu hồi'}
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

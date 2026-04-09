@@ -42,6 +42,12 @@ import { NavUser } from '@/components/dashboard-staff/nav-user';
 import { useAuthStore } from '@/stores/auth-store';
 import { logout as logoutApi } from '@/api/auth';
 import { cn } from '@/lib/utils';
+import {
+  useStaffOrderCounts,
+  selectCount,
+  selectUrgentTotal,
+  selectTotalOrders,
+} from '@/stores/staff-order-counts-store';
 
 // ── Giao hàng: PAID → PREPARING → DELIVERING → DELIVERED ─────────────────────
 const DELIVERY_WORKFLOW_TABS = [
@@ -128,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const searchParams = useSearchParams();
   const currentStatus = searchParams.get('status');
   const { user } = useAuthStore();
-  console.log(user);
+  const { counts } = useStaffOrderCounts();
   const staffName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ')
     : '';
@@ -138,13 +144,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
   const hubDisplayName = user?.hubId ?? ''; // will be enriched once hub API populates store
 
+  // ── Active state ──────────────────────────────────────────────────────────
   const isDashboardActive = pathname === '/staff-dashboard';
   const isOrdersActive =
     pathname === '/staff-dashboard/orders' ||
     pathname.startsWith('/staff-dashboard/orders/');
+  // "Overview" = no filter or the default PAID,PENDING_PICKUP combo
   const isOrdersOverviewActive =
     isOrdersActive &&
-    (!currentStatus || currentStatus === 'PAID,PENDING_PICKUP');
+    (!currentStatus ||
+      currentStatus === 'PAID,PENDING_PICKUP' ||
+      currentStatus === 'PENDING_PICKUP,PAID');
 
   // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
@@ -152,17 +162,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (isOrdersActive) setOrdersOpen(true);
   }, [isOrdersActive]);
 
-  const orderCounts = React.useMemo(() => {
-    // Order counts are derived from the orders API via the page components.
-    // The sidebar shows aggregate counts; these will be populated in a
-    // future iteration via a shared orders context/store.
-    return {} as Record<string, number>;
-  }, []);
-
-  const urgentTotal =
-    (orderCounts['PAID'] ?? 0) + (orderCounts['PENDING_PICKUP'] ?? 0);
-
-  const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
+  // ── Order counts from shared store ────────────────────────────────────────
+  const urgentTotal = selectUrgentTotal(counts);
+  const totalOrders = selectTotalOrders(counts);
 
   const handleLogout = React.useCallback(async () => {
     try {
@@ -241,9 +243,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               >
                 <ShoppingBag className="size-4" />
                 <span className="text-[16px] font-bold">Đơn hàng</span>
-                {urgentTotal > 0 && (
-                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums">
-                    {urgentTotal}
+                {totalOrders > 0 && (
+                  <span
+                    className={cn(
+                      'flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums',
+                      urgentTotal > 0
+                        ? 'bg-destructive text-white'
+                        : 'bg-sidebar-accent text-sidebar-foreground/70',
+                    )}
+                  >
+                    {totalOrders}
                   </span>
                 )}
               </SidebarMenuButton>
@@ -265,10 +274,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     Giao hàng
                   </div>
                   {DELIVERY_WORKFLOW_TABS.map((tab) => {
-                    const count = orderCounts[tab.status] ?? 0;
+                    const count = selectCount(
+                      counts,
+                      tab.status as import('@/types/dashboard.types').OrderStatus,
+                    );
                     const isTabActive =
-                      pathname === '/staff-dashboard/orders' &&
-                      currentStatus === tab.status;
+                      isOrdersActive && currentStatus === tab.status;
                     return (
                       <SidebarMenuSubItem key={tab.title}>
                         <SidebarMenuSubButton
@@ -314,10 +325,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     Thu hồi
                   </div>
                   {PICKUP_WORKFLOW_TABS.map((tab) => {
-                    const count = orderCounts[tab.status] ?? 0;
+                    const count = selectCount(
+                      counts,
+                      tab.status as import('@/types/dashboard.types').OrderStatus,
+                    );
                     const isTabActive =
-                      pathname === '/staff-dashboard/orders' &&
-                      currentStatus === tab.status;
+                      isOrdersActive && currentStatus === tab.status;
                     return (
                       <SidebarMenuSubItem key={tab.title}>
                         <SidebarMenuSubButton
@@ -362,22 +375,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarGroup className="px-3 py-0">
-          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3 space-y-2">
-            <p className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest">
-              Hôm nay
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <QuickStat label="Tổng đơn" value={totalOrders} />
-              <QuickStat
-                label="Cần xử lý"
-                value={urgentTotal}
-                urgent={urgentTotal > 0}
-              />
-            </div>
-          </div>
-        </SidebarGroup>
-
         {/* ── Support ──────────────────────────────────────────────── */}
         <SidebarGroup className="mt-auto">
           <SidebarSeparator className="mb-2" />
@@ -410,31 +407,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         />
       </SidebarFooter>
     </Sidebar>
-  );
-}
-
-function QuickStat({
-  label,
-  value,
-  urgent,
-}: {
-  label: string;
-  value: number;
-  urgent?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] text-sidebar-foreground/50 font-medium">
-        {label}
-      </span>
-      <span
-        className={cn(
-          'text-base font-bold tabular-nums leading-tight',
-          urgent && value > 0 ? 'text-destructive' : 'text-sidebar-foreground',
-        )}
-      >
-        {value}
-      </span>
-    </div>
   );
 }
