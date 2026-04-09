@@ -1,14 +1,3 @@
-/**
- * Dashboard / Orders API
- *
- * Module 12: RENTAL ORDERS — xem rentalOrderApi.ts để dùng full CRUD
- * Module 18: DASHBOARDS (API-113 → API-114)
- * Base URL: /api/v1
- *
- * File này tập trung vào Dashboard data và một số helper staff operations.
- * Cho CRUD đơn thuê đầy đủ (tạo, hủy, gia hạn, gán staff, etc.) dùng rentalOrderApi.ts
- */
-
 import type { AxiosResponse } from 'axios';
 import { httpService } from '@/api/http';
 

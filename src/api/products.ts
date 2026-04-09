@@ -1,14 +1,3 @@
-/**
- * Products API — /api/v1/products + /api/v1/inventory-items
- *
- * Module 8: PRODUCTS (API-052 → API-056)
- * Module 9: INVENTORY ITEMS (API-057 → API-061)
- * Base URL: /api/v1
- *
- * [PUBLIC] GET /products, GET /products/{id}
- * [AUTH]   POST /products, PATCH /products/{id}, DELETE /products/{id}
- * [AUTH]   CRUD /inventory-items
- */
 
 import type { AxiosResponse } from 'axios';
 import { httpService } from '@/api/http';

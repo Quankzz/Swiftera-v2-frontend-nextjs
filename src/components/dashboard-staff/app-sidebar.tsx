@@ -42,52 +42,79 @@ import { NavUser } from '@/components/dashboard-staff/nav-user';
 import { useAuthStore } from '@/stores/auth-store';
 import { logout as logoutApi } from '@/api/auth';
 import { cn } from '@/lib/utils';
+import {
+  useStaffOrderCounts,
+  selectCount,
+  selectUrgentTotal,
+  selectTotalOrders,
+} from '@/stores/staff-order-counts-store';
 
-const ORDER_WORKFLOW_TABS = [
+// ── Giao hàng: PAID → PREPARING → DELIVERING → DELIVERED ─────────────────────
+const DELIVERY_WORKFLOW_TABS = [
   {
     title: 'Chờ xác nhận',
     url: '/staff-dashboard/orders?status=PAID',
-    statuses: ['PAID'] as const,
+    status: 'PAID',
     dotClass: 'bg-amber-400',
     urgency: true,
     icon: Clock,
   },
   {
-    title: 'Đang giao hàng',
+    title: 'Đang chuẩn bị',
+    url: '/staff-dashboard/orders?status=PREPARING',
+    status: 'PREPARING',
+    dotClass: 'bg-blue-400 animate-pulse',
+    urgency: false,
+    icon: Package,
+  },
+  {
+    title: 'Đang giao',
     url: '/staff-dashboard/orders?status=DELIVERING',
-    statuses: ['DELIVERING'] as const,
+    status: 'DELIVERING',
     dotClass: 'bg-info animate-pulse',
     urgency: false,
     icon: Truck,
   },
   {
-    title: 'Đang thuê',
-    url: '/staff-dashboard/orders?status=ACTIVE',
-    statuses: ['ACTIVE'] as const,
-    dotClass: 'bg-success',
+    title: 'Đã giao',
+    url: '/staff-dashboard/orders?status=DELIVERED',
+    status: 'DELIVERED',
+    dotClass: 'bg-teal-500',
+    urgency: false,
+    icon: CheckCircle2,
+  },
+] as const;
+
+// ── Thu hồi: PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED ──────────────
+const PICKUP_WORKFLOW_TABS = [
+  {
+    title: 'Chờ thu hồi',
+    url: '/staff-dashboard/orders?status=PENDING_PICKUP',
+    status: 'PENDING_PICKUP',
+    dotClass: 'bg-orange-400 animate-pulse',
+    urgency: true,
+    icon: Clock,
+  },
+  {
+    title: 'Đang thu hồi',
+    url: '/staff-dashboard/orders?status=PICKING_UP',
+    status: 'PICKING_UP',
+    dotClass: 'bg-purple-400 animate-pulse',
+    urgency: false,
+    icon: RotateCcw,
+  },
+  {
+    title: 'Đã lấy hàng',
+    url: '/staff-dashboard/orders?status=PICKED_UP',
+    status: 'PICKED_UP',
+    dotClass: 'bg-indigo-500',
     urgency: false,
     icon: Package,
   },
   {
-    title: 'Cần thu hồi',
-    url: '/staff-dashboard/orders?status=RETURNING',
-    statuses: ['RETURNING'] as const,
-    dotClass: 'bg-destructive animate-pulse',
-    urgency: true,
-    icon: RotateCcw,
-  },
-  {
-    title: 'Đã quá hạn',
-    url: '/staff-dashboard/orders?status=OVERDUE',
-    statuses: ['OVERDUE'] as const,
-    dotClass: 'bg-destructive animate-pulse',
-    urgency: true,
-    icon: RotateCcw,
-  },
-  {
-    title: 'Đã hoàn thành',
+    title: 'Hoàn thành',
     url: '/staff-dashboard/orders?status=COMPLETED',
-    statuses: ['COMPLETED'] as const,
+    status: 'COMPLETED',
     dotClass: 'bg-success',
     urgency: false,
     icon: CheckCircle2,
@@ -99,13 +126,15 @@ const SECONDARY_ITEMS = [
   { title: 'Cài đặt', url: '#', icon: Settings },
 ];
 
+const DEFAULT_ORDERS_URL = '/staff-dashboard/orders?status=PAID,PENDING_PICKUP';
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentStatus = searchParams.get('status');
   const { user } = useAuthStore();
-  console.log(user);
+  const { counts } = useStaffOrderCounts();
   const staffName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ')
     : '';
@@ -115,10 +144,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
   const hubDisplayName = user?.hubId ?? ''; // will be enriched once hub API populates store
 
+  // ── Active state ──────────────────────────────────────────────────────────
   const isDashboardActive = pathname === '/staff-dashboard';
   const isOrdersActive =
     pathname === '/staff-dashboard/orders' ||
     pathname.startsWith('/staff-dashboard/orders/');
+  // "Overview" = no filter or the default PAID,PENDING_PICKUP combo
+  const isOrdersOverviewActive =
+    isOrdersActive &&
+    (!currentStatus ||
+      currentStatus === 'PAID,PENDING_PICKUP' ||
+      currentStatus === 'PENDING_PICKUP,PAID');
 
   // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
@@ -126,19 +162,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (isOrdersActive) setOrdersOpen(true);
   }, [isOrdersActive]);
 
-  const orderCounts = React.useMemo(() => {
-    // Order counts are derived from the orders API via the page components.
-    // The sidebar shows aggregate counts; these will be populated in a
-    // future iteration via a shared orders context/store.
-    return {} as Record<string, number>;
-  }, []);
-
-  const urgentTotal =
-    (orderCounts['RETURNING'] ?? 0) +
-    (orderCounts['OVERDUE'] ?? 0) +
-    (orderCounts['PAID'] ?? 0);
-
-  const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
+  // ── Order counts from shared store ────────────────────────────────────────
+  const urgentTotal = selectUrgentTotal(counts);
+  const totalOrders = selectTotalOrders(counts);
 
   const handleLogout = React.useCallback(async () => {
     try {
@@ -206,21 +232,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               render={<SidebarMenuItem />}
             >
               <SidebarMenuButton
-                render={<Link href="/staff-dashboard/orders" />}
-                isActive={isOrdersActive && !currentStatus}
+                render={<Link href={DEFAULT_ORDERS_URL} />}
+                isActive={isOrdersOverviewActive}
                 tooltip="Đơn hàng"
                 className={cn(
                   'gap-3 transition-colors',
-                  isOrdersActive &&
-                    !currentStatus &&
+                  isOrdersOverviewActive &&
                     'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
                 )}
               >
                 <ShoppingBag className="size-4" />
                 <span className="text-[16px] font-bold">Đơn hàng</span>
-                {urgentTotal > 0 && (
-                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums">
-                    {urgentTotal}
+                {totalOrders > 0 && (
+                  <span
+                    className={cn(
+                      'flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums',
+                      urgentTotal > 0
+                        ? 'bg-destructive text-white'
+                        : 'bg-sidebar-accent text-sidebar-foreground/70',
+                    )}
+                  >
+                    {totalOrders}
                   </span>
                 )}
               </SidebarMenuButton>
@@ -236,16 +268,69 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuAction>
               <CollapsibleContent>
                 <SidebarMenuSub className="ml-4 mt-0.5 w-full">
-                  {ORDER_WORKFLOW_TABS.map((tab) => {
-                    const count = tab.statuses.reduce(
-                      (s, st) => s + (orderCounts[st] ?? 0),
-                      0,
+                  {/* ── Giao hàng ── */}
+                  <div className="px-2 pt-2 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
+                    <Truck className="size-3" />
+                    Giao hàng
+                  </div>
+                  {DELIVERY_WORKFLOW_TABS.map((tab) => {
+                    const count = selectCount(
+                      counts,
+                      tab.status as import('@/types/dashboard.types').OrderStatus,
                     );
-                    // Check xem sub-tab này có phải là tab đang xem không
                     const isTabActive =
-                      pathname === '/staff-dashboard/orders' &&
-                      currentStatus === tab.statuses[0];
+                      isOrdersActive && currentStatus === tab.status;
+                    return (
+                      <SidebarMenuSubItem key={tab.title}>
+                        <SidebarMenuSubButton
+                          render={<Link href={tab.url} />}
+                          isActive={isTabActive}
+                          className={cn(
+                            'py-4 transition-colors',
+                            isTabActive &&
+                              'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'size-1.5 shrink-0 rounded-full',
+                              tab.dotClass,
+                            )}
+                          />
+                          <span className="flex-1 truncate text-sm">
+                            {tab.title}
+                          </span>
+                          {count > 0 && (
+                            <span
+                              className={cn(
+                                'mr-4 min-w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                tab.urgency
+                                  ? 'bg-destructive text-white'
+                                  : isTabActive
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'bg-sidebar-accent text-sidebar-foreground/60',
+                              )}
+                            >
+                              {count}
+                            </span>
+                          )}
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    );
+                  })}
 
+                  {/* ── Thu hồi ── */}
+                  <div className="px-2 pt-3 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
+                    <RotateCcw className="size-3" />
+                    Thu hồi
+                  </div>
+                  {PICKUP_WORKFLOW_TABS.map((tab) => {
+                    const count = selectCount(
+                      counts,
+                      tab.status as import('@/types/dashboard.types').OrderStatus,
+                    );
+                    const isTabActive =
+                      isOrdersActive && currentStatus === tab.status;
                     return (
                       <SidebarMenuSubItem key={tab.title}>
                         <SidebarMenuSubButton
@@ -290,22 +375,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarGroup className="px-3 py-0">
-          <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3 space-y-2">
-            <p className="text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-widest">
-              Hôm nay
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <QuickStat label="Tổng đơn" value={totalOrders} />
-              <QuickStat
-                label="Cần xử lý"
-                value={urgentTotal}
-                urgent={urgentTotal > 0}
-              />
-            </div>
-          </div>
-        </SidebarGroup>
-
         {/* ── Support ──────────────────────────────────────────────── */}
         <SidebarGroup className="mt-auto">
           <SidebarSeparator className="mb-2" />
@@ -338,31 +407,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         />
       </SidebarFooter>
     </Sidebar>
-  );
-}
-
-function QuickStat({
-  label,
-  value,
-  urgent,
-}: {
-  label: string;
-  value: number;
-  urgent?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] text-sidebar-foreground/50 font-medium">
-        {label}
-      </span>
-      <span
-        className={cn(
-          'text-base font-bold tabular-nums leading-tight',
-          urgent && value > 0 ? 'text-destructive' : 'text-sidebar-foreground',
-        )}
-      >
-        {value}
-      </span>
-    </div>
   );
 }

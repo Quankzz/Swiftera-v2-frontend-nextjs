@@ -15,9 +15,11 @@ import type {
   RegisterCredentials,
   User as AuthUser,
 } from '@/types/auth';
+import type { UserSecuredResponse } from '@/types/api.types';
 import { authApi } from '@/api/authApi';
 import { setLogoutCallback } from '@/api/http';
 import { storageService } from '@/services/storage';
+import { useAuthStore } from '@/stores/auth-store';
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -69,8 +71,7 @@ function normalizeUserPayload(payload: unknown): AuthUser | null {
           ? raw.updatedAt
           : new Date().toISOString(),
       createdBy: typeof raw.createdBy === 'string' ? raw.createdBy : 'system',
-      updatedBy:
-        typeof raw.updatedBy === 'string' ? raw.updatedBy : undefined,
+      updatedBy: typeof raw.updatedBy === 'string' ? raw.updatedBy : undefined,
       rolesSecured: Array.isArray(raw.rolesSecured)
         ? (raw.rolesSecured as AuthUser['rolesSecured'])
         : [],
@@ -150,6 +151,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearSession = useCallback(() => {
     storageService.clearAuth();
     setUser(null);
+    // Sync Zustand store so staff dashboard pages also un-authenticate
+    useAuthStore.getState().clearAuth();
   }, []);
 
   useEffect(() => {
@@ -182,6 +185,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (currentUser) {
           storageService.setUser(toStoredUser(currentUser));
           setUser(currentUser);
+          // Sync Zustand store so staff dashboard pages get the user immediately
+          useAuthStore
+            .getState()
+            .setAuth(token, result?.data as unknown as UserSecuredResponse);
         } else {
           clearSession();
         }
@@ -233,6 +240,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       storageService.setAccessToken(accessToken);
       storageService.setUser(toStoredUser(currentUser));
       setUser(currentUser);
+      // Sync Zustand store so staff dashboard pages get the user + token immediately
+      useAuthStore
+        .getState()
+        .setAuth(
+          accessToken,
+          result.data?.userSecured as unknown as UserSecuredResponse,
+        );
 
       return result;
     } catch (error) {
@@ -267,7 +281,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = response.data as AuthResponse;
 
       if (!result?.success) {
-        throw new Error(result?.message || 'Không thể gửi yêu cầu đặt lại mật khẩu');
+        throw new Error(
+          result?.message || 'Không thể gửi yêu cầu đặt lại mật khẩu',
+        );
       }
 
       return result;

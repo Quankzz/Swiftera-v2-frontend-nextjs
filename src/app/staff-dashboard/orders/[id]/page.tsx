@@ -19,10 +19,8 @@ import { cn } from '@/lib/utils';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import {
   getStaffOrderById,
-  updateOrderStatus,
-  recordDelivery,
-  recordPickup,
-  setPenalty,
+  applyStaffOrderTransition,
+  type StaffTransitionTargetStatus,
 } from '@/api/staff-orders';
 import { getHubById } from '@/api/hubs';
 import type { HubResponse } from '@/api/hubs';
@@ -40,8 +38,6 @@ import { DeliveringWorkflow } from './_components/workflows/DeliveringWorkflow';
 import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
 import { ActiveWorkflow } from './_components/workflows/ActiveWorkflow';
 import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
-import { PickedUpWorkflow } from './_components/workflows/PickedUpWorkflow';
-import { InspectingWorkflow } from './_components/workflows/InspectingWorkflow';
 import { CompletedWorkflow } from './_components/workflows/CompletedWorkflow';
 
 export default function OrderDetailPage({
@@ -56,6 +52,7 @@ export default function OrderDetailPage({
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.userId) {
@@ -134,66 +131,63 @@ export default function OrderDetailPage({
   }, [order?.status]);
 
   const handleStatusChange = useCallback(
-    async (newStatus: OrderStatus, extra?: Partial<DashboardOrder>) => {
+    async (
+      newStatus: StaffTransitionTargetStatus,
+      options?: {
+        extra?: Partial<DashboardOrder>;
+        penaltyTotal?: number;
+        note?: string;
+      },
+    ) => {
       if (!order) return;
       setStatusLoading(true);
+      setActionError(null);
       try {
-        let updated: DashboardOrder | null = null;
-        if (newStatus === 'DELIVERED') {
-          // DELIVERING → DELIVERED: use record-delivery endpoint
-          updated = await recordDelivery(order.rental_order_id, {
-            deliveredLatitude: localLat,
-            deliveredLongitude: localLng,
-          });
-        } else if (newStatus === 'PICKED_UP') {
-          // PICKING_UP → PICKED_UP: use record-pickup endpoint
-          updated = await recordPickup(order.rental_order_id, {
-            pickedUpLatitude: localLat,
-            pickedUpLongitude: localLng,
-          });
-        } else {
-          // All other transitions via PATCH /status
-          updated = await updateOrderStatus(
-            order.rental_order_id,
-            newStatus as Parameters<typeof updateOrderStatus>[1],
+        console.log('[order-detail] handleStatusChange', {
+          orderId: order.rental_order_id,
+          currentStatus: order.status,
+          nextStatus: newStatus,
+          options,
+        });
+        const updated = await applyStaffOrderTransition({
+          orderId: order.rental_order_id,
+          targetStatus: newStatus,
+          latitude: localLat,
+          longitude: localLng,
+          penaltyTotal: options?.penaltyTotal,
+          note: options?.note,
+        });
+        if (!updated) {
+          throw new Error(
+            'API không trả về dữ liệu cập nhật trạng thái đơn hàng',
           );
         }
-        if (updated) {
-          setOrder({ ...updated, ...extra });
-        } else {
-          // Optimistic fallback if API returns null
-          setOrder((prev) =>
-            prev ? { ...prev, status: newStatus, ...extra } : prev,
-          );
-        }
-      } catch {
-        // Keep current state on error; could show a toast here
+        setOrder({ ...updated, ...options?.extra });
+      } catch (err) {
+        setActionError(
+          err instanceof Error ? err.message : 'Không thể cập nhật trạng thái',
+        );
       } finally {
         setStatusLoading(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [order, localLat, localLng],
   );
 
-  const handleDepositRefund = useCallback(async () => {
-    if (!order) return;
-    setStatusLoading(true);
-    try {
-      const updated = await setPenalty(order.rental_order_id, {
+  const handleSettlementUpdate = useCallback(
+    async (refundNote?: string) => {
+      if (!order) return;
+      await handleStatusChange('COMPLETED', {
         penaltyTotal: order.total_penalty_amount ?? 0,
+        note: refundNote,
+        extra: {
+          total_penalty_amount: order.total_penalty_amount ?? 0,
+          deposit_refund_status: 'REFUNDED',
+        },
       });
-      setOrder((prev) =>
-        prev
-          ? { ...(updated ?? prev), deposit_refund_status: 'REFUNDED' }
-          : prev,
-      );
-    } catch {
-      // no-op
-    } finally {
-      setStatusLoading(false);
-    }
-  }, [order]);
+    },
+    [order, handleStatusChange],
+  );
 
   if (pageLoading) {
     return (
@@ -276,17 +270,7 @@ export default function OrderDetailPage({
     'DELIVERING',
     'DELIVERED',
   ];
-  const PICKUP_STATUSES: OrderStatus[] = [
-    'IN_USE',
-    'OVERDUE',
-    'PENDING_PICKUP',
-    'PICKING_UP',
-    'PICKED_UP',
-    'INSPECTING',
-    'COMPLETED',
-  ];
   const isDeliveryStatus = DELIVERY_STATUSES.includes(order.status);
-  const isPickupStatus = PICKUP_STATUSES.includes(order.status);
 
   return (
     <div className="p-3 sm:p-5 lg:p-6 min-h-screen">
@@ -331,8 +315,8 @@ export default function OrderDetailPage({
           </div>
         </div>
 
-        {/* Workflow stepper — full width */}
-        <WorkflowStepper status={order.status} staffRole={staffRole} />
+        {/* Workflow stepper — only show the flow matching current status */}
+        <WorkflowStepper status={order.status} />
 
         {/* Main content grid */}
         <div
@@ -410,6 +394,11 @@ export default function OrderDetailPage({
 
           {/* LEFT column: Workflow + full details */}
           <div className="flex flex-col gap-4 lg:order-1">
+            {actionError && (
+              <div className="rounded-xl border border-destructive/25 bg-destructive/8 px-4 py-3 text-sm text-destructive font-medium">
+                {actionError}
+              </div>
+            )}
             {/* Status-specific workflow panel */}
             {/* ── Delivery staff workflows ─── */}
             {(staffRole === 'delivery' ||
@@ -420,7 +409,9 @@ export default function OrderDetailPage({
                   order={order}
                   onConfirm={() =>
                     handleStatusChange('PREPARING', {
-                      staff_checkin_id: user?.userId,
+                      extra: {
+                        staff_checkin_id: user?.userId,
+                      },
                     })
                   }
                   loading={statusLoading}
@@ -448,7 +439,7 @@ export default function OrderDetailPage({
             )}
 
             {order.status === 'DELIVERED' && (
-              <DeliveredWorkflow order={order} />
+              <DeliveredWorkflow order={order} loading={statusLoading} />
             )}
 
             {/* ── Pickup staff workflows ─── */}
@@ -472,27 +463,34 @@ export default function OrderDetailPage({
             {order.status === 'PICKING_UP' && (
               <ReturningWorkflow
                 order={order}
-                onCompleteReturn={() =>
-                  handleStatusChange('PICKED_UP', {
-                    staff_checkout_id: user?.userId,
-                  })
-                }
+                onCompleteReturn={async (penaltyTotal?: number) => {
+                  try {
+                    await handleStatusChange('PICKED_UP', {
+                      extra: {
+                        staff_checkout_id: user?.userId,
+                        total_penalty_amount: penaltyTotal ?? 0,
+                      },
+                      penaltyTotal,
+                    });
+                  } catch (err) {
+                    setActionError(
+                      err instanceof Error
+                        ? err.message
+                        : 'Lỗi khi lưu dữ liệu hoàn trả',
+                    );
+                  }
+                }}
                 loading={statusLoading}
+                staffLat={localLat}
+                staffLng={localLng}
+                staffLocAt={localLocAt}
               />
             )}
 
             {order.status === 'PICKED_UP' && (
-              <PickedUpWorkflow
+              <CompletedWorkflow
                 order={order}
-                onStartInspection={() => handleStatusChange('INSPECTING')}
-                loading={statusLoading}
-              />
-            )}
-
-            {order.status === 'INSPECTING' && (
-              <InspectingWorkflow
-                order={order}
-                onComplete={() => handleStatusChange('COMPLETED')}
+                onDepositRefund={handleSettlementUpdate}
                 loading={statusLoading}
               />
             )}
@@ -500,7 +498,8 @@ export default function OrderDetailPage({
             {order.status === 'COMPLETED' && (
               <CompletedWorkflow
                 order={order}
-                onDepositRefund={handleDepositRefund}
+                onDepositRefund={handleSettlementUpdate}
+                loading={statusLoading}
               />
             )}
 
