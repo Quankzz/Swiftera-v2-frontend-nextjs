@@ -8,7 +8,7 @@ export const categories: Category[] = [
     name: 'Điện thoại & Máy tính bảng',
     slug: 'phones-tablets',
     sortOrder: 1,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Apple', 'Samsung', 'Xiaomi', 'Google'],
   },
@@ -76,7 +76,7 @@ export const categories: Category[] = [
     name: 'Máy tính',
     slug: 'computers',
     sortOrder: 2,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Apple', 'Dell', 'HP', 'Lenovo', 'Asus'],
   },
@@ -116,7 +116,7 @@ export const categories: Category[] = [
     name: 'Máy chơi game',
     slug: 'consoles',
     sortOrder: 3,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Sony', 'Microsoft', 'Nintendo'],
   },
@@ -149,7 +149,7 @@ export const categories: Category[] = [
     name: 'Gaming & VR',
     slug: 'gaming-vr',
     sortOrder: 4,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Meta', 'HTC', 'Valve', 'Logitech'],
   },
@@ -208,7 +208,7 @@ export const categories: Category[] = [
     name: 'Thiết bị đeo',
     slug: 'wearables',
     sortOrder: 6,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Apple', 'Samsung', 'Garmin', 'Fitbit'],
   },
@@ -260,7 +260,7 @@ export const categories: Category[] = [
     name: 'Máy ảnh',
     slug: 'cameras',
     sortOrder: 8,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Panasonic'],
   },
@@ -293,7 +293,7 @@ export const categories: Category[] = [
     name: 'Máy tính để bàn',
     slug: 'desktops',
     sortOrder: 9,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Apple', 'Dell', 'HP'],
   },
@@ -319,7 +319,7 @@ export const categories: Category[] = [
     name: 'Phụ kiện',
     slug: 'accessories',
     sortOrder: 10,
-    image:
+    imageUrl:
       'https://cdn2.fptshop.com.vn/unsafe/iphone_17_pro_max_cosmic_orange_1_a940b68476.png',
     brands: ['Logitech', 'Razer', 'Corsair'],
   },

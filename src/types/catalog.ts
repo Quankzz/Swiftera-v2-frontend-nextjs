@@ -53,7 +53,7 @@ export interface Product {
   oldDailyPrice?: number;
   depositAmount?: number;
   description: string;
-  shortDescription: string;
+  shortDescription?: string;
   productImages: ProductImage[];
   colors?: ProductColor[];
   minRentalDays: number;

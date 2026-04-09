@@ -153,8 +153,8 @@ export function VoucherLinePickerDialog({
         const fakeVoucher: VoucherResponse = {
           voucherId: sv.voucherId,
           code: sv.code,
-          discountType:
-            sv.discountType === 'FIXED' ? 'FIXED_AMOUNT' : 'PERCENTAGE',
+          type: 'ITEM_VOUCHER',
+          discountType: sv.discountType === 'FIXED' ? 'FIXED' : 'PERCENTAGE',
           discountValue: sv.discountValue,
           maxDiscountAmount: sv.maxDiscountAmount,
           minRentalDays: sv.minRentalDays,
@@ -197,6 +197,7 @@ export function VoucherLinePickerDialog({
           const minimalVoucher: VoucherResponse = {
             voucherId: '',
             code,
+            type: 'ITEM_VOUCHER',
             discountType: 'PERCENTAGE',
             discountValue: 0,
             maxDiscountAmount: null,
@@ -452,11 +453,11 @@ export function VoucherLinePickerDialog({
                           </Badge>
                         </div>
                         <p className='mt-0.5 text-sm font-semibold text-foreground'>
-                          {v.maxDiscountAmount
-                            ? `Giảm tối đa ${fmt(v.maxDiscountAmount)}`
-                            : v.discountType === 'FIXED_AMOUNT'
-                              ? `Giảm ${fmt(v.discountValue)}`
-                              : `Giảm ${v.discountValue}%`}
+                          {v.discountType === 'PERCENTAGE'
+                            ? v.maxDiscountAmount
+                              ? `Giảm tối đa ${fmt(v.maxDiscountAmount)}`
+                              : `Giảm ${v.discountValue}%`
+                            : `Giảm ${fmt(v.discountValue)}`}
                         </p>
                         {v.minRentalDays && (
                           <p className='mt-0.5 text-xs text-muted-foreground'>

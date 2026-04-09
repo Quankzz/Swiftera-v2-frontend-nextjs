@@ -6,3 +6,15 @@
  */
 
 export * from '@/api/rentalOrderApi';
+
+import type { RentalOrderStatus } from '@/types/dashboard';
+
+export const RENTAL_ORDER_STATUSES: { value: RentalOrderStatus; label: string }[] = [
+  { value: 'PENDING', label: 'Chờ xác nhận' },
+  { value: 'CONFIRMED', label: 'Đã xác nhận' },
+  { value: 'DELIVERING', label: 'Đang giao hàng' },
+  { value: 'ACTIVE', label: 'Đang thuê' },
+  { value: 'RETURNING', label: 'Đang thu hồi' },
+  { value: 'COMPLETED', label: 'Hoàn thành' },
+  { value: 'CANCELLED', label: 'Đã hủy' },
+];

@@ -69,12 +69,16 @@ export function useAddToCart(options?: {
             {
               cartLineId: `optimistic-${Date.now()}`,
               productId: input.productId,
+              productColorId: input.productColorId ?? null,
+              colorName: null,
+              colorCode: null,
               productName: '',
               productImageUrl: null,
               dailyPrice: 0,
               rentalDurationDays: input.rentalDurationDays,
               quantity: input.quantity ?? 1,
               lineTotal: 0,
+              availableVouchers: [],
             },
           ],
         };

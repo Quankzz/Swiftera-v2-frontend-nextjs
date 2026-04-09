@@ -14,14 +14,112 @@ import {
   updateRentalOrderStatus,
   cancelRentalOrder,
   extendRentalOrder,
+  assignRentalOrder,
 } from './rental-order.service';
 import type {
   CreateRentalOrderInput,
   UpdateOrderStatusInput,
   ExtendOrderInput,
 } from '@/api/rentalOrderApi';
+import type { AssignOrderInput, RentalOrder, RentalOrderStatus } from '@/types/dashboard';
+import type { RentalOrderResponse, RentalOrderStatus as ApiRentalOrderStatus } from '@/api/rentalOrderApi';
+import { getRentalOrders } from './rental-order.service';
+
+// ─── Status mapping helpers ───────────────────────────────────────────────
+
+function mapApiStatusToDashboard(status: ApiRentalOrderStatus): RentalOrderStatus {
+  switch (status) {
+    case 'PENDING_PAYMENT': return 'PENDING';
+    case 'PAID':
+    case 'PREPARING': return 'CONFIRMED';
+    case 'DELIVERING':
+    case 'DELIVERED': return 'DELIVERING';
+    case 'IN_USE': return 'ACTIVE';
+    case 'PENDING_PICKUP':
+    case 'PICKING_UP':
+    case 'PICKED_UP': return 'RETURNING';
+    case 'COMPLETED': return 'COMPLETED';
+    case 'CANCELLED': return 'CANCELLED';
+  }
+}
+
+function mapApiOrderToDashboard(o: RentalOrderResponse): RentalOrder {
+  return {
+    rentalOrderId: o.rentalOrderId,
+    userId: o.userId,
+    deliveryStaffId: o.deliveryStaff?.userId ?? null,
+    pickupStaffId: o.pickupStaff?.userId ?? null,
+    voucherId: null,
+    deliveryRecipientName: o.deliveryRecipientName,
+    deliveryPhone: o.deliveryPhone,
+    deliveryAddressLine: o.deliveryAddressLine,
+    deliveryWard: o.deliveryWard,
+    deliveryDistrict: o.deliveryDistrict,
+    deliveryCity: o.deliveryCity,
+    deliveryNote: null,
+    startDate: o.expectedDeliveryDate,
+    endDate: o.expectedRentalEndDate,
+    plannedDeliveryAt: o.plannedDeliveryAt,
+    deliveredAt: o.actualDeliveryAt,
+    plannedPickupAt: o.plannedPickupAt,
+    pickedUpAt: o.pickedUpAt,
+    placedAt: o.placedAt,
+    status: mapApiStatusToDashboard(o.status),
+    subtotalRentalFee: o.rentalSubtotalAmount,
+    voucherCodeSnapshot: o.voucherCodeSnapshot,
+    voucherDiscountAmount: o.voucherDiscountAmount,
+    totalRentalFee: o.rentalFeeAmount,
+    totalDeposit: o.depositHoldAmount,
+    penaltyTotal: o.penaltyChargeAmount ?? 0,
+    depositRefundedAmount: o.depositRefundAmount ?? 0,
+    grandTotalPaid: o.totalPaidAmount,
+    hubId: o.hubId,
+    hubName: o.hubName,
+    deliveryStaffName: o.deliveryStaff
+      ? `${o.deliveryStaff.firstName} ${o.deliveryStaff.lastName}`.trim()
+      : null,
+    pickupStaffName: o.pickupStaff
+      ? `${o.pickupStaff.firstName} ${o.pickupStaff.lastName}`.trim()
+      : null,
+    items: [],
+  };
+}
 
 // ─── Query ──────────────────────────────────────────────────────────────────
+
+/**
+ * Lấy danh sách đơn thuê (admin/staff) [AUTH]
+ * Dùng cho dashboard quản trị
+ */
+export function useRentalOrdersQuery(params?: {
+  page?: number;
+  limit?: number;
+  status?: RentalOrderStatus;
+  search?: string;
+}) {
+  const apiParams = {
+    page: params?.page,
+    size: params?.limit,
+    filter: params?.status
+      ? `status:'${params.status}'`
+      : undefined,
+  };
+
+  return useQuery({
+    queryKey: rentalOrderKeys.list(params),
+    queryFn: async () => {
+      const result = await getRentalOrders(apiParams);
+      return {
+        data: result.items.map(mapApiOrderToDashboard),
+        total: result.totalItems,
+        page: result.page,
+        totalPages: result.totalPages,
+      };
+    },
+    staleTime: 15_000,
+    retry: false,
+  });
+}
 
 /**
  * Lấy danh sách đơn thuê của tôi [AUTH]
@@ -134,6 +232,40 @@ export function useCancelOrder(options?: {
     onSuccess: (_, rentalOrderId) => {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(rentalOrderId),
+      });
+      void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
+      options?.onSuccess?.();
+    },
+
+    onError: (error: Error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Gán nhân viên + hub cho đơn thuê [AUTH] — dùng cho dashboard staff
+ */
+export function useAssignOrderMutation(options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      input,
+    }: {
+      id: string;
+      input: AssignOrderInput;
+    }) => {
+      return assignRentalOrder(id, input);
+    },
+
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({
+        queryKey: rentalOrderKeys.detail(variables.id),
       });
       void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
       options?.onSuccess?.();

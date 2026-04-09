@@ -2,10 +2,12 @@
 
 import { useState, useEffect, startTransition } from 'react';
 import { X, Loader2, MapPin, AlertCircle, Map } from 'lucide-react';
-import {
-  LocationPickerModal,
-  type PickedLocation,
-} from '@/components/map/LocationPickerModal';
+import dynamic from 'next/dynamic';
+import type { PickedLocation } from '@/components/map/LocationPickerModal';
+const LocationPickerModal = dynamic(
+  () => import('@/components/map/LocationPickerModal').then((m) => m.LocationPickerModal),
+  { ssr: false },
+);
 import { toast } from 'sonner';
 import type { HubResponse } from '@/features/hubs/types';
 import {

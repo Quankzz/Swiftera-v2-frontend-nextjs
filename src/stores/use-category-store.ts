@@ -103,7 +103,7 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
       slug: data.slug || generateSlug(data.name),
       sortOrder: data.sortOrder,
       brands: data.brands.length > 0 ? data.brands : undefined,
-      image: data.image,
+      imageUrl: data.image,
     };
     set((s) => {
       const next = [...s.categories, newCat];

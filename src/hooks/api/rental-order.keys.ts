@@ -5,6 +5,9 @@
 export const rentalOrderKeys = {
   all: ['rental-orders'] as const,
 
+  list: (params?: object) =>
+    [...rentalOrderKeys.all, 'list', params ?? {}] as const,
+
   myList: (params?: {
     page?: number;
     size?: number;

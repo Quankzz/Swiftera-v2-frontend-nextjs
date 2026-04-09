@@ -58,9 +58,9 @@ export interface OrderItem {
   /** First CHECKOUT phase photo URL stored on backend */
   checkout_photo_url?: string;
   /** All CHECKOUT phase photo URLs (taken at hub before delivery) */
-  checkout_photos: string[];
+  checkout_photos?: string[];
   /** All CHECKIN phase photo URLs (taken when recovering goods) */
-  checkin_photos: string[];
+  checkin_photos?: string[];
   /** Staff condition note at checkout (hub, before delivery) — backend: checkoutConditionNote */
   checkout_condition_note?: string;
   /** Staff condition note at checkin (return from customer) — backend: checkinConditionNote */
