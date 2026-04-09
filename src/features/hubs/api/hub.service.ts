@@ -9,6 +9,7 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/api/apiService';
 import type {
   HubResponse,
+  HubStaffResponse,
   PaginatedHubsResponse,
   CreateHubInput,
   UpdateHubInput,
@@ -22,7 +23,6 @@ import type {
 /**
  * API-042: GET /hubs?page=1&size=10&filter=...
  * BE dùng 1-based pagination (currentPage bắt đầu từ 1).
- * Frontend dùng 0-based → cộng thêm 1 trước khi gửi lên.
  *
  * Ghi chú spec:
  *  - API này là PUBLIC (không cần token) nhưng dashboard gọi với auth header cũng không vấn đề
@@ -31,13 +31,11 @@ import type {
 export function getHubsList(
   params?: HubListParams,
 ): Promise<PaginatedHubsResponse> {
-  const { page, ...rest } = params ?? {};
   return apiGet<PaginatedHubsResponse>('/hubs', {
-    params: {
-      ...rest,
-      // 0-based FE → 1-based BE (BE KHÔNG có page 0)
-      ...(page !== undefined ? { page: page + 1 } : {}),
-    } as Record<string, string | number | boolean | undefined | null>,
+    params: params as Record<
+      string,
+      string | number | boolean | undefined | null
+    >,
   });
 }
 
@@ -82,4 +80,24 @@ export function updateHub(
  */
 export function deleteHub(hubId: string): Promise<null> {
   return apiDelete<null>(`/hubs/${hubId}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Staff
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-043 (staff): GET /hubs/{hubId}/staff?activeOnly=false
+ * Lấy danh sách nhân viên thuộc hub.
+ *
+ * Response: plain array (không paginated).
+ * activeOnly=false → trả về tất cả nhân viên kể cả chưa xác thực.
+ */
+export function getHubStaff(
+  hubId: string,
+  activeOnly = false,
+): Promise<HubStaffResponse[]> {
+  return apiGet<HubStaffResponse[]>(`/hubs/${hubId}/staff`, {
+    params: { activeOnly } as Record<string, boolean>,
+  });
 }

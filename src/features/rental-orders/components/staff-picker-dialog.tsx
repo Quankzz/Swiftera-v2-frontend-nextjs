@@ -25,16 +25,17 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useStaffForAssignQuery } from '@/features/rental-orders/hooks/use-rental-order-assignment';
-import type { StaffOption } from '@/features/rental-orders/types';
+import { useHubStaffForAssignQuery } from '@/features/rental-orders/hooks/use-rental-order-assignment';
+import type { HubStaffResponse } from '@/features/hubs/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface StaffPickerDialogProps {
   role: 'delivery' | 'pickup';
+  hubId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSelected: (staff: StaffOption) => void;
+  onSelected: (staff: HubStaffResponse) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -47,12 +48,13 @@ function getInitials(first: string, last: string) {
 
 export function StaffPickerDialog({
   role,
+  hubId,
   isOpen,
   onClose,
   onSelected,
 }: StaffPickerDialogProps) {
   const [search, setSearch] = useState('');
-  const [highlighted, setHighlighted] = useState<StaffOption | null>(null);
+  const [highlighted, setHighlighted] = useState<HubStaffResponse | null>(null);
 
   const isDelivery = role === 'delivery';
   const title = isDelivery
@@ -74,13 +76,12 @@ export function StaffPickerDialog({
     : 'bg-emerald-600 hover:bg-emerald-700';
   const loaderColor = isDelivery ? 'text-indigo-500' : 'text-emerald-500';
 
-  const { data, isLoading } = useStaffForAssignQuery({
-    page: 0,
-    size: 100,
-    sort: 'firstName,asc',
-  });
+  const { data: staffData, isLoading } = useHubStaffForAssignQuery(hubId);
 
-  const allStaff = useMemo<StaffOption[]>(() => data?.content ?? [], [data]);
+  const allStaff = useMemo<HubStaffResponse[]>(
+    () => staffData ?? [],
+    [staffData],
+  );
 
   const filteredStaff = useMemo(() => {
     if (!search.trim()) return allStaff;
@@ -168,8 +169,6 @@ export function StaffPickerDialog({
             filteredStaff.map((staff) => {
               const isSelected = highlighted?.userId === staff.userId;
               const fullName = `${staff.firstName} ${staff.lastName}`;
-              const roleName =
-                staff.rolesSecured?.find((r) => r.active)?.name ?? 'Nhân viên';
               return (
                 <button
                   key={staff.userId}
@@ -212,8 +211,13 @@ export function StaffPickerDialog({
                     </p>
                     <div className='flex items-center gap-2 mt-0.5 flex-wrap'>
                       <span className='text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-text-sub'>
-                        {roleName}
+                        Nhân viên
                       </span>
+                      {staff.isVerified && (
+                        <span className='text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'>
+                          Đã xác thực
+                        </span>
+                      )}
                       <span className='text-[10px] text-text-sub truncate'>
                         {staff.email}
                       </span>

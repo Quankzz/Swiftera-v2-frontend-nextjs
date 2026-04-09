@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect, startTransition } from 'react';
-import { X, Loader2, MapPin, AlertCircle } from 'lucide-react';
+import { X, Loader2, MapPin, AlertCircle, Map } from 'lucide-react';
+import {
+  LocationPickerModal,
+  type PickedLocation,
+} from '@/components/map/LocationPickerModal';
 import { toast } from 'sonner';
 import type { HubResponse } from '@/features/hubs/types';
 import {
@@ -94,6 +98,8 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
   const createMutation = useCreateHubMutation();
   const updateMutation = useUpdateHubMutation();
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -293,33 +299,48 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
               </div>
             </div>
 
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <label className='text-sm font-medium text-text-main'>
-                  Vĩ độ (latitude)
-                </label>
-                <input
-                  type='number'
-                  step='any'
-                  placeholder='VD: 10.7769'
-                  value={form.latitude}
-                  onChange={(e) => set('latitude', e.target.value)}
-                  className='w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30'
-                />
-              </div>
-              <div className='space-y-1.5'>
-                <label className='text-sm font-medium text-text-main'>
-                  Kinh độ (longitude)
-                </label>
-                <input
-                  type='number'
-                  step='any'
-                  placeholder='VD: 106.7009'
-                  value={form.longitude}
-                  onChange={(e) => set('longitude', e.target.value)}
-                  className='w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30'
-                />
-              </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-text-main'>
+                Vị trí trên bản đồ
+              </label>
+
+              {/* Hiển thị tọa độ đã chọn */}
+              {form.latitude && form.longitude ? (
+                <div className='flex items-center gap-2 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 px-3 py-2'>
+                  <MapPin
+                    size={14}
+                    className='text-green-600 dark:text-green-400 shrink-0'
+                  />
+                  <span className='text-sm font-mono text-text-main flex-1'>
+                    {parseFloat(form.latitude).toFixed(6)},{' '}
+                    {parseFloat(form.longitude).toFixed(6)}
+                  </span>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      set('latitude', '');
+                      set('longitude', '');
+                    }}
+                    className='flex size-5 items-center justify-center rounded text-text-sub hover:text-red-500 transition'
+                    title='Xóa vị trí'
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <p className='text-xs text-text-sub italic'>Chưa chọn vị trí</p>
+              )}
+
+              <button
+                type='button'
+                onClick={() => setLocationPickerOpen(true)}
+                className='inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-1.5 text-sm font-medium text-text-main transition hover:bg-gray-50 dark:hover:bg-white/5 hover:border-theme-primary-start/40'
+              >
+                <Map size={14} className='text-theme-primary-start' />
+                {form.latitude && form.longitude
+                  ? 'Đổi vị trí'
+                  : 'Chọn trên bản đồ'}
+              </button>
             </div>
           </div>
 
@@ -370,6 +391,20 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
             </span>
           </div>
         </form>
+
+        {/* Location picker modal — render outside form để không conflict với form submit */}
+        {locationPickerOpen && (
+          <LocationPickerModal
+            initialLat={form.latitude ? parseFloat(form.latitude) : undefined}
+            initialLng={form.longitude ? parseFloat(form.longitude) : undefined}
+            onConfirm={(loc: PickedLocation) => {
+              set('latitude', String(loc.lat));
+              set('longitude', String(loc.lng));
+              setLocationPickerOpen(false);
+            }}
+            onClose={() => setLocationPickerOpen(false)}
+          />
+        )}
 
         {/* Footer */}
         <div className='flex items-center justify-end gap-3 border-t border-gray-100 dark:border-white/8 px-6 py-4 shrink-0'>

@@ -5,5 +5,5 @@ export default function ProductSectionLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <Layout>{children}</Layout>;
+  return <Layout stickyHeader>{children}</Layout>;
 }

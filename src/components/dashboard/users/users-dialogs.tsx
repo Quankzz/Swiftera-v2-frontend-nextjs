@@ -23,12 +23,13 @@ import {
   useDeleteUserMutation,
   useUpdateUserMutation,
   useUserQuery,
+  useRemoveUserRolesMutation,
 } from '@/features/users/hooks/use-user-management';
-import { useRolesQuery } from '@/hooks/api/use-roles';
+import { useRolesListQuery } from '@/features/roles/hooks/use-roles';
+import type { RoleResponse } from '@/features/roles/types';
 import type { UserResponse, UpdateUserInput } from '@/features/users/types';
 import { useUploadFileMutation } from '@/features/files/hooks/use-files';
 import { normalizeError } from '@/api/apiService';
-import Cropper from 'react-easy-crop';
 import {
   Camera,
   User as UserIcon,
@@ -42,72 +43,6 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
-
-type CropArea = { width: number; height: number; x: number; y: number };
-type FileWithPreview = File & { preview?: string };
-
-async function createImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new window.Image();
-    image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error: Event) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous');
-    image.src = url;
-  });
-}
-
-async function getCroppedBlob(
-  imageSrc: string,
-  croppedAreaPixels: CropArea,
-): Promise<string | null> {
-  try {
-    const image = await createImage(imageSrc);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    canvas.width = croppedAreaPixels.width;
-    canvas.height = croppedAreaPixels.height;
-    ctx.drawImage(
-      image,
-      croppedAreaPixels.x,
-      croppedAreaPixels.y,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-      0,
-      0,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-    );
-    return new Promise((resolve) => {
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return resolve(null);
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        },
-        'image/jpeg',
-        0.9,
-      );
-    });
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Convert data URL (base64) → File object để upload qua Files API.
- */
-function dataUrlToFile(dataUrl: string, filename: string): File {
-  const [header, base64] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-  const binaryStr = atob(base64);
-  const bytes = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) {
-    bytes[i] = binaryStr.charCodeAt(i);
-  }
-  return new File([bytes], filename, { type: mime });
-}
 
 interface UserFormDialogProps {
   open: boolean;
@@ -133,24 +68,19 @@ export function UserFormDialog({
   });
 
   const updateMutation = useUpdateUserMutation();
+  const removeRolesMutation = useRemoveUserRolesMutation();
   const uploadMutation = useUploadFileMutation();
   const { data: userDetail, isFetching: isDetailLoading } = useUserQuery(
     initialUser?.userId,
   );
-  const { data: rolesData } = useRolesQuery({ limit: 100 });
-  const allRoles = rolesData?.data ?? [];
+  const { data: rolesData } = useRolesListQuery({ size: 100 });
+  const allRoles: RoleResponse[] = rolesData?.content ?? [];
 
   const [formState, setFormState] = useState(buildState(initialUser));
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
-  const [avatarFile, setAvatarFile] = useState<FileWithPreview | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [finalAvatarUrl, setFinalAvatarUrl] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(
-    null,
-  );
-  const [isCropping, setIsCropping] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -160,56 +90,33 @@ export function UserFormDialog({
         setSelectedRoleIds([]);
         setAvatarFile(null);
         setFinalAvatarUrl(null);
-        setIsCropping(false);
-        setCrop({ x: 0, y: 0 });
-        setZoom(1);
       });
       return;
     }
     if (userDetail) {
       startTransition(() => {
         setFormState(buildState(userDetail));
-        setSelectedRoleIds(userDetail.rolesSecured?.map((r) => r.roleId) ?? []);
+        setSelectedRoleIds([
+          ...new Set(userDetail.rolesSecured?.map((r) => r.roleId) ?? []),
+        ]);
         setFinalAvatarUrl(userDetail.avatarUrl || null);
         setAvatarFile(null);
-        setIsCropping(false);
       });
     }
   }, [open, isEdit, userDetail, initialUser?.userId]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    // Revoke old preview to prevent memory leaks
-    if (avatarFile?.preview) URL.revokeObjectURL(avatarFile.preview);
-    const withPreview = Object.assign(file, {
-      preview: URL.createObjectURL(file),
-    }) as FileWithPreview;
-    setAvatarFile(withPreview);
-    setFinalAvatarUrl(null);
-    setIsCropping(true);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    // Reset input so same file can be re-selected
-    e.target.value = '';
-  };
-
-  const handleCropConfirm = useCallback(async () => {
-    if (!avatarFile?.preview || !croppedAreaPixels) return;
-    const result = await getCroppedBlob(avatarFile.preview, croppedAreaPixels);
-    if (result) {
-      setFinalAvatarUrl(result);
-      setIsCropping(false);
-    }
-  }, [avatarFile, croppedAreaPixels]);
-
-  const handleCropCancel = () => {
-    setAvatarFile(null);
-    setIsCropping(false);
-    setFinalAvatarUrl(
-      isEdit && userDetail ? userDetail.avatarUrl || null : null,
-    );
-  };
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      e.target.value = '';
+      // Show local preview immediately
+      const previewUrl = URL.createObjectURL(file);
+      setFinalAvatarUrl(previewUrl);
+      setAvatarFile(file);
+    },
+    [],
+  );
 
   const handleSubmit = async () => {
     if (!formState.firstName.trim() || !formState.email.trim()) return;
@@ -243,41 +150,56 @@ export function UserFormDialog({
         if (trimmed.isVerified !== (userDetail.isVerified ?? false))
           payload.isVerified = trimmed.isVerified;
 
-        // Roles: so sánh set roleIds
-        const prevRoleIds = [
-          ...(userDetail.rolesSecured?.map((r) => r.roleId) ?? []),
-        ].sort();
-        const nextRoleIds = [...selectedRoleIds].sort();
-        if (JSON.stringify(prevRoleIds) !== JSON.stringify(nextRoleIds))
-          payload.roleIds = selectedRoleIds;
+        // Roles: tính diff thêm/xóa
+        const prevRoleSet = new Set(
+          userDetail.rolesSecured?.map((r) => r.roleId) ?? [],
+        );
+        const nextRoleSet = new Set(selectedRoleIds);
 
-        // Avatar: nếu user chọn ảnh mới (finalAvatarUrl là data URL) → upload → lấy URL
-        if (
-          avatarFile &&
-          finalAvatarUrl &&
-          finalAvatarUrl.startsWith('data:')
-        ) {
-          const file = dataUrlToFile(
-            finalAvatarUrl,
-            `avatar-${initialUser.userId}.jpg`,
-          );
+        const addedRoleIds = selectedRoleIds.filter(
+          (id) => !prevRoleSet.has(id),
+        );
+        const removedRoleIds = [...prevRoleSet].filter(
+          (id) => !nextRoleSet.has(id),
+        );
+
+        // Thêm role mới qua PATCH (API-016)
+        if (addedRoleIds.length > 0) payload.roleIds = addedRoleIds;
+
+        // Xóa role cũ qua DELETE /users/{userId}/roles (API-018) — gọi song song sau update
+        // Avatar: nếu user chọn ảnh mới → upload → lấy URL
+        if (avatarFile) {
           const uploadResult = await uploadMutation.mutateAsync({
-            file,
+            file: avatarFile,
             folder: 'avatars',
           });
           payload.avatarUrl = uploadResult.fileUrl;
         }
 
-        // Nếu không có gì thay đổi → đóng dialog luôn
-        if (Object.keys(payload).length === 0) {
+        // Nếu không có gì thay đổi (kể cả roles) → đóng dialog luôn
+        const hasRoleChanges =
+          addedRoleIds.length > 0 || removedRoleIds.length > 0;
+        if (Object.keys(payload).length === 0 && !hasRoleChanges) {
           onClose();
           return;
         }
 
-        await updateMutation.mutateAsync({
-          userId: initialUser.userId,
-          payload,
-        });
+        // Gọi PATCH update (nếu có field thay đổi hoặc role thêm mới)
+        if (Object.keys(payload).length > 0) {
+          await updateMutation.mutateAsync({
+            userId: initialUser.userId,
+            payload,
+          });
+        }
+
+        // Gọi DELETE /users/{userId}/roles để xóa role cũ (API-018)
+        if (removedRoleIds.length > 0) {
+          await removeRolesMutation.mutateAsync({
+            userId: initialUser.userId,
+            payload: { roleIds: removedRoleIds },
+          });
+        }
+
         toast.success('Cập nhật người dùng thành công');
       }
       onClose();
@@ -289,7 +211,8 @@ export function UserFormDialog({
     }
   };
 
-  const isSubmitting = updateMutation.isPending;
+  const isSubmitting =
+    updateMutation.isPending || removeRolesMutation.isPending;
 
   const avatarInitial = formState.firstName
     ? formState.firstName.charAt(0).toUpperCase()
@@ -441,58 +364,6 @@ export function UserFormDialog({
               </div>
             </div>
           </div>
-
-          {/* Cropper */}
-          {isCropping && avatarFile?.preview && (
-            <div className='rounded-xl border border-dashed border-theme-primary-start/40 overflow-hidden bg-gray-900 shrink-0'>
-              <div className='relative w-full h-64'>
-                <Cropper
-                  image={avatarFile.preview}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={1}
-                  cropShape='round'
-                  showGrid={false}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={(_, croppedPixels) =>
-                    setCroppedAreaPixels(croppedPixels as CropArea)
-                  }
-                />
-              </div>
-              <div className='flex items-center gap-3 px-4 py-2.5 bg-gray-800'>
-                <span className='text-xs text-gray-400 shrink-0'>
-                  Thu phóng
-                </span>
-                <input
-                  type='range'
-                  min={1}
-                  max={3}
-                  step={0.05}
-                  value={zoom}
-                  onChange={(e) => setZoom(parseFloat(e.target.value))}
-                  className='flex-1 accent-theme-primary-start'
-                />
-                <div className='flex items-center gap-2 shrink-0'>
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    onClick={handleCropCancel}
-                    className='h-7 text-xs border-gray-600 text-gray-300 hover:bg-gray-700'
-                  >
-                    <XCircle size={13} className='mr-1' /> Hủy
-                  </Button>
-                  <Button
-                    size='sm'
-                    onClick={handleCropConfirm}
-                    className='h-7 text-xs bg-theme-primary-start hover:opacity-90'
-                  >
-                    <CheckCircle2 size={13} className='mr-1' /> Dùng ảnh này
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Phone + Verified */}
           <div className='grid grid-cols-2 gap-3'>
@@ -650,7 +521,7 @@ export function UserFormDialog({
                                 setSelectedRoleIds((prev) =>
                                   checked
                                     ? prev.filter((id) => id !== role.roleId)
-                                    : [...prev, role.roleId],
+                                    : [...new Set([...prev, role.roleId])],
                                 )
                               }
                               className='h-4 w-4 rounded accent-blue-600 shrink-0'
@@ -667,7 +538,7 @@ export function UserFormDialog({
                                 </span>
                               )}
                             </span>
-                            {!role.isActive && (
+                            {!role.active && (
                               <span className='shrink-0 text-[10px] text-orange-600 border border-orange-200 bg-orange-50 rounded-full px-2 py-0.5 font-medium'>
                                 Tắt
                               </span>
@@ -698,8 +569,8 @@ export function UserFormDialog({
 
           {/* Nickname — below role select */}
           <div className='space-y-1.5'>
-            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
-              Nickname
+            <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
+              <UserIcon size={11} /> Nickname
             </label>
             <Input
               value={formState.nickname}

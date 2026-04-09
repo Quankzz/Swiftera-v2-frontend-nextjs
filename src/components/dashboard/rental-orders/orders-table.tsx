@@ -302,7 +302,7 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
       searchColumn='rentalOrderId'
       totalLabel='đơn thuê'
       manualPagination
-      pageIndex={page - 1}
+      pageIndex={page}
       pageCount={totalPages}
       onPageChange={(p) => setPage(p + 1)}
       pageSize={limit}

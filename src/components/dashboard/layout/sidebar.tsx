@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Ticket,
   Warehouse,
+  ShieldCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -61,6 +62,11 @@ const NAV_GROUPS = [
         title: 'Phản hồi',
         href: '/dashboard/contact-tickets',
         icon: MessageSquare,
+      },
+      {
+        title: 'Chính sách',
+        href: '/dashboard/policies',
+        icon: ShieldCheck,
       },
     ],
   },

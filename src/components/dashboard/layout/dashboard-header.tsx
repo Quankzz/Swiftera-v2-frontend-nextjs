@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   Moon,
   Sun,
@@ -13,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/context/theme-context';
 import { Button } from '@/components/ui/button';
+import { useAuthStore } from '@/stores/auth-store';
 
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -44,8 +47,6 @@ function ThemeToggle() {
   );
 }
 
-const ADMIN = { name: 'Admin', email: 'admin@swiftera.com', initials: 'AD' };
-
 const NOTIFICATIONS = [
   { text: 'Người dùng mới đăng ký', time: '2 phút trước' },
   { text: 'Yêu cầu phê duyệt vai trò', time: '15 phút trước' },
@@ -67,11 +68,33 @@ function useOutsideClick(
 }
 
 export function DashboardHeader() {
+  const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const user = useAuthStore((s) => s.user);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+
+  const displayName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+    : 'Admin';
+  const displayEmail = user?.email ?? '';
+  const initials = displayName.slice(0, 2).toUpperCase();
+
+  const handleLogout = useCallback(async () => {
+    try {
+      const { logout } = await import('@/api/auth/index');
+      await logout();
+    } catch {
+      // clear local session even if server logout fails
+    } finally {
+      clearAuth();
+      router.push('/auth/login');
+    }
+  }, [clearAuth, router]);
 
   useOutsideClick(
     notifRef,
@@ -102,7 +125,7 @@ export function DashboardHeader() {
         <ThemeToggle />
 
         {/* Notifications */}
-        <div ref={notifRef} className='relative'>
+        {/* <div ref={notifRef} className='relative'>
           <button
             onClick={() => setNotifOpen((v) => !v)}
             className='relative flex h-8 w-8 items-center justify-center rounded-md text-text-sub hover:text-text-main hover:bg-gray-100 dark:hover:bg-white/8 transition-colors'
@@ -144,7 +167,7 @@ export function DashboardHeader() {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Profile dropdown */}
         <div ref={profileRef} className='relative'>
@@ -152,17 +175,28 @@ export function DashboardHeader() {
             onClick={() => setProfileOpen((v) => !v)}
             className='flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors'
           >
-            <div className='h-7 w-7 rounded-full bg-theme-primary-start/15 flex items-center justify-center'>
-              <span className='text-xs font-bold text-theme-primary-start'>
-                {ADMIN.initials}
-              </span>
+            <div className='h-7 w-7 rounded-full bg-theme-primary-start/15 flex items-center justify-center overflow-hidden shrink-0'>
+              {user?.avatarUrl ? (
+                <Image
+                  src={user.avatarUrl}
+                  alt={displayName}
+                  width={28}
+                  height={28}
+                  className='object-cover w-full h-full'
+                  unoptimized
+                />
+              ) : (
+                <span className='text-xs font-bold text-theme-primary-start'>
+                  {initials}
+                </span>
+              )}
             </div>
             <div className='hidden sm:flex flex-col items-start'>
               <span className='text-xs font-semibold text-text-main leading-none'>
-                {ADMIN.name}
+                {displayName}
               </span>
               <span className='text-[10px] text-text-sub leading-none mt-0.5'>
-                {ADMIN.email}
+                {displayEmail}
               </span>
             </div>
             <ChevronDown size={14} className='text-text-sub' />
@@ -172,19 +206,25 @@ export function DashboardHeader() {
             <div className='absolute right-0 top-10 w-52 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-lg dark:shadow-black/30 overflow-hidden z-50'>
               <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
                 <p className='text-sm font-semibold text-text-main'>
-                  {ADMIN.name}
+                  {displayName}
                 </p>
-                <p className='text-xs text-text-sub'>{ADMIN.email}</p>
+                <p className='text-xs text-text-sub'>{displayEmail}</p>
               </div>
               <div className='p-1'>
-                <button className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'>
+                <button
+                  onClick={() => {
+                    setProfileOpen(false);
+                    router.push('/profile');
+                  }}
+                  className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
+                >
                   <User size={14} className='text-text-sub' /> Hồ sơ cá nhân
                 </button>
-                <button className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'>
-                  <Settings size={14} className='text-text-sub' /> Cài đặt
-                </button>
                 <div className='my-1 h-px bg-gray-100 dark:bg-white/8' />
-                <button className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'>
+                <button
+                  onClick={handleLogout}
+                  className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+                >
                   <LogOut size={14} /> Đăng xuất
                 </button>
               </div>

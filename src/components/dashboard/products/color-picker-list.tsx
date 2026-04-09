@@ -3,34 +3,35 @@
 import { useCallback, useState } from 'react';
 import { X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { ProductColorInput } from '@/features/products/types';
 
-const PRESET_COLORS = [
+const PRESET_COLORS: ProductColorInput[] = [
   // Neutrals
-  { hex: '#000000', label: 'Đen' },
-  { hex: '#ffffff', label: 'Trắng' },
-  { hex: '#6b7280', label: 'Xám' },
-  { hex: '#d1d5db', label: 'Xám nhạt' },
+  { name: 'Đen', code: '#000000' },
+  { name: 'Trắng', code: '#ffffff' },
+  { name: 'Xám', code: '#6b7280' },
+  { name: 'Xám nhạt', code: '#d1d5db' },
   // Warm
-  { hex: '#ef4444', label: 'Đỏ' },
-  { hex: '#f97316', label: 'Cam' },
-  { hex: '#eab308', label: 'Vàng' },
-  { hex: '#f59e0b', label: 'Vàng đậm' },
+  { name: 'Đỏ', code: '#ef4444' },
+  { name: 'Cam', code: '#f97316' },
+  { name: 'Vàng', code: '#eab308' },
+  { name: 'Vàng đậm', code: '#f59e0b' },
   // Cool
-  { hex: '#22c55e', label: 'Xanh lá' },
-  { hex: '#06b6d4', label: 'Xanh ngọc' },
-  { hex: '#3b82f6', label: 'Xanh dương' },
-  { hex: '#8b5cf6', label: 'Tím' },
+  { name: 'Xanh lá', code: '#22c55e' },
+  { name: 'Xanh ngọc', code: '#06b6d4' },
+  { name: 'Xanh dương', code: '#3b82f6' },
+  { name: 'Tím', code: '#8b5cf6' },
   // Others
-  { hex: '#ec4899', label: 'Hồng' },
-  { hex: '#a16207', label: 'Nâu' },
-  { hex: '#1e3a5f', label: 'Navy' },
-  { hex: '#065f46', label: 'Xanh rừng' },
+  { name: 'Hồng', code: '#ec4899' },
+  { name: 'Nâu', code: '#a16207' },
+  { name: 'Navy', code: '#1e3a5f' },
+  { name: 'Xanh rừng', code: '#065f46' },
 ];
 
 interface ColorPickerListProps {
-  /** Danh sách màu đang chọn (hex string, VD: "#1a2b3c") */
-  colors: string[];
-  onChange: (colors: string[]) => void;
+  /** Danh sách màu đang chọn */
+  colors: ProductColorInput[];
+  onChange: (colors: ProductColorInput[]) => void;
   /** Max số màu được chọn (default 6) */
   maxColors?: number;
   className?: string;
@@ -42,22 +43,20 @@ export function ColorPickerList({
   maxColors = 6,
   className,
 }: ColorPickerListProps) {
-  // Màu đang preview trong picker (chưa commit vào danh sách)
-  const [pendingColor, setPendingColor] = useState('#3b82f6');
+  const [pendingCode, setPendingCode] = useState('#3b82f6');
+  const [pendingName, setPendingName] = useState('');
 
   const canAdd = colors.length < maxColors;
-  const isPendingAlreadyAdded = colors.includes(pendingColor);
+  const isPendingAlreadyAdded = colors.some((c) => c.code === pendingCode);
 
-  // Thêm màu preset — chỉ thêm nếu chưa có và chưa đạt max
   const handlePresetClick = useCallback(
-    (hex: string) => {
-      if (colors.includes(hex) || !canAdd) return;
-      onChange([...colors, hex]);
+    (preset: ProductColorInput) => {
+      if (colors.some((c) => c.code === preset.code) || !canAdd) return;
+      onChange([...colors, { name: preset.name, code: preset.code }]);
     },
     [colors, canAdd, onChange],
   );
 
-  // Xóa màu đã chọn
   const handleRemove = useCallback(
     (index: number) => {
       onChange(colors.filter((_, i) => i !== index));
@@ -65,19 +64,26 @@ export function ColorPickerList({
     [colors, onChange],
   );
 
-  // onChange chỉ cập nhật state tạm
   const handlePickerChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setPendingColor(e.target.value);
+      setPendingCode(e.target.value);
     },
     [],
   );
 
-  // Commit màu tạm vào danh sách khi user nhấn nút "Thêm"
   const handleAddPending = useCallback(() => {
     if (!canAdd || isPendingAlreadyAdded) return;
-    onChange([...colors, pendingColor]);
-  }, [canAdd, isPendingAlreadyAdded, colors, pendingColor, onChange]);
+    const name = pendingName.trim() || pendingCode.toUpperCase();
+    onChange([...colors, { name, code: pendingCode }]);
+    setPendingName('');
+  }, [
+    canAdd,
+    isPendingAlreadyAdded,
+    colors,
+    pendingCode,
+    pendingName,
+    onChange,
+  ]);
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
@@ -93,16 +99,14 @@ export function ColorPickerList({
                 key={i}
                 className='group relative flex flex-col items-center gap-0.5'
               >
-                {/* Swatch — chỉ hiển thị màu, không có input overlay */}
                 <div
                   className='h-9 w-9 rounded-lg border-2 border-white shadow-sm ring-1 ring-gray-200 dark:ring-white/15'
-                  style={{ backgroundColor: color }}
-                  title={`Màu: ${color}`}
+                  style={{ backgroundColor: color.code }}
+                  title={`${color.name} (${color.code.toUpperCase()})`}
                 />
-                <span className='font-mono text-[9px] text-text-sub leading-none'>
-                  {color.toUpperCase()}
+                <span className='max-w-9 truncate text-center font-mono text-[9px] text-text-sub leading-none'>
+                  {color.name}
                 </span>
-                {/* Nút xóa — chỉ hiện khi hover vào swatch */}
                 <button
                   type='button'
                   onClick={() => handleRemove(i)}
@@ -121,19 +125,19 @@ export function ColorPickerList({
       <div className='flex flex-col gap-1.5'>
         <p className='text-xs font-medium text-text-sub'>Màu cơ bản</p>
         <div className='flex flex-wrap gap-1.5'>
-          {PRESET_COLORS.map(({ hex, label }) => {
-            const isSelected = colors.includes(hex);
+          {PRESET_COLORS.map((preset) => {
+            const isSelected = colors.some((c) => c.code === preset.code);
             const isDisabled = !isSelected && !canAdd;
             return (
               <button
-                key={hex}
+                key={preset.code}
                 type='button'
                 disabled={isDisabled}
-                onClick={() => handlePresetClick(hex)}
-                title={`${label} (${hex.toUpperCase()})${isSelected ? ' — Đã chọn' : isDisabled ? ' — Đã đạt tối đa' : ''}`}
+                onClick={() => handlePresetClick(preset)}
+                title={`${preset.name} (${preset.code.toUpperCase()})${isSelected ? ' — Đã chọn' : isDisabled ? ' — Đã đạt tối đa' : ''}`}
                 className={cn(
                   'relative h-8 w-8 rounded-md border-2 transition-all',
-                  hex === '#ffffff'
+                  preset.code === '#ffffff'
                     ? 'border-gray-200 dark:border-white/15'
                     : 'border-transparent',
                   isSelected
@@ -142,7 +146,7 @@ export function ColorPickerList({
                       ? 'opacity-30 cursor-not-allowed'
                       : 'hover:scale-110 hover:border-white hover:ring-2 hover:ring-offset-1 hover:ring-theme-primary-start cursor-pointer',
                 )}
-                style={{ backgroundColor: hex }}
+                style={{ backgroundColor: preset.code }}
               >
                 {isSelected && (
                   <span className='absolute inset-0 flex items-center justify-center'>
@@ -150,10 +154,10 @@ export function ColorPickerList({
                       <path
                         d='M2 6l3 3 5-5'
                         stroke={
-                          hex === '#ffffff' ||
-                          hex === '#d1d5db' ||
-                          hex === '#f59e0b' ||
-                          hex === '#eab308'
+                          preset.code === '#ffffff' ||
+                          preset.code === '#d1d5db' ||
+                          preset.code === '#f59e0b' ||
+                          preset.code === '#eab308'
                             ? '#374151'
                             : '#ffffff'
                         }
@@ -173,32 +177,42 @@ export function ColorPickerList({
       {/* ── Tự thêm màu tùy chỉnh ── */}
       <div className='flex flex-col gap-1.5'>
         <p className='text-xs font-medium text-text-sub'>Màu tùy chỉnh</p>
-        <div className='flex items-center gap-2'>
-          {/* Native color input — hiển thị inline, onChange chỉ cập nhật preview */}
+        <div className='flex flex-wrap items-center gap-2'>
+          {/* Color picker */}
           <input
             type='color'
-            value={pendingColor}
+            value={pendingCode}
             onChange={handlePickerChange}
             disabled={!canAdd}
             className='h-9 w-10 cursor-pointer rounded-md border border-gray-300 dark:border-white/20 bg-transparent p-0.5 disabled:cursor-not-allowed disabled:opacity-40'
             title='Chọn màu tùy chỉnh'
           />
-          {/* Preview swatch của màu đang chọn */}
+          {/* Preview swatch */}
           <div
             className='h-9 w-9 shrink-0 rounded-md border-2 border-white shadow-sm ring-1 ring-gray-200 dark:ring-white/15'
-            style={{ backgroundColor: pendingColor }}
-            title={pendingColor.toUpperCase()}
+            style={{ backgroundColor: pendingCode }}
+            title={pendingCode.toUpperCase()}
           />
-          <span className='font-mono text-xs text-text-sub w-16 shrink-0'>
-            {pendingColor.toUpperCase()}
+          {/* Hex code */}
+          <span className='w-16 shrink-0 font-mono text-xs text-text-sub'>
+            {pendingCode.toUpperCase()}
           </span>
-          {/* Nút commit màu vào danh sách */}
+          {/* Name input */}
+          <input
+            type='text'
+            value={pendingName}
+            onChange={(e) => setPendingName(e.target.value)}
+            placeholder='Tên màu'
+            disabled={!canAdd}
+            className='h-9 min-w-0 flex-1 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-2.5 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 disabled:opacity-40'
+          />
+          {/* Add button */}
           <button
             type='button'
             onClick={handleAddPending}
             disabled={!canAdd || isPendingAlreadyAdded}
             className={cn(
-              'flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition shrink-0',
+              'flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition',
               !canAdd
                 ? 'border-gray-200 dark:border-white/10 text-text-sub/40 cursor-not-allowed'
                 : isPendingAlreadyAdded
@@ -210,7 +224,7 @@ export function ColorPickerList({
                 ? `Đã đạt tối đa ${maxColors} màu`
                 : isPendingAlreadyAdded
                   ? 'Màu này đã có trong danh sách'
-                  : `Thêm màu ${pendingColor.toUpperCase()}`
+                  : `Thêm màu ${pendingCode.toUpperCase()}`
             }
           >
             <Plus size={14} />

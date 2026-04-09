@@ -27,6 +27,7 @@ export interface CategoryResponse {
   categoryId: string;
   parentId: string | null;
   name: string;
+  imageUrl: string;
   sortOrder: number;
   isActive: boolean;
   children: CategoryResponse[];
@@ -45,6 +46,7 @@ export interface CategoryTreeNode {
   sortOrder: number;
   isActive: boolean;
   children: CategoryTreeNode[];
+  imageUrl: string;
 }
 
 // ── Create input (API-045 POST /api/v1/categories) ──────────────────────────
@@ -56,6 +58,8 @@ export interface CreateCategoryInput {
   parentId?: string | null;
   /** >= 1; auto-assigned if omitted */
   sortOrder?: number;
+  /** URL ảnh đại diện cho danh mục */
+  imageUrl?: string;
 }
 
 // ── Update input (API-049 PATCH /api/v1/categories/{categoryId}) ─────────────
@@ -68,6 +72,8 @@ export interface UpdateCategoryInput {
   parentId?: string | null;
   sortOrder?: number;
   isActive?: boolean;
+  /** URL ảnh đại diện cho danh mục */
+  imageUrl?: string;
 }
 
 // ── Query params (API-047 GET /api/v1/categories) ───────────────────────────

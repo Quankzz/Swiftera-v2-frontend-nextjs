@@ -316,6 +316,9 @@ export interface PaginatedData<T> {
 /**
  * Serialize params object thành query string.
  * Bỏ qua undefined/null values.
+ *
+ * NOTE: URLSearchParams encodes spaces as `+` (form-encoding).  Spring's
+ * filter/RSQL parser expects `%20`, so we replace after serialising.
  */
 function buildQueryString(
   params?: Record<string, string | number | boolean | undefined | null>,
@@ -329,7 +332,7 @@ function buildQueryString(
   for (const [key, value] of entries) {
     searchParams.append(key, String(value));
   }
-  return `?${searchParams.toString()}`;
+  return `?${searchParams.toString().replace(/\+/g, '%20')}`;
 }
 
 /**
@@ -363,7 +366,10 @@ async function request<T>(
 
   // Auto-attach Authorization header
   if (!skipAuth) {
-    const token = _retryToken ?? getAccessToken();
+    const token = getAccessToken();
+
+    // const token =
+    //   'eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJwcml6aXEiLCJzdWIiOiJhODVhMWU1MC0zNGVkLTRkZjItYjM1ZC1hYTE1MmZlZDdiYmMiLCJleHAiOjE3NzUzMDYyNTAsImlhdCI6MTc3NTI5OTA1MCwiZW1haWwiOiJ0ZG1nMTgwOUBnbWFpbC5jb20iLCJqdGkiOiIwYmNiM2Y2Yy04ZTY0LTQ3NWEtYTU2NC01MzFiYzFlMWJjM2YifQ.A4BtWSX5g4yUrWBaOhStgiaE7h8pJUbEhD9EbuihbPQ3WnPd7QHlxPZdBD5vY5JbE9QzhENRg96DIa9JVY62gQ';
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

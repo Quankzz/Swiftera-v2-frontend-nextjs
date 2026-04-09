@@ -58,9 +58,6 @@ export function ProductCardDashboard({
       : null;
 
   // `availableStock` comes directly from BE (not computed from inventoryItems)
-  const plainDescription = product.description
-    ? product.description.replace(/<[^>]*>/g, '').trim()
-    : '';
 
   return (
     <article
@@ -170,7 +167,7 @@ export function ProductCardDashboard({
           {product.name}
         </h3>
         <p className='line-clamp-2 min-h-10 text-sm text-text-sub'>
-          {plainDescription}
+          {product.shortDescription}
         </p>
       </header>
 
@@ -191,8 +188,8 @@ export function ProductCardDashboard({
         )}
       </div>
 
-      {/* SLOT 3: Available stock badge */}
-      <div className='mt-2.5 flex items-center justify-center gap-2'>
+      {/* SLOT 3: Available stock badge + color swatches */}
+      <div className='mt-2.5 flex flex-col items-center justify-center gap-2'>
         <span
           className={cn(
             'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium',
@@ -204,9 +201,23 @@ export function ProductCardDashboard({
           <Package size={11} />
           {product.availableStock} sẵn sàng
         </span>
-        {product.color && (
-          <span className='inline-flex items-center rounded-full border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/5 px-2.5 py-0.5 text-xs text-text-sub'>
-            {product.color}
+
+        {/* Color swatches from colors[] */}
+        {product.colors && product.colors.length > 0 && (
+          <span className='inline-flex items-center gap-1 rounded-full px-2 py-0.5'>
+            {product.colors.slice(0, 5).map((c) => (
+              <span
+                key={c.productColorId}
+                title={`${c.name} (${c.code})`}
+                className='inline-block size-3.5 rounded-full border border-white shadow-sm ring-1 ring-gray-200 dark:ring-white/15'
+                style={{ backgroundColor: c.code }}
+              />
+            ))}
+            {product.colors.length > 5 && (
+              <span className='text-[10px] text-text-sub leading-none'>
+                +{product.colors.length - 5}
+              </span>
+            )}
           </span>
         )}
       </div>

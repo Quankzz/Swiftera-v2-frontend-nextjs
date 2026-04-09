@@ -508,34 +508,35 @@ iframe.rich-media {
 .rich-content h1,
 .rich-content h2,
 .rich-content h3 {
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 0.4em;
-  margin-top: 0.6em;
+  margin-top: 0.8em;
+  line-height: 1.3;
 }
 .rich-content h1 {
-  font-size: 1.15em;
+  font-size: 1.35em;
 }
 .rich-content h2 {
-  font-size: 1.05em;
+  font-size: 1.15em;
 }
 .rich-content h3 {
-  font-size: 0.95em;
+  font-size: 1em;
 }
 .rich-content ul {
   list-style: disc;
-  padding-left: 1.4em;
+  padding-left: 1.6em;
   margin-bottom: 0.5em;
 }
 .rich-content ol {
   list-style: decimal;
-  padding-left: 1.4em;
+  padding-left: 1.6em;
   margin-bottom: 0.5em;
 }
 .rich-content li {
-  margin-bottom: 0.2em;
+  margin-bottom: 0.25em;
 }
 .rich-content strong {
-  font-weight: 600;
+  font-weight: 700;
 }
 .rich-content em {
   font-style: italic;
@@ -544,23 +545,25 @@ iframe.rich-media {
   text-decoration: underline;
 }
 .rich-content blockquote {
-  border-left: 3px solid #d1d5db;
-  padding-left: 0.75em;
+  border-left: 3px solid var(--theme-primary-start, #fe1451);
+  padding-left: 0.85em;
   color: var(--color-text-sub, #6b7280);
-  margin: 0.5em 0;
+  margin: 0.75em 0;
   font-style: italic;
+  opacity: 0.85;
 }
 .dark .rich-content blockquote {
-  border-left-color: rgba(255, 255, 255, 0.2);
+  border-left-color: var(--theme-primary-start, #fe1451);
+  opacity: 0.75;
 }
 .rich-content a {
-  color: #3b82f6;
+  color: var(--theme-primary-start, #fe1451);
   text-decoration: underline;
 }
 .rich-content hr {
   border: none;
   border-top: 1px solid #e5e7eb;
-  margin: 0.5em 0;
+  margin: 0.75em 0;
 }
 .dark .rich-content hr {
   border-top-color: rgba(255, 255, 255, 0.1);

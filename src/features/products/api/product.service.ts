@@ -26,7 +26,13 @@ import type {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Build URLSearchParams string from a plain params object (skips undefined). */
+/** Build URLSearchParams string from a plain params object (skips undefined).
+ *
+ * NOTE: URLSearchParams encodes spaces as `+` (form-encoding), but Spring's
+ * SpringFilter DSL parser expects `%20`.  We replace `+` → `%20` in the
+ * final string so that RSQL expressions like `isActive:true and categoryId:'…'`
+ * arrive at the server with proper spaces, not literal `+` characters.
+ */
 function buildQuery(
   params: Record<string, string | number | boolean | undefined>,
 ): string {
@@ -36,7 +42,9 @@ function buildQuery(
       q.set(key, String(val));
     }
   }
-  const str = q.toString();
+  // Replace form-encoded `+` (space) with percent-encoded `%20` so Spring
+  // receives proper spaces inside RSQL filter expressions.
+  const str = q.toString().replace(/\+/g, '%20');
   return str ? `?${str}` : '';
 }
 
@@ -54,8 +62,14 @@ function buildQuery(
 export function getProducts(
   params: ProductListParams = {},
 ): Promise<PaginatedProductsResponse> {
-  const { page = 0, size = 12, sort, filter } = params;
-  const query = buildQuery({ page, size, sort, filter });
+  const { page = 1, size = 12, sort, filter, includeDescendants } = params;
+  const query = buildQuery({
+    page,
+    size,
+    sort,
+    filter,
+    ...(includeDescendants ? { includeDescendants: true } : {}),
+  });
   return apiGet<PaginatedProductsResponse>(`/products${query}`);
 }
 

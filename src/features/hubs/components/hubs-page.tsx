@@ -7,6 +7,7 @@ import { HubTable } from './hub-table';
 import type { HubTableMeta } from './hub-table';
 import { HubFormDialog } from './hub-form-dialog';
 import { HubDeleteDialog } from './hub-delete-dialog';
+import { HubViewDialog } from './hub-view-dialog';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dialog State
@@ -16,7 +17,8 @@ type DialogState =
   | { type: 'idle' }
   | { type: 'create' }
   | { type: 'edit'; hub: HubResponse }
-  | { type: 'delete'; hub: HubResponse };
+  | { type: 'delete'; hub: HubResponse }
+  | { type: 'view'; hub: HubResponse };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Component
@@ -80,12 +82,19 @@ export function HubsPage() {
 
       {/* Table */}
       <HubTable
+        onView={(hub) => setDialog({ type: 'view', hub })}
         onEdit={(hub) => setDialog({ type: 'edit', hub })}
         onDelete={(hub) => setDialog({ type: 'delete', hub })}
         onMetaChange={setMeta}
       />
 
       {/* Dialogs */}
+      {dialog.type === 'view' && (
+        <HubViewDialog
+          hub={dialog.hub}
+          onClose={() => setDialog({ type: 'idle' })}
+        />
+      )}
       {dialog.type === 'create' && (
         <HubFormDialog
           target={null}

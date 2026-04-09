@@ -42,6 +42,7 @@ function toLocalProduct(p: ProductResponse): Product {
     oldDailyPrice: p.oldDailyPrice ?? undefined,
     depositAmount: p.depositAmount ?? undefined,
     description: p.description ?? '',
+    shortDescription: p.shortDescription ?? '',
     minRentalDays: p.minRentalDays,
     // BE field is `images`, local type expects `productImages`
     productImages: (p.images ?? []).map((img) => ({
@@ -64,7 +65,7 @@ function selectProducts(data: PaginatedProductsResponse): Product[] {
 // ─── Featured products: sorted by dailyPrice desc ─────────────────────────────
 
 const FEATURED_PARAMS = {
-  page: 0,
+  page: 1,
   size: 8,
   sort: 'dailyPrice,desc',
   filter: 'isActive:true',
@@ -86,7 +87,7 @@ export function useHomeFeaturedProductsQuery() {
 // ─── Budget products: sorted by dailyPrice asc ────────────────────────────────
 
 const BUDGET_PARAMS = {
-  page: 0,
+  page: 1,
   size: 8,
   sort: 'dailyPrice,asc',
   filter: 'isActive:true',

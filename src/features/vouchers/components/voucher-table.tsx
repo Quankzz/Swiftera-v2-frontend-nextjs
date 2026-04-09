@@ -5,8 +5,12 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Tag, Clock, Hash } from 'lucide-react';
-import type { VoucherResponse, DiscountType } from '@/features/vouchers/types';
+import { Pencil, Trash2, Tag, Clock, Search } from 'lucide-react';
+import type {
+  VoucherResponse,
+  DiscountType,
+  VoucherType,
+} from '@/features/vouchers/types';
 import { useVouchersQuery } from '@/features/vouchers/hooks/use-voucher-management';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,6 +93,24 @@ function isExpired(expiresAt: string | null): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────────────────────────────────────
+
+function VoucherTypeBadge({ type }: { type: VoucherType }) {
+  return type === 'PRODUCT_DISCOUNT' ? (
+    <Badge
+      variant='outline'
+      className='border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300'
+    >
+      🏷 Sản phẩm
+    </Badge>
+  ) : (
+    <Badge
+      variant='outline'
+      className='border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300'
+    >
+      🎫 Đơn hàng
+    </Badge>
+  );
+}
 
 function DiscountTypeBadge({ type }: { type: DiscountType }) {
   return (
@@ -229,17 +251,31 @@ export function VoucherTable({
   const [size] = useState(10);
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
   const [sort, setSort] = useState<SortOption>('createdAt,desc');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce 400ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Build SpringFilter DSL param
-  const filterParam =
-    activeFilter === 'active'
-      ? 'isActive:true'
-      : activeFilter === 'inactive'
-        ? 'isActive:false'
-        : undefined;
+  const filterParam = useMemo(() => {
+    const parts: string[] = [];
+    if (activeFilter === 'active') parts.push('isActive:true');
+    if (activeFilter === 'inactive') parts.push('isActive:false');
+    if (debouncedSearch.trim()) {
+      parts.push(`code~~'*${debouncedSearch.trim()}*'`);
+    }
+    return parts.length ? parts.join(' and ') : undefined;
+  }, [activeFilter, debouncedSearch]);
 
   const { data, isLoading, isError } = useVouchersQuery({
-    page,
+    page: page + 1,
     size,
     sort,
     filter: filterParam,
@@ -295,8 +331,16 @@ export function VoucherTable({
         ),
       },
       {
+        accessorKey: 'type',
+        header: 'Loại voucher',
+        cell: ({ getValue }) => (
+          <VoucherTypeBadge type={getValue() as VoucherType} />
+        ),
+        enableSorting: false,
+      },
+      {
         accessorKey: 'discountType',
-        header: 'Loại giảm',
+        header: 'Kiểu giảm',
         cell: ({ getValue }) => (
           <DiscountTypeBadge type={getValue() as DiscountType} />
         ),
@@ -329,24 +373,6 @@ export function VoucherTable({
             <span className='text-sm italic text-text-sub opacity-40'>
               Không giới hạn
             </span>
-          );
-        },
-        enableSorting: false,
-      },
-      {
-        id: 'usageDisplay',
-        header: 'Lượt dùng',
-        accessorFn: (row) => row,
-        cell: ({ getValue }) => {
-          const v = getValue() as VoucherResponse;
-          return (
-            <div className='flex items-center gap-1 text-sm text-text-sub'>
-              <Hash size={13} />
-              <span>
-                {v.usedCount}
-                {v.usageLimit != null ? ` / ${v.usageLimit}` : ' / ∞'}
-              </span>
-            </div>
           );
         },
         enableSorting: false,
@@ -421,7 +447,21 @@ export function VoucherTable({
       errorMessage='Không thể tải danh sách voucher. Vui lòng thử lại sau.'
       emptyMessage='Chưa có voucher nào'
       totalLabel='voucher'
-      searchColumn='code'
+      toolbarLeft={
+        <div className='relative'>
+          <Search
+            size={14}
+            className='absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none'
+          />
+          <input
+            type='text'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder='Tìm mã voucher...'
+            className='h-9 w-48 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+          />
+        </div>
+      }
       toolbarRight={
         <FilterBar
           activeFilter={activeFilter}

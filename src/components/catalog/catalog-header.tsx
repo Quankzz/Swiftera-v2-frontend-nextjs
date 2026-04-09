@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { ChevronRight, Home, SlidersHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export type SortOption = 'relevance' | 'price-asc' | 'price-desc' | 'newest';
 
@@ -16,8 +18,11 @@ interface CatalogHeaderProps {
   variant: 'category' | 'search';
   /** Tên danh mục hoặc từ khoá tìm kiếm */
   title: string;
-  /** Breadcrumb phụ — ví dụ: ['Phones & Tablets', 'Smartphones'] */
-  breadcrumbs?: string[];
+  /**
+   * Breadcrumb items — each has a label and optional href.
+   * Items without href are rendered as plain text (current page).
+   */
+  breadcrumbs?: { label: string; href?: string }[];
   /** Tổng số sản phẩm */
   count: number;
   sort: SortOption;
@@ -39,13 +44,37 @@ export function CatalogHeader({
     <div className='flex flex-col gap-3'>
       {/* Breadcrumb */}
       <nav className='flex items-center gap-1.5 text-xs text-text-sub'>
-        <Home className='size-3.5 shrink-0' />
+        <Link href='/' className='shrink-0 transition hover:text-text-main'>
+          <Home className='size-3.5' />
+        </Link>
         <ChevronRight className='size-3 shrink-0' />
-        <span>{variant === 'search' ? 'Tìm kiếm' : 'Danh mục'}</span>
-        {breadcrumbs.map((crumb) => (
-          <span key={crumb} className='flex items-center gap-1.5'>
+        <Link
+          href='/catalog'
+          className={
+            breadcrumbs.length === 0
+              ? 'font-medium text-text-main'
+              : 'hover:text-text-main transition'
+          }
+        >
+          {variant === 'search' ? 'Tìm kiếm' : 'Danh mục'}
+        </Link>
+        {breadcrumbs.map((crumb, i) => (
+          <span key={crumb.label} className='flex items-center gap-1.5'>
             <ChevronRight className='size-3 shrink-0' />
-            <span>{crumb}</span>
+            {crumb.href ? (
+              <Link
+                href={crumb.href}
+                className={cn(
+                  'transition hover:text-text-main',
+                  i === breadcrumbs.length - 1 &&
+                    'font-medium text-text-main pointer-events-none',
+                )}
+              >
+                {crumb.label}
+              </Link>
+            ) : (
+              <span className='font-medium text-text-main'>{crumb.label}</span>
+            )}
           </span>
         ))}
       </nav>

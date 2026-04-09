@@ -19,6 +19,7 @@ import {
   createHub,
   updateHub,
   deleteHub,
+  getHubStaff,
 } from '../api/hub.service';
 import type { HubListParams, CreateHubInput, UpdateHubInput } from '../types';
 
@@ -104,5 +105,25 @@ export function useDeleteHubMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: hubKeys.lists() });
     },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Staff
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * useHubStaffQuery — danh sách nhân viên theo hub (API-043 staff)
+ * GET /hubs/{hubId}/staff?activeOnly=false
+ *
+ * Trả về plain array (không paginated).
+ * Chỉ enabled khi có hubId.
+ */
+export function useHubStaffQuery(hubId?: string) {
+  return useQuery({
+    queryKey: hubKeys.staff(hubId ?? ''),
+    queryFn: () => getHubStaff(hubId!, false),
+    enabled: !!hubId,
+    staleTime: 2 * 60 * 1000,
   });
 }

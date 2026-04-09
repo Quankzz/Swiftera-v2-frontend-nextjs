@@ -92,7 +92,7 @@ export function VoucherPriceCalculator({
 
   // Fetch active vouchers — needed to find selectedVoucher details
   const { data: vouchersData } = useVouchersQuery({
-    page: 0,
+    page: 1,
     size: 200,
   });
   const vouchers = useMemo(() => vouchersData?.content ?? [], [vouchersData]);
@@ -231,7 +231,7 @@ export function VoucherPriceCalculator({
       {/* Computed result */}
       <div className='rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/3 px-4 py-3'>
         <div className='flex items-center justify-between text-sm'>
-          <span className='text-text-sub'>Giá thuê/ngày (gửi lên BE)</span>
+          <span className='text-text-sub'>Giá thuê/ngày</span>
           <div className='flex items-center gap-2'>
             {hasDiscount && oldPrice > 0 && (
               <span className='text-xs text-text-sub line-through'>
