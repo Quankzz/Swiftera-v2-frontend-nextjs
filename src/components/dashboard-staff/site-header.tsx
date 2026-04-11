@@ -119,12 +119,6 @@ export function SiteHeader() {
         </Breadcrumb>
 
         <div className="ml-auto flex items-center gap-2">
-          {MOCK_STATS.overdue_orders > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 rounded-md bg-destructive/10 border border-destructive/20 px-2.5 py-1 text-xs font-medium text-destructive">
-              <span className="size-1.5 rounded-full bg-destructive animate-pulse" />
-              <span>{MOCK_STATS.overdue_orders} đơn quá hạn</span>
-            </div>
-          )}
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="relative h-8 w-8">
             <Bell className="size-4" />

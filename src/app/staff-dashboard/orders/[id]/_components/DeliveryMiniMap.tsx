@@ -74,6 +74,7 @@ export function DeliveryMiniMap({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const goongjsRef = useRef<any>(null);
   const routeDrawnRef = useRef(false);
+  const routeStartRef = useRef<{ lat: number; lng: number } | null>(null);
   const [mapLoading, setMapLoading] = useState(true);
   const [routeInfo, setRouteInfo] = useState<{
     distance: string;
@@ -134,6 +135,8 @@ export function DeliveryMiniMap({
       mapRef.current = map;
 
       map.on('load', () => {
+        // Ensure the canvas matches the container's actual dimensions
+        try { map.resize(); } catch { /* ignore */ }
         setMapLoading(false);
 
         // Destination pin (static — doesn't change)
@@ -164,6 +167,7 @@ export function DeliveryMiniMap({
       staffMarkerRef.current = null;
       goongjsRef.current = null;
       routeDrawnRef.current = false;
+      routeStartRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -186,9 +190,35 @@ export function DeliveryMiniMap({
       staffMarkerRef.current.setLngLat([staffLng, staffLat]);
     }
 
-    // Fetch and draw route only once (on first GPS fix)
+    // Re-route if staff has moved >500m from the last route start
+    if (
+      routeDrawnRef.current &&
+      routeStartRef.current &&
+      haversineKm(
+        routeStartRef.current.lat,
+        routeStartRef.current.lng,
+        staffLat,
+        staffLng,
+      ) > 0.5
+    ) {
+      // Clear existing route layers/sources so a fresh route can be drawn
+      const m = mapRef.current;
+      if (m) {
+        if (m.getLayer('delivery-route')) m.removeLayer('delivery-route');
+        if (m.getLayer('delivery-route-casing'))
+          m.removeLayer('delivery-route-casing');
+        if (m.getSource('delivery-route')) m.removeSource('delivery-route');
+        if (m.getSource('delivery-route-casing'))
+          m.removeSource('delivery-route-casing');
+      }
+      routeDrawnRef.current = false;
+      routeStartRef.current = null;
+    }
+
+    // Fetch and draw route when not yet drawn
     if (!routeDrawnRef.current && destLat != null && destLng != null) {
       routeDrawnRef.current = true;
+      routeStartRef.current = { lat: staffLat, lng: staffLng };
       void (async () => {
         try {
           const res = await axios.get<{
@@ -256,12 +286,13 @@ export function DeliveryMiniMap({
               'line-opacity': 0.92,
             },
           });
-          mapRef.current.fitBounds(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (mapRef.current as any).fitBounds(
             [
               [Math.min(staffLng, destLng), Math.min(staffLat, destLat)],
               [Math.max(staffLng, destLng), Math.max(staffLat, destLat)],
             ],
-            { padding: 70, maxZoom: 16 },
+            { padding: 70, maxZoom: 16, animate: false },
           );
         } catch {
           // Route fetch failed — markers still visible
@@ -271,13 +302,10 @@ export function DeliveryMiniMap({
   }, [mapReady, staffLat, staffLng, destLat, destLng]);
 
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-border shadow-sm">
+    <div className={cn('relative w-full rounded-2xl overflow-hidden border border-border shadow-sm', mapHeightClass)}>
       <div
         ref={mapContainerRef}
-        className={cn(
-          'w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150',
-          mapHeightClass,
-        )}
+        className="w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150"
       />
 
       {mapLoading && (

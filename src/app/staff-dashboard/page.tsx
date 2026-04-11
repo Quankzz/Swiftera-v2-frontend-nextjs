@@ -178,7 +178,7 @@ export default function DashboardPage() {
     : [];
 
   return (
-    <div className="flex flex-col gap-5 p-4 md:p-6 lg:p-8 max-w-6xl mx-auto w-full">
+    <div className="flex flex-col gap-5 p-4 md:p-6 lg:p-8 max-w-[80%] mx-auto w-full">
       {/* ── Loading ── */}
       {isLoading && (
         <div className="flex items-center justify-center min-h-[40vh] gap-3 text-muted-foreground">
