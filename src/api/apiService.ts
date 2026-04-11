@@ -1,30 +1,9 @@
-/**
- * apiService.ts — Entry point chung để gọi API.
- *
- * BASEURL: https://swiftera.azurewebsites.net/api/v1
- *
- * Tất cả module (users, roles, permissions, orders…) đều gọi qua file này.
- * KHÔNG sử dụng client.ts — file đó do người khác quản lý.
- *
- * Bao gồm:
- *  - Reusable Error Handler (AppError, mapApiError)
- *  - HTTP methods: get, post, put, patch, delete (hỗ trợ body + query params)
- *  - Tự động gắn Authorization header nếu có token
- */
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
+import axios from 'axios';
+import { httpService } from './http';
 
 const API_BASE_URL = 'https://swiftera.azurewebsites.net/api/v1';
 
 export const API_BASE = API_BASE_URL;
-export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable Error Handler
-// ─────────────────────────────────────────────────────────────────────────────
-
 /** Error codes tương ứng HTTP status hoặc custom */
 export type AppErrorCode =
   | 'NETWORK_ERROR'
@@ -133,146 +112,6 @@ export function normalizeError(error: unknown): AppError {
   return new AppError('UNKNOWN', 'Đã xảy ra lỗi không xác định.');
 }
 
-async function shouldAttemptSilentRefresh(res: Response): Promise<boolean> {
-  if (res.status !== 401) return false;
-
-  try {
-    const body = await res.clone().json();
-    const errors: Array<{ code?: number }> = Array.isArray(body?.errors)
-      ? body.errors
-      : [];
-    return errors.some((error) => error.code === 1005);
-  } catch {
-    return false;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Auth Token Helper
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Token accessor registration
-// ─────────────────────────────────────────────────────────────────────────────
-
-let _getToken: (() => string | null) | null = null;
-let _setToken: ((token: string, user: unknown) => void) | null = null;
-let _clearAuth: (() => void) | null = null;
-
-/**
- * Register Zustand store accessors so apiService can:
- *  - read the current in-memory token (getToken)
- *  - update the store after a silent refresh (setToken)
- *  - clear auth on unrecoverable 401 (clearAuth)
- *
- * Call this during app bootstrap (e.g. inside auth-store.ts initAuthStore).
- */
-export function registerTokenAccessors(
-  getToken: () => string | null,
-  setToken?: (token: string, user: unknown) => void,
-  clearAuth?: () => void,
-): void {
-  _getToken = getToken;
-  _setToken = setToken ?? null;
-  _clearAuth = clearAuth ?? null;
-}
-
-function getAccessToken(): string | null {
-  const storeToken = _getToken?.();
-
-  // After silent refresh, localStorage is updated immediately, while Zustand may
-  // still hold the previous token for a short window. If both exist but differ,
-  // prefer the localStorage token to avoid retrying with stale credentials.
-  if (typeof window !== 'undefined') {
-    const storageToken = localStorage.getItem('accessToken');
-    if (storageToken && storageToken !== storeToken) {
-      return storageToken;
-    }
-    if (storageToken) {
-      return storageToken;
-    }
-  }
-
-  return storeToken ?? null;
-}
-
-// ─── Silent token refresh ─────────────────────────────────────────────────────
-// Singleton promise: if multiple concurrent requests get a 401 simultaneously,
-// only one refresh call is made and all waiters share the result.
-
-let _refreshPromise: Promise<{ token: string; user?: unknown } | null> | null =
-  null;
-
-/**
- * Silently refresh the access token via the httpOnly cookie.
- * Returns both the new token AND the updated user (if available).
- *
- * Multiple concurrent 401s will share a single refresh request (singleton pattern).
- * All waiters get the same result, then each retry their original request.
- */
-async function silentRefresh(): Promise<{
-  token: string;
-  user?: unknown;
-} | null> {
-  if (_refreshPromise) return _refreshPromise;
-
-  _refreshPromise = (async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
-      });
-
-      if (!res.ok) {
-        console.warn('[silentRefresh] refresh endpoint returned', res.status);
-        return null;
-      }
-
-      const body: { data?: { accessToken?: string; userSecured?: unknown } } =
-        await res.json();
-      const newToken = body?.data?.accessToken ?? null;
-
-      if (!newToken) {
-        console.warn('[silentRefresh] no accessToken in response');
-        return null;
-      }
-
-      // Always update localStorage immediately so concurrent requests can read new token
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('accessToken', newToken);
-        console.log(
-          '[silentRefresh] token refreshed, length:',
-          newToken.length,
-        );
-      }
-
-      // Also sync to Zustand store if available
-      const user = body.data?.userSecured;
-      if (_setToken && user) {
-        _setToken(newToken, user);
-      }
-
-      return { token: newToken, user };
-    } catch (error) {
-      console.error(
-        '[silentRefresh] failed:',
-        error instanceof Error ? error.message : error,
-      );
-      return null;
-    } finally {
-      _refreshPromise = null;
-    }
-  })();
-
-  return _refreshPromise;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Core Request Function
-// ─────────────────────────────────────────────────────────────────────────────
-
 export interface ApiRequestOptions {
   /** Query params — sẽ được serialize vào URL */
   params?: Record<string, string | number | boolean | undefined | null>;
@@ -313,13 +152,6 @@ export interface PaginatedData<T> {
   content: T[];
 }
 
-/**
- * Serialize params object thành query string.
- * Bỏ qua undefined/null values.
- *
- * NOTE: URLSearchParams encodes spaces as `+` (form-encoding).  Spring's
- * filter/RSQL parser expects `%20`, so we replace after serialising.
- */
 function buildQueryString(
   params?: Record<string, string | number | boolean | undefined | null>,
 ): string {
@@ -335,102 +167,95 @@ function buildQueryString(
   return `?${searchParams.toString().replace(/\+/g, '%20')}`;
 }
 
-/**
- * Core fetch wrapper — tất cả method đều đi qua đây.
- *
- * @returns Parsed JSON body (unwrapped `data` nếu BE trả wrapper chuẩn).
- *
- * 401 handling:
- *  1. If response is 401 and not a retry, attempt silent token refresh.
- *  2. If refresh succeeds, retry the original request exactly ONCE with new token.
- *  3. If refresh fails, clear auth and throw 401 error.
- *
- * Token sync: After refresh succeeds, we fetch the new token before retry
- * to ensure the in-memory token is synchronized with backend state.
- */
+function mapAxiosError(error: unknown): AppError {
+  if (error instanceof AppError) return error;
+
+  // AxiosError — network error hoặc lỗi chưa qua interceptor transform
+  if (axios.isAxiosError(error)) {
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED') {
+        return new AppError('TIMEOUT', 'Yêu cầu đã hết thời gian chờ.');
+      }
+      if (error.code === 'ERR_CANCELED') {
+        return new AppError('TIMEOUT', 'Yêu cầu đã bị huỷ.');
+      }
+      return new AppError(
+        'NETWORK_ERROR',
+        'Không thể kết nối đến server. Vui lòng kiểm tra mạng.',
+      );
+    }
+    const status = error.response.status;
+    const code = statusToCode(status);
+    const data = error.response.data as {
+      errors?: ApiErrorDetail[];
+      message?: string;
+    } | null;
+    if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+      return new AppError(
+        code,
+        data.errors[0].message,
+        status,
+        data.errors as ApiErrorDetail[],
+      );
+    }
+    return new AppError(code, data?.message ?? `HTTP ${status}`, status);
+  }
+
+  // Plain body object từ interceptor (error.response?.data)
+  // BE format: { success: false, errors: [{code, message}], message? }
+  if (error && typeof error === 'object') {
+    const body = error as {
+      errors?: ApiErrorDetail[];
+      message?: string;
+      success?: boolean;
+    };
+    if (body.errors && Array.isArray(body.errors) && body.errors.length > 0) {
+      return new AppError('UNKNOWN', body.errors[0].message, 0, body.errors);
+    }
+    if (body.message) {
+      return new AppError('UNKNOWN', body.message, 0);
+    }
+  }
+
+  return normalizeError(error);
+}
+
 async function request<T>(
   method: string,
   endpoint: string,
   options: ApiRequestOptions = {},
-  _isRetry = false,
-  _retryToken?: string,
 ): Promise<T> {
   const { params, body, headers: extraHeaders, signal, skipAuth } = options;
 
   const url = `${API_BASE_URL}${endpoint}${buildQueryString(params)}`;
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...extraHeaders,
-  };
-
-  // Auto-attach Authorization header
-  if (!skipAuth) {
-    const token = getAccessToken();
-
-    // const token =
-    //   'eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJwcml6aXEiLCJzdWIiOiJhODVhMWU1MC0zNGVkLTRkZjItYjM1ZC1hYTE1MmZlZDdiYmMiLCJleHAiOjE3NzUzMDYyNTAsImlhdCI6MTc3NTI5OTA1MCwiZW1haWwiOiJ0ZG1nMTgwOUBnbWFpbC5jb20iLCJqdGkiOiIwYmNiM2Y2Yy04ZTY0LTQ3NWEtYTU2NC01MzFiYzFlMWJjM2YifQ.A4BtWSX5g4yUrWBaOhStgiaE7h8pJUbEhD9EbuihbPQ3WnPd7QHlxPZdBD5vY5JbE9QzhENRg96DIa9JVY62gQ';
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-  }
-
-  let res: Response;
-
   try {
-    res = await fetch(url, {
+    const response = await httpService.request<
+      { success?: boolean; data?: T } | T
+    >({
       method,
-      headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      url,
+      data: body !== undefined ? body : undefined,
+      headers: extraHeaders,
       signal,
-      credentials: 'include', // Gửi cookie (refresh_token)
+      requireToken: !skipAuth,
     });
-  } catch (error) {
-    throw normalizeError(error);
-  }
 
-  // Successful response
-  if (res.ok) {
     // 204 No Content
-    if (res.status === 204) return undefined as T;
+    if (response.status === 204) return undefined as T;
 
-    const json = await res.json();
+    const json = response.data;
 
     // BE luôn bọc trong { success, message, data, meta }
     // Trả thẳng `data` cho tiện sử dụng
     if (json && typeof json === 'object' && 'success' in json) {
-      return json.data as T;
+      return (json as { success: boolean; data: T }).data;
     }
 
     return json as T;
+  } catch (error) {
+    throw mapAxiosError(error);
   }
-
-  // ── 401 handling: attempt silent token refresh then retry once ──────────────
-  if (res.status === 401 && !skipAuth && !_isRetry) {
-    const canRefresh = await shouldAttemptSilentRefresh(res);
-    if (!canRefresh) {
-      throw await mapApiError(res);
-    }
-
-    console.log('[request] got 401, attempting silent refresh...');
-
-    // Attempt refresh: this is a singleton promise, so concurrent 401s
-    // will all wait for the same refresh attempt
-    const refreshResult = await silentRefresh();
-
-    if (refreshResult?.token) {
-      console.log('[request] refresh succeeded, retrying with new token');
-      return request<T>(method, endpoint, options, true, refreshResult.token);
-    }
-
-    // Refresh failed — clear auth and throw so UI redirects to login
-    console.warn('[request] refresh failed, clearing auth');
-    _clearAuth?.();
-    throw await mapApiError(res);
-  }
-
-  // Error response — map thành AppError
-  throw await mapApiError(res);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -489,7 +314,7 @@ export function apiDelete<T>(
  * Upload file(s) qua multipart/form-data.
  * Dùng cho module files (Azure Blob Storage).
  *
- * KHÔNG set Content-Type — để browser tự thêm boundary.
+ * KHÔNG set Content-Type — để browser/Axios tự thêm boundary.
  */
 export async function apiUpload<T>(
   endpoint: string,
@@ -500,54 +325,28 @@ export async function apiUpload<T>(
 
   const url = `${API_BASE_URL}${endpoint}${buildQueryString(params)}`;
 
-  const headers: Record<string, string> = {
-    // KHÔNG có Content-Type — FormData tự xử lý
-    ...extraHeaders,
-  };
-
-  if (!skipAuth) {
-    const token = getAccessToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-  }
-
-  let res: Response;
   try {
-    res = await fetch(url, {
+    const response = await httpService.request<
+      { success?: boolean; data?: T } | T
+    >({
       method: 'POST',
-      headers,
-      body: formData,
+      url,
+      data: formData,
+      headers: extraHeaders, // Không override Content-Type — Axios/browser tự xử lý boundary
       signal,
-      credentials: 'include',
+      requireToken: !skipAuth,
     });
-  } catch (error) {
-    throw normalizeError(error);
-  }
 
-  if (res.ok) {
-    if (res.status === 204) return undefined as T;
-    const json = await res.json();
+    if (response.status === 204) return undefined as T;
+
+    const json = response.data;
     if (json && typeof json === 'object' && 'success' in json) {
-      return json.data as T;
+      return (json as { success: boolean; data: T }).data;
     }
     return json as T;
+  } catch (error) {
+    throw mapAxiosError(error);
   }
-
-  throw await mapApiError(res);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Mock helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Return mockData immediately when USE_MOCK=true,
- * otherwise perform a real GET request.
- */
-export async function mockOr<T>(endpoint: string, mockData: T): Promise<T> {
-  if (USE_MOCK) return Promise.resolve(mockData);
-  return apiGet<T>(endpoint);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

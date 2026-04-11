@@ -132,7 +132,7 @@ export function NavUser({
               onClick={handleLogout}
               disabled={isLoggingOut}
             >
-              <LogOutIcon className="size-4" />
+              <LogOutIcon className="size-4 text-theme-primary-start" />
               {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
             </DropdownMenuItem>
           </DropdownMenuContent>
