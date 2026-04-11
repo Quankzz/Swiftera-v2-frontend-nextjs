@@ -136,7 +136,11 @@ export function DeliveryMiniMap({
 
       map.on('load', () => {
         // Ensure the canvas matches the container's actual dimensions
-        try { map.resize(); } catch { /* ignore */ }
+        try {
+          map.resize();
+        } catch {
+          /* ignore */
+        }
         setMapLoading(false);
 
         // Destination pin (static — doesn't change)
@@ -302,7 +306,12 @@ export function DeliveryMiniMap({
   }, [mapReady, staffLat, staffLng, destLat, destLng]);
 
   return (
-    <div className={cn('relative w-full rounded-2xl overflow-hidden border border-border shadow-sm', mapHeightClass)}>
+    <div
+      className={cn(
+        'relative w-full rounded-2xl overflow-hidden border border-border shadow-sm',
+        mapHeightClass,
+      )}
+    >
       <div
         ref={mapContainerRef}
         className="w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150"
