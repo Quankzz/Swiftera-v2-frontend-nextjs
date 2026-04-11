@@ -27,5 +27,8 @@ export async function getHubById(hubId: string): Promise<HubResponse | null> {
 }
 
 export async function getActiveHubs(): Promise<HubResponse[]> {
-  return getHubs();
+  const res = await apiGet<PaginationResponse<HubResponse>>(
+    `/hubs?filter=isActive:true&size=200`,
+  );
+  return res?.content ?? [];
 }

@@ -25,6 +25,7 @@ import {
 import { getHubById } from '@/api/hubs';
 import type { HubResponse } from '@/api/hubs';
 import { useAuthStore } from '@/stores/auth-store';
+import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
 import { Button } from '@/components/ui/button';
 
 import { STATUS_CFG, fmtDate, fmtDatetime, fmt } from './_components/utils';
@@ -47,6 +48,7 @@ export default function OrderDetailPage({
 }) {
   const { id } = use(params);
   const { user } = useAuthStore();
+  const updateCount = useStaffOrderCounts((s) => s.updateCount);
   const [order, setOrder] = useState<DashboardOrder | null>(null);
   const [hubInfo, setHubInfo] = useState<HubResponse | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -162,6 +164,8 @@ export default function OrderDetailPage({
             'API không trả về dữ liệu cập nhật trạng thái đơn hàng',
           );
         }
+        // Optimistically sync sidebar counts immediately
+        updateCount(order.status, newStatus as OrderStatus);
         setOrder({ ...updated, ...options?.extra });
       } catch (err) {
         setActionError(

@@ -32,6 +32,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
     nearbyHubs,
     openHubModal,
     userLocation,
+    hubs,
   } = useMapStore();
   const [showNearbyOnly, setShowNearbyOnly] = useState(false);
   const [nearbyRadius, setNearbyRadius] = useState(10);
@@ -39,8 +40,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
   const hasLocation = !!userLocation;
 
   const results = useMemo(() => {
-    const baseHubs =
-      nearbyHubs.length > 0 ? nearbyHubs : useMapStore.getState().hubs;
+    const baseHubs = nearbyHubs.length > 0 ? nearbyHubs : hubs;
 
     let filtered = baseHubs;
 
@@ -63,7 +63,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
     }
 
     return filtered;
-  }, [searchQuery, showNearbyOnly, nearbyRadius, nearbyHubs]);
+  }, [searchQuery, showNearbyOnly, nearbyRadius, nearbyHubs, hubs]);
 
   const handleClearQuery = () => setSearchQuery('');
 
@@ -225,7 +225,10 @@ const SearchTab: React.FC<SearchTabProps> = ({
                 key={hub.hub_id}
                 hub={hub}
                 nearby={nearby}
-                onFly={() => onFlyToHub(hub)}
+                onFly={() => {
+                  onFlyToHub(hub);
+                  openHubModal(hub);
+                }}
                 onOpenModal={() => openHubModal(hub)}
                 onNavigate={() => onNavigateToHub(hub)}
               />
@@ -242,8 +245,8 @@ interface HubCardProps {
   hub: Hub;
   nearby?: { distance: number };
   onFly: () => void;
-  onOpenModal: (e: React.MouseEvent) => void;
-  onNavigate: (e: React.MouseEvent) => void;
+  onOpenModal: () => void;
+  onNavigate: () => void;
 }
 
 const HubCard: React.FC<HubCardProps> = ({
@@ -296,7 +299,7 @@ const HubCard: React.FC<HubCardProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onOpenModal(e);
+          onOpenModal();
         }}
         className="
           flex flex-1 items-center justify-center gap-1.5
@@ -315,7 +318,7 @@ const HubCard: React.FC<HubCardProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onNavigate(e);
+          onNavigate();
         }}
         className="
           flex flex-1 items-center justify-center gap-1.5

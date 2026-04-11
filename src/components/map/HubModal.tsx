@@ -2,7 +2,16 @@
 
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Phone, Navigation2, Package, Loader2 } from 'lucide-react';
+import {
+  X,
+  MapPin,
+  Phone,
+  Navigation2,
+  Package,
+  Loader2,
+  ShoppingCart,
+} from 'lucide-react';
+import Link from 'next/link';
 import { useMapStore } from '@/stores/use-map-store';
 import type { Hub } from '@/types/map.types';
 import { useHubAvailableProducts } from '@/features/products/hooks/use-hub-products';
@@ -150,7 +159,6 @@ const HubModal = ({
                   </span>
                 )}
               </div>
-
               {/* Loading */}
               {isLoading && (
                 <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
@@ -158,7 +166,6 @@ const HubModal = ({
                   <span className="text-sm">Đang tải thiết bị…</span>
                 </div>
               )}
-
               {/* Empty */}
               {!isLoading && hubProducts.length === 0 && (
                 <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
@@ -166,11 +173,10 @@ const HubModal = ({
                   <span className="text-sm">Hub chưa có thiết bị khả dụng</span>
                 </div>
               )}
-
               {/* Product list */}
               {!isLoading && hubProducts.length > 0 && (
-                <div className="divide-y divide-border/60">
-                  {hubProducts.map(({ product, items }) => {
+                <div className="block divide-y divide-border/60">
+                  {hubProducts.map(({ product, availableCount }) => {
                     const primaryImage =
                       product.images.find((img) => img.isPrimary)?.imageUrl ??
                       product.images[0]?.imageUrl;
@@ -205,7 +211,7 @@ const HubModal = ({
                               {product.name}
                             </p>
                             <span className="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                              {items.length} chiếc
+                              {availableCount} chiếc
                             </span>
                           </div>
 
@@ -218,19 +224,36 @@ const HubModal = ({
                           )}
 
                           {product.dailyPrice > 0 && (
-                            <div className="flex items-baseline gap-2 mt-1">
-                              <span className="text-sm font-bold text-theme-primary-start">
-                                {formatPrice(product.dailyPrice)}
-                                <span className="text-xs font-normal text-muted-foreground">
-                                  /ngày
-                                </span>
-                              </span>
-                              {product.oldDailyPrice &&
-                                product.oldDailyPrice > product.dailyPrice && (
-                                  <span className="text-xs text-muted-foreground line-through">
-                                    {formatPrice(product.oldDailyPrice)}
+                            <div className="flex items-center justify-between gap-2 mt-1">
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm font-bold text-theme-primary-start">
+                                  {formatPrice(product.dailyPrice)}
+                                  <span className="text-xs font-normal text-muted-foreground">
+                                    /ngày
                                   </span>
-                                )}
+                                </span>
+                                {product.oldDailyPrice &&
+                                  product.oldDailyPrice >
+                                    product.dailyPrice && (
+                                    <span className="text-xs text-muted-foreground line-through">
+                                      {formatPrice(product.oldDailyPrice)}
+                                    </span>
+                                  )}
+                              </div>
+                              <Link
+                                href={`/product/${product.productId}`}
+                                onClick={closeHubModal}
+                                className="
+                                  shrink-0 flex items-center gap-1.5
+                                  px-3 py-1.5 rounded-lg text-sm font-bold
+                                  bg-linear-to-r from-theme-primary-start to-theme-primary-end
+                                  text-white shadow-sm hover:brightness-110
+                                  transition-all duration-150 active:scale-95
+                                "
+                              >
+                                <ShoppingCart size={16} strokeWidth={2.5} />
+                                Thuê ngay
+                              </Link>
                             </div>
                           )}
                         </div>

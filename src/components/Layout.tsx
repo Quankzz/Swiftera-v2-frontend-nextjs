@@ -23,22 +23,22 @@ export function Layout({ children, stickyHeader = false }: LayoutProps) {
   return (
     <MainLayout>
       <Header stickyHeader={stickyHeader} />
-      <main className='min-h-screen flex-1'>{children}</main>
+      <main className="min-h-screen flex-1">{children}</main>
       <Footer />
 
       {/* Container chứa các nút */}
-      <div className='fixed right-0 bottom-8 z-50 hidden flex-col gap-3 sm:flex'>
+      <div className="fixed right-0 bottom-8 z-50 hidden flex-col gap-3 sm:flex">
         {/* Nút Gọi ngay */}
         <div className={buttonWrapperClass}>
           <a
-            href='tel:19001234'
+            href="tel:19001234"
             className={buttonActiveArea}
-            aria-label='Gọi ngay'
+            aria-label="Gọi ngay"
           >
-            <Phone className='size-6' />
+            <Phone className="size-6" />
           </a>
           {/* Tooltip - Đặt ngoài thẻ a để không bị ảnh hưởng bởi translate-x của thẻ a nếu muốn */}
-          <span className='pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white dark:bg-surface-card dark:text-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100'>
+          <span className="pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white dark:bg-surface-card dark:text-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100">
             Gọi ngay
           </span>
         </div>
@@ -46,15 +46,15 @@ export function Layout({ children, stickyHeader = false }: LayoutProps) {
         {/* Nút Bản đồ */}
         <div className={buttonWrapperClass}>
           <Link
-            href='https://maps.google.com'
-            target='_blank'
-            rel='noopener noreferrer'
+            href="./map"
+            target="_blank"
+            rel="noopener noreferrer"
             className={buttonActiveArea}
-            aria-label='Bản đồ'
+            aria-label="Bản đồ"
           >
-            <MapPinned className='size-6' />
+            <MapPinned className="size-6" />
           </Link>
-          <span className='pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white dark:bg-surface-card dark:text-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100'>
+          <span className="pointer-events-none absolute right-full mr-1.5 whitespace-nowrap rounded-md bg-white dark:bg-surface-card dark:text-white px-2 py-1 text-xs font-medium text-text-main opacity-0 shadow transition-opacity group-hover:opacity-100">
             Bản đồ
           </span>
         </div>

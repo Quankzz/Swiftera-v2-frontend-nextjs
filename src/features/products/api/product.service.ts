@@ -74,6 +74,32 @@ export function getProducts(
 }
 
 /**
+ * GET /api/v1/products/hub/{hubId}
+ * Lấy danh sách sản phẩm theo hub (public).
+ * Chỉ trả sản phẩm isActive=true (lọc qua filter param).
+ */
+export function getProductsByHub(
+  hubId: string,
+  params: ProductListParams = {},
+): Promise<PaginatedProductsResponse> {
+  const {
+    page = 1,
+    size = 50,
+    sort = 'createdAt,desc',
+    filter = 'isActive:true',
+    includeDescendants = false,
+  } = params;
+  const query = buildQuery({
+    page,
+    size,
+    sort,
+    filter,
+    ...(includeDescendants ? { includeDescendants: true } : {}),
+  });
+  return apiGet<PaginatedProductsResponse>(`/products/hub/${hubId}${query}`);
+}
+
+/**
  * API-052: GET /api/v1/products/{productId}
  * Fetch a single product by ID.
  */
