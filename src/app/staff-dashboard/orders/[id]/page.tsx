@@ -134,7 +134,9 @@ export default function OrderDetailPage({
   const gpsWatchRef = useRef<number | null>(null);
   useEffect(() => {
     const needsGps =
-      order?.status === 'DELIVERING' || order?.status === 'PICKING_UP';
+      order?.status === 'PREPARING' ||
+      order?.status === 'DELIVERING' ||
+      order?.status === 'PICKING_UP';
     if (!needsGps || typeof navigator === 'undefined' || !navigator.geolocation)
       return;
     const opts: PositionOptions = {
@@ -466,6 +468,9 @@ export default function OrderDetailPage({
                   hubInfo={hubInfo}
                   onStartDelivery={() => handleStatusChange('DELIVERING')}
                   loading={statusLoading}
+                  staffLat={localLat}
+                  staffLng={localLng}
+                  staffLocAt={localLocAt}
                 />
               )}
 
