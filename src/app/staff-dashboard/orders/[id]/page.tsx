@@ -274,16 +274,15 @@ export default function OrderDetailPage({
 
   // Map shown only while staff is physically moving: delivering or collecting returns
   const hasMapPanel =
-    (order.status === 'DELIVERING' || order.status === 'PICKING_UP') &&
-    effectiveDestLat != null;
+    order.status === 'DELIVERING' || order.status === 'PICKING_UP';
 
   const mapConfig = (() => {
-    if (!hasMapPanel || effectiveDestLat == null) return null;
+    if (!hasMapPanel) return null;
     return {
       title:
         order.status === 'DELIVERING' ? 'Bản đồ giao hàng' : 'Đến lấy hàng trả',
       destLat: effectiveDestLat,
-      destLng: effectiveDestLng!,
+      destLng: effectiveDestLng,
       destAddress: order.delivery_address ?? '',
       destPinColor: 'red' as const,
       destLabel: order.status === 'DELIVERING' ? 'Điểm giao' : 'Lấy hàng trả',
@@ -506,12 +505,17 @@ export default function OrderDetailPage({
               {order.status === 'PICKING_UP' && (
                 <ReturningWorkflow
                   order={order}
-                  onCompleteReturn={async (penaltyTotal?: number) => {
+                  onCompleteReturn={async (
+                    damagePenalty?: number,
+                    overduePenalty?: number,
+                  ) => {
+                    const penaltyTotal =
+                      (damagePenalty ?? 0) + (overduePenalty ?? 0);
                     try {
                       await handleStatusChange('PICKED_UP', {
                         extra: {
                           staff_checkout_id: user?.userId,
-                          total_penalty_amount: penaltyTotal ?? 0,
+                          total_penalty_amount: penaltyTotal,
                         },
                         penaltyTotal,
                       });

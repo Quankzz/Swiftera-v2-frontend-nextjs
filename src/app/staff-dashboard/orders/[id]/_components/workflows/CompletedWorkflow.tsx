@@ -19,6 +19,7 @@ import {
   CreditCard,
   Wallet,
   Building2,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -70,11 +71,18 @@ export function CompletedWorkflow({
   onDepositRefund,
   loading,
 }: CompletedWorkflowProps) {
-  const [refundMethod, setRefundMethod] = useState<RefundMethod>('CASH');
-
   const isCompleted = order.status === 'COMPLETED';
+  // Total penalty already committed into the order after PICKING_UP → PICKED_UP transition
   const penalty = order.total_penalty_amount ?? 0;
+  // Derive per-type breakdown: damage from individual item penalties, overdue is the remainder
+  const damagePenalty = order.items.reduce(
+    (sum, item) => sum + (item.item_penalty_amount ?? 0),
+    0,
+  );
+  const overduePenalty = Math.max(0, penalty - damagePenalty);
   const deposit = order.total_deposit;
+
+  const [refundMethod, setRefundMethod] = useState<RefundMethod>('CASH');
 
   const scenario: 'no_damage' | 'partial_refund' | 'excess_charge' =
     penalty === 0
@@ -190,7 +198,7 @@ export function CompletedWorkflow({
                   {penalty > 0 && (
                     <div className="flex items-center justify-between pb-3 border-b border-dashed border-border/60 dark:border-slate-700">
                       <span className="text-[14px] font-medium text-orange-600 dark:text-orange-400">
-                        Phí hư hỏng
+                        Tổng phí phạt
                       </span>
                       <span className="text-[15px] font-bold text-orange-600 dark:text-orange-400">
                         –{fmt(penalty)}
@@ -223,7 +231,7 @@ export function CompletedWorkflow({
             </div>
 
             {/* RIGHT: Items */}
-            <div className="lg:col-span-5 flex flex-col h-[28rem] lg:h-auto">
+            <div className="lg:col-span-5 flex flex-col h-112 lg:h-auto">
               <div className="rounded-2xl border border-border/80 dark:border-slate-800 bg-card shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
                 <div className="px-5 py-4 border-b border-border/80 dark:border-slate-800 bg-muted/30 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2.5">
@@ -323,7 +331,7 @@ export function CompletedWorkflow({
           </div>
 
           {/* Financial breakdown */}
-          <div className="p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-border/60 dark:border-slate-700 p-5 text-center">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
                 Tiền đặt cọc
@@ -335,7 +343,7 @@ export function CompletedWorkflow({
             <div
               className={cn(
                 'rounded-xl border p-5 text-center',
-                penalty > 0
+                damagePenalty > 0
                   ? 'bg-orange-50 border-orange-200/60 dark:bg-orange-950/20 dark:border-orange-800/30'
                   : 'bg-slate-50 dark:bg-slate-800/50 border-border/60 dark:border-slate-700',
               )}
@@ -344,7 +352,9 @@ export function CompletedWorkflow({
                 <ShieldAlert
                   className={cn(
                     'size-4',
-                    penalty > 0 ? 'text-orange-500' : 'text-muted-foreground',
+                    damagePenalty > 0
+                      ? 'text-orange-500'
+                      : 'text-muted-foreground',
                   )}
                 />
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -354,12 +364,45 @@ export function CompletedWorkflow({
               <p
                 className={cn(
                   'text-2xl font-black tabular-nums',
-                  penalty > 0
+                  damagePenalty > 0
                     ? 'text-orange-600 dark:text-orange-400'
                     : 'text-muted-foreground',
                 )}
               >
-                {penalty > 0 ? fmt(penalty) : 'Không có'}
+                {damagePenalty > 0 ? fmt(damagePenalty) : 'Không có'}
+              </p>
+            </div>
+            <div
+              className={cn(
+                'rounded-xl border p-5 text-center',
+                overduePenalty > 0
+                  ? 'bg-amber-50 border-amber-200/60 dark:bg-amber-950/20 dark:border-amber-800/30'
+                  : 'bg-slate-50 dark:bg-slate-800/50 border-border/60 dark:border-slate-700',
+              )}
+            >
+              <div className="flex items-center justify-center gap-1.5 mb-3">
+                <Clock
+                  className={cn(
+                    'size-4',
+                    overduePenalty > 0
+                      ? 'text-amber-600'
+                      : 'text-muted-foreground',
+                  )}
+                />
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Phí quá hạn
+                </p>
+              </div>
+
+              <p
+                className={cn(
+                  'text-2xl font-black tabular-nums',
+                  overduePenalty > 0
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-muted-foreground',
+                )}
+              >
+                {overduePenalty > 0 ? fmt(overduePenalty) : 'Không có'}
               </p>
             </div>
             <div
@@ -414,20 +457,20 @@ export function CompletedWorkflow({
           >
             {scenario === 'no_damage' && (
               <p>
-                Thiết bị không có hư hỏng → Hoàn toàn bộ tiền đặt cọc{' '}
+                Không có phí phạt → Hoàn toàn bộ tiền đặt cọc{' '}
                 <strong>{fmt(deposit)}</strong> cho khách hàng.
               </p>
             )}
             {scenario === 'partial_refund' && (
               <p>
-                Tiền cọc <strong>{fmt(deposit)}</strong> − Phí hư hỏng{' '}
+                Tiền cọc <strong>{fmt(deposit)}</strong> − Tổng phí phạt{' '}
                 <strong>{fmt(penalty)}</strong> = Hoàn lại{' '}
                 <strong>{fmt(refundAmount)}</strong> cho khách hàng.
               </p>
             )}
             {scenario === 'excess_charge' && (
               <p>
-                Phí hư hỏng <strong>{fmt(penalty)}</strong> − Tiền cọc{' '}
+                Tổng phí phạt <strong>{fmt(penalty)}</strong> − Tiền cọc{' '}
                 <strong>{fmt(deposit)}</strong> = Thu thêm{' '}
                 <strong>{fmt(extraCharge)}</strong> từ khách hàng.
               </p>
@@ -562,7 +605,7 @@ export function CompletedWorkflow({
           </div>
 
           {/* RIGHT: Items review */}
-          <div className="lg:col-span-7 flex flex-col h-[28rem] lg:h-auto">
+          <div className="lg:col-span-7 flex flex-col h-112 lg:h-auto">
             <div className="rounded-2xl border border-border/80 dark:border-slate-800 bg-card shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
               <div className="px-5 py-4 border-b border-border/80 dark:border-slate-800 bg-muted/30 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">

@@ -140,16 +140,14 @@ export function CameraCapture({
 
   return (
     <div className="flex flex-col gap-3">
-      {label && (
-        <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-      )}
+      {label && <p className="text-sm font-bold text-foreground/80">{label}</p>}
       {/* ── Horizontal row of squares ── */}
       <div className="flex gap-2 overflow-x-auto pb-1">
         {/* Existing photo tiles */}
         {photos.map((url, i) => (
           <div
             key={i}
-            className="relative size-20 shrink-0 rounded-xl overflow-hidden border border-border bg-muted group"
+            className="relative size-28 shrink-0 rounded-xl overflow-hidden border border-border bg-muted group"
           >
             <Image
               src={url}
@@ -176,11 +174,11 @@ export function CameraCapture({
           <button
             type="button"
             onClick={() => startCamera()}
-            className="size-20 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-1 hover:border-theme-primary-start/50 hover:bg-theme-primary-start/5 transition-all"
+            className="size-28 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-theme-primary-start/60 hover:bg-theme-primary-start/8 transition-all"
           >
-            <Camera className="size-5 text-muted-foreground" />
-            <span className="text-[10px] font-medium text-muted-foreground">
-              Chụp
+            <Camera className="size-7 text-muted-foreground" />
+            <span className="text-xs font-semibold text-muted-foreground">
+              Chụp ảnh
             </span>
           </button>
         )}

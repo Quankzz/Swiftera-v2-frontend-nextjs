@@ -236,6 +236,29 @@ export interface SetPenaltyInput {
   note?: string;
 }
 
+// ─── Overdue Penalty Suggestion ─────────────────────────────────────────────
+
+export interface OverduePenaltySuggestionData {
+  rentalOrderId: string;
+  status: RentalOrderStatus;
+  overdue: boolean;
+  expectedRentalEndDate: string;
+  actualRentalEndAt: string | null;
+  overdueDays: number;
+  dailyOverdueRateAmount: number;
+  provisionalOverduePenaltyAmount: number;
+  finalOverduePenaltyAmount: number;
+  damagePenaltyAmount: number;
+  suggestedTotalPenaltyAmount: number;
+  suggestedDepositRefundAmount: number;
+}
+
+export interface OverduePenaltySuggestionResponse {
+  code: number;
+  message: string;
+  data: OverduePenaltySuggestionData;
+}
+
 // ─── Staff Detail ────────────────────────────────────────────────────────────
 
 export interface StaffSummary {
@@ -499,6 +522,26 @@ export function setPenalty(
   return httpService.patch<RentalOrderSingleResponse>(
     `/rental-orders/${rentalOrderId}/set-penalty`,
     input,
+    authOpts,
+  );
+}
+
+/**
+ * Lấy đề xuất phí phạt quá hạn tạm tính [AUTH]
+ *
+ * @param rentalOrderId - UUID của đơn thuê
+ *
+ * Business logic:
+ * - Khi IN_USE/PENDING_PICKUP và overdue: backend auto-refresh provisionalOverduePenaltyAmount mỗi ngày.
+ * - Khi PICKED_UP: backend dùng actualRentalEndAt để khóa số ngày overdue.
+ * - FE dùng provisionalOverduePenaltyAmount để prefill overduePenaltyAmount ở set-penalty,
+ *   hoặc cho staff nhập tay mức cuối cùng khác.
+ */
+export function getOverduePenaltySuggestion(
+  rentalOrderId: string,
+): Promise<AxiosResponse<OverduePenaltySuggestionResponse>> {
+  return httpService.get<OverduePenaltySuggestionResponse>(
+    `/rental-orders/${rentalOrderId}/overdue-penalty-suggestion`,
     authOpts,
   );
 }
