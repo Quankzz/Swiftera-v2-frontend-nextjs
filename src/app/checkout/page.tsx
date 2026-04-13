@@ -89,8 +89,8 @@ export default function CheckoutPage() {
   const editingSubtotal = editingLine ? rentalSubtotalLine(editingLine) : 0;
 
   return (
-    <div className='min-h-screen bg-white px-3 pb-16 pt-20 font-sans dark:bg-surface-base sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
-      <div className='mx-auto max-w-7xl'>
+    <div className='relative min-h-screen overflow-x-hidden bg-white font-sans dark:bg-surface-base'>
+      <div className='relative mx-auto w-full max-w-7xl px-3 pb-16 pt-8 sm:px-4 sm:pt-4 md:px-6 md:pt-8'>
         <Button
           variant='ghost'
           size='sm'

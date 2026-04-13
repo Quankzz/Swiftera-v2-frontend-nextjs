@@ -13,6 +13,7 @@ import {
   CreditCard,
   Loader2,
   AlertCircle,
+  QrCode,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -260,7 +261,7 @@ export default function RentalOrdersPage() {
   const hasActiveFilters = statusFilter !== '' || deferredSearch !== '';
 
   return (
-    <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28 dark:bg-background'>
+    <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-4 md:px-6 md:pt-8 dark:bg-background'>
       <div className='mx-auto max-w-3xl'>
         {/* Page header */}
         <div className='mb-6'>
@@ -470,11 +471,32 @@ export default function RentalOrdersPage() {
                           >
                             {RENTAL_ORDER_STATUS_LABELS[status]}
                           </Badge>
+                          {order.qrCode && (
+                            <span
+                              className='inline-flex items-center text-muted-foreground'
+                              title='Có mã QR đơn hàng'
+                              aria-label='Có mã QR đơn hàng'
+                            >
+                              <QrCode className='size-3.5' />
+                            </span>
+                          )}
                         </div>
                         <p className='mt-0.5 text-xs text-muted-foreground'>
                           {formatDate(order.placedAt)} &middot;{' '}
                           {order.rentalOrderLines.length} sản phẩm
                         </p>
+                        {order.provisionalOverduePenaltyAmount != null &&
+                          order.provisionalOverduePenaltyAmount > 0 && (
+                            <p
+                              className='mt-1 text-[11px] font-medium tabular-nums text-amber-700 dark:text-amber-400'
+                              title='Phí phạt quá hạn tạm tính trên đơn (chưa chốt)'
+                            >
+                              Phạt quá hạn tạm tính:{' '}
+                              {fmt.format(
+                                order.provisionalOverduePenaltyAmount,
+                              )}
+                            </p>
+                          )}
 
                         {/* Amount — hiển thị trong info khi có nút Pay để tránh crowding */}
                         {isPending && (
