@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
@@ -47,7 +47,10 @@ import { useInitiatePayment } from '@/hooks/api/use-payments';
 import dynamic from 'next/dynamic';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
 const PolicyConsentDialog = dynamic(
-  () => import('@/components/checkout/policy-consent-dialog').then((m) => m.PolicyConsentDialog),
+  () =>
+    import('@/components/checkout/policy-consent-dialog').then(
+      (m) => m.PolicyConsentDialog,
+    ),
   { ssr: false },
 );
 import {
@@ -58,6 +61,17 @@ import { toast } from 'sonner';
 import type { VoucherResponse } from '@/features/vouchers/types';
 import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
 import { useDeliveryInfo } from '@/hooks/use-delivery-info';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  useUserAddressesQuery,
+  useCreateUserAddress,
+} from '@/hooks/api/use-user-addresses';
+import {
+  AddressFormDialog,
+  type AddressFormValues,
+} from '@/components/user-address/address-form-dialog';
+import type { UserAddressResponse } from '@/api/userAddressApi';
+import { getApiErrorMessage } from '@/app/profile/utils';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -722,6 +736,92 @@ export default function CartPage() {
     setCity,
   } = useDeliveryInfo();
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [cartAddAddressOpen, setCartAddAddressOpen] = useState(false);
+  const [selectedUserAddressId, setSelectedUserAddressId] = useState<
+    string | null
+  >(null);
+  const addressesInitRef = useRef(false);
+
+  const { isAuthenticated } = useAuth();
+  const { data: savedAddresses, isLoading: savedAddressesLoading } =
+    useUserAddressesQuery({ enabled: !!isAuthenticated });
+
+  const createAddressMutation = useCreateUserAddress({
+    onSuccess: (addr) => {
+      if (!addr) return;
+      toast.success('Đã lưu địa chỉ vào sổ.');
+      setCartAddAddressOpen(false);
+      setSelectedUserAddressId(addr.userAddressId);
+      syncDeliveryFromSaved(addr);
+    },
+    onError: (err) =>
+      toast.error(
+        getApiErrorMessage(err, 'Không thể lưu địa chỉ. Vui lòng thử lại.'),
+      ),
+  });
+
+  const cartAddAddressInitial = useMemo(
+    () => ({ isDefault: (savedAddresses ?? []).length === 0 }),
+    [savedAddresses],
+  );
+
+  function handleCartCreateAddress(values: AddressFormValues) {
+    createAddressMutation.mutate({
+      recipientName: values.recipientName,
+      phoneNumber: values.phoneNumber,
+      addressLine: values.addressLine || undefined,
+      ward: values.ward || undefined,
+      district: values.district || undefined,
+      city: values.city || undefined,
+      isDefault: values.isDefault,
+    });
+  }
+
+  const delivery = useMemo(
+    () => ({
+      setRecipientName,
+      setPhone,
+      setAddressLine,
+      setWard,
+      setDistrict,
+      setCity,
+    }),
+    [setRecipientName, setPhone, setAddressLine, setWard, setDistrict, setCity],
+  );
+
+  function syncDeliveryFromSaved(addr: UserAddressResponse) {
+    delivery.setRecipientName(addr.recipientName);
+    delivery.setPhone(addr.phoneNumber);
+    delivery.setAddressLine(addr.addressLine ?? '');
+    delivery.setWard(addr.ward ?? '');
+    delivery.setDistrict(addr.district ?? '');
+    delivery.setCity(addr.city ?? '');
+  }
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      addressesInitRef.current = false;
+      setSelectedUserAddressId(null);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !savedAddresses?.length || addressesInitRef.current)
+      return;
+    addressesInitRef.current = true;
+    const pick = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
+    setSelectedUserAddressId(pick.userAddressId);
+    syncDeliveryFromSaved(pick);
+  }, [isAuthenticated, savedAddresses]);
+
+  useEffect(() => {
+    if (!savedAddresses?.length || !selectedUserAddressId) return;
+    if (
+      !savedAddresses.some((a) => a.userAddressId === selectedUserAddressId)
+    ) {
+      setSelectedUserAddressId(null);
+    }
+  }, [savedAddresses, selectedUserAddressId]);
 
   // Voucher per-line: cartLineId → voucherCode
   const [lineVouchers, setLineVouchers] = useState<Map<string, string>>(
@@ -855,6 +955,12 @@ export default function CartPage() {
       toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
       return;
     }
+    if (!isAuthenticated) {
+      toast.error(
+        'Vui lòng đăng nhập để đặt thuê — đơn cần địa chỉ trong sổ (API-074).',
+      );
+      return;
+    }
     if (!recipientName.trim()) {
       toast.error('Vui lòng nhập tên người nhận hàng.');
       return;
@@ -868,18 +974,38 @@ export default function CartPage() {
 
   /** Bước 2: Gọi sau khi user đã đồng ý điều khoản → tạo đơn + thanh toán */
   async function handleCreateOrder() {
+    if (!isAuthenticated) {
+      toast.error('Vui lòng đăng nhập để đặt thuê.');
+      return;
+    }
+
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const expectedDeliveryDate = tomorrow.toISOString().slice(0, 10);
 
     try {
+      let userAddressId = selectedUserAddressId;
+
+      if (!userAddressId) {
+        const addr = await createAddressMutation.mutateAsync({
+          recipientName: recipientName.trim(),
+          phoneNumber: phone.trim(),
+          addressLine: addressLine.trim() || undefined,
+          ward: ward.trim() || undefined,
+          district: district.trim() || undefined,
+          city: city.trim() || undefined,
+          isDefault: (savedAddresses?.length ?? 0) === 0,
+        });
+        if (!addr?.userAddressId) {
+          toast.error('Không lưu được địa chỉ. Vui lòng thử lại.');
+          return;
+        }
+        userAddressId = addr.userAddressId;
+        setSelectedUserAddressId(addr.userAddressId);
+      }
+
       const result = await createOrder.mutateAsync({
-        deliveryRecipientName: recipientName.trim(),
-        deliveryPhone: phone.trim(),
-        deliveryAddressLine: addressLine.trim() || undefined,
-        deliveryWard: ward.trim() || undefined,
-        deliveryDistrict: district.trim() || undefined,
-        deliveryCity: city.trim() || undefined,
+        userAddressId,
         expectedDeliveryDate,
         voucherCode: voucherCode || undefined,
         orderLines: selectedLines.map((l) => ({
@@ -913,7 +1039,7 @@ export default function CartPage() {
 
   return (
     <div className='relative min-h-screen overflow-x-hidden bg-white font-sans dark:bg-surface-base'>
-      <div className='relative mx-auto w-full max-w-7xl px-3 pb-16 pt-20 sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
+      <div className='relative mx-auto w-full max-w-7xl px-3 pb-16 pt-8 sm:px-4 sm:pt-4 md:px-6 md:pt-8'>
         {/* Breadcrumb */}
         <nav className='mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm'>
           <ol className='flex flex-wrap items-center gap-x-1.5 gap-y-1'>
@@ -1159,18 +1285,18 @@ export default function CartPage() {
 
                       {/* Thông tin giao hàng */}
                       <div className='space-y-2'>
-                        <div className='flex items-center justify-between'>
+                        <div className='flex items-center justify-between gap-2'>
                           <div className='flex items-center gap-1.5'>
                             <Truck className='size-4 text-rose-600 dark:text-rose-400' />
                             <span className='text-sm font-semibold text-foreground'>
                               Thông tin giao hàng
                             </span>
                           </div>
-                          {(recipientName || phone) && (
+                          {!isAuthenticated && (recipientName || phone) && (
                             <button
                               type='button'
                               onClick={() => setDeliveryDialogOpen(true)}
-                              className='flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+                              className='flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
                             >
                               <Pencil className='size-3' />
                               Sửa
@@ -1178,59 +1304,177 @@ export default function CartPage() {
                           )}
                         </div>
 
-                        {recipientName || phone ? (
-                          /* ── Summary khi đã điền ── */
-                          <button
-                            type='button'
-                            onClick={() => setDeliveryDialogOpen(true)}
-                            className='w-full rounded-xl border border-border/60 bg-muted/20 p-3.5 text-left transition-colors hover:border-rose-300/60 hover:bg-rose-50/30 dark:hover:bg-rose-950/10'
-                          >
-                            <div className='flex items-start gap-3'>
-                              <CheckCircle2 className='mt-0.5 size-4 shrink-0 text-emerald-500' />
-                              <div className='min-w-0 space-y-0.5'>
-                                {recipientName && (
-                                  <p className='truncate text-sm font-semibold text-foreground'>
-                                    {recipientName}
-                                  </p>
-                                )}
-                                {phone && (
-                                  <p className='text-xs text-muted-foreground'>
-                                    {phone}
-                                  </p>
-                                )}
-                                {(addressLine || district || city) && (
-                                  <p className='truncate text-xs text-muted-foreground'>
-                                    {[addressLine, ward, district, city]
-                                      .filter(Boolean)
-                                      .join(', ')}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </button>
-                        ) : (
-                          /* ── CTA khi chưa điền ── */
-                          <button
-                            type='button'
-                            onClick={() => setDeliveryDialogOpen(true)}
-                            className='flex w-full items-center justify-between rounded-xl border border-dashed border-rose-300/60 bg-rose-50/30 px-4 py-3.5 text-left transition-colors hover:border-rose-400/70 hover:bg-rose-50/50 dark:border-rose-800/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20'
-                          >
-                            <div className='flex items-center gap-2.5'>
-                              <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40'>
-                                <User className='size-4 text-rose-600 dark:text-rose-400' />
-                              </div>
-                              <div>
-                                <p className='text-sm font-semibold text-rose-700 dark:text-rose-300'>
-                                  Nhập thông tin giao hàng
-                                </p>
-                                <p className='text-xs text-rose-600/70 dark:text-rose-400/70'>
-                                  Tên người nhận &amp; số điện thoại bắt buộc
-                                </p>
-                              </div>
-                            </div>
-                            <ChevronDown className='-rotate-90 size-4 text-rose-400' />
-                          </button>
+                        {isAuthenticated && savedAddressesLoading && (
+                          <div className='space-y-2'>
+                            <Skeleton className='h-16 w-full rounded-xl' />
+                            <Skeleton className='h-9 w-full rounded-xl' />
+                          </div>
                         )}
+
+                        {isAuthenticated && !savedAddressesLoading && (
+                          <div className='space-y-3'>
+                            {savedAddresses && savedAddresses.length > 0 && (
+                              <ul className='max-h-52 space-y-2 overflow-y-auto pr-0.5'>
+                                {savedAddresses.map((addr) => {
+                                  const selected =
+                                    selectedUserAddressId ===
+                                    addr.userAddressId;
+                                  const line = [
+                                    addr.addressLine,
+                                    addr.ward,
+                                    addr.district,
+                                    addr.city,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(', ');
+                                  return (
+                                    <li key={addr.userAddressId}>
+                                      <button
+                                        type='button'
+                                        onClick={() => {
+                                          setSelectedUserAddressId(
+                                            addr.userAddressId,
+                                          );
+                                          syncDeliveryFromSaved(addr);
+                                        }}
+                                        className={cn(
+                                          'w-full rounded-xl border p-3 text-left transition-colors',
+                                          selected
+                                            ? 'border-rose-500 bg-rose-50/60 ring-1 ring-rose-500/20 dark:bg-rose-950/30'
+                                            : 'border-border/60 bg-muted/15 hover:border-rose-300/50',
+                                        )}
+                                      >
+                                        <div className='flex items-start gap-2.5'>
+                                          <MapPin className='mt-0.5 size-4 shrink-0 text-rose-500' />
+                                          <div className='min-w-0 flex-1 space-y-0.5'>
+                                            <div className='flex flex-wrap items-center gap-1.5'>
+                                              <span className='text-sm font-semibold text-foreground'>
+                                                {addr.recipientName}
+                                              </span>
+                                              {addr.isDefault && (
+                                                <Badge
+                                                  variant='secondary'
+                                                  className='rounded-md px-1.5 py-0 text-[10px] font-medium'
+                                                >
+                                                  Mặc định
+                                                </Badge>
+                                              )}
+                                            </div>
+                                            <p className='text-xs text-muted-foreground'>
+                                              {addr.phoneNumber}
+                                            </p>
+                                            {line ? (
+                                              <p className='line-clamp-2 text-xs text-muted-foreground'>
+                                                {line}
+                                              </p>
+                                            ) : null}
+                                          </div>
+                                          {selected && (
+                                            <CheckCircle2 className='size-4 shrink-0 text-emerald-500' />
+                                          )}
+                                        </div>
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+
+                            <div className='flex flex-wrap gap-2'>
+                              <Button
+                                type='button'
+                                variant='outline'
+                                size='sm'
+                                className='rounded-xl border-rose-300/60 text-rose-800 hover:bg-rose-50 dark:text-rose-200'
+                                onClick={() => setCartAddAddressOpen(true)}
+                                disabled={createAddressMutation.isPending}
+                              >
+                                <Plus className='size-4' />
+                                Thêm địa chỉ (lưu sổ)
+                              </Button>
+                              {/* <Button
+                                type='button'
+                                variant='secondary'
+                                size='sm'
+                                className='rounded-xl'
+                                onClick={() => {
+                                  setSelectedUserAddressId(null);
+                                  setDeliveryDialogOpen(true);
+                                }}
+                              >
+                                Nhập nhanh (không lưu)
+                              </Button> */}
+                            </div>
+
+                            {savedAddresses?.length === 0 &&
+                              !(recipientName || phone) && (
+                                <p className='text-xs text-amber-700 dark:text-amber-400'>
+                                  Chưa có địa chỉ trong sổ — thêm mới hoặc nhập
+                                  nhanh để tiếp tục.
+                                </p>
+                              )}
+
+                            {selectedUserAddressId === null &&
+                              (recipientName || phone) && (
+                                <p className='rounded-lg border border-amber-200/80 bg-amber-50/50 px-3 py-2 text-[11px] text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200'>
+                                  Đang dùng địa chỉ nhập tạm (không lưu vào sổ).
+                                </p>
+                              )}
+                          </div>
+                        )}
+
+                        {!isAuthenticated &&
+                          (recipientName || phone ? (
+                            <button
+                              type='button'
+                              onClick={() => setDeliveryDialogOpen(true)}
+                              className='w-full rounded-xl border border-border/60 bg-muted/20 p-3.5 text-left transition-colors hover:border-rose-300/60 hover:bg-rose-50/30 dark:hover:bg-rose-950/10'
+                            >
+                              <div className='flex items-start gap-3'>
+                                <CheckCircle2 className='mt-0.5 size-4 shrink-0 text-emerald-500' />
+                                <div className='min-w-0 space-y-0.5'>
+                                  {recipientName && (
+                                    <p className='truncate text-sm font-semibold text-foreground'>
+                                      {recipientName}
+                                    </p>
+                                  )}
+                                  {phone && (
+                                    <p className='text-xs text-muted-foreground'>
+                                      {phone}
+                                    </p>
+                                  )}
+                                  {(addressLine || district || city) && (
+                                    <p className='truncate text-xs text-muted-foreground'>
+                                      {[addressLine, ward, district, city]
+                                        .filter(Boolean)
+                                        .join(', ')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          ) : (
+                            <button
+                              type='button'
+                              onClick={() => setDeliveryDialogOpen(true)}
+                              className='flex w-full items-center justify-between rounded-xl border border-dashed border-rose-300/60 bg-rose-50/30 px-4 py-3.5 text-left transition-colors hover:border-rose-400/70 hover:bg-rose-50/50 dark:border-rose-800/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20'
+                            >
+                              <div className='flex items-center gap-2.5'>
+                                <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40'>
+                                  <User className='size-4 text-rose-600 dark:text-rose-400' />
+                                </div>
+                                <div>
+                                  <p className='text-sm font-semibold text-rose-700 dark:text-rose-300'>
+                                    Nhập thông tin giao hàng
+                                  </p>
+                                  <p className='text-xs text-rose-600/70 dark:text-rose-400/70'>
+                                    Tên người nhận &amp; số điện thoại bắt buộc
+                                  </p>
+                                </div>
+                              </div>
+                              <ChevronDown className='-rotate-90 size-4 text-rose-400' />
+                            </button>
+                          ))}
                       </div>
 
                       {/* Voucher */}
@@ -1298,6 +1542,18 @@ export default function CartPage() {
                         có) sẽ hiển thị ở bước thanh toán VNPay.
                       </div>
 
+                      {!isAuthenticated && (
+                        <p className='text-center text-xs text-muted-foreground'>
+                          <Link
+                            href='/auth/login?redirect=/cart'
+                            className='font-medium text-rose-600 underline underline-offset-2 hover:text-rose-700 dark:text-rose-400'
+                          >
+                            Đăng nhập
+                          </Link>{' '}
+                          để đặt thuê — đơn gắn với địa chỉ đã lưu.
+                        </p>
+                      )}
+
                       <Magnetic intensity={0.3} range={100}>
                         <Button
                           type='button'
@@ -1307,13 +1563,21 @@ export default function CartPage() {
                             selectedTotals.selectedCount === 0 ||
                             !recipientName.trim() ||
                             !phone.trim() ||
+                            !isAuthenticated ||
                             createOrder.isPending ||
-                            initiatePayment.isPending
+                            initiatePayment.isPending ||
+                            createAddressMutation.isPending ||
+                            (isAuthenticated && savedAddressesLoading)
                           }
                           onClick={handleProceedToRent}
                         >
-                          {createOrder.isPending ||
-                          initiatePayment.isPending ? (
+                          {createAddressMutation.isPending ? (
+                            <span className='flex items-center gap-2'>
+                              <span className='size-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
+                              Đang lưu địa chỉ…
+                            </span>
+                          ) : createOrder.isPending ||
+                            initiatePayment.isPending ? (
                             <span className='flex items-center gap-2'>
                               <span className='size-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
                               Đang xử lý…
@@ -1357,7 +1621,23 @@ export default function CartPage() {
         setDistrict={setDistrict}
         city={city}
         setCity={setCity}
-        onConfirm={() => setDeliveryDialogOpen(false)}
+        onConfirm={() => {
+          setSelectedUserAddressId(null);
+          setDeliveryDialogOpen(false);
+        }}
+      />
+
+      <AddressFormDialog
+        open={cartAddAddressOpen}
+        onOpenChange={setCartAddAddressOpen}
+        title='Thêm địa chỉ vào sổ'
+        submitLabel={
+          createAddressMutation.isPending ? 'Đang lưu…' : 'Lưu địa chỉ'
+        }
+        initialValues={cartAddAddressInitial}
+        showDefaultCheckbox
+        isSubmitting={createAddressMutation.isPending}
+        onSubmit={handleCartCreateAddress}
       />
 
       {/* Policy consent dialog */}
