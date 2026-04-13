@@ -12,6 +12,7 @@ import { rentalOrderKeys } from '../api/rental-order.keys';
 import {
   assignHubToOrder,
   assignStaffToOrder,
+  assignStaffToHub,
 } from '../api/rental-order.service';
 import { apiGet } from '@/api/apiService';
 import { getHubStaff } from '@/features/hubs/api/hub.service';
@@ -21,6 +22,7 @@ import type {
   RentalOrderResponse,
   AssignHubInput,
   AssignStaffInput,
+  AssignStaffToHubInput,
   HubOption,
 } from '../types';
 import type { HubStaffResponse } from '@/features/hubs/types';
@@ -128,6 +130,33 @@ export function useAssignStaffMutation() {
     },
     onError: (error) => {
       toast.error(error.message || 'Gán nhân viên thất bại');
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Assign Staff to Hub Mutation (API-120)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Gán nhiều staff vào hub.
+ * PATCH /hubs/{hubId}/assign-staff
+ */
+export function useAssignStaffToHubMutation() {
+  const qc = useQueryClient();
+  return useMutation<
+    HubStaffResponse[],
+    Error,
+    { hubId: string; payload: AssignStaffToHubInput }
+  >({
+    mutationFn: ({ hubId, payload }) => assignStaffToHub(hubId, payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: hubKeys.staff(variables.hubId) });
+      qc.invalidateQueries({ queryKey: hubKeys.lists() });
+      toast.success('Gán nhân viên vào hub thành công');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Gán nhân viên vào hub thất bại');
     },
   });
 }

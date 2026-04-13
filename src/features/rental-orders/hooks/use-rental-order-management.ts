@@ -15,6 +15,8 @@ import {
   getRentalOrderById,
   updateRentalOrderStatus,
   cancelRentalOrder,
+  completeRentalOrder,
+  reportIssueRecall,
 } from '../api/rental-order.service';
 import { toast } from 'sonner';
 import type {
@@ -22,6 +24,7 @@ import type {
   PaginatedRentalOrdersResponse,
   RentalOrderListParams,
   UpdateOrderStatusInput,
+  ReportIssueInput,
 } from '../types';
 
 /**
@@ -88,6 +91,51 @@ export function useCancelOrderMutation() {
     },
     onError: (error) => {
       toast.error(error.message || 'Hủy đơn thuê thất bại');
+    },
+  });
+}
+
+/**
+ * Hoàn tất đơn thuê — PICKED_UP → COMPLETED (API-079)
+ */
+export function useCompleteOrderMutation() {
+  const qc = useQueryClient();
+  return useMutation<RentalOrderResponse, Error, string>({
+    mutationFn: completeRentalOrder,
+    onSuccess: (_, rentalOrderId) => {
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
+      qc.invalidateQueries({
+        queryKey: rentalOrderKeys.detail(rentalOrderId),
+      });
+      toast.success('Đơn thuê đã hoàn tất');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Hoàn tất đơn thuê thất bại');
+    },
+  });
+}
+
+/**
+ * Thu hồi sớm do sự cố — DELIVERED/IN_USE → PENDING_PICKUP (API-079, ADMIN only)
+ */
+export function useReportIssueMutation() {
+  const qc = useQueryClient();
+  return useMutation<
+    RentalOrderResponse,
+    Error,
+    { rentalOrderId: string; payload: ReportIssueInput }
+  >({
+    mutationFn: ({ rentalOrderId, payload }) =>
+      reportIssueRecall(rentalOrderId, payload),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
+      qc.invalidateQueries({
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
+      });
+      toast.success('Đã ghi nhận sự cố và yêu cầu thu hồi');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Ghi nhận sự cố thất bại');
     },
   });
 }

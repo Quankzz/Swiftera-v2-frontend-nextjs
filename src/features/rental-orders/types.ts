@@ -125,18 +125,41 @@ export const STATUS_STYLES: Record<
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// User Address (nested in RentalOrderResponse)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface UserAddress {
+  userAddressId: string;
+  userId: string;
+  recipientName: string;
+  phoneNumber: string;
+  addressLine: string | null;
+  ward: string | null;
+  district: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  isDefault: boolean;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Rental Order Line (per product)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface RentalOrderLine {
   rentalOrderLineId: string;
   productId: string;
+  productColorId: string | null;
+  colorNameSnapshot: string | null;
+  colorCodeSnapshot: string | null;
   productNameSnapshot: string;
   inventoryItemId: string | null;
   inventorySerialNumber: string | null;
   dailyPriceSnapshot: number;
   depositAmountSnapshot: number;
   rentalDurationDays: number;
+  voucherCodeSnapshot: string | null;
+  voucherDiscountAmount: number;
   checkoutConditionNote: string | null;
   checkinConditionNote: string | null;
   itemPenaltyAmount: number;
@@ -151,23 +174,25 @@ export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
 
-  // Hub assignment
+  // Hub assignment (expanded details from BE)
   hubId: string | null;
+  hubCode: string | null;
   hubName: string | null;
+  hubAddressLine: string | null;
+  hubWard: string | null;
+  hubDistrict: string | null;
+  hubCity: string | null;
+  hubLatitude: number | null;
+  hubLongitude: number | null;
+  hubPhone: string | null;
 
   // Staff assignment (nested objects — trả về từ API sau khi gán)
   deliveryStaff: HubStaffResponse | null;
   pickupStaff: HubStaffResponse | null;
 
-  // Delivery info
-  deliveryRecipientName: string;
-  deliveryPhone: string;
-  deliveryAddressLine: string | null;
-  deliveryWard: string | null;
-  deliveryDistrict: string | null;
-  deliveryCity: string | null;
-  deliveryLatitude: number | null;
-  deliveryLongitude: number | null;
+  // User address (nested from BE — thay thế delivery* fields cũ)
+  userAddressId: string | null;
+  userAddress: UserAddress | null;
 
   // Dates
   expectedDeliveryDate: string | null; // YYYY-MM-DD
@@ -177,6 +202,12 @@ export interface RentalOrderResponse {
   actualRentalStartAt: string | null;
   deliveredLatitude: number | null;
   deliveredLongitude: number | null;
+
+  // Issue tracking
+  issueReportedAt: string | null;
+  issueReportNote: string | null;
+
+  // Pickup
   plannedPickupAt: string | null;
   actualRentalEndAt: string | null;
   pickedUpAt: string | null;
@@ -193,9 +224,15 @@ export interface RentalOrderResponse {
   rentalFeeAmount: number;
   depositHoldAmount: number;
   totalPayableAmount: number;
+  damagePenaltyAmount: number | null;
+  overduePenaltyAmount: number | null;
+  provisionalOverduePenaltyAmount: number | null;
   penaltyChargeAmount: number | null;
   depositRefundAmount: number | null;
   totalPaidAmount: number;
+
+  // QR Code (sinh sau khi PAID)
+  qrCode: string | null;
 
   // Timestamps
   placedAt: string; // ISO datetime
@@ -265,10 +302,23 @@ export interface RecordPickupInput {
   pickedUpLongitude?: number | null;
 }
 
-/** API-084: Cập nhật phí phạt */
+/** API-084: Cập nhật phí phạt (split penalty) */
 export interface SetPenaltyInput {
-  penaltyTotal: number;
+  damagePenaltyAmount?: number;
+  overduePenaltyAmount?: number;
+  penaltyTotal?: number;
   note?: string | null;
+}
+
+/** API-079: Report issue / Thu hồi sớm do sự cố (ADMIN only) */
+export interface ReportIssueInput {
+  status: 'PENDING_PICKUP';
+  issueNote: string;
+}
+
+/** API-120: Gán nhiều staff vào hub */
+export interface AssignStaffToHubInput {
+  staffIds: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

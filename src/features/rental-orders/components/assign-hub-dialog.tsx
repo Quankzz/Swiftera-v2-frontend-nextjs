@@ -105,7 +105,7 @@ export function AssignHubDialog({
               </h2>
               <p className='text-xs text-blue-100'>
                 Đơn: {order.rentalOrderId.slice(0, 8).toUpperCase()} —{' '}
-                {order.deliveryRecipientName}
+                {order.userAddress?.recipientName ?? '—'}
               </p>
             </div>
           </div>

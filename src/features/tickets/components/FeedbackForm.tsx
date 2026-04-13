@@ -108,7 +108,7 @@ function OrderPickerDialog({
     const q = search.toLowerCase();
     return (
       o.rentalOrderId.toLowerCase().includes(q) ||
-      o.deliveryRecipientName?.toLowerCase().includes(q) ||
+      o.userAddress?.recipientName?.toLowerCase().includes(q) ||
       o.status?.toLowerCase().includes(q)
     );
   });
@@ -177,7 +177,7 @@ function OrderPickerDialog({
                         #{order.rentalOrderId.slice(0, 16)}…
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400 mt-0.5'>
-                        {order.deliveryRecipientName} •{' '}
+                        {order.userAddress?.recipientName ?? '—'} •{' '}
                         <span className='capitalize'>
                           {order.status.toLowerCase().replace(/_/g, ' ')}
                         </span>

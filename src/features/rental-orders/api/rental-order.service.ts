@@ -24,8 +24,11 @@ import type {
   SetPenaltyInput,
   ExtendOrderInput,
   StaffOption,
+  ReportIssueInput,
+  AssignStaffToHubInput,
 } from '../types';
 import type { PaginatedData } from '@/api/apiService';
+import type { HubStaffResponse } from '@/features/hubs/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Queries
@@ -201,5 +204,64 @@ export function setPenalty(
   return apiPatch<RentalOrderResponse>(
     `/rental-orders/${rentalOrderId}/set-penalty`,
     payload,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Complete & Report Issue
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Hoàn tất đơn thuê — chuyển status PICKED_UP → COMPLETED.
+ * Sử dụng API-079: PATCH /rental-orders/{id}/status
+ */
+export function completeRentalOrder(
+  rentalOrderId: string,
+): Promise<RentalOrderResponse> {
+  return apiPatch<RentalOrderResponse>(
+    `/rental-orders/${rentalOrderId}/status`,
+    { status: 'COMPLETED' },
+  );
+}
+
+/**
+ * Thu hồi sớm do sự cố — ADMIN only.
+ * Chuyển DELIVERED / IN_USE → PENDING_PICKUP kèm issueNote.
+ * API-079: PATCH /rental-orders/{id}/status
+ */
+export function reportIssueRecall(
+  rentalOrderId: string,
+  payload: ReportIssueInput,
+): Promise<RentalOrderResponse> {
+  return apiPatch<RentalOrderResponse>(
+    `/rental-orders/${rentalOrderId}/status`,
+    payload,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. Hub Staff Assignment
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-120: Gán nhiều staff vào hub
+ * PATCH /hubs/{hubId}/assign-staff
+ */
+export function assignStaffToHub(
+  hubId: string,
+  payload: AssignStaffToHubInput,
+): Promise<HubStaffResponse[]> {
+  return apiPatch<HubStaffResponse[]>(`/hubs/${hubId}/assign-staff`, payload);
+}
+
+/**
+ * API-082: Xem chi tiết nhân sự xử lý đơn thuê
+ * GET /rental-orders/{rentalOrderId}/staff-detail
+ */
+export function getRentalOrderStaffDetail(
+  rentalOrderId: string,
+): Promise<RentalOrderResponse> {
+  return apiGet<RentalOrderResponse>(
+    `/rental-orders/${rentalOrderId}/staff-detail`,
   );
 }
