@@ -2,10 +2,11 @@
  * Policy API service — Module 17: POLICIES
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *
- * Dùng apiService.ts — KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  */
 
-import { apiGet, apiPost, apiPatch } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 import type {
   PolicyDocumentResponse,
   PaginatedPoliciesResponse,
@@ -13,6 +14,8 @@ import type {
   UpdatePolicyInput,
   PolicyListParams,
 } from '../types';
+
+const authOpts = { requireToken: true as const };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -22,24 +25,26 @@ import type {
  * API-109: GET /policies?page=1&size=10&filter=...
  * BE dùng 1-based pagination. Caller truyền đúng page 1-based.
  */
-export function getPoliciesList(
+export async function getPoliciesList(
   params?: PolicyListParams,
 ): Promise<PaginatedPoliciesResponse> {
-  return apiGet<PaginatedPoliciesResponse>('/policies', {
-    params: params as Record<
-      string,
-      string | number | boolean | undefined | null
-    >,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedPoliciesResponse>>(
+    '/policies',
+    { params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-107: GET /policies/{policyId}
  */
-export function getPolicyById(
+export async function getPolicyById(
   policyDocumentId: string,
 ): Promise<PolicyDocumentResponse> {
-  return apiGet<PolicyDocumentResponse>(`/policies/${policyDocumentId}`);
+  const res = await httpService.get<ApiResponse<PolicyDocumentResponse>>(
+    `/policies/${policyDocumentId}`,
+  );
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,23 +55,30 @@ export function getPolicyById(
  * API-106: POST /policies
  * Tạo tài liệu chính sách mới
  */
-export function createPolicy(
+export async function createPolicy(
   payload: CreatePolicyInput,
 ): Promise<PolicyDocumentResponse> {
-  return apiPost<PolicyDocumentResponse>('/policies', payload);
+  const res = await httpService.post<ApiResponse<PolicyDocumentResponse>>(
+    '/policies',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-110: PATCH /policies/{policyId}/deactivate
  * Vô hiệu hóa chính sách (isActive → false)
  */
-export function deactivatePolicy(
+export async function deactivatePolicy(
   policyDocumentId: string,
 ): Promise<PolicyDocumentResponse> {
-  return apiPatch<PolicyDocumentResponse>(
+  const res = await httpService.patch<ApiResponse<PolicyDocumentResponse>>(
     `/policies/${policyDocumentId}/deactivate`,
     {},
+    authOpts,
   );
+  return res.data.data!;
 }
 
 /**
@@ -74,12 +86,14 @@ export function deactivatePolicy(
  * Cập nhật tài liệu chính sách (title, pdfUrl, effectiveFrom).
  * code và policyVersion là immutable — không hỗ trợ update qua endpoint này.
  */
-export function updatePolicy(
+export async function updatePolicy(
   policyDocumentId: string,
   payload: UpdatePolicyInput,
 ): Promise<PolicyDocumentResponse> {
-  return apiPatch<PolicyDocumentResponse>(
+  const res = await httpService.patch<ApiResponse<PolicyDocumentResponse>>(
     `/policies/${policyDocumentId}`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }

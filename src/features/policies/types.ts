@@ -3,7 +3,7 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 17: POLICIES
  */
 
-import type { PaginatedData } from '@/api/apiService';
+import type { PaginationResponse } from '@/types/api.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Policy Document Response (API-106 → API-110)
@@ -26,7 +26,8 @@ export interface PolicyDocumentResponse {
 // Paginated Response
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PaginatedPoliciesResponse = PaginatedData<PolicyDocumentResponse>;
+export type PaginatedPoliciesResponse =
+  PaginationResponse<PolicyDocumentResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // List Params (API-109)

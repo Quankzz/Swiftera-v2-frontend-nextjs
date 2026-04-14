@@ -1,6 +1,6 @@
 /**
  * User service — tất cả API calls cho users module.
- * Dùng apiService.ts làm HTTP layer, KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  *
  * Chia thành 3 section:
  *  1. Profile / self-service
@@ -10,7 +10,8 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 2: USERS)
  */
 
-import { apiGet, apiPatch, apiPut, apiPost, apiDelete } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 
 import type {
   UserSecureResponse,
@@ -25,6 +26,8 @@ import type {
   RemoveUserRolesInput,
 } from '../types';
 
+const authOpts = { requireToken: true as const };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Profile / Self-service
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,48 +36,68 @@ import type {
  * API-006: Lấy thông tin tài khoản hiện tại
  * GET /auth/account [AUTH]
  */
-export function getMyProfile(): Promise<UserSecureResponse> {
-  return apiGet<UserSecureResponse>('/auth/account');
+export async function getMyProfile(): Promise<UserSecureResponse> {
+  const res = await httpService.get<ApiResponse<UserSecureResponse>>(
+    '/auth/account',
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-010: Cập nhật hồ sơ cá nhân
  * PATCH /users/update-profile [AUTH]
  */
-export function updateProfile(
+export async function updateProfile(
   payload: UpdateProfileInput,
 ): Promise<UserSecureResponse> {
-  return apiPatch<UserSecureResponse>('/users/update-profile', payload);
+  const res = await httpService.patch<ApiResponse<UserSecureResponse>>(
+    '/users/update-profile',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-011: Đổi mật khẩu
  * PUT /users/update-password [AUTH]
  */
-export function updatePassword(
+export async function updatePassword(
   payload: UpdatePasswordInput,
 ): Promise<UserSecureResponse> {
-  return apiPut<UserSecureResponse>('/users/update-password', payload);
+  const res = await httpService.put<ApiResponse<UserSecureResponse>>(
+    '/users/update-password',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-012: Yêu cầu đổi email
  * PUT /users/update-email [AUTH]
  */
-export function requestChangeEmail(
+export async function requestChangeEmail(
   payload: RequestChangeEmailInput,
 ): Promise<null> {
-  return apiPut<null>('/users/update-email', payload);
+  await httpService.put('/users/update-email', payload, authOpts);
+  return null;
 }
 
 /**
  * API-013: Xác thực token đổi email
  * POST /users/verify-change-email [AUTH]
  */
-export function verifyChangeEmail(
+export async function verifyChangeEmail(
   payload: VerifyChangeEmailInput,
 ): Promise<UserSecureResponse> {
-  return apiPost<UserSecureResponse>('/users/verify-change-email', payload);
+  const res = await httpService.post<ApiResponse<UserSecureResponse>>(
+    '/users/verify-change-email',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,39 +108,51 @@ export function verifyChangeEmail(
  * API-014: Lấy thông tin user theo ID
  * GET /users/{userId} [AUTH]
  */
-export function getUserById(userId: string): Promise<UserResponse> {
-  return apiGet<UserResponse>(`/users/${userId}`);
+export async function getUserById(userId: string): Promise<UserResponse> {
+  const res = await httpService.get<ApiResponse<UserResponse>>(
+    `/users/${userId}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-015: Lấy danh sách user
  * GET /users?page=0&size=10&sort=createdAt,desc&filter=... [AUTH]
  */
-export function getUsers(
+export async function getUsers(
   params?: UserListParams,
 ): Promise<PaginatedUsersResponse> {
-  return apiGet<PaginatedUsersResponse>('/users', {
-    params: params as Record<string, string | number | boolean | undefined>,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedUsersResponse>>(
+    '/users',
+    { ...authOpts, params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-016: Cập nhật user (admin)
  * PATCH /users/{userId} [AUTH]
  */
-export function updateUser(
+export async function updateUser(
   userId: string,
   payload: UpdateUserInput,
 ): Promise<UserResponse> {
-  return apiPatch<UserResponse>(`/users/${userId}`, payload);
+  const res = await httpService.patch<ApiResponse<UserResponse>>(
+    `/users/${userId}`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-017: Xóa tài khoản user
  * DELETE /users/{userId} [AUTH]
  */
-export function deleteUser(userId: string): Promise<null> {
-  return apiDelete<null>(`/users/${userId}`);
+export async function deleteUser(userId: string): Promise<null> {
+  await httpService.delete(`/users/${userId}`, authOpts);
+  return null;
 }
 
 /**
@@ -125,11 +160,15 @@ export function deleteUser(userId: string): Promise<null> {
  * DELETE /users/{userId}/roles [AUTH]
  * NOTE: API cần body trong DELETE request
  */
-export function removeUserRoles(
+export async function removeUserRoles(
   userId: string,
   payload: RemoveUserRolesInput,
 ): Promise<null> {
-  return apiDelete<null>(`/users/${userId}/roles`, payload);
+  await httpService.delete(`/users/${userId}/roles`, {
+    ...authOpts,
+    data: payload,
+  });
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,6 +180,11 @@ export function removeUserRoles(
  * POST /users/staff-requests [AUTH]
  * Không có request body
  */
-export function requestStaffUpgrade(): Promise<UserSecureResponse> {
-  return apiPost<UserSecureResponse>('/users/staff-requests');
+export async function requestStaffUpgrade(): Promise<UserSecureResponse> {
+  const res = await httpService.post<ApiResponse<UserSecureResponse>>(
+    '/users/staff-requests',
+    {},
+    authOpts,
+  );
+  return res.data.data!;
 }

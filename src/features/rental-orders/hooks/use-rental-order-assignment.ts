@@ -14,7 +14,8 @@ import {
   assignStaffToOrder,
   assignStaffToHub,
 } from '../api/rental-order.service';
-import { apiGet } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse, PaginationResponse } from '@/types/api.types';
 import { getHubStaff } from '@/features/hubs/api/hub.service';
 import { hubKeys } from '@/features/hubs/api/hub.keys';
 import { toast } from 'sonner';
@@ -26,7 +27,6 @@ import type {
   HubOption,
 } from '../types';
 import type { HubStaffResponse } from '@/features/hubs/types';
-import type { PaginatedData } from '@/api/apiService';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hub query for assignment dialog
@@ -44,12 +44,14 @@ interface HubListParams {
  * Dùng trong assign-hub-dialog.
  */
 export function useHubsForAssignQuery(params?: HubListParams) {
-  return useQuery<PaginatedData<HubOption>>({
+  return useQuery<PaginationResponse<HubOption>>({
     queryKey: ['hubs', 'assign', params ?? {}],
-    queryFn: () =>
-      apiGet<PaginatedData<HubOption>>('/hubs', {
-        params: params as Record<string, string | number | boolean | undefined>,
-      }),
+    queryFn: async () => {
+      const res = await httpService.get<
+        ApiResponse<PaginationResponse<HubOption>>
+      >('/hubs', { params });
+      return res.data.data!;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }

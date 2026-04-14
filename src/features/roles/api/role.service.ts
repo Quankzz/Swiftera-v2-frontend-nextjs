@@ -1,6 +1,6 @@
 /**
  * Role & Permission service — tất cả API calls.
- * Dùng apiService.ts làm HTTP layer, KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  *
  * Module 3: ROLES  (API-020 → API-025)
  * Module 4: PERMISSIONS (API-026 → API-033)
@@ -8,7 +8,8 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  */
 
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 
 import type {
   RoleResponse,
@@ -25,6 +26,8 @@ import type {
   CreateModuleInput,
 } from '../types';
 
+const authOpts = { requireToken: true as const };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Module 3: ROLES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,58 +36,81 @@ import type {
  * API-020: Tạo vai trò mới
  * POST /roles
  */
-export function createRole(payload: CreateRoleInput): Promise<RoleResponse> {
-  return apiPost<RoleResponse>('/roles', payload);
+export async function createRole(
+  payload: CreateRoleInput,
+): Promise<RoleResponse> {
+  const res = await httpService.post<ApiResponse<RoleResponse>>(
+    '/roles',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-021: Lấy thông tin vai trò theo ID
  * GET /roles/{roleId}
  */
-export function getRoleById(roleId: string): Promise<RoleResponse> {
-  return apiGet<RoleResponse>(`/roles/${roleId}`);
+export async function getRoleById(roleId: string): Promise<RoleResponse> {
+  const res = await httpService.get<ApiResponse<RoleResponse>>(
+    `/roles/${roleId}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-022: Lấy danh sách vai trò
  * GET /roles?page=0&size=10
  */
-export function getRoles(
+export async function getRoles(
   params?: RoleListParams,
 ): Promise<PaginatedRolesResponse> {
-  return apiGet<PaginatedRolesResponse>('/roles', {
-    params: params as Record<string, string | number | boolean | undefined>,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedRolesResponse>>(
+    '/roles',
+    { ...authOpts, params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-023: Cập nhật vai trò
  * PATCH /roles/{roleId}
  */
-export function updateRole(
+export async function updateRole(
   roleId: string,
   payload: UpdateRoleInput,
 ): Promise<RoleResponse> {
-  return apiPatch<RoleResponse>(`/roles/${roleId}`, payload);
+  const res = await httpService.patch<ApiResponse<RoleResponse>>(
+    `/roles/${roleId}`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-024: Xóa permission khỏi vai trò
  * DELETE /roles/{roleId}/permissions
  */
-export function removeRolePermissions(
+export async function removeRolePermissions(
   roleId: string,
   payload: RemoveRolePermissionsInput,
 ): Promise<null> {
-  return apiDelete<null>(`/roles/${roleId}/permissions`, payload);
+  await httpService.delete(`/roles/${roleId}/permissions`, {
+    ...authOpts,
+    data: payload,
+  });
+  return null;
 }
 
 /**
  * API-025: Xóa vai trò
  * DELETE /roles/{roleId}
  */
-export function deleteRole(roleId: string): Promise<null> {
-  return apiDelete<null>(`/roles/${roleId}`);
+export async function deleteRole(roleId: string): Promise<null> {
+  await httpService.delete(`/roles/${roleId}`, authOpts);
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,75 +121,102 @@ export function deleteRole(roleId: string): Promise<null> {
  * API-026: Tạo module cho nhóm permission
  * POST /permissions/module
  */
-export function createPermissionModule(
+export async function createPermissionModule(
   payload: CreateModuleInput,
 ): Promise<PermissionResponse[]> {
-  return apiPost<PermissionResponse[]>('/permissions/module', payload);
+  const res = await httpService.post<ApiResponse<PermissionResponse[]>>(
+    '/permissions/module',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-027: Xóa module theo tên
  * DELETE /permissions/module/{name}
  */
-export function deletePermissionModule(name: string): Promise<null> {
-  return apiDelete<null>(`/permissions/module/${name}`);
+export async function deletePermissionModule(name: string): Promise<null> {
+  await httpService.delete(`/permissions/module/${name}`, authOpts);
+  return null;
 }
 
 /**
  * API-028: Lấy danh sách tên module
  * GET /permissions/modules
  */
-export function getModules(): Promise<string[]> {
-  return apiGet<string[]>('/permissions/modules');
+export async function getModules(): Promise<string[]> {
+  const res = await httpService.get<ApiResponse<string[]>>(
+    '/permissions/modules',
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-029: Tạo permission mới
  * POST /permissions
  */
-export function createPermission(
+export async function createPermission(
   payload: CreatePermissionInput,
 ): Promise<PermissionResponse> {
-  return apiPost<PermissionResponse>('/permissions', payload);
+  const res = await httpService.post<ApiResponse<PermissionResponse>>(
+    '/permissions',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-030: Cập nhật permission
  * PATCH /permissions/{permissionId}
  */
-export function updatePermission(
+export async function updatePermission(
   permissionId: string,
   payload: UpdatePermissionInput,
 ): Promise<PermissionResponse> {
-  return apiPatch<PermissionResponse>(`/permissions/${permissionId}`, payload);
+  const res = await httpService.patch<ApiResponse<PermissionResponse>>(
+    `/permissions/${permissionId}`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-031: Lấy permission theo ID
  * GET /permissions/{permissionId}
  */
-export function getPermissionById(
+export async function getPermissionById(
   permissionId: string,
 ): Promise<PermissionResponse> {
-  return apiGet<PermissionResponse>(`/permissions/${permissionId}`);
+  const res = await httpService.get<ApiResponse<PermissionResponse>>(
+    `/permissions/${permissionId}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-032: Lấy danh sách permission
  * GET /permissions?page=0&size=20&filter=module:'CART'
  */
-export function getPermissions(
+export async function getPermissions(
   params?: PermissionListParams,
 ): Promise<PaginatedPermissionsResponse> {
-  return apiGet<PaginatedPermissionsResponse>('/permissions', {
-    params: params as Record<string, string | number | boolean | undefined>,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedPermissionsResponse>>(
+    '/permissions',
+    { ...authOpts, params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-033: Xóa permission
  * DELETE /permissions/{permissionId}
  */
-export function deletePermission(permissionId: string): Promise<null> {
-  return apiDelete<null>(`/permissions/${permissionId}`);
+export async function deletePermission(permissionId: string): Promise<null> {
+  await httpService.delete(`/permissions/${permissionId}`, authOpts);
+  return null;
 }

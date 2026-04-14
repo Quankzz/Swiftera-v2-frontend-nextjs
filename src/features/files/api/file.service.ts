@@ -1,11 +1,12 @@
 /**
  * File service — tất cả API calls cho files / Azure Blob Storage.
- * Dùng apiService.ts làm HTTP layer, KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 5: FILES)
  */
 
-import { apiUpload, apiDelete, apiPut } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 import type {
   UploadSingleResponse,
   UploadMultipleResponse,
@@ -13,6 +14,8 @@ import type {
   MoveSingleFileInput,
   MoveMultipleFilesInput,
 } from '../types';
+
+const authOpts = { requireToken: true as const };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Upload
@@ -26,7 +29,7 @@ import type {
  * @param file     File binary
  * @param folder   Tên folder (tùy chọn, default AZURE_STORAGE_CONTAINER_NAME)
  */
-export function uploadSingleFile(
+export async function uploadSingleFile(
   file: File,
   folder?: string,
 ): Promise<UploadSingleResponse> {
@@ -34,10 +37,12 @@ export function uploadSingleFile(
   formData.append('file', file);
   if (folder) formData.append('folderName', folder);
 
-  return apiUpload<UploadSingleResponse>(
+  const res = await httpService.post<ApiResponse<UploadSingleResponse>>(
     '/storage/azure-blob/upload/single',
     formData,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 /**
@@ -45,7 +50,7 @@ export function uploadSingleFile(
  * POST /storage/azure-blob/upload/multiple [AUTH]
  * Content-Type: multipart/form-data
  */
-export function uploadMultipleFiles(
+export async function uploadMultipleFiles(
   files: File[],
   folder?: string,
 ): Promise<UploadMultipleResponse> {
@@ -55,10 +60,12 @@ export function uploadMultipleFiles(
   }
   if (folder) formData.append('folderName', folder);
 
-  return apiUpload<UploadMultipleResponse>(
+  const res = await httpService.post<ApiResponse<UploadMultipleResponse>>(
     '/storage/azure-blob/upload/multiple',
     formData,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,20 +76,26 @@ export function uploadMultipleFiles(
  * API-036: Xóa một file
  * DELETE /storage/azure-blob/delete/single?filePath=... [AUTH]
  */
-export function deleteSingleFile(filePath: string): Promise<null> {
-  return apiDelete<null>('/storage/azure-blob/delete/single', undefined, {
+export async function deleteSingleFile(filePath: string): Promise<null> {
+  await httpService.delete('/storage/azure-blob/delete/single', {
+    ...authOpts,
     params: { filePath },
   });
+  return null;
 }
 
 /**
  * API-037: Xóa nhiều file
  * DELETE /storage/azure-blob/delete/multiple [AUTH]
  */
-export function deleteMultipleFiles(
+export async function deleteMultipleFiles(
   payload: DeleteMultipleFilesInput,
 ): Promise<null> {
-  return apiDelete<null>('/storage/azure-blob/delete/multiple', payload);
+  await httpService.delete('/storage/azure-blob/delete/multiple', {
+    ...authOpts,
+    data: payload,
+  });
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -93,16 +106,28 @@ export function deleteMultipleFiles(
  * API-038: Di chuyển một file
  * PUT /storage/azure-blob/move/single [AUTH]
  */
-export function moveSingleFile(payload: MoveSingleFileInput): Promise<string> {
-  return apiPut<string>('/storage/azure-blob/move/single', payload);
+export async function moveSingleFile(
+  payload: MoveSingleFileInput,
+): Promise<string> {
+  const res = await httpService.put<ApiResponse<string>>(
+    '/storage/azure-blob/move/single',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-039: Di chuyển nhiều file
  * PUT /storage/azure-blob/move/multiple [AUTH]
  */
-export function moveMultipleFiles(
+export async function moveMultipleFiles(
   payload: MoveMultipleFilesInput,
 ): Promise<string> {
-  return apiPut<string>('/storage/azure-blob/move/multiple', payload);
+  const res = await httpService.put<ApiResponse<string>>(
+    '/storage/azure-blob/move/multiple',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }

@@ -6,7 +6,7 @@
  * Không tự suy đoán field — chỉ model field có trong spec.
  */
 
-import type { PaginatedData } from '@/api/apiService';
+import type { PaginationResponse } from '@/types/api.types';
 import type { HubStaffResponse } from '@/features/hubs/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -247,7 +247,8 @@ export interface RentalOrderResponse {
 // Paginated Response
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PaginatedRentalOrdersResponse = PaginatedData<RentalOrderResponse>;
+export type PaginatedRentalOrdersResponse =
+  PaginationResponse<RentalOrderResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // List Params (API-075)
