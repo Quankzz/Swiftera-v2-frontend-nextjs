@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -26,6 +26,17 @@ import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
 import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
+
+const PAGE_SIZE = 5;
 
 // Default landing view for "Đơn hàng": show the two queues that require staff
 // confirmation right now.
@@ -171,6 +182,9 @@ function OrdersPageInner() {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
+  // ─── Pagination ───────────────────────────────────────────────
+  const [currentPage, setCurrentPage] = useState(1);
+
   // allOrders already filtered by staff ID at API level
   const myOrders = allOrders;
 
@@ -205,6 +219,20 @@ function OrdersPageInner() {
     });
     return list;
   }, [search, activeStatuses, sortKey, sortDir, myOrders]);
+
+  // Paginate
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedOrders = useMemo(
+    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filtered, safePage],
+  );
+
+  // Reset trang về 1 khi filter/search/sort thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, activeStatuses, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
@@ -252,9 +280,11 @@ function OrdersPageInner() {
             <span>
               Hiển thị{' '}
               <strong className="text-foreground font-semibold">
-                {filtered.length}
+                {filtered.length === 0
+                  ? 0
+                  : `${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filtered.length)}`}
               </strong>{' '}
-              / {myOrders.length} đơn
+              / {filtered.length} đơn
             </span>
             {urgentCount > 0 && (
               <>
@@ -448,11 +478,87 @@ function OrdersPageInner() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {filtered.map((order) => (
-              <OrderCard key={order.rental_order_id} order={order} now={now} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-4">
+              {paginatedOrders.map((order) => (
+                <OrderCard
+                  key={order.rental_order_id}
+                  order={order}
+                  now={now}
+                />
+              ))}
+            </div>
+
+            {/* ===== Pagination ===== */}
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(1, p - 1))
+                        }
+                        className={cn(
+                          currentPage === 1 && 'pointer-events-none opacity-50',
+                        )}
+                      />
+                    </PaginationItem>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => {
+                        const isActive = page === safePage;
+                        const showEllipsisStart = page === 2 && safePage > 3;
+                        const showEllipsisEnd =
+                          page === totalPages - 1 && safePage < totalPages - 2;
+                        const isHidden =
+                          page !== 1 &&
+                          page !== totalPages &&
+                          Math.abs(page - safePage) > 1;
+
+                        if (isHidden) {
+                          if (
+                            (page === safePage - 2 && safePage > 3) ||
+                            (page === safePage + 2 && safePage < totalPages - 2)
+                          ) {
+                            return (
+                              <PaginationItem key={page}>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            );
+                          }
+                          return null;
+                        }
+
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              isActive={isActive}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      },
+                    )}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(totalPages, p + 1))
+                        }
+                        className={cn(
+                          currentPage === totalPages &&
+                            'pointer-events-none opacity-50',
+                        )}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
