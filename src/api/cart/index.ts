@@ -38,8 +38,16 @@ export interface CartLineResponse {
   productName: string;
   productImageUrl: string | null;
   dailyPrice: number;
+  /** Tiền cọc cho 1 item */
+  depositAmount?: number;
   rentalDurationDays: number;
   quantity: number;
+  /** Tiền thuê line (sau rules backend) */
+  rentalFeeAmount?: number;
+  /** Tổng tiền cọc giữ cho line */
+  depositHoldAmount?: number;
+  /** Tổng cần thanh toán của line = rentalFee + depositHold */
+  totalPayableAmount?: number;
   /** dailyPrice × quantity × rentalDurationDays */
   lineTotal: number;
   availableVouchers: CartLineVoucherItem[];

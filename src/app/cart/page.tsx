@@ -147,6 +147,10 @@ function CartLineRow({
   const days = line.rentalDurationDays;
   const qty = line.quantity;
   const lineTotal = line.lineTotal;
+  const rentalFeeAmount = line.rentalFeeAmount ?? lineTotal;
+  const depositHoldAmount =
+    line.depositHoldAmount ??
+    (line.depositAmount != null ? line.depositAmount * qty : 0);
 
   const isMutating = isRemoving || isUpdating;
 
@@ -320,16 +324,44 @@ function CartLineRow({
                     {voucherDiscount > 0 ? (
                       <>
                         <div className='whitespace-nowrap text-sm text-muted-foreground line-through'>
-                          {formatter.format(lineTotal)}
+                          {formatter.format(rentalFeeAmount)}
                         </div>
                         <div className='whitespace-nowrap text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
-                          {formatter.format(lineTotal - voucherDiscount)}
+                          {formatter.format(rentalFeeAmount - voucherDiscount)}
                         </div>
                       </>
                     ) : (
                       <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
-                        {formatter.format(lineTotal)}
+                        {formatter.format(rentalFeeAmount)}
                       </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className='grid grid-cols-1 gap-1.5 rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-xs sm:grid-cols-3'>
+                <div className='flex items-center justify-between gap-2 sm:block'>
+                  <span className='text-muted-foreground'>Tiền thuê</span>
+                  <div className='font-semibold tabular-nums text-foreground'>
+                    {formatter.format(
+                      Math.max(rentalFeeAmount - voucherDiscount, 0),
+                    )}
+                  </div>
+                </div>
+                <div className='flex items-center justify-between gap-2 sm:block'>
+                  <span className='text-muted-foreground'>Cọc giữ</span>
+                  <div className='font-semibold tabular-nums text-foreground'>
+                    {formatter.format(depositHoldAmount)}
+                  </div>
+                </div>
+                <div className='flex items-center justify-between gap-2 sm:block'>
+                  <span className='text-muted-foreground'>Cần thanh toán</span>
+                  <div className='font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                    {formatter.format(
+                      line.totalPayableAmount != null
+                        ? line.totalPayableAmount
+                        : Math.max(rentalFeeAmount - voucherDiscount, 0) +
+                            depositHoldAmount,
                     )}
                   </div>
                 </div>
@@ -876,14 +908,28 @@ export default function CartPage() {
 
   // Tính tổng cho sản phẩm đã chọn
   const selectedTotals = useMemo(() => {
-    const subtotal = selectedLines.reduce((acc, l) => acc + l.lineTotal, 0);
+    const rentalSubtotal = selectedLines.reduce(
+      (acc, l) => acc + (l.rentalFeeAmount ?? l.lineTotal),
+      0,
+    );
+    const depositHoldTotal = selectedLines.reduce((acc, l) => {
+      const fallbackDeposit =
+        l.depositAmount != null ? l.depositAmount * l.quantity : 0;
+      return acc + (l.depositHoldAmount ?? fallbackDeposit);
+    }, 0);
+    const rentalAfterVoucher = Math.max(
+      rentalSubtotal - lineVoucherDiscount,
+      0,
+    );
     const maxRentalDays = selectedLines.reduce(
       (max, l) => Math.max(max, l.rentalDurationDays),
       0,
     );
     return {
-      subtotal,
-      grandTotal: subtotal - lineVoucherDiscount,
+      rentalSubtotal,
+      rentalAfterVoucher,
+      depositHoldTotal,
+      grandTotal: rentalAfterVoucher + depositHoldTotal,
       selectedCount: selectedLines.length,
       selectedQty: selectedLines.reduce((a, l) => a + l.quantity, 0),
       maxRentalDays,
@@ -1498,7 +1544,7 @@ export default function CartPage() {
                           </span>
                           <span className='font-medium tabular-nums text-foreground'>
                             {selectedTotals.selectedCount > 0
-                              ? formatter.format(selectedTotals.subtotal)
+                              ? formatter.format(selectedTotals.rentalSubtotal)
                               : formatter.format(0)}
                           </span>
                         </div>
@@ -1516,6 +1562,19 @@ export default function CartPage() {
                           </div>
                         )}
 
+                        <div className='flex items-baseline justify-between gap-3'>
+                          <span className='text-muted-foreground'>
+                            Tiền cọc giữ
+                          </span>
+                          <span className='font-medium tabular-nums text-foreground'>
+                            {selectedTotals.selectedCount > 0
+                              ? formatter.format(
+                                  selectedTotals.depositHoldTotal,
+                                )
+                              : formatter.format(0)}
+                          </span>
+                        </div>
+
                         {selectedTotals.selectedCount === 0 &&
                           lines.length > 0 && (
                             <p className='text-xs text-amber-600 dark:text-amber-400'>
@@ -1523,7 +1582,11 @@ export default function CartPage() {
                             </p>
                           )}
 
-                        <div className='border-t border-border/80 pt-4'>
+                        <div className='rounded-xl border border-rose-200/80 bg-rose-50/60 px-4 py-3 dark:border-rose-800/50 dark:bg-rose-950/20'>
+                          <p className='mb-1 text-xs font-medium text-rose-700/80 dark:text-rose-300/80'>
+                            Tổng cần thanh toán = Tiền thuê sau giảm + Tiền cọc
+                            giữ
+                          </p>
                           <div className='flex items-baseline justify-between gap-3'>
                             <span className='text-base font-bold text-foreground'>
                               Tổng thanh toán
