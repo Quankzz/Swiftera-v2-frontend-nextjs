@@ -21,6 +21,8 @@ import {
   PlayCircle,
   PackageMinus,
   QrCode,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +43,8 @@ import {
   useOverduePenaltySuggestionQuery,
 } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
+import { useRentalContractByOrderQuery } from '@/hooks/api/use-contract';
+import { PolicyPdfPreview } from '@/features/policies/components/policy-pdf-preview';
 import { toast } from 'sonner';
 import { useCartAnimationStore } from '@/stores/cart-animation-store';
 import { useAddToCart } from '@/hooks/api/use-cart';
@@ -435,6 +439,7 @@ export default function RentalOrderDetailPage() {
   const id = typeof params?.id === 'string' ? params.id : '';
   const [extendOpen, setExtendOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [reorderState, setReorderState] = useState<
     'idle' | 'adding' | 'success'
   >('idle');
@@ -452,6 +457,23 @@ export default function RentalOrderDetailPage() {
     useOverduePenaltySuggestionQuery(id, {
       enabled: overdueSuggestionEnabled,
     });
+
+  const contractQueryEnabled = useMemo(
+    () =>
+      !!order &&
+      order.status !== 'PENDING_PAYMENT' &&
+      order.status !== 'CANCELLED',
+    [order],
+  );
+
+  const { data: rentalContract, isPending: contractLoading } =
+    useRentalContractByOrderQuery(id, {
+      enabled: !!id && contractQueryEnabled,
+    });
+
+  const hasContractAction =
+    contractQueryEnabled &&
+    (contractLoading || Boolean(rentalContract?.contractPdfUrl));
 
   const { mutateAsync: addToCartApi } = useAddToCart();
   const addFlyingItem = useCartAnimationStore((s) => s.addFlyingItem);
@@ -694,7 +716,8 @@ export default function RentalOrderDetailPage() {
                     hasReview ||
                     hasReorder ||
                     hasCancel ||
-                    hasQr;
+                    hasQr ||
+                    hasContractAction;
 
                   if (!anyAction) return null;
 
@@ -741,6 +764,27 @@ export default function RentalOrderDetailPage() {
                           >
                             <QrCode className='size-4' />
                             Xem mã QR
+                          </Button>
+                        )}
+
+                        {hasContractAction && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-slate-300 px-5 font-semibold text-slate-800 hover:bg-slate-50 hover:border-slate-400 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-900/50'
+                            onClick={() => setContractDialogOpen(true)}
+                            disabled={
+                              contractLoading || !rentalContract?.contractPdfUrl
+                            }
+                          >
+                            {contractLoading ? (
+                              <Loader2 className='size-4 animate-spin' />
+                            ) : (
+                              <FileText className='size-4' />
+                            )}
+                            {contractLoading
+                              ? 'Đang tải hợp đồng…'
+                              : 'Xem hợp đồng'}
                           </Button>
                         )}
 
@@ -907,6 +951,51 @@ export default function RentalOrderDetailPage() {
                       Mở ảnh QR trong tab mới
                     </a>
                   </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {rentalContract?.contractPdfUrl && (
+              <Dialog
+                open={contractDialogOpen}
+                onOpenChange={setContractDialogOpen}
+              >
+                <DialogContent className='flex max-h-[90dvh] max-w-3xl flex-col gap-0 overflow-hidden p-0'>
+                  <DialogHeader className='shrink-0 border-b border-border/60 px-5 py-4 text-left'>
+                    <DialogTitle className='flex items-center gap-2.5'>
+                      <span className='flex size-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800'>
+                        <FileText className='size-5 text-slate-700 dark:text-slate-200' />
+                      </span>
+                      Hợp đồng thuê
+                    </DialogTitle>
+                    {/* <DialogDescription className='text-left'>
+                      {rentalContract.contractNumber} · Phiên bản{' '}
+                      {rentalContract.contractVersion}
+                      {rentalContract.acceptedAt && (
+                        <> · Xác nhận: {rentalContract.acceptedAt}</>
+                      )}
+                    </DialogDescription> */}
+                  </DialogHeader>
+                  <div className='min-h-0 flex-1 overflow-auto bg-muted/30 px-4 py-4'>
+                    <PolicyPdfPreview
+                      pdfUrl={rentalContract.contractPdfUrl}
+                      className='mx-auto'
+                    />
+                  </div>
+                  <DialogFooter className='shrink-0 border-t border-border/60 px-5 py-3 sm:justify-between'>
+                    <p className='text-xs text-muted-foreground'>
+                      Nếu không xem được trong khung, mở file PDF ở tab mới.
+                    </p>
+                    <a
+                      href={rentalContract.contractPdfUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='inline-flex items-center gap-1.5 text-sm font-medium text-rose-600 hover:underline dark:text-rose-400'
+                    >
+                      <ExternalLink className='size-4' />
+                      Mở PDF
+                    </a>
+                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             )}
