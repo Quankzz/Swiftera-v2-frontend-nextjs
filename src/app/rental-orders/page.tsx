@@ -2,6 +2,7 @@
 
 import { useState, useDeferredValue, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Package,
   ChevronRight,
@@ -27,6 +28,14 @@ import {
 } from '@/api/rentalOrderApi';
 import type { RentalOrderStatus } from '@/api/rentalOrderApi';
 import { toast } from 'sonner';
+
+const PolicyConsentDialog = dynamic(
+  () =>
+    import('@/components/checkout/policy-consent-dialog').then(
+      (m) => m.PolicyConsentDialog,
+    ),
+  { ssr: false },
+);
 
 const PAGE_SIZE = 5;
 const MAX_VISIBLE_PAGES = 5;
@@ -216,6 +225,10 @@ export default function RentalOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [pendingPayOrderId, setPendingPayOrderId] = useState<string | null>(
+    null,
+  );
 
   const deferredSearch = useDeferredValue(search);
 
@@ -225,15 +238,23 @@ export default function RentalOrdersPage() {
     e.preventDefault(); // ngăn Link navigate
     e.stopPropagation();
     if (payingId) return;
-    setPayingId(rentalOrderId);
+    setPendingPayOrderId(rentalOrderId);
+    setPolicyOpen(true);
+  }
+
+  async function handlePayAfterConsent() {
+    if (!pendingPayOrderId || payingId) return;
+    setPolicyOpen(false);
+    setPayingId(pendingPayOrderId);
     try {
-      const url = await initiatePayment.mutateAsync(rentalOrderId);
+      const url = await initiatePayment.mutateAsync(pendingPayOrderId);
       window.location.href = url;
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Không thể tạo link thanh toán.';
       toast.error(msg);
       setPayingId(null);
+      setPendingPayOrderId(null);
     }
   }
 
@@ -582,6 +603,15 @@ export default function RentalOrdersPage() {
           )}
         </div>
       </div>
+
+      <PolicyConsentDialog
+        open={policyOpen}
+        onOpenChange={(open) => {
+          setPolicyOpen(open);
+          if (!open && !payingId) setPendingPayOrderId(null);
+        }}
+        onAllConsented={() => void handlePayAfterConsent()}
+      />
     </div>
   );
 }

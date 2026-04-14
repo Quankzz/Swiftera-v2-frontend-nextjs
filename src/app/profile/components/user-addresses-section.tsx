@@ -5,6 +5,14 @@ import { MapPin, Pencil, Plus, Trash2, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
@@ -46,6 +54,7 @@ export function UserAddressesSection() {
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<UserAddressResponse | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const createMut = useCreateUserAddress({
     onSuccess: () => {
@@ -110,10 +119,17 @@ export function UserAddressesSection() {
   }
 
   function handleDelete(id: string) {
-    if (!window.confirm('Xóa địa chỉ này?')) return;
-    setDeletingId(id);
-    deleteMut.mutate(id, {
-      onSettled: () => setDeletingId(null),
+    setConfirmDeleteId(id);
+  }
+
+  function confirmDeleteAddress() {
+    if (!confirmDeleteId) return;
+    setDeletingId(confirmDeleteId);
+    deleteMut.mutate(confirmDeleteId, {
+      onSettled: () => {
+        setDeletingId(null);
+        setConfirmDeleteId(null);
+      },
     });
   }
 
@@ -283,6 +299,36 @@ export function UserAddressesSection() {
         initialValues={editInitial}
         onSubmit={handleUpdate}
       />
+
+      <Dialog
+        open={confirmDeleteId !== null}
+        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa địa chỉ</DialogTitle>
+            <DialogDescription>
+              Địa chỉ này sẽ bị xóa khỏi sổ địa chỉ của bạn.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setConfirmDeleteId(null)}
+              disabled={deleteMut.isPending}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={confirmDeleteAddress}
+              disabled={deleteMut.isPending}
+            >
+              {deleteMut.isPending ? 'Đang xóa…' : 'Xóa địa chỉ'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

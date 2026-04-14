@@ -3,6 +3,7 @@
 import { useState, Fragment, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
   ArrowLeft,
   Truck,
@@ -57,6 +58,14 @@ import type {
   RentalOrderStatus,
   RentalOrderStaffSummary,
 } from '@/api/rentalOrderApi';
+
+const PolicyConsentDialog = dynamic(
+  () =>
+    import('@/components/checkout/policy-consent-dialog').then(
+      (m) => m.PolicyConsentDialog,
+    ),
+  { ssr: false },
+);
 
 const fmt = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -440,6 +449,9 @@ export default function RentalOrderDetailPage() {
   const [extendOpen, setExtendOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [paymentPolicyOpen, setPaymentPolicyOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [pickupConfirmOpen, setPickupConfirmOpen] = useState(false);
   const [reorderState, setReorderState] = useState<
     'idle' | 'adding' | 'success'
   >('idle');
@@ -538,12 +550,24 @@ export default function RentalOrderDetailPage() {
 
   function handleCancel() {
     if (!order) return;
-    if (!window.confirm('Bạn có chắc muốn hủy đơn thuê này?')) return;
-    cancelOrder.mutate(order.rentalOrderId);
+    setCancelConfirmOpen(true);
+  }
+
+  function confirmCancel() {
+    if (!order) return;
+    cancelOrder.mutate(order.rentalOrderId, {
+      onSuccess: () => setCancelConfirmOpen(false),
+    });
   }
 
   function handlePayment() {
     if (!order) return;
+    setPaymentPolicyOpen(true);
+  }
+
+  function handlePaymentAfterConsent() {
+    if (!order) return;
+    setPaymentPolicyOpen(false);
     initiatePayment.mutate(order.rentalOrderId);
   }
 
@@ -557,16 +581,20 @@ export default function RentalOrderDetailPage() {
 
   function handleInUseToPendingPickup() {
     if (!order) return;
-    if (
-      !window.confirm(
-        'Xác nhận yêu cầu thu hồi thiết bị? Trạng thái đơn sẽ chuyển sang chờ thu hồi.',
-      )
-    )
-      return;
-    updateOrderStatus.mutate({
-      rentalOrderId: order.rentalOrderId,
-      input: { status: 'PENDING_PICKUP' },
-    });
+    setPickupConfirmOpen(true);
+  }
+
+  function confirmInUseToPendingPickup() {
+    if (!order) return;
+    updateOrderStatus.mutate(
+      {
+        rentalOrderId: order.rentalOrderId,
+        input: { status: 'PENDING_PICKUP' },
+      },
+      {
+        onSuccess: () => setPickupConfirmOpen(false),
+      },
+    );
   }
 
   const isExtendable =
@@ -921,6 +949,70 @@ export default function RentalOrderDetailPage() {
               />
             )}
 
+            <Dialog
+              open={cancelConfirmOpen}
+              onOpenChange={setCancelConfirmOpen}
+            >
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle>Xác nhận hủy đơn thuê</DialogTitle>
+                  <DialogDescription>
+                    Đơn sẽ chuyển sang trạng thái đã hủy và không thể tiếp tục
+                    xử lý.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => setCancelConfirmOpen(false)}
+                    disabled={cancelOrder.isPending}
+                  >
+                    Hủy bỏ
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    onClick={confirmCancel}
+                    disabled={cancelOrder.isPending}
+                  >
+                    {cancelOrder.isPending ? 'Đang xử lý…' : 'Xác nhận hủy đơn'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={pickupConfirmOpen}
+              onOpenChange={setPickupConfirmOpen}
+            >
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle>Xác nhận yêu cầu thu hồi</DialogTitle>
+                  <DialogDescription>
+                    Trạng thái đơn sẽ chuyển sang chờ thu hồi
+                    (`PENDING_PICKUP`).
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => setPickupConfirmOpen(false)}
+                    disabled={updateOrderStatus.isPending}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    className='bg-orange-600 text-white hover:bg-orange-700'
+                    onClick={confirmInUseToPendingPickup}
+                    disabled={updateOrderStatus.isPending}
+                  >
+                    {updateOrderStatus.isPending
+                      ? 'Đang xử lý…'
+                      : 'Xác nhận thu hồi'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             {order?.qrCode && (
               <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
                 <DialogContent className='max-h-[90dvh] overflow-y-auto sm:max-w-md'>
@@ -960,7 +1052,7 @@ export default function RentalOrderDetailPage() {
                 open={contractDialogOpen}
                 onOpenChange={setContractDialogOpen}
               >
-                <DialogContent className='flex max-h-[90dvh] max-w-3xl flex-col gap-0 overflow-hidden p-0'>
+                <DialogContent className='flex h-[92vh] w-[70vw] max-w-[96vw]! flex-col gap-0 p-0'>
                   <DialogHeader className='shrink-0 border-b border-border/60 px-5 py-4 text-left'>
                     <DialogTitle className='flex items-center gap-2.5'>
                       <span className='flex size-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800'>
@@ -976,7 +1068,7 @@ export default function RentalOrderDetailPage() {
                       )}
                     </DialogDescription> */}
                   </DialogHeader>
-                  <div className='min-h-0 flex-1 overflow-auto bg-muted/30 px-4 py-4'>
+                  <div className='min-h-0 flex-1 overflow-auto bg-muted/30 px-2 py-3 sm:px-4 sm:py-4'>
                     <PolicyPdfPreview
                       pdfUrl={rentalContract.contractPdfUrl}
                       className='mx-auto'
@@ -999,6 +1091,12 @@ export default function RentalOrderDetailPage() {
                 </DialogContent>
               </Dialog>
             )}
+
+            <PolicyConsentDialog
+              open={paymentPolicyOpen}
+              onOpenChange={setPaymentPolicyOpen}
+              onAllConsented={() => void handlePaymentAfterConsent()}
+            />
 
             {/* ── Two-column layout ── */}
             <div className='grid gap-5 lg:grid-cols-12 lg:gap-6'>
