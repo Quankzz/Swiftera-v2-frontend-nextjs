@@ -27,7 +27,6 @@ interface FormState {
   maxDiscountAmount: string;
   minRentalDays: string;
   expiresAt: string; // "YYYY-MM-DDTHH:mm" cho datetime-local input
-  usageLimit: string;
   isActive: boolean;
 }
 
@@ -67,7 +66,6 @@ function initForm(voucher: VoucherResponse | null): FormState {
       maxDiscountAmount: '',
       minRentalDays: '',
       expiresAt: '',
-      usageLimit: '',
       isActive: true,
     };
   }
@@ -83,7 +81,6 @@ function initForm(voucher: VoucherResponse | null): FormState {
     minRentalDays:
       voucher.minRentalDays != null ? String(voucher.minRentalDays) : '',
     expiresAt: toDateTimeLocalValue(voucher.expiresAt),
-    usageLimit: voucher.usageLimit != null ? String(voucher.usageLimit) : '',
     isActive: voucher.isActive,
   };
 }
@@ -159,7 +156,6 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
               ? Number(form.minRentalDays)
               : null,
             expiresAt: expiresAtISO,
-            usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
             isActive: form.isActive,
           },
         });
@@ -177,7 +173,6 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
             ? Number(form.minRentalDays)
             : undefined,
           expiresAt: expiresAtISO ?? undefined,
-          usageLimit: form.usageLimit ? Number(form.usageLimit) : undefined,
         });
         toast.success('Tạo voucher thành công');
       }
@@ -357,37 +352,20 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
             )}
           </div>
 
-          {/* Ngày thuê tối thiểu + Giới hạn lượt dùng */}
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-1.5'>
-              <label className='block text-sm font-medium text-text-main'>
-                Ngày thuê tối thiểu
-              </label>
-              <input
-                type='number'
-                min={1}
-                step={1}
-                value={form.minRentalDays}
-                onChange={(e) => set('minRentalDays', e.target.value)}
-                placeholder='3'
-                className='h-10 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-base px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
-              />
-            </div>
-
-            <div className='space-y-1.5'>
-              <label className='block text-sm font-medium text-text-main'>
-                Giới hạn lượt dùng
-              </label>
-              <input
-                type='number'
-                min={1}
-                step={1}
-                value={form.usageLimit}
-                onChange={(e) => set('usageLimit', e.target.value)}
-                placeholder='100'
-                className='h-10 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-base px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
-              />
-            </div>
+          {/* Ngày thuê tối thiểu */}
+          <div className='space-y-1.5'>
+            <label className='block text-sm font-medium text-text-main'>
+              Ngày thuê tối thiểu
+            </label>
+            <input
+              type='number'
+              min={1}
+              step={1}
+              value={form.minRentalDays}
+              onChange={(e) => set('minRentalDays', e.target.value)}
+              placeholder='3'
+              className='h-10 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-base px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
+            />
           </div>
 
           {/* Ngày hết hạn */}

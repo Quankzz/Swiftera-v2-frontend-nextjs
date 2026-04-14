@@ -27,8 +27,10 @@ import type {
   ProductResponse,
   ProductImageResponse,
   InventoryItemResponse,
+  InventoryItemInProduct,
 } from '@/features/products/types';
 import { useInventoryItemsQuery } from '@/features/products/hooks/use-inventory-items';
+import { useProductQuery } from '@/features/products/hooks/use-product-management';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -339,7 +341,10 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function InventoryCard({ item }: { item: InventoryItemResponse }) {
+/** Union item type — InventoryCard works with both embedded and standalone types */
+type InventoryItem = InventoryItemResponse | InventoryItemInProduct;
+
+function InventoryCard({ item }: { item: InventoryItem }) {
   return (
     <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-white/3 p-4 flex flex-col gap-2'>
       {/* Top row: serial + status */}
@@ -362,6 +367,15 @@ function InventoryCard({ item }: { item: InventoryItemResponse }) {
             🔖 {CONDITION_LABEL[item.conditionGrade] ?? item.conditionGrade}
           </span>
         )}
+        {item.colorName && (
+          <span className='flex items-center gap-1'>
+            <span
+              className='inline-block h-2.5 w-2.5 rounded-full border border-white/50 shadow-sm'
+              style={{ backgroundColor: item.colorCode ?? undefined }}
+            />
+            {item.colorName}
+          </span>
+        )}
       </div>
       {/* Staff note */}
       {item.staffNote && (
@@ -369,20 +383,22 @@ function InventoryCard({ item }: { item: InventoryItemResponse }) {
           {item.staffNote}
         </p>
       )}
-      {/* Timestamps */}
-      <p className='text-[11px] text-text-sub/60 border-t border-gray-100 dark:border-white/8 pt-1.5'>
-        Thêm vào:{' '}
-        {new Intl.DateTimeFormat('vi-VN', {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        }).format(new Date(item.createdAt))}
-      </p>
+      {/* Timestamps — only available from standalone InventoryItemResponse */}
+      {'createdAt' in item && item.createdAt && (
+        <p className='text-[11px] text-text-sub/60 border-t border-gray-100 dark:border-white/8 pt-1.5'>
+          Thêm vào:{' '}
+          {new Intl.DateTimeFormat('vi-VN', {
+            dateStyle: 'short',
+            timeStyle: 'short',
+          }).format(new Date(item.createdAt))}
+        </p>
+      )}
     </div>
   );
 }
 
 // Counts per status
-function InventorySummaryBar({ items }: { items: InventoryItemResponse[] }) {
+function InventorySummaryBar({ items }: { items: InventoryItem[] }) {
   const counts = items.reduce<Record<string, number>>((acc, it) => {
     acc[it.status] = (acc[it.status] ?? 0) + 1;
     return acc;
@@ -417,8 +433,22 @@ function InventorySummaryBar({ items }: { items: InventoryItemResponse[] }) {
 
 // ─── Tab: Thiết bị ────────────────────────────────────────────────
 function InventoryTab({ productId }: { productId: string }) {
-  const { data, isLoading, isError } = useInventoryItemsQuery(productId);
-  const items: InventoryItemResponse[] = data?.content ?? [];
+  // Strategy: use product detail (PUBLIC, always works, has embedded inventoryItems)
+  // as primary source. Fall back to standalone inventory API if embedded list is missing.
+  const productQuery = useProductQuery(productId);
+  const inventoryQuery = useInventoryItemsQuery(
+    // Only call standalone API if product detail has no embedded inventoryItems
+    productQuery.data && !productQuery.data.inventoryItems
+      ? productId
+      : undefined,
+  );
+
+  const isLoading = productQuery.isLoading || inventoryQuery.isLoading;
+  const isError = productQuery.isError && inventoryQuery.isError;
+
+  // Prefer embedded items from product detail; fall back to standalone API
+  const items: InventoryItem[] =
+    productQuery.data?.inventoryItems ?? inventoryQuery.data?.content ?? [];
 
   if (isLoading) {
     return (

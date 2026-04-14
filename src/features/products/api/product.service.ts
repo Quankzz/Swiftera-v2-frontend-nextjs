@@ -125,8 +125,20 @@ export async function getInventoryItems(
 ): Promise<PaginatedInventoryItemsResponse> {
   const res = await httpService.get<
     ApiResponse<PaginatedInventoryItemsResponse>
-  >('/inventory-items', { params });
-  return res.data.data!;
+  >('/inventory-items', { ...authOpts, params });
+  return (
+    res.data.data ?? {
+      meta: {
+        currentPage: 1,
+        pageSize: 50,
+        totalPages: 0,
+        totalElements: 0,
+        hasNext: false,
+        hasPrevious: false,
+      },
+      content: [],
+    }
+  );
 }
 
 /**
@@ -138,6 +150,7 @@ export async function getInventoryItemById(
 ): Promise<InventoryItemResponse> {
   const res = await httpService.get<ApiResponse<InventoryItemResponse>>(
     `/inventory-items/${inventoryItemId}`,
+    authOpts,
   );
   return res.data.data!;
 }

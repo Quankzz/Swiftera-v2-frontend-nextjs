@@ -23,12 +23,15 @@ import {
   X,
   Search,
   HeadphonesIcon,
+  CalendarDays,
+  MapPin,
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
 import { useCreateTicket } from '../hooks/useTickets';
 import { getMyRentalOrders } from '@/features/rental-orders/api/rental-order.service';
 import type { RentalOrderResponse } from '@/features/rental-orders/types';
+import { STATUS_LABELS, STATUS_STYLES } from '@/features/rental-orders/types';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -57,6 +60,29 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+const vndFmt = new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND',
+  maximumFractionDigits: 0,
+});
+
+function formatShortDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr.replace(' ', 'T'));
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return '—';
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Order picker dialog
@@ -109,7 +135,10 @@ function OrderPickerDialog({
     return (
       o.rentalOrderId.toLowerCase().includes(q) ||
       o.userAddress?.recipientName?.toLowerCase().includes(q) ||
-      o.status?.toLowerCase().includes(q)
+      o.status?.toLowerCase().includes(q) ||
+      o.rentalOrderLines?.some((l) =>
+        l.productNameSnapshot?.toLowerCase().includes(q),
+      )
     );
   });
 
@@ -117,13 +146,13 @@ function OrderPickerDialog({
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm'>
-      <div className='bg-white dark:bg-surface-base w-full max-w-lg rounded-2xl shadow-xl flex flex-col max-h-[80vh]'>
+      <div className='bg-white dark:bg-surface-base w-full max-w-xl rounded-2xl shadow-xl flex flex-col max-h-[80vh]'>
         {/* Header */}
         <div className='flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-white/8'>
           <div className='flex items-center gap-2'>
             <Package size={18} className='text-theme-primary-start' />
             <h3 className='font-semibold text-gray-900 dark:text-white'>
-              Chọn đơn thuê
+              Chọn đơn thuê liên quan
             </h3>
           </div>
           <button
@@ -145,7 +174,7 @@ function OrderPickerDialog({
               type='text'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder='Tìm theo mã đơn, tên...'
+              placeholder='Tìm theo mã đơn, sản phẩm, tên người nhận...'
               className='w-full pl-8 pr-3 py-2 text-sm bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-primary-start/40 dark:text-white'
             />
           </div>
@@ -163,33 +192,109 @@ function OrderPickerDialog({
             </div>
           ) : (
             <ul className='divide-y divide-gray-100 dark:divide-white/8'>
-              {filtered.map((order) => (
-                <li key={order.rentalOrderId}>
-                  <button
-                    onClick={() => {
-                      onSelect(order);
-                      onClose();
-                    }}
-                    className='w-full text-left px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center justify-between gap-3 transition-colors'
-                  >
-                    <div className='min-w-0'>
-                      <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
-                        #{order.rentalOrderId.slice(0, 16)}…
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-0.5'>
-                        {order.userAddress?.recipientName ?? '—'} •{' '}
-                        <span className='capitalize'>
-                          {order.status.toLowerCase().replace(/_/g, ' ')}
-                        </span>
-                      </p>
-                    </div>
-                    <ChevronRight
-                      size={14}
-                      className='text-gray-400 shrink-0'
-                    />
-                  </button>
-                </li>
-              ))}
+              {filtered.map((order) => {
+                const style = STATUS_STYLES[order.status];
+                const productNames = order.rentalOrderLines
+                  ?.map((l) => l.productNameSnapshot)
+                  .filter(Boolean);
+                const totalItems = order.rentalOrderLines?.length ?? 0;
+
+                return (
+                  <li key={order.rentalOrderId}>
+                    <button
+                      onClick={() => {
+                        onSelect(order);
+                        onClose();
+                      }}
+                      className='w-full text-left px-5 py-4 hover:bg-gray-50 dark:hover:bg-white/5 flex items-start gap-3 transition-colors'
+                    >
+                      <div className='min-w-0 flex-1 space-y-1.5'>
+                        {/* Row 1: Order ID + status badge */}
+                        <div className='flex items-center gap-2 flex-wrap'>
+                          <span className='text-sm font-semibold text-gray-900 dark:text-white font-mono'>
+                            #{order.rentalOrderId.slice(0, 12)}…
+                          </span>
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
+                              style?.cls,
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'inline-block h-1.5 w-1.5 rounded-full',
+                                style?.dot,
+                              )}
+                            />
+                            {STATUS_LABELS[order.status] ??
+                              order.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+
+                        {/* Row 2: Product names */}
+                        {productNames && productNames.length > 0 && (
+                          <p className='text-xs text-gray-700 dark:text-gray-300 line-clamp-1'>
+                            <Package
+                              size={11}
+                              className='inline-block mr-1 -mt-0.5 text-gray-400'
+                            />
+                            {productNames.slice(0, 2).join(', ')}
+                            {productNames.length > 2 && (
+                              <span className='text-gray-400'>
+                                {' '}
+                                +{productNames.length - 2} sản phẩm
+                              </span>
+                            )}
+                            {totalItems > 0 && (
+                              <span className='text-gray-400'>
+                                {' '}
+                                · {totalItems} mục
+                              </span>
+                            )}
+                          </p>
+                        )}
+
+                        {/* Row 3: Meta info */}
+                        <div className='flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500 dark:text-gray-400'>
+                          {/* Recipient */}
+                          {order.userAddress?.recipientName && (
+                            <span>{order.userAddress.recipientName}</span>
+                          )}
+                          {/* Location */}
+                          {(order.userAddress?.district ||
+                            order.userAddress?.city) && (
+                            <span className='flex items-center gap-0.5'>
+                              <MapPin size={10} className='shrink-0' />
+                              {[
+                                order.userAddress.district,
+                                order.userAddress.city,
+                              ]
+                                .filter(Boolean)
+                                .join(', ')}
+                            </span>
+                          )}
+                          {/* Order date */}
+                          <span className='flex items-center gap-0.5'>
+                            <CalendarDays size={10} className='shrink-0' />
+                            {formatShortDate(order.placedAt)}
+                          </span>
+                          {/* Total */}
+                          {order.totalPayableAmount > 0 && (
+                            <span className='font-medium text-gray-600 dark:text-gray-300'>
+                              {vndFmt.format(order.totalPayableAmount)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <ChevronRight
+                        size={14}
+                        className='text-gray-400 shrink-0 mt-1'
+                      />
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
 

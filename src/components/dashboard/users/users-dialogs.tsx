@@ -578,7 +578,7 @@ export function UserFormDialog({
                 setFormState((s) => ({ ...s, nickname: e.target.value }))
               }
               placeholder='Biệt danh'
-              className='bg-gray-50/50'
+              className='bg-gray-50/50 h-10'
             />
           </div>
         </div>
