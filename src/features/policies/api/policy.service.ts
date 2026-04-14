@@ -10,6 +10,7 @@ import type {
   PolicyDocumentResponse,
   PaginatedPoliciesResponse,
   CreatePolicyInput,
+  UpdatePolicyInput,
   PolicyListParams,
 } from '../types';
 
@@ -65,5 +66,20 @@ export function deactivatePolicy(
   return apiPatch<PolicyDocumentResponse>(
     `/policies/${policyDocumentId}/deactivate`,
     {},
+  );
+}
+
+/**
+ * API-109A: PATCH /policies/{policyId}
+ * Cập nhật tài liệu chính sách (title, pdfUrl, effectiveFrom).
+ * code và policyVersion là immutable — không hỗ trợ update qua endpoint này.
+ */
+export function updatePolicy(
+  policyDocumentId: string,
+  payload: UpdatePolicyInput,
+): Promise<PolicyDocumentResponse> {
+  return apiPatch<PolicyDocumentResponse>(
+    `/policies/${policyDocumentId}`,
+    payload,
   );
 }

@@ -52,3 +52,10 @@ export interface CreatePolicyInput {
   pdfHash?: string | null;
   effectiveFrom: string; // ISO 8601 e.g. "2026-04-01T00:00:00Z"
 }
+
+/** API-109A: PATCH /policies/{policyId} — tất cả field tùy chọn */
+export interface UpdatePolicyInput {
+  title?: string;
+  pdfUrl?: string | null;
+  effectiveFrom?: string; // ISO 8601
+}

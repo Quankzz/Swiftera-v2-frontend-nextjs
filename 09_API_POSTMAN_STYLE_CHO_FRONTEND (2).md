@@ -910,6 +910,11 @@ file: <binary file>
 folderName: "products"   (tùy chọn, mặc định AZURE_STORAGE_CONTAINER_NAME)
 ```
 
+**Accepted MIME types**:
+
+- `image/jpeg`, `image/png`, `image/jpg`, `audio/mpeg`, `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+- Nếu client gửi `application/octet-stream` cho PDF/DOC/DOCX, backend sẽ fallback nhận diện theo phần mở rộng filename.
+
 **Response**:
 
 ```json
@@ -938,6 +943,8 @@ files: <binary file 1>
 files: <binary file 2>
 folderName: "products"
 ```
+
+**Accepted MIME types**: giống API-034.
 
 **Response**:
 
@@ -1743,8 +1750,12 @@ Mỗi phần tử `inventoryItems` gồm:
         "productName": "Canon EOS R50",
         "productImageUrl": "https://cdn.example.com/canon-r50.jpg",
         "dailyPrice": 250000,
+        "depositAmount": 5000000,
         "rentalDurationDays": 5,
         "quantity": 2,
+        "rentalFeeAmount": 2500000,
+        "depositHoldAmount": 10000000,
+        "totalPayableAmount": 12500000,
         "lineTotal": 2500000,
         "availableVouchers": [
           {
@@ -1768,7 +1779,13 @@ Mỗi phần tử `inventoryItems` gồm:
 }
 ```
 
-**Ghi chú**: `lineTotal = dailyPrice × quantity × rentalDurationDays`
+**Ghi chú**:
+
+- `rentalFeeAmount = dailyPrice × quantity × rentalDurationDays`
+- `depositAmount` là tiền cọc trên mỗi sản phẩm
+- `depositHoldAmount = depositAmount × quantity`
+- `totalPayableAmount = rentalFeeAmount + depositHoldAmount`
+- `lineTotal` được giữ để tương thích ngược và hiện bằng `rentalFeeAmount`
 
 ---
 
@@ -2260,9 +2277,11 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 - `PREPARING -> DELIVERING`: phải có `rental_contract` và đã gán `deliveryStaff`.
 - `DELIVERING -> DELIVERED`: không nên dùng API-079 để nhảy trạng thái; backend yêu cầu dùng API-084 `record-delivery` để ghi nhận thời gian/toạ độ giao hàng.
 - `DELIVERED -> IN_USE`, `DELIVERED -> PENDING_PICKUP` và `IN_USE -> PENDING_PICKUP`: chỉ hợp lệ khi đơn đã có dữ liệu giao hàng thực tế (`actualDeliveryAt`, `actualRentalStartAt`).
+- Mọi flow chuyển sang `PENDING_PICKUP` đều phải gán `pickupStaff` trước.
 - `DELIVERED -> PENDING_PICKUP` (trả sớm do sự cố): chỉ ADMIN được phép gọi, bắt buộc truyền `issueNote`, backend tự lưu `issueReportedAt` + `issueReportNote`.
 - `PENDING_PICKUP -> PICKING_UP`: phải gán `pickupStaff` trước.
 - `PICKING_UP -> PICKED_UP`: không nên dùng API-079 để nhảy trạng thái; backend yêu cầu dùng API-085 `record-pickup` để ghi nhận thời gian/toạ độ thu hồi.
+- API-085 cũng sẽ từ chối nếu chưa gán `pickupStaff` cho đơn.
 - `PICKED_UP -> COMPLETED`: chỉ hợp lệ khi đơn đã có dữ liệu thu hồi thực tế (`pickedUpAt`, `actualRentalEndAt`).
 - `PICKED_UP -> COMPLETED` với cash refund flow: `STAFF` hoặc `ADMIN` đều có thể xác nhận hoàn tất.
 - `PICKED_UP -> COMPLETED` với bank refund flow: nếu đơn đã phát sinh transaction `DEPOSIT_REFUND`, bắt buộc phải có ít nhất 1 transaction `SUCCESS` và chỉ `ADMIN` được xác nhận `COMPLETED`.
@@ -2663,7 +2682,7 @@ Ví dụ response phần staff:
 - Transaction → `SUCCESS`, ghi `paidAt`
 - `totalPaidAmount += amount`
 - Nếu `totalPaidAmount >= totalPayableAmount` → Order → `PAID`
-- Nếu order vừa chuyển `PAID` và chưa có QR, backend tự sinh `qrCode` là URL ảnh QR (PNG) và lưu vào `rental_orders.qr_code`
+- Nếu order vừa chuyển `PAID` và chưa có QR, backend tự sinh QR cho order; backend vẫn giữ URL/token nội bộ để phục vụ luồng scan, nhưng mọi API response và redirect trả `qrCode` ở dạng base64 data URI PNG.
 - Nếu order vừa đủ điều kiện `PAID`, backend **tự tạo rental contract** cho order (idempotent: mỗi order tối đa 1 contract)
 
 **Side effects khi thất bại**:
@@ -2689,7 +2708,7 @@ Ví dụ response phần staff:
 
 **Response**: HTTP 302 redirect sang frontend URL (cấu hình trong `application.yaml`) kèm query params kết quả.
 
-- Khi thành công: `success=true`, `txnRef`, `rentalOrderId`, `qrCode` (URL ảnh QR để FE fetch trực tiếp).
+- Khi thành công: `success=true`, `txnRef`, `rentalOrderId`, `qrCode` (chuỗi `data:image/png;base64,...` để FE bind trực tiếp vào `img src`, không cần fetch thêm).
 - Khi thất bại: `success=false`, `txnRef`, `code`, `status`, `signatureValid`.
 
 ---
@@ -2967,7 +2986,7 @@ Ví dụ response phần staff:
 
 ---
 
-## Module 17: POLICIES (7 APIs)
+## Module 17: POLICIES (8 APIs)
 
 ---
 
@@ -3042,6 +3061,31 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 - **URL**: `/api/v1/policies?page=1&size=10&filter=isActive:true`
 
 **Response**: `PaginationResponse` chứa mảng `PolicyDocumentResponse`
+
+---
+
+### API-109A: Cập nhật tài liệu chính sách [AUTH]
+
+- **Method**: `PATCH`
+- **URL**: `/api/v1/policies/{policyId}`
+
+**Request body** (tất cả tùy chọn):
+
+```json
+{
+  "title": "Điều khoản thuê thiết bị v2.1",
+  "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2_1.pdf",
+  "effectiveFrom": "2026-04-15T00:00:00Z"
+}
+```
+
+**Rule cập nhật**:
+
+- Cần có ít nhất 1 field thay đổi trong body.
+- `code` và `policyVersion` là immutable, không hỗ trợ update qua endpoint này.
+- Nếu gửi `pdfUrl` là chuỗi rỗng, backend sẽ clear link PDF hiện tại.
+
+**Response**: `PolicyDocumentResponse`
 
 ---
 
@@ -3478,7 +3522,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-## Phụ lục A: Tổng hợp 121 APIs
+## Phụ lục A: Tổng hợp 123 APIs
 
 | #    | Method | URL                                                                | Auth            | Module        |
 | ---- | ------ | ------------------------------------------------------------------ | --------------- | ------------- |
@@ -3592,6 +3636,7 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | 107  | GET    | `/api/v1/policies/{policyId}`                                      | PUBLIC          | POLICIES      |
 | 108  | GET    | `/api/v1/policies/code/{code}/latest`                              | PUBLIC          | POLICIES      |
 | 109  | GET    | `/api/v1/policies`                                                 | PUBLIC          | POLICIES      |
+| 109A | PATCH  | `/api/v1/policies/{policyId}`                                      | AUTH            | POLICIES      |
 | 110  | PATCH  | `/api/v1/policies/{policyId}/deactivate`                           | AUTH            | POLICIES      |
 | 111  | POST   | `/api/v1/policies/{policyId}/consent`                              | AUTH            | POLICIES      |
 | 112  | GET    | `/api/v1/policies/my-consents`                                     | AUTH            | POLICIES      |

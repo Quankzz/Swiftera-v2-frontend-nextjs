@@ -31,10 +31,13 @@ import {
   CircleDot,
   AlertTriangle,
   QrCode,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAssignStaffMutation } from '@/features/rental-orders/hooks/use-rental-order-assignment';
+import { useRentalOrderContractQuery } from '@/features/rental-orders/hooks/use-rental-order-management';
 import { StaffPickerDialog } from '@/features/rental-orders/components/staff-picker-dialog';
 import {
   STATUS_LABELS,
@@ -62,12 +65,61 @@ function formatCurrency(v: number | null | undefined) {
   }).format(v);
 }
 
-function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('vi-VN', {
+/**
+ * Parse ngày giờ linh hoạt — hỗ trợ:
+ *  - ISO 8601: "2026-03-24T10:30:00Z"
+ *  - BE custom: "2026-03-24 10:30:00 AM"
+ *  - Date-only: "2026-03-24"
+ */
+function parseDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+
+  // Thử ISO trước
+  let d = new Date(raw);
+  if (!isNaN(d.getTime())) return d;
+
+  // BE custom format: "2026-03-24 10:30:00 AM"
+  const match = raw.match(
+    /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2}:\d{2})\s*(AM|PM)?$/i,
+  );
+  if (match) {
+    const [, datePart, timePart, ampm] = match;
+    if (ampm) {
+      const [hh, mm, ss] = timePart.split(':').map(Number);
+      let hour24 = hh;
+      if (ampm.toUpperCase() === 'PM' && hh !== 12) hour24 += 12;
+      if (ampm.toUpperCase() === 'AM' && hh === 12) hour24 = 0;
+      d = new Date(
+        `${datePart}T${String(hour24).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`,
+      );
+    } else {
+      d = new Date(`${datePart}T${timePart}`);
+    }
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  return null;
+}
+
+function formatDate(raw: string | null | undefined) {
+  const d = parseDate(raw);
+  if (!d) return '—';
+  return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+  });
+}
+
+function formatDateTime(raw: string | null | undefined) {
+  const d = parseDate(raw);
+  if (!d) return '—';
+  return d.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -195,6 +247,10 @@ export function RentalOrderAssignDialog({
   );
 
   const assignMutation = useAssignStaffMutation();
+
+  // ── Contract query (API-094) ───────────────────────────────────────────────
+  const { data: contract, isLoading: contractLoading } =
+    useRentalOrderContractQuery(order.rentalOrderId);
 
   const statusStyle = STATUS_STYLES[order.status] ?? {
     dot: 'bg-gray-400',
@@ -426,14 +482,102 @@ export function RentalOrderAssignDialog({
             {order.qrCode && (
               <div>
                 <SectionLabel>Mã QR</SectionLabel>
-                <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-white/4 px-4 py-3 flex items-center gap-3'>
-                  <QrCode className='w-5 h-5 text-text-sub shrink-0' />
-                  <span className='text-xs font-mono text-text-sub break-all'>
-                    {order.qrCode}
-                  </span>
+                <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-white/4 px-4 py-3 flex items-center justify-center'>
+                  {order.qrCode.startsWith('data:') ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={order.qrCode}
+                      alt='QR Code'
+                      className='w-36 h-36 rounded-lg'
+                    />
+                  ) : order.qrCode.length > 100 ? (
+                    // Raw base64 without data URI prefix
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`data:image/png;base64,${order.qrCode}`}
+                      alt='QR Code'
+                      className='w-36 h-36 rounded-lg'
+                    />
+                  ) : (
+                    <div className='flex items-center gap-3'>
+                      <QrCode className='w-5 h-5 text-text-sub shrink-0' />
+                      <span className='text-xs font-mono text-text-sub break-all'>
+                        {order.qrCode}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+
+            {/* ── Contract (API-094) ── */}
+            <div>
+              <SectionLabel>Hợp đồng thuê</SectionLabel>
+              {contractLoading ? (
+                <div className='flex items-center gap-2 rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3'>
+                  <Loader2 className='w-4 h-4 animate-spin text-text-sub' />
+                  <span className='text-xs text-text-sub'>
+                    Đang tải hợp đồng…
+                  </span>
+                </div>
+              ) : contract ? (
+                <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3 space-y-0.5'>
+                  <InfoRow
+                    icon={FileText}
+                    label='Số hợp đồng'
+                    value={
+                      <span className='font-mono font-semibold text-indigo-600 dark:text-indigo-400'>
+                        {contract.contractNumber}
+                      </span>
+                    }
+                  />
+                  <InfoRow
+                    icon={FileText}
+                    label='Phiên bản'
+                    value={`v${contract.contractVersion}`}
+                  />
+                  <InfoRow
+                    icon={BadgeCheck}
+                    label='Phương thức'
+                    value={
+                      contract.acceptMethod === 'SIGNATURE'
+                        ? 'Ký tay'
+                        : 'Click đồng ý'
+                    }
+                  />
+                  <InfoRow
+                    icon={Calendar}
+                    label='Đồng ý lúc'
+                    value={formatDateTime(contract.acceptedAt)}
+                  />
+                  <InfoRow
+                    icon={Calendar}
+                    label='Tạo lúc'
+                    value={formatDateTime(contract.createdAt)}
+                  />
+                  {contract.contractPdfUrl && (
+                    <div className='pt-2'>
+                      <a
+                        href={contract.contractPdfUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors'
+                      >
+                        <ExternalLink className='w-3.5 h-3.5' />
+                        Xem hợp đồng PDF
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className='flex items-center gap-2 rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3'>
+                  <FileText className='w-4 h-4 text-text-sub' />
+                  <span className='text-xs text-text-sub italic'>
+                    Chưa có hợp đồng cho đơn hàng này.
+                  </span>
+                </div>
+              )}
+            </div>
 
             {/* ── Financials ── */}
             <div>

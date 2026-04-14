@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import {
@@ -26,6 +27,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Loader2,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -496,20 +498,30 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
 
           return (
             <div className='flex items-center gap-1.5'>
-              {/* Gán đơn / Xem */}
-              <Button
-                size='sm'
-                variant={canAssign ? 'default' : 'ghost'}
-                onClick={() => onAssign(row.original)}
+              {/* Xem chi tiết — always available */}
+              <Link
+                href={`/dashboard/rental-orders/${row.original.rentalOrderId}`}
                 className={cn(
-                  'flex items-center gap-1.5 text-xs h-8 px-3 whitespace-nowrap',
-                  !canAssign &&
-                    'text-text-sub border border-gray-200 dark:border-white/8',
+                  'inline-flex items-center gap-1.5 text-xs h-8 px-3 whitespace-nowrap rounded-md font-medium',
+                  'text-text-sub border border-gray-200 dark:border-white/8 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors',
                 )}
               >
-                <Truck className='w-3.5 h-3.5' />
-                {canAssign ? 'Gán đơn' : 'Xem'}
-              </Button>
+                <Eye className='w-3.5 h-3.5' />
+                Xem
+              </Link>
+
+              {/* Gán đơn — chỉ khi có thể assign */}
+              {canAssign && (
+                <Button
+                  size='sm'
+                  variant='default'
+                  onClick={() => onAssign(row.original)}
+                  className='flex items-center gap-1.5 text-xs h-8 px-3 whitespace-nowrap'
+                >
+                  <Truck className='w-3.5 h-3.5' />
+                  Gán đơn
+                </Button>
+              )}
 
               {/* Hoàn tất đơn hàng — chỉ khi PICKED_UP */}
               {canComplete && (

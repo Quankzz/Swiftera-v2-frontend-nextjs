@@ -349,3 +349,24 @@ export interface HubOption {
   phone: string | null;
   isActive: boolean;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contract (Module 14)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-094: GET /contracts/rental-order/{rentalOrderId}
+ * Response: Hợp đồng thuê liên kết với đơn hàng.
+ */
+export interface RentalContractResponse {
+  rentalContractId: string;
+  rentalOrderId: string;
+  policyDocumentId: string;
+  contractNumber: string;
+  contractVersion: string;
+  acceptMethod: 'CLICK' | 'SIGNATURE';
+  acceptedAt: string;
+  contractPdfUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -17,6 +17,7 @@ import {
   cancelRentalOrder,
   completeRentalOrder,
   reportIssueRecall,
+  getContractByOrder,
 } from '../api/rental-order.service';
 import { toast } from 'sonner';
 import type {
@@ -25,6 +26,7 @@ import type {
   RentalOrderListParams,
   UpdateOrderStatusInput,
   ReportIssueInput,
+  RentalContractResponse,
 } from '../types';
 
 /**
@@ -137,5 +139,25 @@ export function useReportIssueMutation() {
     onError: (error) => {
       toast.error(error.message || 'Ghi nhận sự cố thất bại');
     },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Contracts
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-094: Lấy hợp đồng thuê theo đơn hàng
+ * Chỉ fetch khi rentalOrderId có giá trị.
+ */
+export function useRentalOrderContractQuery(rentalOrderId: string | undefined) {
+  return useQuery<RentalContractResponse>({
+    enabled: !!rentalOrderId,
+    queryKey: rentalOrderId
+      ? rentalOrderKeys.contract(rentalOrderId)
+      : rentalOrderKeys.contracts(),
+    queryFn: () => getContractByOrder(rentalOrderId as string),
+    staleTime: 60 * 1000,
+    retry: false, // contract có thể chưa tồn tại
   });
 }

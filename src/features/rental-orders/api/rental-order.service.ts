@@ -26,6 +26,7 @@ import type {
   StaffOption,
   ReportIssueInput,
   AssignStaffToHubInput,
+  RentalContractResponse,
 } from '../types';
 import type { PaginatedData } from '@/api/apiService';
 import type { HubStaffResponse } from '@/features/hubs/types';
@@ -263,5 +264,21 @@ export function getRentalOrderStaffDetail(
 ): Promise<RentalOrderResponse> {
   return apiGet<RentalOrderResponse>(
     `/rental-orders/${rentalOrderId}/staff-detail`,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. Contracts
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-094: Lấy hợp đồng thuê theo đơn hàng
+ * GET /contracts/rental-order/{rentalOrderId}
+ */
+export function getContractByOrder(
+  rentalOrderId: string,
+): Promise<RentalContractResponse> {
+  return apiGet<RentalContractResponse>(
+    `/contracts/rental-order/${rentalOrderId}`,
   );
 }
