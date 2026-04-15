@@ -99,6 +99,7 @@ export async function createTicket(
   const res = await httpService.post<ApiResponse<ContactTicketResponse>>(
     '/contact-tickets',
     body,
+    authOpts,
   );
   return res.data.data!;
 }
