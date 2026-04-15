@@ -13,8 +13,8 @@ import type {
   PaginatedRentalOrdersResponse,
   RentalOrderStaffDetailResponse,
   RentalOrderResponse,
+  OverduePenaltySuggestionData,
   OverduePenaltySuggestionResponse,
-  OverduePenaltySuggestionEnvelope,
 } from '@/api/rentalOrderApi';
 import type { AssignOrderInput } from '@/types/dashboard';
 
@@ -147,8 +147,8 @@ export async function assignRentalOrder(
 /** API-086A */
 export async function getOverduePenaltySuggestion(
   rentalOrderId: string,
-): Promise<OverduePenaltySuggestionResponse> {
-  const res = await httpService.get<OverduePenaltySuggestionEnvelope>(
+): Promise<OverduePenaltySuggestionData> {
+  const res = await httpService.get<OverduePenaltySuggestionResponse>(
     `/rental-orders/${rentalOrderId}/overdue-penalty-suggestion`,
     authOpts,
   );

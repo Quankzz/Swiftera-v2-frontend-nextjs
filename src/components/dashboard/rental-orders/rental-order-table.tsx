@@ -360,9 +360,9 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         id: 'customer',
         header: 'Khách hàng',
         cell: ({ row }) => {
-          const { deliveryRecipientName, deliveryPhone } = row.original;
+          const { userAddress } = row.original;
 
-          const name = deliveryRecipientName || '';
+          const name = userAddress?.recipientName || '';
 
           return (
             <div className="flex items-center gap-2.5 min-w-40">
@@ -374,7 +374,7 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
                   {name || '—'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {deliveryPhone || '—'}
+                  {userAddress?.phoneNumber ?? '—'}
                 </p>
               </div>
             </div>
@@ -392,10 +392,10 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
               <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-1">
-                  {deliveryAddressLine || '—'}
+                  {addr?.addressLine || '—'}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  {[deliveryDistrict, deliveryCity]
+                  {[addr?.district, addr?.city]
                     .filter(Boolean)
                     .join(', ') || '—'}
                 </p>

@@ -60,7 +60,7 @@ export async function getProducts(
  * Lấy danh sách sản phẩm theo hub (public).
  * Chỉ trả sản phẩm isActive=true (lọc qua filter param).
  */
-export function getProductsByHub(
+export async function getProductsByHub(
   hubId: string,
   params: ProductListParams = {},
 ): Promise<PaginatedProductsResponse> {
@@ -71,14 +71,19 @@ export function getProductsByHub(
     filter = 'isActive:true',
     includeDescendants = false,
   } = params;
-  const query = buildQuery({
-    page,
-    size,
-    sort,
-    filter,
-    ...(includeDescendants ? { includeDescendants: true } : {}),
-  });
-  return apiGet<PaginatedProductsResponse>(`/products/hub/${hubId}${query}`);
+  const res = await httpService.get<ApiResponse<PaginatedProductsResponse>>(
+    `/products/hub/${hubId}`,
+    {
+      params: {
+        page,
+        size,
+        sort,
+        filter,
+        ...(includeDescendants ? { includeDescendants: true } : {}),
+      },
+    },
+  );
+  return res.data.data!;
 }
 
 /**
