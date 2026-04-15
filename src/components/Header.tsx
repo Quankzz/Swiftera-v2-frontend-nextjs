@@ -126,6 +126,10 @@ export function Header({ stickyHeader = false }: HeaderProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
 
+  // Hydration-safe: chỉ render icon sau khi mount để tránh mismatch server/client
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   // ── Real API data for search ────────────────────────────────────────────────
   const search = useHeaderSearch();
   const { data: categoryTree = [] } = useCategoryTreeQuery();
@@ -401,8 +405,12 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                 aria-label="Chuyển chế độ sáng/tối"
                 onClick={toggleTheme}
                 className="dark:hover:bg-white/10"
+                suppressHydrationWarning
               >
-                {resolvedTheme === 'dark' ? (
+                {/* Render placeholder trên server; sau mount mới show icon đúng */}
+                {!mounted ? (
+                  <span className="size-5" aria-hidden />
+                ) : resolvedTheme === 'dark' ? (
                   <Sun className="size-5 text-text-main" />
                 ) : (
                   <Moon className="size-5 text-text-main" />
