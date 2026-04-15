@@ -1,6 +1,6 @@
 /**
  * Rental Orders hooks — TanStack Query
- * Module 12: RENTAL ORDERS (API-074 → API-085)
+ * Module 12: RENTAL ORDERS (API-074 → API-086A)
  *
  * Lưu ý: initiatePayment đã chuyển sang Module 13 (useInitiatePayment trong use-payments.ts)
  */
@@ -15,31 +15,48 @@ import {
   cancelRentalOrder,
   extendRentalOrder,
   assignRentalOrder,
+  getRentalOrders,
+  getOverduePenaltySuggestion,
 } from './rental-order.service';
 import type {
   CreateRentalOrderInput,
   UpdateOrderStatusInput,
   ExtendOrderInput,
 } from '@/api/rentalOrderApi';
-import type { AssignOrderInput, RentalOrder, RentalOrderStatus } from '@/types/dashboard';
-import type { RentalOrderResponse, RentalOrderStatus as ApiRentalOrderStatus } from '@/api/rentalOrderApi';
-import { getRentalOrders } from './rental-order.service';
+import type {
+  AssignOrderInput,
+  RentalOrder,
+  RentalOrderStatus,
+} from '@/types/dashboard';
+import type {
+  RentalOrderResponse,
+  RentalOrderStatus as ApiRentalOrderStatus,
+} from '@/api/rentalOrderApi';
 
 // ─── Status mapping helpers ───────────────────────────────────────────────
 
-function mapApiStatusToDashboard(status: ApiRentalOrderStatus): RentalOrderStatus {
+function mapApiStatusToDashboard(
+  status: ApiRentalOrderStatus,
+): RentalOrderStatus {
   switch (status) {
-    case 'PENDING_PAYMENT': return 'PENDING';
+    case 'PENDING_PAYMENT':
+      return 'PENDING';
     case 'PAID':
-    case 'PREPARING': return 'CONFIRMED';
+    case 'PREPARING':
+      return 'CONFIRMED';
     case 'DELIVERING':
-    case 'DELIVERED': return 'DELIVERING';
-    case 'IN_USE': return 'ACTIVE';
+    case 'DELIVERED':
+      return 'DELIVERING';
+    case 'IN_USE':
+      return 'ACTIVE';
     case 'PENDING_PICKUP':
     case 'PICKING_UP':
-    case 'PICKED_UP': return 'RETURNING';
-    case 'COMPLETED': return 'COMPLETED';
-    case 'CANCELLED': return 'CANCELLED';
+    case 'PICKED_UP':
+      return 'RETURNING';
+    case 'COMPLETED':
+      return 'COMPLETED';
+    case 'CANCELLED':
+      return 'CANCELLED';
   }
 }
 
@@ -100,9 +117,7 @@ export function useRentalOrdersQuery(params?: {
   const apiParams = {
     page: params?.page,
     size: params?.limit,
-    filter: params?.status
-      ? `status:'${params.status}'`
-      : undefined,
+    filter: params?.status ? `status:'${params.status}'` : undefined,
   };
 
   return useQuery({
@@ -149,6 +164,24 @@ export function useRentalOrderQuery(rentalOrderId: string) {
     queryFn: () => getRentalOrderById(rentalOrderId),
     enabled: !!rentalOrderId,
     staleTime: 15_000,
+    retry: false,
+  });
+}
+
+/**
+ * API-086A: Đề xuất phí phạt quá hạn tạm tính (khi đơn đang thuê / thu hồi / sau thu hồi)
+ */
+export function useOverduePenaltySuggestionQuery(
+  rentalOrderId: string,
+  options?: { enabled?: boolean },
+) {
+  const enabled = !!rentalOrderId && (options?.enabled ?? true);
+
+  return useQuery({
+    queryKey: rentalOrderKeys.overdueSuggestion(rentalOrderId),
+    queryFn: () => getOverduePenaltySuggestion(rentalOrderId),
+    enabled,
+    staleTime: 60_000,
     retry: false,
   });
 }
@@ -204,6 +237,9 @@ export function useUpdateOrderStatus(options?: {
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
+      });
+      void qc.invalidateQueries({
+        queryKey: rentalOrderKeys.overdueSuggestion(variables.rentalOrderId),
       });
       void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
       options?.onSuccess?.();
@@ -300,6 +336,9 @@ export function useExtendOrder(options?: {
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
+      });
+      void qc.invalidateQueries({
+        queryKey: rentalOrderKeys.overdueSuggestion(variables.rentalOrderId),
       });
       void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
       options?.onSuccess?.();

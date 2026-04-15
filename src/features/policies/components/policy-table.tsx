@@ -26,6 +26,15 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
   usePoliciesQuery,
   useDeactivatePolicyMutation,
 } from '../hooks/use-policy-management';
@@ -166,6 +175,8 @@ export function PolicyTable() {
   const [previewPolicy, setPreviewPolicy] =
     useState<PolicyDocumentResponse | null>(null);
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  const [confirmDeactivatePolicy, setConfirmDeactivatePolicy] =
+    useState<PolicyDocumentResponse | null>(null);
 
   const deactivateMutation = useDeactivatePolicyMutation();
 
@@ -207,11 +218,18 @@ export function PolicyTable() {
 
   // ── Deactivate ─────────────────────────────────────────────────────────────
   const handleDeactivate = async (policy: PolicyDocumentResponse) => {
-    if (!window.confirm(`Vô hiệu hóa "${policy.title}"?`)) return;
-    setDeactivatingId(policy.policyDocumentId);
+    setConfirmDeactivatePolicy(policy);
+  };
+
+  const confirmDeactivate = async () => {
+    if (!confirmDeactivatePolicy) return;
+    setDeactivatingId(confirmDeactivatePolicy.policyDocumentId);
     try {
-      await deactivateMutation.mutateAsync(policy.policyDocumentId);
-      toast.success(`Đã vô hiệu hóa "${policy.title}".`);
+      await deactivateMutation.mutateAsync(
+        confirmDeactivatePolicy.policyDocumentId,
+      );
+      toast.success(`Đã vô hiệu hóa "${confirmDeactivatePolicy.title}".`);
+      setConfirmDeactivatePolicy(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Vô hiệu hóa thất bại.');
     } finally {
@@ -365,6 +383,38 @@ export function PolicyTable() {
         policy={previewPolicy}
         onClose={() => setPreviewPolicy(null)}
       />
+
+      <Dialog
+        open={confirmDeactivatePolicy !== null}
+        onOpenChange={(open) => !open && setConfirmDeactivatePolicy(null)}
+      >
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Xác nhận vô hiệu hóa chính sách</DialogTitle>
+            <DialogDescription>
+              {confirmDeactivatePolicy
+                ? `Bạn có chắc muốn vô hiệu hóa "${confirmDeactivatePolicy.title}"?`
+                : 'Bạn có chắc muốn vô hiệu hóa chính sách này?'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setConfirmDeactivatePolicy(null)}
+              disabled={deactivateMutation.isPending}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={() => void confirmDeactivate()}
+              disabled={deactivateMutation.isPending}
+            >
+              {deactivateMutation.isPending ? 'Đang xử lý…' : 'Vô hiệu hóa'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

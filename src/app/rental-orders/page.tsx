@@ -2,6 +2,7 @@
 
 import { useState, useDeferredValue, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Package,
   ChevronRight,
@@ -13,6 +14,7 @@ import {
   CreditCard,
   Loader2,
   AlertCircle,
+  QrCode,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +28,14 @@ import {
 } from '@/api/rentalOrderApi';
 import type { RentalOrderStatus } from '@/api/rentalOrderApi';
 import { toast } from 'sonner';
+
+const PolicyConsentDialog = dynamic(
+  () =>
+    import('@/components/checkout/policy-consent-dialog').then(
+      (m) => m.PolicyConsentDialog,
+    ),
+  { ssr: false },
+);
 
 const PAGE_SIZE = 5;
 const MAX_VISIBLE_PAGES = 5;
@@ -215,6 +225,10 @@ export default function RentalOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const [pendingPayOrderId, setPendingPayOrderId] = useState<string | null>(
+    null,
+  );
 
   const deferredSearch = useDeferredValue(search);
 
@@ -224,15 +238,23 @@ export default function RentalOrdersPage() {
     e.preventDefault(); // ngăn Link navigate
     e.stopPropagation();
     if (payingId) return;
-    setPayingId(rentalOrderId);
+    setPendingPayOrderId(rentalOrderId);
+    setPolicyOpen(true);
+  }
+
+  async function handlePayAfterConsent() {
+    if (!pendingPayOrderId || payingId) return;
+    setPolicyOpen(false);
+    setPayingId(pendingPayOrderId);
     try {
-      const url = await initiatePayment.mutateAsync(rentalOrderId);
+      const url = await initiatePayment.mutateAsync(pendingPayOrderId);
       window.location.href = url;
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Không thể tạo link thanh toán.';
       toast.error(msg);
       setPayingId(null);
+      setPendingPayOrderId(null);
     }
   }
 
@@ -260,7 +282,7 @@ export default function RentalOrdersPage() {
   const hasActiveFilters = statusFilter !== '' || deferredSearch !== '';
 
   return (
-    <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-24 md:px-6 md:pt-28 dark:bg-background'>
+    <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-4 md:px-6 md:pt-8 dark:bg-background'>
       <div className='mx-auto max-w-3xl'>
         {/* Page header */}
         <div className='mb-6'>
@@ -470,11 +492,32 @@ export default function RentalOrdersPage() {
                           >
                             {RENTAL_ORDER_STATUS_LABELS[status]}
                           </Badge>
+                          {order.qrCode && (
+                            <span
+                              className='inline-flex items-center text-muted-foreground'
+                              title='Có mã QR đơn hàng'
+                              aria-label='Có mã QR đơn hàng'
+                            >
+                              <QrCode className='size-3.5' />
+                            </span>
+                          )}
                         </div>
                         <p className='mt-0.5 text-xs text-muted-foreground'>
                           {formatDate(order.placedAt)} &middot;{' '}
                           {order.rentalOrderLines.length} sản phẩm
                         </p>
+                        {order.provisionalOverduePenaltyAmount != null &&
+                          order.provisionalOverduePenaltyAmount > 0 && (
+                            <p
+                              className='mt-1 text-[11px] font-medium tabular-nums text-amber-700 dark:text-amber-400'
+                              title='Phí phạt quá hạn tạm tính trên đơn (chưa chốt)'
+                            >
+                              Phạt quá hạn tạm tính:{' '}
+                              {fmt.format(
+                                order.provisionalOverduePenaltyAmount,
+                              )}
+                            </p>
+                          )}
 
                         {/* Amount — hiển thị trong info khi có nút Pay để tránh crowding */}
                         {isPending && (
@@ -560,6 +603,15 @@ export default function RentalOrdersPage() {
           )}
         </div>
       </div>
+
+      <PolicyConsentDialog
+        open={policyOpen}
+        onOpenChange={(open) => {
+          setPolicyOpen(open);
+          if (!open && !payingId) setPendingPayOrderId(null);
+        }}
+        onAllConsented={() => void handlePayAfterConsent()}
+      />
     </div>
   );
 }

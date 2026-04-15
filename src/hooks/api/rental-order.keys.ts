@@ -18,4 +18,7 @@ export const rentalOrderKeys = {
 
   detail: (rentalOrderId: string) =>
     [...rentalOrderKeys.all, 'detail', rentalOrderId] as const,
+
+  overdueSuggestion: (rentalOrderId: string) =>
+    [...rentalOrderKeys.all, 'overdue-suggestion', rentalOrderId] as const,
 };
