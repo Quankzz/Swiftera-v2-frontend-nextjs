@@ -61,14 +61,14 @@ export function HeroBanner() {
   if (!isLoading && !current) return null;
 
   return (
-    <section className='relative min-h-screen overflow-hidden bg-[#0a0a0a] flex items-center lg:px-18 py-16'>
+    <section className='relative min-h-[80vh] overflow-hidden bg-white dark:bg-[#0a0a0a] flex items-center px-6 lg:px-18 py-16'>
       {/* ── Particles background (React Bits) ── */}
-      <div aria-hidden className='pointer-events-none absolute inset-0 z-0'>
+      <div aria-hidden className='pointer-events-none absolute inset-0 z-0 opacity-20 dark:opacity-100'>
         <ParticlesBg
           particleCount={200}
           particleSpread={10}
           speed={0.07}
-          particleColors={['#ffffff', '#c8d6e5', '#a4b8cc']}
+          particleColors={['#000000', '#666666', '#999999']}
           moveParticlesOnHover={false}
           alphaParticles={true}
           particleBaseSize={90}
@@ -89,7 +89,7 @@ export function HeroBanner() {
         {/* ═══ TYPOGRAPHY COLUMN (col 1–6) ═══ */}
         <div className='col-span-12 lg:col-span-6 flex flex-col'>
           {/* Big editorial headline */}
-          <h1 className='font-black leading-[1.15] tracking-tighter text-[clamp(3.5rem,10vw,7rem)] text-white'>
+          <h1 className='font-black leading-[1.1] tracking-tighter text-[clamp(2.5rem,8vw,5rem)] text-gray-900 dark:text-white break-words'>
             Yêu công nghệ
             <span className='text-theme-primary-start'>,</span>
             <br />
@@ -107,7 +107,7 @@ export function HeroBanner() {
           </h1>
 
           {/* Description */}
-          <p className='mt-8 max-w-lg text-lg font-medium leading-relaxed text-white/55 lg:text-xl'>
+          <p className='mt-6 max-w-lg text-base md:text-lg font-medium leading-relaxed text-gray-600 dark:text-white/55'>
             Thuê thiết bị linh hoạt, chi phí hợp lý — giao hàng nhanh, đổi trả
             dễ dàng.
           </p>
@@ -130,7 +130,7 @@ export function HeroBanner() {
               fill={true}
               responsive={true}
               showPath={false}
-              pathColor='rgba(255,255,255,0.06)'
+              pathColor='rgba(128,128,128,0.1)'
             />
           </div>
         </div>
