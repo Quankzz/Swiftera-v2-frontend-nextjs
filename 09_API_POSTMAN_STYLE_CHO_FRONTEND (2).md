@@ -1,4 +1,4 @@
-﻿# 09. API Postman-Style for Frontend
+# 09. API Postman-Style for Frontend
 
 ## Common Conventions
 
@@ -910,6 +910,11 @@ file: <binary file>
 folderName: "products"   (tùy chọn, mặc định AZURE_STORAGE_CONTAINER_NAME)
 ```
 
+**Accepted MIME types**:
+
+- `image/jpeg`, `image/png`, `image/jpg`, `audio/mpeg`, `application/pdf`, `application/msword`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+- Nếu client gửi `application/octet-stream` cho PDF/DOC/DOCX, backend sẽ fallback nhận diện theo phần mở rộng filename.
+
 **Response**:
 
 ```json
@@ -938,6 +943,8 @@ files: <binary file 1>
 files: <binary file 2>
 folderName: "products"
 ```
+
+**Accepted MIME types**: giống API-034.
 
 **Response**:
 
@@ -1048,7 +1055,7 @@ folderName: "products"
 
 ---
 
-## Module 6: HUBS (6 APIs)
+## Module 6: HUBS (7 APIs)
 
 ---
 
@@ -1383,7 +1390,7 @@ Ví dụ response:
 
 ---
 
-## Module 8: PRODUCTS (5 APIs)
+## Module 8: PRODUCTS (6 APIs)
 
 ---
 
@@ -1525,6 +1532,7 @@ Mỗi phần tử `inventoryItems` gồm:
 
 - `includeDescendants=true` chỉ có tác dụng khi filter có điều kiện theo `categoryId` dạng SpringFilter DSL.
 - Nếu không truyền `includeDescendants`, backend vẫn giữ behavior cũ: chỉ match category trực tiếp.
+- Nếu cần lấy catalog theo từng hub cụ thể (public endpoint), dùng API-121: `GET /api/v1/products/hub/{hubId}`.
 
 ---
 
@@ -1744,8 +1752,12 @@ Mỗi phần tử `inventoryItems` gồm:
                 "productName": "Canon EOS R50",
                 "productImageUrl": "https://cdn.example.com/canon-r50.jpg",
                 "dailyPrice": 250000,
+                "depositAmount": 5000000,
                 "rentalDurationDays": 5,
                 "quantity": 2,
+                "rentalFeeAmount": 2500000,
+                "depositHoldAmount": 10000000,
+                "totalPayableAmount": 12500000,
                 "lineTotal": 2500000,
                 "availableVouchers": [
                     {
@@ -1769,7 +1781,13 @@ Mỗi phần tử `inventoryItems` gồm:
 }
 ```
 
-**Ghi chú**: `lineTotal = dailyPrice × quantity × rentalDurationDays`
+**Ghi chú**:
+
+- `rentalFeeAmount = dailyPrice × quantity × rentalDurationDays`
+- `depositAmount` là tiền cọc trên mỗi sản phẩm
+- `depositHoldAmount = depositAmount × quantity`
+- `totalPayableAmount = rentalFeeAmount + depositHoldAmount`
+- `lineTotal` được giữ để tương thích ngược và hiện bằng `rentalFeeAmount`
 
 ---
 
@@ -2038,12 +2056,7 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 
 ```json
 {
-    "deliveryRecipientName": "Nguyen Van A",
-    "deliveryPhone": "0988888888",
-    "deliveryAddressLine": "123 Nguyen Trai",
-    "deliveryWard": "Phường 2",
-    "deliveryDistrict": "Quận 5",
-    "deliveryCity": "Hồ Chí Minh",
+    "userAddressId": "address-uuid-001",
     "expectedDeliveryDate": "2026-03-26",
     "orderLines": [
         {
@@ -2057,18 +2070,16 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
 }
 ```
 
-| Field                                    | Bắt buộc | Validation                               |
-| ---------------------------------------- | -------- | ---------------------------------------- |
-| `deliveryRecipientName`                  | ✓        | not blank                                |
-| `deliveryPhone`                          | ✓        | not blank                                |
-| `expectedDeliveryDate`                   | ✓        | định dạng `YYYY-MM-DD`                   |
-| `orderLines`                             | ✓        | không rỗng                               |
-| `orderLines[].productId`                 | ✓        | UUID product tồn tại, đang active        |
-| `orderLines[].productColorId`            | tùy chọn | bắt buộc nếu product có >1 màu           |
-| `orderLines[].voucherCode`               | tùy chọn | voucher line-level hợp lệ cho product đó |
-| `orderLines[].quantity`                  | ✓        | >= 1                                     |
-| `orderLines[].rentalDurationDays`        | ✓        | >= 1 và >= `minRentalDays` của product   |
-| `deliveryAddressLine/Ward/District/City` | tùy chọn | địa chỉ giao                             |
+| Field                             | Bắt buộc | Validation                               |
+| --------------------------------- | -------- | ---------------------------------------- |
+| `userAddressId`                   | ✓        | địa chỉ tồn tại và thuộc user hiện tại   |
+| `expectedDeliveryDate`            | ✓        | định dạng `YYYY-MM-DD`                   |
+| `orderLines`                      | ✓        | không rỗng                               |
+| `orderLines[].productId`          | ✓        | UUID product tồn tại, đang active        |
+| `orderLines[].productColorId`     | tùy chọn | bắt buộc nếu product có >1 màu           |
+| `orderLines[].voucherCode`        | tùy chọn | voucher line-level hợp lệ cho product đó |
+| `orderLines[].quantity`           | ✓        | >= 1                                     |
+| `orderLines[].rentalDurationDays` | ✓        | >= 1 và >= `minRentalDays` của product   |
 
 **Tương thích ngược**:
 
@@ -2083,16 +2094,30 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
     "data": {
         "rentalOrderId": "6cc84ef6-20e2-4c9d-bde0-d322d8a8bc11",
         "userId": "d4f6e5a8-...",
-        "hubId": null,
-        "hubName": null,
-        "deliveryRecipientName": "Nguyen Van A",
-        "deliveryPhone": "0988888888",
-        "deliveryAddressLine": "123 Nguyen Trai",
-        "deliveryWard": "Phường 2",
-        "deliveryDistrict": "Quận 5",
-        "deliveryCity": "Hồ Chí Minh",
-        "deliveryLatitude": null,
-        "deliveryLongitude": null,
+        "hubId": "h1a2b3c4-...",
+        "hubCode": "HCM-01",
+        "hubName": "Hub Hồ Chí Minh - Quận 1",
+        "hubAddressLine": "123 Lê Lợi",
+        "hubWard": "Phường Bến Nghé",
+        "hubDistrict": "Quận 1",
+        "hubCity": "Hồ Chí Minh",
+        "hubLatitude": 10.7769,
+        "hubLongitude": 106.7009,
+        "hubPhone": "+842812345678",
+        "userAddressId": "address-uuid-001",
+        "userAddress": {
+            "userAddressId": "address-uuid-001",
+            "userId": "d4f6e5a8-...",
+            "recipientName": "Nguyen Van A",
+            "phoneNumber": "0988888888",
+            "addressLine": "123 Nguyen Trai",
+            "ward": "Phường 2",
+            "district": "Quận 5",
+            "city": "Hồ Chí Minh",
+            "latitude": null,
+            "longitude": null,
+            "isDefault": true
+        },
         "expectedDeliveryDate": "2026-03-26",
         "expectedRentalEndDate": "2026-04-02",
         "plannedDeliveryAt": null,
@@ -2100,6 +2125,8 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
         "actualRentalStartAt": null,
         "deliveredLatitude": null,
         "deliveredLongitude": null,
+        "issueReportedAt": null,
+        "issueReportNote": null,
         "plannedPickupAt": null,
         "actualRentalEndAt": null,
         "pickedUpAt": null,
@@ -2112,9 +2139,13 @@ Ví dụ: `/api/v1/vouchers/code/SUMMER30`
         "rentalFeeAmount": 1162500,
         "depositHoldAmount": 5000000,
         "totalPayableAmount": 6162500,
+        "damagePenaltyAmount": null,
+        "overduePenaltyAmount": null,
+        "provisionalOverduePenaltyAmount": null,
         "penaltyChargeAmount": null,
         "depositRefundAmount": null,
         "totalPaidAmount": 0,
+        "qrCode": null,
         "placedAt": "2026-03-24 10:00:00 AM",
         "rentalOrderLines": [
             {
@@ -2216,29 +2247,30 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ```json
 {
-    "status": "PREPARING"
+    "status": "PREPARING",
+    "issueNote": "Tuỳ chọn, chỉ bắt buộc khi DELIVERED -> PENDING_PICKUP do sự cố"
 }
 ```
 
 **Phân quyền runtime**:
 
-- `CUSTOMER`: chỉ được cập nhật **đơn của chính mình** và chỉ cho các bước `PENDING_PAYMENT/PREPARING -> CANCELLED`, `DELIVERED -> IN_USE`, `IN_USE -> PENDING_PICKUP`, `PICKED_UP -> COMPLETED`.
-- `STAFF`: chỉ được cập nhật các bước vận hành `PAID -> PREPARING`, `PREPARING -> DELIVERING/CANCELLED`, `PENDING_PICKUP -> PICKING_UP`. Nếu đơn đã có `deliveryStaff` hoặc `pickupStaff`, staff đang gọi API phải đúng người được gán.
-- `ADMIN`: có thể gọi các bước hợp lệ theo state machine, nhưng vẫn phải thỏa các guard nghiệp vụ bên dưới.
+- `CUSTOMER`: chỉ được cập nhật **đơn của chính mình** và chỉ cho các bước `PENDING_PAYMENT/PREPARING -> CANCELLED`, `DELIVERED -> IN_USE`, `IN_USE -> PENDING_PICKUP`.
+- `STAFF`: được cập nhật các bước vận hành `PAID -> PREPARING`, `PREPARING -> DELIVERING/CANCELLED`, `PENDING_PICKUP -> PICKING_UP`, `PICKED_UP -> COMPLETED` (cash refund flow). Nếu đơn đã có `deliveryStaff` hoặc `pickupStaff`, staff đang gọi API phải đúng người được gán.
+- `ADMIN`: có thể gọi các bước hợp lệ theo state machine; flow `DELIVERED -> PENDING_PICKUP` do sự cố sau giao hàng chỉ ADMIN được phép gọi; riêng flow hoàn cọc qua ngân hàng thì ADMIN là người xác nhận `COMPLETED`.
 
 **Chuyển đổi trạng thái cho phép**:
 
-| Từ                | Sang                          |
-| ----------------- | ----------------------------- |
-| `PENDING_PAYMENT` | `PAID` hoặc `CANCELLED`       |
-| `PAID`            | `PREPARING`                   |
-| `PREPARING`       | `DELIVERING` hoặc `CANCELLED` |
-| `DELIVERING`      | `DELIVERED`                   |
-| `DELIVERED`       | `IN_USE`                      |
-| `IN_USE`          | `PENDING_PICKUP`              |
-| `PENDING_PICKUP`  | `PICKING_UP`                  |
-| `PICKING_UP`      | `PICKED_UP`                   |
-| `PICKED_UP`       | `COMPLETED`                   |
+| Từ                | Sang                           |
+| ----------------- | ------------------------------ |
+| `PENDING_PAYMENT` | `PAID` hoặc `CANCELLED`        |
+| `PAID`            | `PREPARING`                    |
+| `PREPARING`       | `DELIVERING` hoặc `CANCELLED`  |
+| `DELIVERING`      | `DELIVERED`                    |
+| `DELIVERED`       | `IN_USE` hoặc `PENDING_PICKUP` |
+| `IN_USE`          | `PENDING_PICKUP`               |
+| `PENDING_PICKUP`  | `PICKING_UP`                   |
+| `PICKING_UP`      | `PICKED_UP`                    |
+| `PICKED_UP`       | `COMPLETED`                    |
 
 **Guard nghiệp vụ bổ sung**:
 
@@ -2246,11 +2278,23 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 - `PAID -> PREPARING`: phải có `rental_contract` cho đơn.
 - `PREPARING -> DELIVERING`: phải có `rental_contract` và đã gán `deliveryStaff`.
 - `DELIVERING -> DELIVERED`: không nên dùng API-079 để nhảy trạng thái; backend yêu cầu dùng API-084 `record-delivery` để ghi nhận thời gian/toạ độ giao hàng.
-- `DELIVERED -> IN_USE` và `IN_USE -> PENDING_PICKUP`: chỉ hợp lệ khi đơn đã có dữ liệu giao hàng thực tế (`actualDeliveryAt`, `actualRentalStartAt`).
+- `DELIVERED -> IN_USE`, `DELIVERED -> PENDING_PICKUP` và `IN_USE -> PENDING_PICKUP`: chỉ hợp lệ khi đơn đã có dữ liệu giao hàng thực tế (`actualDeliveryAt`, `actualRentalStartAt`).
+- Mọi flow chuyển sang `PENDING_PICKUP` đều phải gán `pickupStaff` trước.
+- `DELIVERED -> PENDING_PICKUP` (trả sớm do sự cố): chỉ ADMIN được phép gọi, bắt buộc truyền `issueNote`, backend tự lưu `issueReportedAt` + `issueReportNote`.
 - `PENDING_PICKUP -> PICKING_UP`: phải gán `pickupStaff` trước.
 - `PICKING_UP -> PICKED_UP`: không nên dùng API-079 để nhảy trạng thái; backend yêu cầu dùng API-085 `record-pickup` để ghi nhận thời gian/toạ độ thu hồi.
+- API-085 cũng sẽ từ chối nếu chưa gán `pickupStaff` cho đơn.
 - `PICKED_UP -> COMPLETED`: chỉ hợp lệ khi đơn đã có dữ liệu thu hồi thực tế (`pickedUpAt`, `actualRentalEndAt`).
+- `PICKED_UP -> COMPLETED` với cash refund flow: `STAFF` hoặc `ADMIN` đều có thể xác nhận hoàn tất.
+- `PICKED_UP -> COMPLETED` với bank refund flow: nếu đơn đã phát sinh transaction `DEPOSIT_REFUND`, bắt buộc phải có ít nhất 1 transaction `SUCCESS` và chỉ `ADMIN` được xác nhận `COMPLETED`.
 - Khi chuyển sang `CANCELLED` qua API-079, backend rollback inventory `RESERVED -> AVAILABLE`; không còn semantics rollback bộ đếm voucher toàn cục.
+
+**Flow gợi ý khi giao hàng gặp sự cố**:
+
+1. Admin vận hành gọi API-079 với `status=PENDING_PICKUP` và `issueNote` để ghi nhận yêu cầu trả sớm do sự cố.
+2. STAFF gán `pickupStaff` (API-083) và chuyển `PENDING_PICKUP -> PICKING_UP` (API-079).
+3. STAFF ghi nhận thu hồi thực tế bằng API-085 (`record-pickup`) để chuyển sang `PICKED_UP`.
+4. Thực hiện đối soát/hoàn cọc rồi xác nhận `COMPLETED` theo đúng rule cash/bank ở trên.
 
 **Response**: `RentalOrderResponse`
 
@@ -2279,7 +2323,7 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 ---
 
-### API-081: Gia hạn đơn thuê [AUTH]
+### API-081: Gia hạn đơn thuê (gia hạn hợp đồng thuê) [AUTH]
 
 - **Method**: `PATCH`
 - **URL**: `/api/v1/rental-orders/{rentalOrderId}/extend`
@@ -2298,11 +2342,13 @@ hoặc hủy: `PENDING_PAYMENT → CANCELLED`
 
 **Business logic**:
 
+- Đây là API backend chính để xử lý yêu cầu gia hạn hợp đồng thuê ở runtime.
 - Có thể gọi khi đơn ở một trong các trạng thái: `PENDING_PAYMENT`, `PAID`, `PREPARING`, `DELIVERING`, `DELIVERED`, `IN_USE`, `PENDING_PICKUP`
 - Tăng `rentalDurationDays` cho tất cả line trong đơn
 - Cập nhật `expectedRentalEndDate`
 - Nếu serial hiện tại bị conflict lịch sau gia hạn → tự tìm serial khác cùng product không bị xung đột (ưu tiên AVAILABLE → conditionGrade tốt hơn → FIFO)
 - Tính lại `rentalSubtotalAmount`, `rentalFeeAmount`, `totalPayableAmount`
+- Nếu đơn đã có contract (tức đã bước vào vòng đời sau thanh toán), backend tự refresh lại `contractHtmlSnapshot` và `contractPdfUrl` để nội dung hợp đồng luôn khớp thời hạn thuê mới; contract không bị xoá mà được cập nhật trên cùng record hiện tại.
 
 **Response**: `RentalOrderResponse` đầy đủ
 
@@ -2472,19 +2518,76 @@ Ví dụ response phần staff:
 
 ```json
 {
-    "penaltyTotal": 500000,
+    "damagePenaltyAmount": 300000,
+    "overduePenaltyAmount": 200000,
     "note": "Máy bị xước nhẹ, đền bù phụ kiện"
 }
 ```
 
-| Field          | Bắt buộc | Validation         |
-| -------------- | -------- | ------------------ |
-| `penaltyTotal` | ✓        | >= 0               |
-| `note`         | tùy chọn | ghi chú lý do phạt |
+| Field                  | Bắt buộc     | Validation         |
+| ---------------------- | ------------ | ------------------ |
+| `damagePenaltyAmount`  | tùy chọn\*   | >= 0               |
+| `overduePenaltyAmount` | tùy chọn\*   | >= 0               |
+| `penaltyTotal`         | tùy chọn\*\* | >= 0               |
+| `note`                 | tùy chọn     | ghi chú lý do phạt |
 
-**Business logic**: `depositRefundAmount = depositHoldAmount - penaltyChargeAmount`
+- a: Cần có ít nhất một trong hai field `damagePenaltyAmount` hoặc `overduePenaltyAmount`.
+- b: Nếu chỉ gửi một field split, backend giữ nguyên field còn lại đang có; muốn clear phải gửi explicit `0`.
+- c: Giữ tương thích ngược payload cũ. Nếu chỉ gửi `penaltyTotal`, backend sẽ map vào `damagePenaltyAmount` và `overduePenaltyAmount = 0`.
+
+**Business logic**: `depositRefundAmount = max(depositHoldAmount - (damagePenaltyAmount + overduePenaltyAmount), 0)`
+
+`overduePenaltyAmount` là phí phạt quá hạn đã chốt cuối cùng. `provisionalOverduePenaltyAmount` nằm ở response order để FE hiển thị mức tạm tính hiện tại, nhưng không được cộng vào `penaltyChargeAmount` cho tới khi staff/admin xác nhận qua `set-penalty`.
 
 **Response**: `RentalOrderResponse`
+
+---
+
+### API-086A: Lấy đề xuất phí phạt quá hạn tạm tính [AUTH]
+
+- **Method**: `GET`
+- **URL**: `/api/v1/rental-orders/{rentalOrderId}/overdue-penalty-suggestion`
+
+**Response body mẫu**:
+
+```json
+{
+    "code": 1000,
+    "message": "Lấy đề xuất phí phạt quá hạn tạm tính thành công",
+    "data": {
+        "rentalOrderId": "7d4e9b35-...",
+        "status": "PICKED_UP",
+        "overdue": true,
+        "expectedRentalEndDate": "2026-04-08",
+        "actualRentalEndAt": "2026-04-10 09:30:00 AM",
+        "overdueDays": 2,
+        "dailyOverdueRateAmount": 250000,
+        "provisionalOverduePenaltyAmount": 500000,
+        "finalOverduePenaltyAmount": 200000,
+        "damagePenaltyAmount": 300000,
+        "suggestedTotalPenaltyAmount": 800000,
+        "suggestedDepositRefundAmount": 4200000
+    }
+}
+```
+
+| Field                             | Ý nghĩa                                                          |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `overdue`                         | order có đang/vừa bị quá hạn hay không                           |
+| `overdueDays`                     | số ngày quá hạn đã tính đến hôm nay hoặc đến `actualRentalEndAt` |
+| `dailyOverdueRateAmount`          | tổng daily rate snapshot của các line trong order                |
+| `provisionalOverduePenaltyAmount` | mức phí phạt quá hạn tạm tính backend đề xuất                    |
+| `finalOverduePenaltyAmount`       | mức phí phạt quá hạn cuối cùng đang lưu                          |
+| `suggestedTotalPenaltyAmount`     | `damagePenaltyAmount + provisionalOverduePenaltyAmount`          |
+| `suggestedDepositRefundAmount`    | `max(depositHoldAmount - suggestedTotalPenaltyAmount, 0)`        |
+
+**Business logic**:
+
+- Khi order đang `IN_USE` hoặc `PENDING_PICKUP` và đã overdue, backend auto-refresh `provisionalOverduePenaltyAmount` mỗi ngày mới.
+- Khi order đã `PICKED_UP`, backend dùng `actualRentalEndAt` để khóa số ngày overdue, tránh tiếp tục cộng thêm theo ngày hiện tại.
+- FE có thể lấy `provisionalOverduePenaltyAmount` để prefill `overduePenaltyAmount` ở API `set-penalty`, hoặc cho staff nhập tay mức cuối cùng khác.
+
+**Response**: `OverduePenaltySuggestionResponse`
 
 ---
 
@@ -2581,6 +2684,7 @@ Ví dụ response phần staff:
 - Transaction → `SUCCESS`, ghi `paidAt`
 - `totalPaidAmount += amount`
 - Nếu `totalPaidAmount >= totalPayableAmount` → Order → `PAID`
+- Nếu order vừa chuyển `PAID` và chưa có QR, backend tự sinh QR cho order; backend vẫn giữ URL/token nội bộ để phục vụ luồng scan, nhưng mọi API response và redirect trả `qrCode` ở dạng base64 data URI PNG.
 - Nếu order vừa đủ điều kiện `PAID`, backend **tự tạo rental contract** cho order (idempotent: mỗi order tối đa 1 contract)
 
 **Side effects khi thất bại**:
@@ -2605,6 +2709,9 @@ Ví dụ response phần staff:
 **Gọi bởi VNPay sau khi user trả về từ cổng thanh toán.**
 
 **Response**: HTTP 302 redirect sang frontend URL (cấu hình trong `application.yaml`) kèm query params kết quả.
+
+- Khi thành công: `success=true`, `txnRef`, `rentalOrderId`, `qrCode` (chuỗi `data:image/png;base64,...` để FE bind trực tiếp vào `img src`, không cần fetch thêm).
+- Khi thất bại: `success=false`, `txnRef`, `code`, `status`, `signatureValid`.
 
 ---
 
@@ -2654,6 +2761,8 @@ Ví dụ response phần staff:
 - Backend **không còn API tạo contract thủ công**.
 - Contract được tự động provision sau khi VNPay IPN xác nhận thanh toán thành công và order đủ tiền (`PAID`).
 - Luồng tự động đảm bảo one-order-one-contract (idempotent).
+- Khi order được gia hạn sau thanh toán, backend refresh snapshot/PDF của contract hiện tại để phản ánh thời hạn thuê mới.
+- Khi order hoàn trả hàng, pickup xong hoặc completed, contract vẫn được giữ nguyên để phục vụ đối soát/audit; backend không xóa hợp đồng sau hoàn trả.
 - File PDF của contract là snapshot hợp đồng điện tử tiếng Việt bám đúng mẫu hợp đồng đã chốt; backend bind dữ liệu order/user/line vào template đó, dùng `swiftera2.contract.issuer.*` cho thông tin pháp lý bên cho thuê và dùng fallback tường minh khi line chưa có serial/phụ kiện cấu trúc riêng; FE vẫn chỉ cần bind `RentalContractResponse` như cũ.
 
 ---
@@ -2684,6 +2793,12 @@ Ví dụ response phần staff:
 | `productId`     | ✓        | UUID product có trong đơn  |
 | `rating`        | ✓        | 1–5                        |
 | `content`       | tùy chọn | nội dung đánh giá          |
+
+**Rule phân quyền tạo đánh giá/comment**:
+
+- Chỉ user là chủ sở hữu đơn thuê mới được tạo đánh giá.
+- User phải có lịch sử thuê đã hoàn tất (`COMPLETED`) với đúng sản phẩm đang đánh giá.
+- Nếu không thỏa điều kiện trên, backend trả lỗi `REVIEW_PRODUCT_NOT_RENTED` hoặc `REVIEW_NOT_ORDER_OWNER` tùy trường hợp.
 
 **Response**:
 
@@ -2873,7 +2988,7 @@ Ví dụ response phần staff:
 
 ---
 
-## Module 17: POLICIES (7 APIs)
+## Module 17: POLICIES (8 APIs)
 
 ---
 
@@ -2948,6 +3063,31 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 - **URL**: `/api/v1/policies?page=1&size=10&filter=isActive:true`
 
 **Response**: `PaginationResponse` chứa mảng `PolicyDocumentResponse`
+
+---
+
+### API-109A: Cập nhật tài liệu chính sách [AUTH]
+
+- **Method**: `PATCH`
+- **URL**: `/api/v1/policies/{policyId}`
+
+**Request body** (tất cả tùy chọn):
+
+```json
+{
+    "title": "Điều khoản thuê thiết bị v2.1",
+    "pdfUrl": "https://<storage-account>.blob.core.windows.net/<container>/policies/rental-terms-v2_1.pdf",
+    "effectiveFrom": "2026-04-15T00:00:00Z"
+}
+```
+
+**Rule cập nhật**:
+
+- Cần có ít nhất 1 field thay đổi trong body.
+- `code` và `policyVersion` là immutable, không hỗ trợ update qua endpoint này.
+- Nếu gửi `pdfUrl` là chuỗi rỗng, backend sẽ clear link PDF hiện tại.
+
+**Response**: `PolicyDocumentResponse`
 
 ---
 
@@ -3257,124 +3397,260 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 
 ---
 
-## Phụ lục A: Tổng hợp 114 APIs
+## Module 19: USER ADDRESSES (5 APIs)
 
-| #   | Method | URL                                                     | Auth            | Module        |
-| --- | ------ | ------------------------------------------------------- | --------------- | ------------- |
-| 001 | POST   | `/api/v1/auth/register`                                 | PUBLIC          | AUTH          |
-| 002 | POST   | `/api/v1/auth/verify-active-account`                    | PUBLIC          | AUTH          |
-| 003 | POST   | `/api/v1/auth/resend-verify`                            | PUBLIC          | AUTH          |
-| 004 | POST   | `/api/v1/auth/login`                                    | PUBLIC          | AUTH          |
-| 005 | POST   | `/api/v1/auth/logout`                                   | AUTH            | AUTH          |
-| 006 | GET    | `/api/v1/auth/account`                                  | AUTH            | AUTH          |
-| 007 | GET    | `/api/v1/auth/refresh`                                  | PUBLIC (cookie) | AUTH          |
-| 008 | POST   | `/api/v1/auth/forgot-password`                          | PUBLIC          | AUTH          |
-| 009 | POST   | `/api/v1/auth/reset-password`                           | PUBLIC          | AUTH          |
-| 010 | PATCH  | `/api/v1/users/update-profile`                          | AUTH            | USERS         |
-| 011 | PUT    | `/api/v1/users/update-password`                         | AUTH            | USERS         |
-| 012 | PUT    | `/api/v1/users/update-email`                            | AUTH            | USERS         |
-| 013 | POST   | `/api/v1/users/verify-change-email`                     | AUTH            | USERS         |
-| 014 | GET    | `/api/v1/users/{userId}`                                | AUTH            | USERS         |
-| 015 | GET    | `/api/v1/users`                                         | AUTH            | USERS         |
-| 016 | PATCH  | `/api/v1/users/{userId}`                                | AUTH            | USERS         |
-| 017 | DELETE | `/api/v1/users/{userId}`                                | AUTH            | USERS         |
-| 018 | DELETE | `/api/v1/users/{userId}/roles`                          | AUTH            | USERS         |
-| 019 | POST   | `/api/v1/users/staff-requests`                          | AUTH            | USERS         |
-| 020 | POST   | `/api/v1/roles`                                         | AUTH            | ROLES         |
-| 021 | GET    | `/api/v1/roles/{roleId}`                                | AUTH            | ROLES         |
-| 022 | GET    | `/api/v1/roles`                                         | AUTH            | ROLES         |
-| 023 | PATCH  | `/api/v1/roles/{roleId}`                                | AUTH            | ROLES         |
-| 024 | DELETE | `/api/v1/roles/{roleId}/permissions`                    | AUTH            | ROLES         |
-| 025 | DELETE | `/api/v1/roles/{roleId}`                                | AUTH            | ROLES         |
-| 026 | POST   | `/api/v1/permissions/module`                            | AUTH            | PERMISSIONS   |
-| 027 | DELETE | `/api/v1/permissions/module/{name}`                     | AUTH            | PERMISSIONS   |
-| 028 | GET    | `/api/v1/permissions/modules`                           | AUTH            | PERMISSIONS   |
-| 029 | POST   | `/api/v1/permissions`                                   | AUTH            | PERMISSIONS   |
-| 030 | PATCH  | `/api/v1/permissions/{permissionId}`                    | AUTH            | PERMISSIONS   |
-| 031 | GET    | `/api/v1/permissions/{permissionId}`                    | AUTH            | PERMISSIONS   |
-| 032 | GET    | `/api/v1/permissions`                                   | AUTH            | PERMISSIONS   |
-| 033 | DELETE | `/api/v1/permissions/{permissionId}`                    | AUTH            | PERMISSIONS   |
-| 034 | POST   | `/api/v1/storage/azure-blob/upload/single`              | AUTH            | FILES         |
-| 035 | POST   | `/api/v1/storage/azure-blob/upload/multiple`            | AUTH            | FILES         |
-| 036 | DELETE | `/api/v1/storage/azure-blob/delete/single`              | AUTH            | FILES         |
-| 037 | DELETE | `/api/v1/storage/azure-blob/delete/multiple`            | AUTH            | FILES         |
-| 038 | PUT    | `/api/v1/storage/azure-blob/move/single`                | AUTH            | FILES         |
-| 039 | PUT    | `/api/v1/storage/azure-blob/move/multiple`              | AUTH            | FILES         |
-| 040 | POST   | `/api/v1/hubs`                                          | AUTH            | HUBS          |
-| 041 | GET    | `/api/v1/hubs/{hubId}`                                  | AUTH            | HUBS          |
-| 042 | GET    | `/api/v1/hubs`                                          | PUBLIC          | HUBS          |
-| 043 | GET    | `/api/v1/hubs/{hubId}/staff`                            | AUTH            | HUBS          |
-| 044 | PATCH  | `/api/v1/hubs/{hubId}`                                  | AUTH            | HUBS          |
-| 045 | DELETE | `/api/v1/hubs/{hubId}`                                  | AUTH            | HUBS          |
-| 046 | POST   | `/api/v1/categories`                                    | AUTH            | CATEGORIES    |
-| 047 | GET    | `/api/v1/categories/{categoryId}`                       | PUBLIC          | CATEGORIES    |
-| 048 | GET    | `/api/v1/categories`                                    | PUBLIC          | CATEGORIES    |
-| 049 | GET    | `/api/v1/categories/tree`                               | PUBLIC          | CATEGORIES    |
-| 050 | PATCH  | `/api/v1/categories/{categoryId}`                       | AUTH            | CATEGORIES    |
-| 051 | DELETE | `/api/v1/categories/{categoryId}`                       | AUTH            | CATEGORIES    |
-| 052 | POST   | `/api/v1/products`                                      | AUTH            | PRODUCTS      |
-| 053 | GET    | `/api/v1/products/{productId}`                          | PUBLIC          | PRODUCTS      |
-| 054 | GET    | `/api/v1/products`                                      | PUBLIC          | PRODUCTS      |
-| 055 | PATCH  | `/api/v1/products/{productId}`                          | AUTH            | PRODUCTS      |
-| 056 | DELETE | `/api/v1/products/{productId}`                          | AUTH            | PRODUCTS      |
-| 057 | POST   | `/api/v1/inventory-items`                               | AUTH            | INVENTORY     |
-| 058 | GET    | `/api/v1/inventory-items/{inventoryItemId}`             | AUTH            | INVENTORY     |
-| 059 | GET    | `/api/v1/inventory-items`                               | AUTH            | INVENTORY     |
-| 060 | PATCH  | `/api/v1/inventory-items/{inventoryItemId}`             | AUTH            | INVENTORY     |
-| 061 | DELETE | `/api/v1/inventory-items/{inventoryItemId}`             | AUTH            | INVENTORY     |
-| 062 | GET    | `/api/v1/cart`                                          | AUTH            | CART          |
-| 063 | POST   | `/api/v1/cart/lines`                                    | AUTH            | CART          |
-| 064 | PATCH  | `/api/v1/cart/lines/{cartLineId}`                       | AUTH            | CART          |
-| 065 | DELETE | `/api/v1/cart/lines/{cartLineId}`                       | AUTH            | CART          |
-| 066 | DELETE | `/api/v1/cart`                                          | AUTH            | CART          |
-| 067 | POST   | `/api/v1/vouchers`                                      | AUTH            | VOUCHERS      |
-| 068 | GET    | `/api/v1/vouchers/{voucherId}`                          | AUTH            | VOUCHERS      |
-| 069 | GET    | `/api/v1/vouchers/code/{code}`                          | AUTH            | VOUCHERS      |
-| 070 | GET    | `/api/v1/vouchers/validate`                             | AUTH            | VOUCHERS      |
-| 071 | GET    | `/api/v1/vouchers`                                      | AUTH            | VOUCHERS      |
-| 072 | PATCH  | `/api/v1/vouchers/{voucherId}`                          | AUTH            | VOUCHERS      |
-| 073 | DELETE | `/api/v1/vouchers/{voucherId}`                          | AUTH            | VOUCHERS      |
-| 074 | POST   | `/api/v1/rental-orders`                                 | AUTH            | RENTAL_ORDERS |
-| 075 | GET    | `/api/v1/rental-orders/{rentalOrderId}`                 | AUTH            | RENTAL_ORDERS |
-| 076 | GET    | `/api/v1/rental-orders`                                 | AUTH            | RENTAL_ORDERS |
-| 077 | GET    | `/api/v1/rental-orders/hub/{hubId}`                     | AUTH            | RENTAL_ORDERS |
-| 078 | GET    | `/api/v1/rental-orders/my-orders`                       | AUTH            | RENTAL_ORDERS |
-| 079 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/status`          | AUTH            | RENTAL_ORDERS |
-| 080 | POST   | `/api/v1/rental-orders/{rentalOrderId}/cancel`          | AUTH            | RENTAL_ORDERS |
-| 081 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/extend`          | AUTH            | RENTAL_ORDERS |
-| 082 | GET    | `/api/v1/rental-orders/{rentalOrderId}/staff-detail`    | AUTH            | RENTAL_ORDERS |
-| 083 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/assign-staff`    | AUTH            | RENTAL_ORDERS |
-| 084 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-delivery` | AUTH            | RENTAL_ORDERS |
-| 085 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-pickup`   | AUTH            | RENTAL_ORDERS |
-| 086 | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/set-penalty`     | AUTH            | RENTAL_ORDERS |
-| 087 | GET    | `/api/v1/payments/{paymentTransactionId}`               | AUTH            | PAYMENTS      |
-| 088 | GET    | `/api/v1/payments`                                      | AUTH            | PAYMENTS      |
-| 089 | GET    | `/api/v1/payments/rental-order/{rentalOrderId}`         | AUTH            | PAYMENTS      |
-| 090 | POST   | `/api/v1/payments/{rentalOrderId}/initiate`             | AUTH            | PAYMENTS      |
-| 091 | GET    | `/api/v1/payments/vnpay/ipn`                            | PUBLIC          | PAYMENTS      |
-| 092 | GET    | `/api/v1/payments/vnpay/return`                         | PUBLIC          | PAYMENTS      |
-| 093 | GET    | `/api/v1/contracts/{rentalContractId}`                  | AUTH            | CONTRACTS     |
-| 094 | GET    | `/api/v1/contracts/rental-order/{rentalOrderId}`        | AUTH            | CONTRACTS     |
-| 095 | POST   | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
-| 096 | GET    | `/api/v1/reviews/{reviewId}`                            | AUTH            | REVIEWS       |
-| 097 | GET    | `/api/v1/reviews`                                       | AUTH            | REVIEWS       |
-| 098 | GET    | `/api/v1/reviews/product/{productId}`                   | AUTH            | REVIEWS       |
-| 099 | DELETE | `/api/v1/reviews/{reviewId}`                            | AUTH            | REVIEWS       |
-| 100 | POST   | `/api/v1/contact-tickets`                               | PUBLIC          | TICKETS       |
-| 101 | GET    | `/api/v1/contact-tickets/{ticketId}`                    | AUTH            | TICKETS       |
-| 102 | GET    | `/api/v1/contact-tickets`                               | AUTH            | TICKETS       |
-| 103 | GET    | `/api/v1/contact-tickets/my-tickets`                    | AUTH            | TICKETS       |
-| 104 | PATCH  | `/api/v1/contact-tickets/{ticketId}/reply`              | AUTH            | TICKETS       |
-| 105 | PATCH  | `/api/v1/contact-tickets/{ticketId}/close`              | AUTH            | TICKETS       |
-| 106 | POST   | `/api/v1/policies`                                      | AUTH            | POLICIES      |
-| 107 | GET    | `/api/v1/policies/{policyId}`                           | PUBLIC          | POLICIES      |
-| 108 | GET    | `/api/v1/policies/code/{code}/latest`                   | PUBLIC          | POLICIES      |
-| 109 | GET    | `/api/v1/policies`                                      | PUBLIC          | POLICIES      |
-| 110 | PATCH  | `/api/v1/policies/{policyId}/deactivate`                | AUTH            | POLICIES      |
-| 111 | POST   | `/api/v1/policies/{policyId}/consent`                   | AUTH            | POLICIES      |
-| 112 | GET    | `/api/v1/policies/my-consents`                          | AUTH            | POLICIES      |
-| 113 | GET    | `/api/v1/dashboards/admin`                              | AUTH            | DASHBOARDS    |
-| 114 | GET    | `/api/v1/dashboards/staff`                              | AUTH            | DASHBOARDS    |
+---
+
+### API-115: Tạo địa chỉ người dùng [AUTH]
+
+- **Method**: `POST`
+- **URL**: `/api/v1/user-addresses`
+
+**Request body**:
+
+```json
+{
+    "recipientName": "Nguyen Van A",
+    "phoneNumber": "0988888888",
+    "addressLine": "123 Nguyen Trai",
+    "ward": "Phường 2",
+    "district": "Quận 5",
+    "city": "Hồ Chí Minh",
+    "latitude": 10.7626,
+    "longitude": 106.6601,
+    "isDefault": true
+}
+```
+
+**Validation**: `recipientName`, `phoneNumber` bắt buộc.
+
+**Response**: `UserAddressResponse`
+
+---
+
+### API-116: Lấy danh sách địa chỉ của tôi [AUTH]
+
+- **Method**: `GET`
+- **URL**: `/api/v1/user-addresses`
+
+**Response**: `UserAddressResponse[]` (sắp theo `isDefault desc`, rồi `updatedAt desc`).
+
+---
+
+### API-117: Lấy chi tiết địa chỉ [AUTH]
+
+- **Method**: `GET`
+- **URL**: `/api/v1/user-addresses/{userAddressId}`
+
+**Response**: `UserAddressResponse`
+
+**Rule**: chỉ chủ sở hữu hoặc admin mới truy cập được.
+
+---
+
+### API-118: Cập nhật địa chỉ [AUTH]
+
+- **Method**: `PATCH`
+- **URL**: `/api/v1/user-addresses/{userAddressId}`
+
+**Request body**: tất cả field đều tùy chọn.
+
+**Response**: `UserAddressResponse`
+
+**Rule**: nếu set `isDefault=true`, backend tự bỏ cờ default ở các địa chỉ còn lại của user.
+
+---
+
+### API-119: Xóa địa chỉ [AUTH]
+
+- **Method**: `DELETE`
+- **URL**: `/api/v1/user-addresses/{userAddressId}`
+
+**Response**:
+
+```json
+{
+    "success": true,
+    "message": "Xóa địa chỉ thành công",
+    "data": null
+}
+```
+
+**Rule**: nếu địa chỉ đang được dùng trong `rental_orders`, backend trả lỗi `USER_ADDRESS_IN_USE`.
+
+---
+
+## Module 20: HUB STAFF ASSIGNMENT (1 API)
+
+---
+
+### API-120: Gán nhiều staff vào hub [AUTH]
+
+- **Method**: `PATCH`
+- **URL**: `/api/v1/hubs/{hubId}/assign-staff`
+
+**Request body**:
+
+```json
+{
+    "staffIds": ["staff-uuid-001", "staff-uuid-002"]
+}
+```
+
+**Validation**:
+
+- `staffIds` không được rỗng (`HUB_STAFF_IDS_NOT_EMPTY`).
+- Tất cả ID phải tồn tại, và từng user phải có role `STAFF`.
+
+**Response**: `HubStaffResponse[]` của danh sách vừa được gán hub.
+
+---
+
+## Module 21: PRODUCTS BY HUB (1 API)
+
+---
+
+### API-121: Lấy danh sách sản phẩm theo hub [PUBLIC]
+
+- **Method**: `GET`
+- **URL**: `/api/v1/products/hub/{hubId}?page=1&size=12&sort=createdAt,desc&filter=isActive:true&includeDescendants=false`
+
+**Response**: `PaginationResponse` chứa `ProductResponse[]`.
+
+**Logic lọc theo hub**:
+
+- Chỉ trả sản phẩm `isActive=true`.
+- Sản phẩm phải có inventory item thuộc hub và trạng thái khác `RETIRED`, `DAMAGED`.
+
+---
+
+## Phụ lục A: Tổng hợp 123 APIs
+
+| #    | Method | URL                                                                | Auth            | Module        |
+| ---- | ------ | ------------------------------------------------------------------ | --------------- | ------------- |
+| 001  | POST   | `/api/v1/auth/register`                                            | PUBLIC          | AUTH          |
+| 002  | POST   | `/api/v1/auth/verify-active-account`                               | PUBLIC          | AUTH          |
+| 003  | POST   | `/api/v1/auth/resend-verify`                                       | PUBLIC          | AUTH          |
+| 004  | POST   | `/api/v1/auth/login`                                               | PUBLIC          | AUTH          |
+| 005  | POST   | `/api/v1/auth/logout`                                              | AUTH            | AUTH          |
+| 006  | GET    | `/api/v1/auth/account`                                             | AUTH            | AUTH          |
+| 007  | GET    | `/api/v1/auth/refresh`                                             | PUBLIC (cookie) | AUTH          |
+| 008  | POST   | `/api/v1/auth/forgot-password`                                     | PUBLIC          | AUTH          |
+| 009  | POST   | `/api/v1/auth/reset-password`                                      | PUBLIC          | AUTH          |
+| 010  | PATCH  | `/api/v1/users/update-profile`                                     | AUTH            | USERS         |
+| 011  | PUT    | `/api/v1/users/update-password`                                    | AUTH            | USERS         |
+| 012  | PUT    | `/api/v1/users/update-email`                                       | AUTH            | USERS         |
+| 013  | POST   | `/api/v1/users/verify-change-email`                                | AUTH            | USERS         |
+| 014  | GET    | `/api/v1/users/{userId}`                                           | AUTH            | USERS         |
+| 015  | GET    | `/api/v1/users`                                                    | AUTH            | USERS         |
+| 016  | PATCH  | `/api/v1/users/{userId}`                                           | AUTH            | USERS         |
+| 017  | DELETE | `/api/v1/users/{userId}`                                           | AUTH            | USERS         |
+| 018  | DELETE | `/api/v1/users/{userId}/roles`                                     | AUTH            | USERS         |
+| 019  | POST   | `/api/v1/users/staff-requests`                                     | AUTH            | USERS         |
+| 020  | POST   | `/api/v1/roles`                                                    | AUTH            | ROLES         |
+| 021  | GET    | `/api/v1/roles/{roleId}`                                           | AUTH            | ROLES         |
+| 022  | GET    | `/api/v1/roles`                                                    | AUTH            | ROLES         |
+| 023  | PATCH  | `/api/v1/roles/{roleId}`                                           | AUTH            | ROLES         |
+| 024  | DELETE | `/api/v1/roles/{roleId}/permissions`                               | AUTH            | ROLES         |
+| 025  | DELETE | `/api/v1/roles/{roleId}`                                           | AUTH            | ROLES         |
+| 026  | POST   | `/api/v1/permissions/module`                                       | AUTH            | PERMISSIONS   |
+| 027  | DELETE | `/api/v1/permissions/module/{name}`                                | AUTH            | PERMISSIONS   |
+| 028  | GET    | `/api/v1/permissions/modules`                                      | AUTH            | PERMISSIONS   |
+| 029  | POST   | `/api/v1/permissions`                                              | AUTH            | PERMISSIONS   |
+| 030  | PATCH  | `/api/v1/permissions/{permissionId}`                               | AUTH            | PERMISSIONS   |
+| 031  | GET    | `/api/v1/permissions/{permissionId}`                               | AUTH            | PERMISSIONS   |
+| 032  | GET    | `/api/v1/permissions`                                              | AUTH            | PERMISSIONS   |
+| 033  | DELETE | `/api/v1/permissions/{permissionId}`                               | AUTH            | PERMISSIONS   |
+| 034  | POST   | `/api/v1/storage/azure-blob/upload/single`                         | AUTH            | FILES         |
+| 035  | POST   | `/api/v1/storage/azure-blob/upload/multiple`                       | AUTH            | FILES         |
+| 036  | DELETE | `/api/v1/storage/azure-blob/delete/single`                         | AUTH            | FILES         |
+| 037  | DELETE | `/api/v1/storage/azure-blob/delete/multiple`                       | AUTH            | FILES         |
+| 038  | PUT    | `/api/v1/storage/azure-blob/move/single`                           | AUTH            | FILES         |
+| 039  | PUT    | `/api/v1/storage/azure-blob/move/multiple`                         | AUTH            | FILES         |
+| 040  | POST   | `/api/v1/hubs`                                                     | AUTH            | HUBS          |
+| 041  | GET    | `/api/v1/hubs/{hubId}`                                             | AUTH            | HUBS          |
+| 042  | GET    | `/api/v1/hubs`                                                     | PUBLIC          | HUBS          |
+| 043  | GET    | `/api/v1/hubs/{hubId}/staff`                                       | AUTH            | HUBS          |
+| 044  | PATCH  | `/api/v1/hubs/{hubId}`                                             | AUTH            | HUBS          |
+| 045  | DELETE | `/api/v1/hubs/{hubId}`                                             | AUTH            | HUBS          |
+| 046  | POST   | `/api/v1/categories`                                               | AUTH            | CATEGORIES    |
+| 047  | GET    | `/api/v1/categories/{categoryId}`                                  | PUBLIC          | CATEGORIES    |
+| 048  | GET    | `/api/v1/categories`                                               | PUBLIC          | CATEGORIES    |
+| 049  | GET    | `/api/v1/categories/tree`                                          | PUBLIC          | CATEGORIES    |
+| 050  | PATCH  | `/api/v1/categories/{categoryId}`                                  | AUTH            | CATEGORIES    |
+| 051  | DELETE | `/api/v1/categories/{categoryId}`                                  | AUTH            | CATEGORIES    |
+| 052  | POST   | `/api/v1/products`                                                 | AUTH            | PRODUCTS      |
+| 053  | GET    | `/api/v1/products/{productId}`                                     | PUBLIC          | PRODUCTS      |
+| 054  | GET    | `/api/v1/products`                                                 | PUBLIC          | PRODUCTS      |
+| 055  | PATCH  | `/api/v1/products/{productId}`                                     | AUTH            | PRODUCTS      |
+| 056  | DELETE | `/api/v1/products/{productId}`                                     | AUTH            | PRODUCTS      |
+| 057  | POST   | `/api/v1/inventory-items`                                          | AUTH            | INVENTORY     |
+| 058  | GET    | `/api/v1/inventory-items/{inventoryItemId}`                        | AUTH            | INVENTORY     |
+| 059  | GET    | `/api/v1/inventory-items`                                          | AUTH            | INVENTORY     |
+| 060  | PATCH  | `/api/v1/inventory-items/{inventoryItemId}`                        | AUTH            | INVENTORY     |
+| 061  | DELETE | `/api/v1/inventory-items/{inventoryItemId}`                        | AUTH            | INVENTORY     |
+| 062  | GET    | `/api/v1/cart`                                                     | AUTH            | CART          |
+| 063  | POST   | `/api/v1/cart/lines`                                               | AUTH            | CART          |
+| 064  | PATCH  | `/api/v1/cart/lines/{cartLineId}`                                  | AUTH            | CART          |
+| 065  | DELETE | `/api/v1/cart/lines/{cartLineId}`                                  | AUTH            | CART          |
+| 066  | DELETE | `/api/v1/cart`                                                     | AUTH            | CART          |
+| 067  | POST   | `/api/v1/vouchers`                                                 | AUTH            | VOUCHERS      |
+| 068  | GET    | `/api/v1/vouchers/{voucherId}`                                     | AUTH            | VOUCHERS      |
+| 069  | GET    | `/api/v1/vouchers/code/{code}`                                     | AUTH            | VOUCHERS      |
+| 070  | GET    | `/api/v1/vouchers/validate`                                        | AUTH            | VOUCHERS      |
+| 071  | GET    | `/api/v1/vouchers`                                                 | AUTH            | VOUCHERS      |
+| 072  | PATCH  | `/api/v1/vouchers/{voucherId}`                                     | AUTH            | VOUCHERS      |
+| 073  | DELETE | `/api/v1/vouchers/{voucherId}`                                     | AUTH            | VOUCHERS      |
+| 074  | POST   | `/api/v1/rental-orders`                                            | AUTH            | RENTAL_ORDERS |
+| 075  | GET    | `/api/v1/rental-orders/{rentalOrderId}`                            | AUTH            | RENTAL_ORDERS |
+| 076  | GET    | `/api/v1/rental-orders`                                            | AUTH            | RENTAL_ORDERS |
+| 077  | GET    | `/api/v1/rental-orders/hub/{hubId}`                                | AUTH            | RENTAL_ORDERS |
+| 078  | GET    | `/api/v1/rental-orders/my-orders`                                  | AUTH            | RENTAL_ORDERS |
+| 079  | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/status`                     | AUTH            | RENTAL_ORDERS |
+| 080  | POST   | `/api/v1/rental-orders/{rentalOrderId}/cancel`                     | AUTH            | RENTAL_ORDERS |
+| 081  | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/extend`                     | AUTH            | RENTAL_ORDERS |
+| 082  | GET    | `/api/v1/rental-orders/{rentalOrderId}/staff-detail`               | AUTH            | RENTAL_ORDERS |
+| 083  | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/assign-staff`               | AUTH            | RENTAL_ORDERS |
+| 084  | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-delivery`            | AUTH            | RENTAL_ORDERS |
+| 085  | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/record-pickup`              | AUTH            | RENTAL_ORDERS |
+| 086  | PATCH  | `/api/v1/rental-orders/{rentalOrderId}/set-penalty`                | AUTH            | RENTAL_ORDERS |
+| 086A | GET    | `/api/v1/rental-orders/{rentalOrderId}/overdue-penalty-suggestion` | AUTH            | RENTAL_ORDERS |
+| 087  | GET    | `/api/v1/payments/{paymentTransactionId}`                          | AUTH            | PAYMENTS      |
+| 088  | GET    | `/api/v1/payments`                                                 | AUTH            | PAYMENTS      |
+| 089  | GET    | `/api/v1/payments/rental-order/{rentalOrderId}`                    | AUTH            | PAYMENTS      |
+| 090  | POST   | `/api/v1/payments/{rentalOrderId}/initiate`                        | AUTH            | PAYMENTS      |
+| 091  | GET    | `/api/v1/payments/vnpay/ipn`                                       | PUBLIC          | PAYMENTS      |
+| 092  | GET    | `/api/v1/payments/vnpay/return`                                    | PUBLIC          | PAYMENTS      |
+| 093  | GET    | `/api/v1/contracts/{rentalContractId}`                             | AUTH            | CONTRACTS     |
+| 094  | GET    | `/api/v1/contracts/rental-order/{rentalOrderId}`                   | AUTH            | CONTRACTS     |
+| 095  | POST   | `/api/v1/reviews`                                                  | AUTH            | REVIEWS       |
+| 096  | GET    | `/api/v1/reviews/{reviewId}`                                       | AUTH            | REVIEWS       |
+| 097  | GET    | `/api/v1/reviews`                                                  | AUTH            | REVIEWS       |
+| 098  | GET    | `/api/v1/reviews/product/{productId}`                              | AUTH            | REVIEWS       |
+| 099  | DELETE | `/api/v1/reviews/{reviewId}`                                       | AUTH            | REVIEWS       |
+| 100  | POST   | `/api/v1/contact-tickets`                                          | PUBLIC          | TICKETS       |
+| 101  | GET    | `/api/v1/contact-tickets/{ticketId}`                               | AUTH            | TICKETS       |
+| 102  | GET    | `/api/v1/contact-tickets`                                          | AUTH            | TICKETS       |
+| 103  | GET    | `/api/v1/contact-tickets/my-tickets`                               | AUTH            | TICKETS       |
+| 104  | PATCH  | `/api/v1/contact-tickets/{ticketId}/reply`                         | AUTH            | TICKETS       |
+| 105  | PATCH  | `/api/v1/contact-tickets/{ticketId}/close`                         | AUTH            | TICKETS       |
+| 106  | POST   | `/api/v1/policies`                                                 | AUTH            | POLICIES      |
+| 107  | GET    | `/api/v1/policies/{policyId}`                                      | PUBLIC          | POLICIES      |
+| 108  | GET    | `/api/v1/policies/code/{code}/latest`                              | PUBLIC          | POLICIES      |
+| 109  | GET    | `/api/v1/policies`                                                 | PUBLIC          | POLICIES      |
+| 109A | PATCH  | `/api/v1/policies/{policyId}`                                      | AUTH            | POLICIES      |
+| 110  | PATCH  | `/api/v1/policies/{policyId}/deactivate`                           | AUTH            | POLICIES      |
+| 111  | POST   | `/api/v1/policies/{policyId}/consent`                              | AUTH            | POLICIES      |
+| 112  | GET    | `/api/v1/policies/my-consents`                                     | AUTH            | POLICIES      |
+| 113  | GET    | `/api/v1/dashboards/admin`                                         | AUTH            | DASHBOARDS    |
+| 114  | GET    | `/api/v1/dashboards/staff`                                         | AUTH            | DASHBOARDS    |
+| 115  | POST   | `/api/v1/user-addresses`                                           | AUTH            | USERS         |
+| 116  | GET    | `/api/v1/user-addresses`                                           | AUTH            | USERS         |
+| 117  | GET    | `/api/v1/user-addresses/{userAddressId}`                           | AUTH            | USERS         |
+| 118  | PATCH  | `/api/v1/user-addresses/{userAddressId}`                           | AUTH            | USERS         |
+| 119  | DELETE | `/api/v1/user-addresses/{userAddressId}`                           | AUTH            | USERS         |
+| 120  | PATCH  | `/api/v1/hubs/{hubId}/assign-staff`                                | AUTH            | HUBS          |
+| 121  | GET    | `/api/v1/products/hub/{hubId}`                                     | PUBLIC          | PRODUCTS      |
 
 ---
 
@@ -3394,6 +3670,10 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | `PHONE_NUMBER_EXISTED`                   | 1117 | Số điện thoại đã tồn tại                    |
 | `USER_NOT_FOUND`                         | 1201 | Không tìm thấy người dùng                   |
 | `USER_NOT_STAFF_ROLE`                    | 1213 | Người dùng được gán không có vai trò STAFF  |
+| `USER_ADDRESS_NOT_FOUND`                 | 1214 | Không tìm thấy địa chỉ người dùng           |
+| `USER_ADDRESS_NOT_OWNED`                 | 1215 | Địa chỉ không thuộc user hiện tại           |
+| `USER_ADDRESS_IN_USE`                    | 1218 | Địa chỉ đang được dùng bởi đơn thuê         |
+| `HUB_STAFF_IDS_NOT_EMPTY`                | 1606 | Danh sách staffIds không được để trống      |
 | `PRODUCT_NOT_FOUND`                      | 1801 | Không tìm thấy sản phẩm                     |
 | `INVENTORY_INSUFFICIENT_STOCK`           | 1906 | Không đủ tồn kho                            |
 | `CART_RENTAL_MIN_DAYS`                   | 2005 | Chưa đạt số ngày thuê tối thiểu             |
@@ -3412,12 +3692,15 @@ Ví dụ: `/api/v1/policies/code/RENTAL_TERMS/latest`
 | `RENTAL_ORDER_INVALID_STATUS_TRANSITION` | 2202 | Chuyển trạng thái đơn thuê không hợp lệ     |
 | `RENTAL_ORDER_CANNOT_CANCEL`             | 2203 | Không thể hủy đơn ở trạng thái hiện tại     |
 | `RENTAL_ORDER_EXTENSION_CONFLICT`        | 2213 | Gia hạn thất bại do xung đột lịch           |
+| `RENTAL_ORDER_USER_ADDRESS_REQUIRED`     | 2214 | Cần chọn địa chỉ giao hàng hợp lệ           |
 | `PAYMENT_NOT_FOUND`                      | 2301 | Không tìm thấy giao dịch thanh toán         |
 | `PAYMENT_AMOUNT_MIN`                     | 2304 | Số tiền thanh toán phải > 0                 |
 | `CONTRACT_NOT_FOUND`                     | 2401 | Không tìm thấy hợp đồng                     |
 | `CONTRACT_ALREADY_EXISTS_FOR_ORDER`      | 2403 | Đơn thuê đã có hợp đồng                     |
 | `REVIEW_ALREADY_EXISTS`                  | 2502 | Đã đánh giá sản phẩm này cho đơn thuê       |
 | `REVIEW_ORDER_NOT_COMPLETED`             | 2505 | Chỉ đánh giá khi đơn thuê đã hoàn thành     |
+| `REVIEW_NOT_ORDER_OWNER`                 | 2506 | Không phải chủ sở hữu đơn thuê để đánh giá  |
+| `REVIEW_PRODUCT_NOT_RENTED`              | 2507 | Chưa có lịch sử thuê COMPLETED với sản phẩm |
 | `TICKET_NOT_FOUND`                       | 2601 | Không tìm thấy ticket hỗ trợ                |
 | `TICKET_ALREADY_CLOSED`                  | 2604 | Ticket đã đóng                              |
 | `POLICY_NOT_FOUND`                       | 2701 | Không tìm thấy tài liệu chính sách          |

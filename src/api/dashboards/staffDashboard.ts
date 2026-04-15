@@ -1,12 +1,3 @@
-/**
- * API-114: Staff Dashboard (GET /api/v1/dashboards/staff)
- *
- * Authenticated endpoint — automatically injects Bearer token.
- * Pass hubId only if staff wants a specific hub; omit to use the assigned hub.
- * If hubId doesn't match the staff's hub, the backend returns UNAUTHORIZED_ACCESS
- * and the caller should retry without hubId.
- */
-
 import { apiGet } from '@/api/apiService';
 
 // ─── Response shapes ──────────────────────────────────────────────────────────

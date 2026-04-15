@@ -1,5 +1,5 @@
 /**
- * Rental Orders API — Module 12: RENTAL ORDERS (API-074 → API-081)
+ * Rental Orders API — Module 12: RENTAL ORDERS (API-074 → API-086A)
  *
  * Base URL: /api/v1
  * Tất cả endpoints đều yêu cầu xác thực [AUTH]
@@ -132,6 +132,17 @@ export interface RentalOrderResponse {
   penaltyChargeAmount: number | null;
   depositRefundAmount: number | null;
   totalPaidAmount: number;
+  /** URL ảnh QR (PNG) — backend tự sinh khi đơn vừa PAID và chưa có QR */
+  qrCode?: string | null;
+  /** Phạt hỏng / mất thiết bị (đã chốt hoặc đang lưu) */
+  damagePenaltyAmount?: number | null;
+  /** Phạt quá hạn đã chốt cuối cùng */
+  overduePenaltyAmount?: number | null;
+  /**
+   * Phạt quá hạn tạm tính (chưa gộp vào penaltyChargeAmount cho đến khi staff chốt).
+   * Backend có thể cập nhật theo ngày khi đơn IN_USE / PENDING_PICKUP và đang quá hạn.
+   */
+  provisionalOverduePenaltyAmount?: number | null;
   placedAt: string;
   createdBy: string | null;
   deliveryStaff: RentalOrderStaffSummary | null;
@@ -188,17 +199,13 @@ export interface CreateOrderLineInput {
   voucherCode?: string;
 }
 
+/** API-074 POST — địa chỉ lấy từ sổ user (`userAddressId`) */
 export interface CreateRentalOrderInput {
-  deliveryRecipientName: string;
-  deliveryPhone: string;
-  deliveryAddressLine?: string;
-  deliveryWard?: string;
-  deliveryDistrict?: string;
-  deliveryCity?: string;
+  userAddressId: string;
   expectedDeliveryDate: string; // YYYY-MM-DD
-  /** @deprecated Dùng orderLines[].voucherCode thay thế (chỉ tương thích ngược với đơn 1 line) */
-  voucherCode?: string;
   orderLines: CreateOrderLineInput[];
+  /** @deprecated Dùng orderLines[].voucherCode; chỉ tương thích đơn 1 line */
+  voucherCode?: string;
 }
 
 export interface UpdateOrderStatusInput {
@@ -231,9 +238,36 @@ export interface RecordPickupInput {
 }
 
 export interface SetPenaltyInput {
-  /** >= 0; depositRefundAmount = depositHoldAmount - penaltyTotal */
-  penaltyTotal: number;
+  /** Tương thích ngược: nếu chỉ gửi field này, backend map vào damage, overdue = 0 */
+  penaltyTotal?: number;
+  damagePenaltyAmount?: number;
+  overduePenaltyAmount?: number;
   note?: string;
+}
+
+
+// ─── Overdue Penalty Suggestion ─────────────────────────────────────────────
+
+export interface OverduePenaltySuggestionData {
+  rentalOrderId: string;
+  status: RentalOrderStatus;
+  overdue: boolean;
+  expectedRentalEndDate: string;
+  actualRentalEndAt: string | null;
+  overdueDays: number;
+  dailyOverdueRateAmount: number;
+  provisionalOverduePenaltyAmount: number;
+  finalOverduePenaltyAmount: number;
+  damagePenaltyAmount: number;
+  suggestedTotalPenaltyAmount: number;
+  suggestedDepositRefundAmount: number;
+}
+
+
+export interface OverduePenaltySuggestionResponse {
+  code: number;
+  message: string;
+  data: OverduePenaltySuggestionData;
 }
 
 // ─── Staff Detail ────────────────────────────────────────────────────────────
@@ -273,7 +307,7 @@ const authOpts = { requireToken: true as const };
 /**
  * API-074: Tạo đơn thuê [AUTH]
  *
- * @param input - delivery info + order lines
+ * @param input - userAddressId + expectedDeliveryDate + orderLines
  *
  * Lỗi: INVENTORY_INSUFFICIENT_STOCK, RENTAL_ORDER_MIN_DAYS_NOT_MET,
  *       VOUCHER_EXPIRED, VOUCHER_MIN_RENTAL_DAYS_NOT_MET
@@ -486,11 +520,10 @@ export function recordPickup(
 /**
  * API-085: Cập nhật phí phạt đơn thuê [AUTH]
  *
- * @param rentalOrderId - UUID của đơn thuê
- * @param input - penaltyTotal (>= 0) và note tùy chọn
+ * @param input - damagePenaltyAmount / overduePenaltyAmount hoặc penaltyTotal (legacy)
  *
  * Business logic:
- * - depositRefundAmount = depositHoldAmount - penaltyChargeAmount
+ * - depositRefundAmount = max(depositHoldAmount - (damage + overdue), 0)
  */
 export function setPenalty(
   rentalOrderId: string,
@@ -499,6 +532,26 @@ export function setPenalty(
   return httpService.patch<RentalOrderSingleResponse>(
     `/rental-orders/${rentalOrderId}/set-penalty`,
     input,
+    authOpts,
+  );
+}
+
+/**
+ * Lấy đề xuất phí phạt quá hạn tạm tính [AUTH]
+ *
+ * @param rentalOrderId - UUID của đơn thuê
+ *
+ * Business logic:
+ * - Khi IN_USE/PENDING_PICKUP và overdue: backend auto-refresh provisionalOverduePenaltyAmount mỗi ngày.
+ * - Khi PICKED_UP: backend dùng actualRentalEndAt để khóa số ngày overdue.
+ * - FE dùng provisionalOverduePenaltyAmount để prefill overduePenaltyAmount ở set-penalty,
+ *   hoặc cho staff nhập tay mức cuối cùng khác.
+ */
+export function getOverduePenaltySuggestion(
+  rentalOrderId: string,
+): Promise<AxiosResponse<OverduePenaltySuggestionResponse>> {
+  return httpService.get<OverduePenaltySuggestionResponse>(
+    `/rental-orders/${rentalOrderId}/overdue-penalty-suggestion`,
     authOpts,
   );
 }

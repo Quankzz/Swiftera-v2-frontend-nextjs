@@ -12,4 +12,7 @@ export const rentalOrderKeys = {
     [...rentalOrderKeys.lists(), params ?? {}] as const,
   details: () => [...rentalOrderKeys.all, 'detail'] as const,
   detail: (id: string) => [...rentalOrderKeys.details(), id] as const,
+  contracts: () => [...rentalOrderKeys.all, 'contract'] as const,
+  contract: (rentalOrderId: string) =>
+    [...rentalOrderKeys.contracts(), rentalOrderId] as const,
 } as const;

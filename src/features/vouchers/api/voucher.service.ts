@@ -2,11 +2,12 @@
  * Voucher API service — Module 11: VOUCHERS
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (API-067 → API-073)
  *
- * Dùng apiService.ts — KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  * Service chỉ nhận payload đúng format API, không chứa UI logic.
  */
 
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 import type {
   VoucherResponse,
   PaginatedVouchersResponse,
@@ -14,6 +15,8 @@ import type {
   UpdateVoucherInput,
   VoucherListParams,
 } from '../types';
+
+const authOpts = { requireToken: true as const };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -23,31 +26,40 @@ import type {
  * API-071: GET /vouchers?page=1&size=10&filter=...
  * BE dùng 1-based pagination. Caller phải truyền đúng page (1-based).
  */
-export function getVouchersList(
+export async function getVouchersList(
   params?: VoucherListParams,
 ): Promise<PaginatedVouchersResponse> {
-  return apiGet<PaginatedVouchersResponse>('/vouchers', {
-    params: params as Record<
-      string,
-      string | number | boolean | undefined | null
-    >,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedVouchersResponse>>(
+    '/vouchers',
+    { ...authOpts, params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-068: GET /vouchers/{voucherId}
  * Lấy chi tiết voucher theo ID
  */
-export function getVoucherById(voucherId: string): Promise<VoucherResponse> {
-  return apiGet<VoucherResponse>(`/vouchers/${voucherId}`);
+export async function getVoucherById(
+  voucherId: string,
+): Promise<VoucherResponse> {
+  const res = await httpService.get<ApiResponse<VoucherResponse>>(
+    `/vouchers/${voucherId}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-069: GET /vouchers/code/{code}
  * Lấy voucher theo mã code (dùng ở dashboard để preview)
  */
-export function getVoucherByCode(code: string): Promise<VoucherResponse> {
-  return apiGet<VoucherResponse>(`/vouchers/code/${encodeURIComponent(code)}`);
+export async function getVoucherByCode(code: string): Promise<VoucherResponse> {
+  const res = await httpService.get<ApiResponse<VoucherResponse>>(
+    `/vouchers/code/${encodeURIComponent(code)}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
@@ -75,7 +87,7 @@ export interface VoucherValidateResponse {
   expiresAt: string | null;
 }
 
-export function validateVoucher(params: {
+export async function validateVoucher(params: {
   code: string;
   rentalDurationDays: number;
   rentalSubtotalAmount: number;
@@ -83,12 +95,17 @@ export function validateVoucher(params: {
   productId?: string;
 }): Promise<VoucherValidateResponse> {
   const { productId, ...rest } = params;
-  return apiGet<VoucherValidateResponse>('/vouchers/validate', {
-    params: {
-      ...rest,
-      ...(productId ? { productId } : {}),
+  const res = await httpService.get<ApiResponse<VoucherValidateResponse>>(
+    '/vouchers/validate',
+    {
+      ...authOpts,
+      params: {
+        ...rest,
+        ...(productId ? { productId } : {}),
+      },
     },
-  });
+  );
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,27 +116,38 @@ export function validateVoucher(params: {
  * API-067: POST /vouchers
  * Tạo voucher mới
  */
-export function createVoucher(
+export async function createVoucher(
   payload: CreateVoucherInput,
 ): Promise<VoucherResponse> {
-  return apiPost<VoucherResponse>('/vouchers', payload);
+  const res = await httpService.post<ApiResponse<VoucherResponse>>(
+    '/vouchers',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-072: PATCH /vouchers/{voucherId}
  * Cập nhật voucher (partial)
  */
-export function updateVoucher(
+export async function updateVoucher(
   voucherId: string,
   payload: UpdateVoucherInput,
 ): Promise<VoucherResponse> {
-  return apiPatch<VoucherResponse>(`/vouchers/${voucherId}`, payload);
+  const res = await httpService.patch<ApiResponse<VoucherResponse>>(
+    `/vouchers/${voucherId}`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-073: DELETE /vouchers/{voucherId}
  * Xóa voucher
  */
-export function deleteVoucher(voucherId: string): Promise<null> {
-  return apiDelete<null>(`/vouchers/${voucherId}`);
+export async function deleteVoucher(voucherId: string): Promise<null> {
+  await httpService.delete(`/vouchers/${voucherId}`, authOpts);
+  return null;
 }

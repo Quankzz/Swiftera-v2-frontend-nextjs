@@ -9,6 +9,11 @@ interface StaffOrderCountsState {
 
   /** Replace the entire counts map after a fresh data load. */
   setCounts: (counts: Partial<Record<OrderStatus, number>>) => void;
+  /**
+   * Optimistically adjust counts after a single order's status changes.
+   * Decrements `from` and increments `to` without re-fetching the full list.
+   */
+  updateCount: (from: OrderStatus, to: OrderStatus) => void;
   /** Clear on logout / user switch. */
   clear: () => void;
 }
@@ -18,6 +23,21 @@ export const useStaffOrderCounts = create<StaffOrderCountsState>((set) => ({
   isLoaded: false,
 
   setCounts: (counts) => set({ counts, isLoaded: true }),
+
+  updateCount: (from, to) =>
+    set((state) => {
+      const prev = state.counts;
+      const fromVal = (prev[from] ?? 0) - 1;
+      const toVal = (prev[to] ?? 0) + 1;
+      return {
+        counts: {
+          ...prev,
+          ...(fromVal > 0 ? { [from]: fromVal } : { [from]: 0 }),
+          [to]: toVal,
+        },
+      };
+    }),
+
   clear: () => set({ counts: {}, isLoaded: false }),
 }));
 

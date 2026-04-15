@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import {
   RotateCcw,
@@ -9,11 +9,12 @@ import {
   CheckCircle2,
   Loader2,
   AlertTriangle,
-  Banknote,
   Info,
   Wifi,
   Navigation2,
   ShieldAlert,
+  Clock,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,10 +23,15 @@ import type { DashboardOrder, OrderItem } from '@/types/dashboard.types';
 import { fmt } from '../utils';
 import { WorkflowBanner } from '../WorkflowBanner';
 import { CameraCapture } from '../CameraCapture';
+import { WorkflowFooter } from '../WorkflowFooter';
+import {
+  getOverduePenaltySuggestion,
+  type OverduePenaltySuggestionData,
+} from '@/api/rentalOrderApi';
 
 interface ReturningWorkflowProps {
   order: DashboardOrder;
-  onCompleteReturn: (penaltyTotal?: number) => void;
+  onCompleteReturn: (damagePenalty?: number, overduePenalty?: number) => void;
   loading?: boolean;
   staffLat?: number;
   staffLng?: number;
@@ -47,6 +53,7 @@ function ItemReturnCard({
   onRemove: (idx: number) => void;
   onPenaltyChange: (val: string) => void;
 }) {
+  const [penaltyLocked, setPenaltyLocked] = useState(false);
   const hasPhoto = photos.length > 0;
   const penaltyNum = Number(penalty);
   const penaltyValid =
@@ -84,10 +91,10 @@ function ItemReturnCard({
           <p className="text-sm font-bold text-foreground truncate">
             {item.product_name}
           </p>
-          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+          <p className="text-sm text-muted-foreground font-mono mt-0.5">
             {item.serial_number || '—'}
           </p>
-          <p className="text-xs font-semibold text-theme-primary-start mt-1">
+          <p className="text-sm font-semibold text-theme-primary-start mt-1">
             Cọc {fmt(item.deposit_amount)}
           </p>
         </div>
@@ -125,52 +132,109 @@ function ItemReturnCard({
       <div>
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle className="size-3.5 text-orange-500 shrink-0" />
-          <label className="text-xs font-bold text-foreground">
+          <label className="text-sm font-bold text-foreground">
             Phí xử lý hư hỏng (nếu có)
           </label>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Input
-              type="number"
-              min={0}
-              step={1000}
-              value={penalty}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/[^0-9]/g, '');
-                onPenaltyChange(raw);
-              }}
-              placeholder="0"
+
+        {penaltyLocked ? (
+          /* Locked row */
+          <div className="flex items-center gap-2">
+            <div
               className={cn(
-                'pr-12 rounded-xl text-sm font-semibold',
-                !penaltyValid || penaltyExcessive
-                  ? 'border-destructive focus-visible:ring-destructive'
-                  : penaltyNum > 0
-                    ? 'border-orange-400 focus-visible:ring-orange-400'
-                    : '',
+                'flex-1 flex items-center gap-2.5 rounded-xl px-4 py-2 border',
+                penaltyNum > 0
+                  ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200/60 dark:border-orange-800/30'
+                  : 'bg-success/8 border-success/30',
               )}
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium pointer-events-none">
-              VNĐ
-            </span>
+            >
+              {penaltyNum > 0 ? (
+                <ShieldAlert className="size-4 text-orange-500 shrink-0" />
+              ) : (
+                <CheckCircle2 className="size-4 text-success shrink-0" />
+              )}
+              <span
+                className={cn(
+                  'text-sm font-bold flex-1',
+                  penaltyNum > 0
+                    ? 'text-orange-700 dark:text-orange-300'
+                    : 'text-success',
+                )}
+              >
+                {penaltyNum > 0 ? fmt(penaltyNum) : 'Không có hư hỏng'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPenaltyLocked(false)}
+              className="inline-flex items-center gap-1.5 h-10 px-8 rounded-xl border border-border bg-card text-lg font-bold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
+            >
+              <Pencil className="size-4" /> Chỉnh sửa
+            </button>
           </div>
-          {penaltyNum > 0 && (
-            <span className="text-xs font-bold text-orange-600 dark:text-orange-400 shrink-0">
-              {fmt(penaltyNum)}
-            </span>
-          )}
-        </div>
-        {penaltyExcessive && (
-          <p className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-            <Info className="size-3 shrink-0" />
-            Phí phạt vượt quá 3× tiền cọc. Vui lòng kiểm tra lại.
-          </p>
-        )}
-        {penaltyNum > 0 && !penaltyExcessive && (
-          <p className="text-xs text-orange-600 dark:text-orange-400 mt-1.5 flex items-center gap-1">
-            <AlertTriangle className="size-3 shrink-0" />
-            Sẽ trừ vào tiền cọc khi hoàn tất.
-          </p>
+        ) : (
+          /* Editing row */
+          <>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Input
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={penalty}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, '');
+                    onPenaltyChange(raw);
+                  }}
+                  placeholder="0"
+                  className={cn(
+                    'pr-12 rounded-xl text-sm font-semibold',
+                    !penaltyValid || penaltyExcessive
+                      ? 'border-destructive focus-visible:ring-destructive'
+                      : penaltyNum > 0
+                        ? 'border-orange-400 focus-visible:ring-orange-400'
+                        : '',
+                  )}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium pointer-events-none">
+                  VNĐ
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPenaltyLocked(true)}
+                disabled={penalty === ''}
+                className={cn(
+                  'inline-flex items-center gap-1.5 h-10 px-8 rounded-xl text-lg font-bold shrink-0 transition-colors',
+                  penalty !== ''
+                    ? penaltyNum > 0
+                      ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                      : 'bg-success hover:bg-success/90 text-white'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50',
+                )}
+              >
+                <CheckCircle2 className="size-4" /> Xác nhận
+              </button>
+            </div>
+            {penaltyNum > 0 && (
+              <span className="pl-3 text-sm font-bold text-orange-600 dark:text-orange-400 shrink-0 tabular-nums">
+                {fmt(penaltyNum)}
+              </span>
+            )}
+            {penaltyExcessive && (
+              <p className="text-sm text-destructive mt-1.5 flex items-center gap-1">
+                <Info className="size-3 shrink-0" />
+                Phí phạt vượt quá 3× tiền cọc. Vui lòng kiểm tra lại.
+              </p>
+            )}
+            {penaltyNum > 0 && !penaltyExcessive && (
+              <p className="text-sm text-orange-600 dark:text-orange-400 mt-1.5 flex items-center gap-1">
+                <AlertTriangle className="size-3 shrink-0" />
+                Sẽ trừ vào tiền cọc khi hoàn tất.
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -197,6 +261,37 @@ export function ReturningWorkflow({
         ]),
       ),
   );
+  const [overdueSuggestion, setOverdueSuggestion] =
+    useState<OverduePenaltySuggestionData | null>(null);
+  const [overdueSuggestionLoading, setOverdueSuggestionLoading] =
+    useState(true);
+  const [overduePenaltyInput, setOverduePenaltyInput] = useState<string>('');
+  const [overdueLocked, setOverdueLocked] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getOverduePenaltySuggestion(order.rental_order_id)
+      .then((res) => {
+        if (cancelled) return;
+        const data = res.data.data;
+        setOverdueSuggestion(data);
+        if (data.overdue) {
+          setOverduePenaltyInput(String(data.provisionalOverduePenaltyAmount));
+        } else {
+          // No overdue detected — auto-confirm at 0
+          setOverdueLocked(true);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setOverdueSuggestionLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [order.rental_order_id]);
+
+  const overduePenalty = Number(overduePenaltyInput) || 0; // allow positive or negative adjustment
 
   const itemsDone = order.items.filter(
     (i) => (itemPhotos[i.rental_order_item_id]?.length ?? 0) > 0,
@@ -228,8 +323,13 @@ export function ReturningWorkflow({
   }, []);
 
   const handleSubmit = useCallback(() => {
-    onCompleteReturn(totalPenalty > 0 ? totalPenalty : undefined);
-  }, [onCompleteReturn, totalPenalty]);
+    onCompleteReturn(
+      totalPenalty > 0 ? totalPenalty : undefined,
+      overduePenalty !== 0 && Number.isFinite(overduePenalty)
+        ? overduePenalty
+        : undefined,
+    );
+  }, [onCompleteReturn, totalPenalty, overduePenalty]);
 
   const hasPenalty = totalPenalty > 0;
   const depositAfterPenalty =
@@ -260,7 +360,7 @@ export function ReturningWorkflow({
           )}
         />
         <Navigation2 className="size-4 text-muted-foreground shrink-0" />
-        <span className="text-xs font-semibold text-foreground flex-1">
+        <span className="text-sm font-semibold text-foreground flex-1">
           {staffLat != null
             ? 'GPS đang theo dõi vị trí'
             : 'Đang lấy vị trí GPS…'}
@@ -308,13 +408,13 @@ export function ReturningWorkflow({
           />
         </div>
         {!allPhotographed && (
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
+          <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1.5">
             <Info className="size-3.5 shrink-0" />
             Chụp ảnh tất cả {order.items.length} thiết bị thu hồi để tiếp tục.
           </p>
         )}
         {allPhotographed && !hasGps && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1.5">
+          <p className="text-sm text-amber-600 dark:text-amber-400 mt-2 flex items-center gap-1.5">
             <Info className="size-3.5 shrink-0" />
             GPS chưa sẵn sàng. Hệ thống vẫn có thể ghi nhận thu hồi nhưng sẽ
             không kèm tọa độ hiện tại.
@@ -331,11 +431,11 @@ export function ReturningWorkflow({
               Kiểm tra từng thiết bị
             </h3>
           </div>
-          <span className="text-xs font-bold bg-muted text-muted-foreground px-2.5 py-1 rounded-lg">
+          <span className="text-sm font-bold bg-muted text-muted-foreground px-2.5 py-1 rounded-lg">
             {order.items.length} thiết bị
           </span>
         </div>
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="p-4 grid grid-cols-1 gap-3">
           {order.items.map((item) => (
             <ItemReturnCard
               key={item.rental_order_item_id}
@@ -401,46 +501,216 @@ export function ReturningWorkflow({
         </div>
       )}
 
-      {/* Action footer */}
-      <div className="rounded-2xl border border-border bg-card px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="text-sm text-muted-foreground">
-          {allPhotographed ? (
-            <span className="flex items-center gap-2 text-success font-semibold">
-              <CheckCircle2 className="size-4" />
-              {hasPenalty
-                ? `Hoàn tất kiểm tra — Phí phạt: ${fmt(totalPenalty)}`
-                : 'Hoàn tất kiểm tra — Không có hư hỏng.'}
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <Camera className="size-4 shrink-0" />
-              Còn {order.items.length - itemsDone} thiết bị chưa được chụp ảnh.
-            </span>
+      {/* Overdue penalty */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2.5">
+          <Clock className="size-4 text-amber-600 dark:text-amber-400" />
+          <h3 className="text-sm font-bold text-foreground flex-1">
+            Phí phạt quá hạn tạm tính
+          </h3>
+          {overdueSuggestionLoading && (
+            <Loader2 className="size-4 animate-spin text-muted-foreground" />
           )}
         </div>
-        <Button
-          onClick={handleSubmit}
-          disabled={!allPhotographed || loading}
-          className={cn(
-            'h-12 gap-2 rounded-xl px-7 text-[15px] font-bold shrink-0 min-w-52',
-            allPhotographed
-              ? 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-600 dark:hover:bg-purple-700'
-              : '',
+        <div className="p-5 space-y-4">
+          {overdueSuggestion?.overdue && (
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30 p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div className="rounded-lg bg-white dark:bg-slate-900 border border-border/60 dark:border-slate-700 p-3">
+                  <p className="text-sm font-semibold text-muted-foreground mb-1.5">
+                    Ngày quá hạn
+                  </p>
+                  <p className="text-xl font-black text-amber-600 dark:text-amber-400">
+                    {overdueSuggestion.overdueDays}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white dark:bg-slate-900 border border-border/60 dark:border-slate-700 p-3">
+                  <p className="text-sm font-semibold text-muted-foreground mb-1.5">
+                    Đơn giá / ngày
+                  </p>
+                  <p className="text-sm font-black text-foreground tabular-nums">
+                    {fmt(overdueSuggestion.dailyOverdueRateAmount)}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white dark:bg-slate-900 border border-border/60 dark:border-slate-700 p-3">
+                  <p className="text-sm font-semibold text-muted-foreground mb-1.5">
+                    Đề xuất hệ thống
+                  </p>
+                  <p className="text-sm font-black text-amber-600 dark:text-amber-400 tabular-nums">
+                    {fmt(overdueSuggestion.provisionalOverduePenaltyAmount)}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white dark:bg-slate-900 border border-border/60 dark:border-slate-700 p-3">
+                  <p className="text-sm font-semibold text-muted-foreground mb-1.5">
+                    Hạn trả dự kiến
+                  </p>
+                  <p className="text-sm font-bold text-foreground">
+                    {overdueSuggestion.expectedRentalEndDate}
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              Đang xử lý…
-            </>
-          ) : (
-            <>
-              <RotateCcw className="size-4" />
-              Xác nhận thu hồi hàng
-            </>
-          )}
-        </Button>
+          {!overdueSuggestionLoading &&
+            overdueSuggestion &&
+            !overdueSuggestion.overdue && (
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <Info className="size-3.5 shrink-0" />
+                Hệ thống không phát hiện quá hạn. Nhập thủ công nếu cần.
+              </p>
+            )}
+          <div>
+            {/* Label */}
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="size-3.5 text-amber-500 shrink-0" />
+              <label className="text-sm font-bold text-foreground">
+                Phí phát sinh
+              </label>
+            </div>
+
+            {overdueLocked ? (
+              /* Locked row */
+              <div className="flex items-center gap-2">
+                <div className="flex-1 flex items-center gap-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30 px-4 py-2">
+                  <CheckCircle2 className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="text-sm font-bold text-amber-700 dark:text-amber-300 flex-1">
+                    Đã xác nhận phí quá hạn
+                  </span>
+                  <span className="text-sm font-black text-amber-700 dark:text-amber-300 tabular-nums">
+                    {overduePenalty < 0
+                      ? `−${fmt(Math.abs(overduePenalty))}`
+                      : fmt(overduePenalty)}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOverdueLocked(false)}
+                  className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-border bg-card text-sm font-bold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0"
+                >
+                  <Pencil className="size-4" /> Chỉnh sửa
+                </button>
+              </div>
+            ) : (
+              /* Editing row */
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      step={10000}
+                      value={overduePenaltyInput}
+                      onChange={(e) => setOverduePenaltyInput(e.target.value)}
+                      placeholder="0"
+                      className={cn(
+                        'pr-14 rounded-xl text-sm font-semibold',
+                        overduePenalty < 0
+                          ? 'border-success focus-visible:ring-success'
+                          : overduePenalty > 0
+                            ? 'border-amber-400 focus-visible:ring-amber-400'
+                            : '',
+                      )}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium pointer-events-none">
+                      VNĐ
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setOverdueLocked(true)}
+                    disabled={overduePenaltyInput === ''}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 h-10 px-8 rounded-xl text-lg font-bold shrink-0 transition-colors',
+                      overduePenaltyInput !== ''
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50',
+                    )}
+                  >
+                    <CheckCircle2 className="size-4" /> Xác nhận
+                  </button>
+                </div>
+                <span
+                  className={cn(
+                    'pl-3 text-sm font-bold shrink-0 tabular-nums w-24 text-right',
+                    overduePenalty < 0
+                      ? 'text-success'
+                      : 'text-amber-600 dark:text-amber-400',
+                  )}
+                >
+                  {overduePenalty < 0
+                    ? `−${fmt(Math.abs(overduePenalty))}`
+                    : fmt(overduePenalty)}
+                </span>
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Info className="size-3 shrink-0" />
+                    Nhập số dương để cộng thêm phí, số âm để giảm bớt so với đề
+                    xuất hệ thống.
+                  </p>
+                  {overdueSuggestion?.overdue &&
+                    overduePenalty !==
+                      overdueSuggestion.provisionalOverduePenaltyAmount && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOverduePenaltyInput(
+                            String(
+                              overdueSuggestion.provisionalOverduePenaltyAmount,
+                            ),
+                          )
+                        }
+                        className="text-xs text-theme-primary-start underline underline-offset-2 shrink-0 ml-3"
+                      >
+                        Dùng đề xuất
+                      </button>
+                    )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Action footer */}
+      <WorkflowFooter>
+        <div className="p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="text-[14px] text-muted-foreground flex-1 min-w-0">
+            {allPhotographed ? (
+              <span className="flex items-center gap-2 text-success font-semibold">
+                <CheckCircle2 className="size-5" />
+                {hasPenalty
+                  ? `Hoàn tất kiểm tra — Phí phạt: ${fmt(totalPenalty)}`
+                  : 'Hoàn tất kiểm tra — Không có hư hỏng.'}
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Camera className="size-5 shrink-0" /> Còn{' '}
+                {order.items.length - itemsDone} thiết bị chưa được chụp ảnh.
+              </span>
+            )}
+          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={!allPhotographed || loading}
+            className={cn(
+              'h-16 gap-2 rounded-xl px-7 text-xl font-bold shrink-0 sm:min-w-52',
+              allPhotographed
+                ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/20 dark:bg-purple-600 dark:hover:bg-purple-700'
+                : '',
+            )}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="size-5 animate-spin" /> Đang xử lý…
+              </>
+            ) : (
+              <>
+                <RotateCcw className="size-5" /> Xác nhận thu hồi hàng
+              </>
+            )}
+          </Button>
+        </div>
+      </WorkflowFooter>
     </div>
   );
 }

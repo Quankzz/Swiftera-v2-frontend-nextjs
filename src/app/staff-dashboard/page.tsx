@@ -178,7 +178,7 @@ export default function DashboardPage() {
     : [];
 
   return (
-    <div className="flex flex-col gap-5 p-4 md:p-6 lg:p-8 max-w-6xl mx-auto w-full">
+    <div className="flex flex-col gap-5 p-4 md:p-6 lg:p-8 max-w-[80%] mx-auto w-full">
       {/* ── Loading ── */}
       {isLoading && (
         <div className="flex items-center justify-center min-h-[40vh] gap-3 text-muted-foreground">
@@ -511,44 +511,53 @@ export default function DashboardPage() {
 
           {/* ── Urgent Overdue Queue ── */}
           {(overdue?.items?.length ?? 0) > 0 && (
-            <section className="rounded-2xl border border-destructive/20 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
+            <section className="flex flex-col overflow-hidden rounded-2xl border border-destructive/20 bg-card shadow-sm transition-all duration-200 hover:shadow-md">
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-border/25 bg-destructive/4">
+              <div className="flex items-center justify-between border-b border-border/40 bg-destructive/5 px-5 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
-                    <AlertCircle className="size-4 text-destructive" />
+                  {/* Icon Container: Đổi sang bo tròn hoàn toàn (rounded-full) để nhìn mềm mại hơn */}
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                    <AlertCircle className="size-5 text-destructive" />
                   </div>
+
                   <div>
-                    <h2 className="text-sm font-bold text-foreground leading-none">
-                      Đơn quá hạn — cần xử lý
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {overdue!.count} đơn vượt ngày trả hàng
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">
+                        Đơn quá hạn cần xử lý
+                      </h2>
+                      {/* Badge đếm số: Gom lên cùng dòng với tiêu đề để mắt dễ quét (F-pattern) */}
+                      <span className="flex h-5 items-center justify-center rounded-full bg-destructive px-2 text-[11px] font-bold text-white shadow-sm ring-2 ring-background">
+                        {overdue!.count}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Cần ưu tiên thu hồi theo quy định
                     </p>
                   </div>
-                  <span className="flex min-w-6 h-6 px-1.5 items-center justify-center rounded-full bg-destructive text-[11px] font-black text-white shadow-sm">
-                    {overdue!.count}
-                  </span>
                 </div>
+
+                {/* Nút Xem tất cả: Thêm group-hover để icon Chevron mượt mà trượt sang phải */}
                 <Link
                   href="/staff-dashboard/orders?overdue=true"
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors hover:gap-1.5"
+                  className="group inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Xem tất cả <ChevronRight className="size-3.5" />
+                  Xem tất cả
+                  <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               </div>
 
               {/* Table header */}
-              <div className="hidden sm:grid grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-3 px-5 py-2.5 bg-muted/30 border-b border-border/20 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              {/* Căn chỉnh lại padding và font size để header trông gọn gàng, giống dạng Data Table */}
+              <div className="hidden grid-cols-[2fr_1.5fr_1fr_1fr_auto] gap-3 border-b border-border/40 bg-muted/20 px-5 py-2.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase sm:grid">
                 <span>Đơn hàng</span>
                 <span>Khách hàng</span>
-                <span>Ngày hết hạn</span>
+                <span>Ngày hẹn trả</span>
                 <span>Trạng thái</span>
-                <span>Trễ</span>
+                <span className="text-right">Số giờ trễ</span>
               </div>
 
               {/* Rows */}
-              <div className="divide-y divide-border/20">
+              <div className="max-h-100 divide-y divide-border/20 overflow-y-auto">
                 {overdue!.items.map((item) => (
                   <OverdueRow key={item.rentalOrderId} item={item} />
                 ))}

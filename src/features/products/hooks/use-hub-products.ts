@@ -14,15 +14,15 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { getInventoryItems, getProducts } from '../api/product.service';
-import type { InventoryItemResponse, ProductResponse } from '../types';
+import { getProductsByHub } from '../api/product.service';
+import type { ProductResponse } from '../types';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
 export interface HubProduct {
   product: ProductResponse;
-  /** Tất cả inventory items AVAILABLE của sản phẩm này tại hub */
-  items: InventoryItemResponse[];
+  /** Số lượng thiết bị khả dụng tại hub */
+  availableCount: number;
 }
 
 export interface HubAvailableProductsResult {
@@ -43,67 +43,25 @@ export const hubProductKeys = {
 async function fetchHubAvailableProducts(
   hubId: string,
 ): Promise<HubAvailableProductsResult> {
-  // Bước 1: lấy items AVAILABLE toàn hệ thống, filter client-side
-  const invRes = await getInventoryItems({
-    filter: `status:'AVAILABLE'`,
-    size: 200,
+  const res = await getProductsByHub(hubId, {
+    page: 1,
+    size: 50,
+    sort: 'createdAt,desc',
+    filter: 'isActive:true',
+    includeDescendants: false,
   });
 
-  const items = (invRes.content ?? []).filter((i) => i.hubId === hubId);
-  if (items.length === 0) return { hubProducts: [], totalAvailable: 0 };
+  const products = res.content ?? [];
+  const hubProducts: HubProduct[] = products.map((p) => ({
+    product: p,
+    availableCount: p.availableStock ?? 0,
+  }));
+  const totalAvailable = hubProducts.reduce(
+    (sum, hp) => sum + hp.availableCount,
+    0,
+  );
 
-  // Nhóm items theo productId
-  const itemsByProduct: Record<string, InventoryItemResponse[]> = {};
-  for (const item of items) {
-    (itemsByProduct[item.productId] ??= []).push(item);
-  }
-
-  const uniqueIds = Object.keys(itemsByProduct);
-  const rsqlFilter = uniqueIds.map((id) => `productId:'${id}'`).join(' or ');
-
-  // Bước 2: lấy chi tiết sản phẩm
-  try {
-    const prodRes = await getProducts({
-      filter: rsqlFilter,
-      size: uniqueIds.length,
-    });
-    const productMap: Record<string, ProductResponse> = {};
-    for (const p of prodRes.content ?? []) productMap[p.productId] = p;
-
-    const hubProducts = uniqueIds
-      .filter((id) => productMap[id])
-      .map((id) => ({ product: productMap[id], items: itemsByProduct[id] }));
-
-    return { hubProducts, totalAvailable: items.length };
-  } catch {
-    // Fallback: dùng productName từ inventory khi /products lỗi
-    const hubProducts = uniqueIds.map((id) => ({
-      product: {
-        productId: id,
-        name: itemsByProduct[id][0].productName,
-        categoryId: '',
-        categoryName: '',
-        brand: null,
-        voucherId: null,
-        color: null,
-        colors: [],
-        shortDescription: null,
-        description: null,
-        dailyPrice: 0,
-        oldDailyPrice: null,
-        depositAmount: null,
-        minRentalDays: 1,
-        isActive: true,
-        images: [],
-        availableStock: itemsByProduct[id].length,
-        averageRating: null,
-        createdAt: '',
-        updatedAt: '',
-      } satisfies ProductResponse,
-      items: itemsByProduct[id],
-    }));
-    return { hubProducts, totalAvailable: items.length };
-  }
+  return { hubProducts, totalAvailable };
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
   ArrowLeft,
   Truck,
@@ -18,6 +19,11 @@ import {
   Check,
   MapPin,
   Clock3,
+  PlayCircle,
+  PackageMinus,
+  QrCode,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,8 +40,12 @@ import {
   useRentalOrderQuery,
   useCancelOrder,
   useExtendOrder,
+  useUpdateOrderStatus,
+  useOverduePenaltySuggestionQuery,
 } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
+import { useRentalContractByOrderQuery } from '@/hooks/api/use-contract';
+import { PolicyPdfPreview } from '@/features/policies/components/policy-pdf-preview';
 import { toast } from 'sonner';
 import { useCartAnimationStore } from '@/stores/cart-animation-store';
 import { useAddToCart } from '@/hooks/api/use-cart';
@@ -48,6 +58,14 @@ import type {
   RentalOrderStatus,
   RentalOrderStaffSummary,
 } from '@/api/rentalOrderApi';
+
+const PolicyConsentDialog = dynamic(
+  () =>
+    import('@/components/checkout/policy-consent-dialog').then(
+      (m) => m.PolicyConsentDialog,
+    ),
+  { ssr: false },
+);
 
 const fmt = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -63,6 +81,13 @@ const EXTENDABLE_STATUSES: RentalOrderStatus[] = [
   'DELIVERED',
   'IN_USE',
   'PENDING_PICKUP',
+];
+
+const OVERDUE_SUGGESTION_STATUSES: RentalOrderStatus[] = [
+  'IN_USE',
+  'PENDING_PICKUP',
+  'PICKING_UP',
+  'PICKED_UP',
 ];
 
 function formatDate(iso: string) {
@@ -422,11 +447,46 @@ export default function RentalOrderDetailPage() {
   const params = useParams();
   const id = typeof params?.id === 'string' ? params.id : '';
   const [extendOpen, setExtendOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [paymentPolicyOpen, setPaymentPolicyOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [pickupConfirmOpen, setPickupConfirmOpen] = useState(false);
   const [reorderState, setReorderState] = useState<
     'idle' | 'adding' | 'success'
   >('idle');
 
   const { data: order, isLoading, isError } = useRentalOrderQuery(id);
+
+  const overdueSuggestionEnabled = useMemo(
+    () =>
+      !!order &&
+      OVERDUE_SUGGESTION_STATUSES.includes(order.status as RentalOrderStatus),
+    [order],
+  );
+
+  const { data: overdueSuggestion, isLoading: overdueSuggestionLoading } =
+    useOverduePenaltySuggestionQuery(id, {
+      enabled: overdueSuggestionEnabled,
+    });
+
+  const contractQueryEnabled = useMemo(
+    () =>
+      !!order &&
+      order.status !== 'PENDING_PAYMENT' &&
+      order.status !== 'CANCELLED',
+    [order],
+  );
+
+  const { data: rentalContract, isPending: contractLoading } =
+    useRentalContractByOrderQuery(id, {
+      enabled: !!id && contractQueryEnabled,
+    });
+
+  const hasContractAction =
+    contractQueryEnabled &&
+    (contractLoading || Boolean(rentalContract?.contractPdfUrl));
+
   const { mutateAsync: addToCartApi } = useAddToCart();
   const addFlyingItem = useCartAnimationStore((s) => s.addFlyingItem);
 
@@ -478,15 +538,63 @@ export default function RentalOrderDetailPage() {
       ),
   });
 
+  const updateOrderStatus = useUpdateOrderStatus({
+    onSuccess: () => toast.success('Đã cập nhật trạng thái đơn thuê.'),
+    onError: (err) =>
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Không thể cập nhật trạng thái. Vui lòng thử lại.',
+      ),
+  });
+
   function handleCancel() {
     if (!order) return;
-    if (!window.confirm('Bạn có chắc muốn hủy đơn thuê này?')) return;
-    cancelOrder.mutate(order.rentalOrderId);
+    setCancelConfirmOpen(true);
+  }
+
+  function confirmCancel() {
+    if (!order) return;
+    cancelOrder.mutate(order.rentalOrderId, {
+      onSuccess: () => setCancelConfirmOpen(false),
+    });
   }
 
   function handlePayment() {
     if (!order) return;
+    setPaymentPolicyOpen(true);
+  }
+
+  function handlePaymentAfterConsent() {
+    if (!order) return;
+    setPaymentPolicyOpen(false);
     initiatePayment.mutate(order.rentalOrderId);
+  }
+
+  function handleDeliveredToInUse() {
+    if (!order) return;
+    updateOrderStatus.mutate({
+      rentalOrderId: order.rentalOrderId,
+      input: { status: 'IN_USE' },
+    });
+  }
+
+  function handleInUseToPendingPickup() {
+    if (!order) return;
+    setPickupConfirmOpen(true);
+  }
+
+  function confirmInUseToPendingPickup() {
+    if (!order) return;
+    updateOrderStatus.mutate(
+      {
+        rentalOrderId: order.rentalOrderId,
+        input: { status: 'PENDING_PICKUP' },
+      },
+      {
+        onSuccess: () => setPickupConfirmOpen(false),
+      },
+    );
   }
 
   const isExtendable =
@@ -518,8 +626,8 @@ export default function RentalOrderDetailPage() {
   }
 
   return (
-    <div className='min-h-screen bg-muted/30 font-sans dark:bg-background'>
-      <div className='mx-auto max-w-5xl px-3 pb-20 pt-20 sm:px-4 sm:pt-24 md:px-6 md:pt-28'>
+    <div className='relative min-h-screen overflow-x-hidden bg-white font-sans dark:bg-surface-base'>
+      <div className='relative mx-auto w-full max-w-7xl px-3 pb-16 pt-8 sm:px-4 sm:pt-4 md:px-6 md:pt-8'>
         <Button
           variant='ghost'
           size='sm'
@@ -616,18 +724,28 @@ export default function RentalOrderDetailPage() {
                 {(() => {
                   const hasPay = order.status === 'PENDING_PAYMENT';
                   const hasCancel = order.status === 'PENDING_PAYMENT';
+                  const hasStartUse = order.status === 'DELIVERED';
+                  const hasRequestPickup = order.status === 'IN_USE';
+                  const canRentalStatusTransition = Boolean(
+                    order.actualDeliveryAt && order.actualRentalStartAt,
+                  );
                   const hasReview =
                     order.status === 'COMPLETED' &&
                     order.rentalOrderLines.length > 0;
                   const hasReorder =
                     order.status === 'COMPLETED' &&
                     order.rentalOrderLines.length > 0;
+                  const hasQr = Boolean(order.qrCode);
                   const anyAction =
                     hasPay ||
                     isExtendable ||
+                    hasStartUse ||
+                    hasRequestPickup ||
                     hasReview ||
                     hasReorder ||
-                    hasCancel;
+                    hasCancel ||
+                    hasQr ||
+                    hasContractAction;
 
                   if (!anyAction) return null;
 
@@ -662,6 +780,89 @@ export default function RentalOrderDetailPage() {
                           >
                             <CalendarPlus className='size-4' />
                             Gia hạn
+                          </Button>
+                        )}
+
+                        {hasQr && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-zinc-300 px-5 font-semibold text-zinc-800 hover:bg-zinc-50 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-900/50'
+                            onClick={() => setQrDialogOpen(true)}
+                          >
+                            <QrCode className='size-4' />
+                            Xem mã QR
+                          </Button>
+                        )}
+
+                        {hasContractAction && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-slate-300 px-5 font-semibold text-slate-800 hover:bg-slate-50 hover:border-slate-400 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-900/50'
+                            onClick={() => setContractDialogOpen(true)}
+                            disabled={
+                              contractLoading || !rentalContract?.contractPdfUrl
+                            }
+                          >
+                            {contractLoading ? (
+                              <Loader2 className='size-4 animate-spin' />
+                            ) : (
+                              <FileText className='size-4' />
+                            )}
+                            {contractLoading
+                              ? 'Đang tải hợp đồng…'
+                              : 'Xem hợp đồng'}
+                          </Button>
+                        )}
+
+                        {hasStartUse && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            title={
+                              !canRentalStatusTransition
+                                ? 'Cần có thời điểm giao hàng và bắt đầu thuê thực tế trước khi xác nhận.'
+                                : undefined
+                            }
+                            className='gap-2 rounded-xl border-cyan-300 px-5 font-semibold text-cyan-800 hover:bg-cyan-50 hover:border-cyan-400 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-950/50'
+                            onClick={handleDeliveredToInUse}
+                            disabled={
+                              updateOrderStatus.isPending ||
+                              !canRentalStatusTransition
+                            }
+                          >
+                            {updateOrderStatus.isPending ? (
+                              <Loader2 className='size-4 animate-spin' />
+                            ) : (
+                              <PlayCircle className='size-4' />
+                            )}
+                            Bắt đầu sử dụng
+                          </Button>
+                        )}
+
+                        {hasRequestPickup && (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            title={
+                              !canRentalStatusTransition
+                                ? 'Cần có thời điểm giao hàng và bắt đầu thuê thực tế trước khi yêu cầu thu hồi.'
+                                : undefined
+                            }
+                            className='gap-2 rounded-xl border-orange-300 px-5 font-semibold text-orange-800 hover:bg-orange-50 hover:border-orange-400 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/50'
+                            onClick={handleInUseToPendingPickup}
+                            disabled={
+                              updateOrderStatus.isPending ||
+                              !canRentalStatusTransition
+                            }
+                          >
+                            {updateOrderStatus.isPending ? (
+                              <Loader2 className='size-4 animate-spin' />
+                            ) : (
+                              <PackageMinus className='size-4' />
+                            )}
+                            Yêu cầu thu hồi
                           </Button>
                         )}
 
@@ -747,6 +948,155 @@ export default function RentalOrderDetailPage() {
                 onOpenChange={setExtendOpen}
               />
             )}
+
+            <Dialog
+              open={cancelConfirmOpen}
+              onOpenChange={setCancelConfirmOpen}
+            >
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle>Xác nhận hủy đơn thuê</DialogTitle>
+                  <DialogDescription>
+                    Đơn sẽ chuyển sang trạng thái đã hủy và không thể tiếp tục
+                    xử lý.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => setCancelConfirmOpen(false)}
+                    disabled={cancelOrder.isPending}
+                  >
+                    Hủy bỏ
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    onClick={confirmCancel}
+                    disabled={cancelOrder.isPending}
+                  >
+                    {cancelOrder.isPending ? 'Đang xử lý…' : 'Xác nhận hủy đơn'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={pickupConfirmOpen}
+              onOpenChange={setPickupConfirmOpen}
+            >
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle>Xác nhận yêu cầu thu hồi</DialogTitle>
+                  <DialogDescription>
+                    Trạng thái đơn sẽ chuyển sang chờ thu hồi
+                    (`PENDING_PICKUP`).
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => setPickupConfirmOpen(false)}
+                    disabled={updateOrderStatus.isPending}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    className='bg-orange-600 text-white hover:bg-orange-700'
+                    onClick={confirmInUseToPendingPickup}
+                    disabled={updateOrderStatus.isPending}
+                  >
+                    {updateOrderStatus.isPending
+                      ? 'Đang xử lý…'
+                      : 'Xác nhận thu hồi'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {order?.qrCode && (
+              <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+                <DialogContent className='max-h-[90dvh] overflow-y-auto sm:max-w-md'>
+                  <DialogHeader>
+                    <DialogTitle className='flex items-center gap-2.5'>
+                      <span className='flex size-9 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800'>
+                        <QrCode className='size-5 text-zinc-700 dark:text-zinc-200' />
+                      </span>
+                      Mã QR đơn hàng
+                    </DialogTitle>
+                    <DialogDescription>
+                      Hiển thị sau khi thanh toán thành công. Quét tại quầy hoặc
+                      lưu ảnh khi cần.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className='flex flex-col items-center gap-4 py-2'>
+                    <img
+                      src={order.qrCode}
+                      alt='Mã QR thanh toán hoặc nhận hàng'
+                      className='max-h-64 max-w-full rounded-xl border border-border/80 bg-white p-3 shadow-sm'
+                    />
+                    <a
+                      href={order.qrCode}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-sm font-medium text-rose-600 underline-offset-2 hover:underline dark:text-rose-400'
+                    >
+                      Mở ảnh QR trong tab mới
+                    </a>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {rentalContract?.contractPdfUrl && (
+              <Dialog
+                open={contractDialogOpen}
+                onOpenChange={setContractDialogOpen}
+              >
+                <DialogContent className='flex h-[92vh] w-[70vw] max-w-[96vw]! flex-col gap-0 p-0'>
+                  <DialogHeader className='shrink-0 border-b border-border/60 px-5 py-4 text-left'>
+                    <DialogTitle className='flex items-center gap-2.5'>
+                      <span className='flex size-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800'>
+                        <FileText className='size-5 text-slate-700 dark:text-slate-200' />
+                      </span>
+                      Hợp đồng thuê
+                    </DialogTitle>
+                    {/* <DialogDescription className='text-left'>
+                      {rentalContract.contractNumber} · Phiên bản{' '}
+                      {rentalContract.contractVersion}
+                      {rentalContract.acceptedAt && (
+                        <> · Xác nhận: {rentalContract.acceptedAt}</>
+                      )}
+                    </DialogDescription> */}
+                  </DialogHeader>
+                  <div className='min-h-0 flex-1 overflow-auto bg-muted/30 px-2 py-3 sm:px-4 sm:py-4'>
+                    <PolicyPdfPreview
+                      pdfUrl={rentalContract.contractPdfUrl}
+                      className='mx-auto'
+                    />
+                  </div>
+                  <DialogFooter className='shrink-0 border-t border-border/60 px-5 py-3 sm:justify-between'>
+                    <p className='text-xs text-muted-foreground'>
+                      Nếu không xem được trong khung, mở file PDF ở tab mới.
+                    </p>
+                    <a
+                      href={rentalContract.contractPdfUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='inline-flex items-center gap-1.5 text-sm font-medium text-rose-600 hover:underline dark:text-rose-400'
+                    >
+                      <ExternalLink className='size-4' />
+                      Mở PDF
+                    </a>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            <PolicyConsentDialog
+              open={paymentPolicyOpen}
+              onOpenChange={setPaymentPolicyOpen}
+              onAllConsented={() => void handlePaymentAfterConsent()}
+            />
 
             {/* ── Two-column layout ── */}
             <div className='grid gap-5 lg:grid-cols-12 lg:gap-6'>
@@ -915,6 +1265,106 @@ export default function RentalOrderDetailPage() {
 
               {/* Right column */}
               <div className='space-y-5 lg:col-span-5 lg:sticky lg:top-24 lg:self-start'>
+                {overdueSuggestionEnabled && (
+                  <SectionCard>
+                    <SectionHeader
+                      icon={<AlertCircle className='size-4' />}
+                      iconBg='bg-amber-500'
+                      title='Phí phạt quá hạn (tạm tính)'
+                    />
+                    <div className='space-y-3 p-5 text-sm'>
+                      {overdueSuggestionLoading && (
+                        <div className='space-y-2'>
+                          <Skeleton className='h-4 w-full' />
+                          <Skeleton className='h-4 w-2/3' />
+                        </div>
+                      )}
+                      {!overdueSuggestionLoading && overdueSuggestion && (
+                        <div className='space-y-3'>
+                          <div
+                            className={cn(
+                              'rounded-lg border px-3 py-2 text-xs font-medium',
+                              overdueSuggestion.overdue
+                                ? 'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100'
+                                : 'border-border/60 bg-muted/40 text-muted-foreground',
+                            )}
+                          >
+                            {overdueSuggestion.overdue
+                              ? `Đơn đang quá hạn trả — ${overdueSuggestion.overdueDays} ngày`
+                              : 'Chưa ghi nhận quá hạn theo dữ liệu hiện tại.'}
+                          </div>
+                          <dl className='grid grid-cols-1 gap-2 text-xs sm:grid-cols-2'>
+                            <div className='flex justify-between gap-2 rounded-md bg-muted/30 px-2 py-1.5'>
+                              <dt className='text-muted-foreground'>
+                                Mức/ngày (tổng line)
+                              </dt>
+                              <dd className='font-medium tabular-nums text-foreground'>
+                                {fmt.format(
+                                  overdueSuggestion.dailyOverdueRateAmount,
+                                )}
+                              </dd>
+                            </div>
+                            <div className='flex justify-between gap-2 rounded-md bg-muted/30 px-2 py-1.5'>
+                              <dt className='text-muted-foreground'>
+                                Phạt quá hạn (tạm tính)
+                              </dt>
+                              <dd className='font-medium tabular-nums text-amber-700 dark:text-amber-300'>
+                                {fmt.format(
+                                  overdueSuggestion.provisionalOverduePenaltyAmount,
+                                )}
+                              </dd>
+                            </div>
+                            <div className='flex justify-between gap-2 rounded-md bg-muted/30 px-2 py-1.5'>
+                              <dt className='text-muted-foreground'>
+                                Phạt quá hạn (đã chốt)
+                              </dt>
+                              <dd className='font-medium tabular-nums text-foreground'>
+                                {fmt.format(
+                                  overdueSuggestion.finalOverduePenaltyAmount,
+                                )}
+                              </dd>
+                            </div>
+                            <div className='flex justify-between gap-2 rounded-md bg-muted/30 px-2 py-1.5'>
+                              <dt className='text-muted-foreground'>
+                                Phạt hỏng (đang lưu)
+                              </dt>
+                              <dd className='font-medium tabular-nums text-foreground'>
+                                {fmt.format(
+                                  overdueSuggestion.damagePenaltyAmount,
+                                )}
+                              </dd>
+                            </div>
+                            <div className='sm:col-span-2 flex justify-between gap-2 rounded-md border border-border/60 bg-background/80 px-2 py-2'>
+                              <dt className='font-medium text-foreground'>
+                                Tổng phạt gợi ý
+                              </dt>
+                              <dd className='font-semibold tabular-nums text-rose-600 dark:text-rose-400'>
+                                {fmt.format(
+                                  overdueSuggestion.suggestedTotalPenaltyAmount,
+                                )}
+                              </dd>
+                            </div>
+                            <div className='sm:col-span-2 flex justify-between gap-2 rounded-md border border-emerald-200/70 bg-emerald-50/60 px-2 py-2 dark:border-emerald-900/40 dark:bg-emerald-950/30'>
+                              <dt className='text-emerald-900 dark:text-emerald-200'>
+                                Hoàn cọc gợi ý (sau phạt)
+                              </dt>
+                              <dd className='font-semibold tabular-nums text-emerald-800 dark:text-emerald-200'>
+                                {fmt.format(
+                                  overdueSuggestion.suggestedDepositRefundAmount,
+                                )}
+                              </dd>
+                            </div>
+                          </dl>
+                          <p className='text-[11px] leading-relaxed text-muted-foreground'>
+                            Số liệu tham khảo; mức chốt cuối do nhân viên xác
+                            nhận qua cập nhật phạt.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </SectionCard>
+                )}
+
                 {/* Payment summary */}
                 <SectionCard>
                   <SectionHeader
@@ -968,11 +1418,29 @@ export default function RentalOrderDetailPage() {
                       </div>
                     )}
 
+                    {order.provisionalOverduePenaltyAmount != null && (
+                      <div className='flex justify-between gap-2'>
+                        <span className='text-muted-foreground'>
+                          Phạt quá hạn (tạm tính)
+                        </span>
+                        <span
+                          className={cn(
+                            'font-medium tabular-nums',
+                            order.provisionalOverduePenaltyAmount > 0
+                              ? 'text-amber-700 dark:text-amber-400'
+                              : 'text-muted-foreground',
+                          )}
+                        >
+                          {fmt.format(order.provisionalOverduePenaltyAmount)}
+                        </span>
+                      </div>
+                    )}
+
                     {order.penaltyChargeAmount !== null &&
                       order.penaltyChargeAmount > 0 && (
                         <div className='flex justify-between gap-2'>
                           <span className='text-muted-foreground'>
-                            Phí phạt
+                            Phí phạt (đã ghi nhận)
                           </span>
                           <span className='font-medium tabular-nums text-red-600'>
                             +{fmt.format(order.penaltyChargeAmount)}

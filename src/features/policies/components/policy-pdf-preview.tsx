@@ -23,6 +23,7 @@ import {
   Loader2,
   AlertTriangle,
   BookOpen,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -116,10 +117,15 @@ export function PolicyPdfPreview({
       setPages(dataUrls);
     } catch (err) {
       console.error('[PolicyPdfPreview] load error:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      const isNetwork =
+        msg.includes('Failed to fetch') ||
+        msg.includes('NetworkError') ||
+        msg.includes('ERR_NAME_NOT_RESOLVED');
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Không thể đọc file PDF. Vui lòng kiểm tra lại.',
+        isNetwork
+          ? 'Không thể tải file PDF — URL không hợp lệ hoặc không truy cập được.'
+          : `Không thể đọc file PDF: ${msg}`,
       );
     } finally {
       setIsLoading(false);
@@ -157,7 +163,7 @@ export function PolicyPdfPreview({
           className,
         )}
       >
-        <Loader2 className='w-7 h-7 animate-spin text-indigo-500' />
+        <Loader2 className='w-7 h-7 animate-spin text-theme-primary-start' />
         <p className='text-sm text-text-sub'>Đang tải PDF...</p>
       </div>
     );
@@ -175,6 +181,17 @@ export function PolicyPdfPreview({
         <p className='text-sm text-red-600 dark:text-red-400 text-center px-4'>
           {error}
         </p>
+        {pdfUrl && (
+          <a
+            href={pdfUrl}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-white/10 text-text-sub hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'
+          >
+            <ExternalLink className='w-3.5 h-3.5' />
+            Thử mở trực tiếp
+          </a>
+        )}
       </div>
     );
   }
@@ -199,7 +216,7 @@ export function PolicyPdfPreview({
       <div className='relative'>
         <HTMLFlipBook
           ref={flipBookRef}
-          width={380}
+          width={480}
           height={540}
           size='fixed'
           minWidth={200}
@@ -258,7 +275,7 @@ export function PolicyPdfPreview({
                 className={cn(
                   'rounded-full transition-all',
                   isActive
-                    ? 'w-2.5 h-2.5 bg-indigo-500'
+                    ? 'w-2.5 h-2.5 bg-theme-primary-start'
                     : 'w-1.5 h-1.5 bg-gray-300 dark:bg-white/20 hover:bg-gray-400',
                 )}
               />

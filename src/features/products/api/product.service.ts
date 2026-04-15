@@ -1,6 +1,6 @@
 /**
  * Product service — tất cả API calls cho products module (dashboard).
- * Dùng apiService.ts làm HTTP layer, KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *   Module 8: PRODUCTS (API-051 → API-055)
@@ -8,7 +8,8 @@
  * Category service đã tách sang: src/features/categories/api/category.service.ts
  */
 
-import { apiDelete, apiGet, apiPatch, apiPost } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 import type {
   CreateInventoryItemInput,
   CreateProductInput,
@@ -22,31 +23,7 @@ import type {
   UpdateProductInput,
 } from '../types';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Build URLSearchParams string from a plain params object (skips undefined).
- *
- * NOTE: URLSearchParams encodes spaces as `+` (form-encoding), but Spring's
- * SpringFilter DSL parser expects `%20`.  We replace `+` → `%20` in the
- * final string so that RSQL expressions like `isActive:true and categoryId:'…'`
- * arrive at the server with proper spaces, not literal `+` characters.
- */
-function buildQuery(
-  params: Record<string, string | number | boolean | undefined>,
-): string {
-  const q = new URLSearchParams();
-  for (const [key, val] of Object.entries(params)) {
-    if (val !== undefined && val !== null && val !== '') {
-      q.set(key, String(val));
-    }
-  }
-  // Replace form-encoded `+` (space) with percent-encoded `%20` so Spring
-  // receives proper spaces inside RSQL filter expressions.
-  const str = q.toString().replace(/\+/g, '%20');
-  return str ? `?${str}` : '';
-}
+const authOpts = { requireToken: true as const };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Products CRUD
@@ -59,26 +36,67 @@ function buildQuery(
  * sort:   "field,direction"  e.g. "dailyPrice,asc" | "name,desc"
  * filter: RSQL               e.g. "name:'Canon' and isActive:true"
  */
-export function getProducts(
+export async function getProducts(
   params: ProductListParams = {},
 ): Promise<PaginatedProductsResponse> {
   const { page = 1, size = 12, sort, filter, includeDescendants } = params;
-  const query = buildQuery({
-    page,
-    size,
-    sort,
-    filter,
-    ...(includeDescendants ? { includeDescendants: true } : {}),
-  });
-  return apiGet<PaginatedProductsResponse>(`/products${query}`);
+  const res = await httpService.get<ApiResponse<PaginatedProductsResponse>>(
+    '/products',
+    {
+      params: {
+        page,
+        size,
+        sort,
+        filter,
+        ...(includeDescendants ? { includeDescendants: true } : {}),
+      },
+    },
+  );
+  return res.data.data!;
+}
+
+/**
+ * GET /api/v1/products/hub/{hubId}
+ * Lấy danh sách sản phẩm theo hub (public).
+ * Chỉ trả sản phẩm isActive=true (lọc qua filter param).
+ */
+export async function getProductsByHub(
+  hubId: string,
+  params: ProductListParams = {},
+): Promise<PaginatedProductsResponse> {
+  const {
+    page = 1,
+    size = 50,
+    sort = 'createdAt,desc',
+    filter = 'isActive:true',
+    includeDescendants = false,
+  } = params;
+  const res = await httpService.get<ApiResponse<PaginatedProductsResponse>>(
+    `/products/hub/${hubId}`,
+    {
+      params: {
+        page,
+        size,
+        sort,
+        filter,
+        ...(includeDescendants ? { includeDescendants: true } : {}),
+      },
+    },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-052: GET /api/v1/products/{productId}
  * Fetch a single product by ID.
  */
-export function getProductById(productId: string): Promise<ProductResponse> {
-  return apiGet<ProductResponse>(`/products/${productId}`);
+export async function getProductById(
+  productId: string,
+): Promise<ProductResponse> {
+  const res = await httpService.get<ApiResponse<ProductResponse>>(
+    `/products/${productId}`,
+  );
+  return res.data.data!;
 }
 
 /**
@@ -87,10 +105,15 @@ export function getProductById(productId: string): Promise<ProductResponse> {
  * Images should be uploaded first via useUploadFilesMutation,
  * then pass the resulting URLs in imageUrls[].
  */
-export function createProduct(
+export async function createProduct(
   payload: CreateProductInput,
 ): Promise<ProductResponse> {
-  return apiPost<ProductResponse>('/products', payload);
+  const res = await httpService.post<ApiResponse<ProductResponse>>(
+    '/products',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
@@ -98,19 +121,25 @@ export function createProduct(
  * Update an existing product (partial update).
  * imageUrls replaces all images when provided.
  */
-export function updateProduct(
+export async function updateProduct(
   productId: string,
   payload: UpdateProductInput,
 ): Promise<ProductResponse> {
-  return apiPatch<ProductResponse>(`/products/${productId}`, payload);
+  const res = await httpService.patch<ApiResponse<ProductResponse>>(
+    `/products/${productId}`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-055: DELETE /api/v1/products/{productId}
  * Soft-delete a product. Returns void/null.
  */
-export function deleteProduct(productId: string): Promise<null> {
-  return apiDelete<null>(`/products/${productId}`);
+export async function deleteProduct(productId: string): Promise<null> {
+  await httpService.delete(`/products/${productId}`, authOpts);
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,55 +151,79 @@ export function deleteProduct(productId: string): Promise<null> {
  * Paginated list of inventory items. Filter by productId via RSQL:
  *   filter = "productId:'<uuid>'"
  */
-export function getInventoryItems(
+export async function getInventoryItems(
   params?: InventoryItemListParams,
 ): Promise<PaginatedInventoryItemsResponse> {
-  return apiGet<PaginatedInventoryItemsResponse>('/inventory-items', {
-    params: params as Record<
-      string,
-      string | number | boolean | undefined | null
-    >,
-  });
+  const res = await httpService.get<
+    ApiResponse<PaginatedInventoryItemsResponse>
+  >('/inventory-items', { ...authOpts, params });
+  return (
+    res.data.data ?? {
+      meta: {
+        currentPage: 1,
+        pageSize: 50,
+        totalPages: 0,
+        totalElements: 0,
+        hasNext: false,
+        hasPrevious: false,
+      },
+      content: [],
+    }
+  );
 }
 
 /**
  * API-057: GET /api/v1/inventory-items/{inventoryItemId}
  * Get a single inventory item by ID.
  */
-export function getInventoryItemById(
+export async function getInventoryItemById(
   inventoryItemId: string,
 ): Promise<InventoryItemResponse> {
-  return apiGet<InventoryItemResponse>(`/inventory-items/${inventoryItemId}`);
+  const res = await httpService.get<ApiResponse<InventoryItemResponse>>(
+    `/inventory-items/${inventoryItemId}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-056: POST /api/v1/inventory-items
  * Create a new inventory item. productId and hubId are required.
  */
-export function createInventoryItem(
+export async function createInventoryItem(
   payload: CreateInventoryItemInput,
 ): Promise<InventoryItemResponse> {
-  return apiPost<InventoryItemResponse>('/inventory-items', payload);
+  const res = await httpService.post<ApiResponse<InventoryItemResponse>>(
+    '/inventory-items',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-059: PATCH /api/v1/inventory-items/{inventoryItemId}
  * Partial update of an inventory item.
  */
-export function updateInventoryItem(
+export async function updateInventoryItem(
   inventoryItemId: string,
   payload: UpdateInventoryItemInput,
 ): Promise<InventoryItemResponse> {
-  return apiPatch<InventoryItemResponse>(
+  const res = await httpService.patch<ApiResponse<InventoryItemResponse>>(
     `/inventory-items/${inventoryItemId}`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 /**
  * API-060: DELETE /api/v1/inventory-items/{inventoryItemId}
  * Delete an inventory item. Returns void/null.
  */
-export function deleteInventoryItem(inventoryItemId: string): Promise<null> {
-  return apiDelete<null>(`/inventory-items/${inventoryItemId}`);
+export async function deleteInventoryItem(
+  inventoryItemId: string,
+): Promise<null> {
+  await httpService.delete(`/inventory-items/${inventoryItemId}`, authOpts);
+  return null;
 }

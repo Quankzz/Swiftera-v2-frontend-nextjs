@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Mail, Lock, AlertCircle } from 'lucide-react';
+import { User, Mail, Lock, AlertCircle, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { getApiErrorMessage } from '../utils';
 import { UserProfileForm } from './user-profile-form';
 import { UserEmailForm } from './user-email-form';
 import { UserPasswordForm } from './user-password-form';
+import { UserAddressesSection } from './user-addresses-section';
 
 const tabVariants = {
   initial: { opacity: 0, x: -16 },
@@ -134,27 +135,34 @@ export function UserProfileClient() {
           onValueChange={setActiveTab}
           className='w-full'
         >
-          <TabsList className='grid w-full grid-cols-3 mb-8 bg-white dark:bg-surface-card p-1 rounded-xl shadow-sm dark:shadow-black/30'>
+          <TabsList className='grid w-full grid-cols-2 md:grid-cols-4 gap-1 mb-8 bg-white dark:bg-surface-card p-1 rounded-xl shadow-sm dark:shadow-black/30'>
             <TabsTrigger
               value='profile'
-              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2'
+              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
             >
-              <User className='h-4 w-4' />
-              <span>Thông tin cá nhân</span>
+              <User className='h-4 w-4 shrink-0' />
+              <span className='truncate'>Thông tin</span>
             </TabsTrigger>
             <TabsTrigger
               value='email'
-              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2'
+              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
             >
-              <Mail className='h-4 w-4' />
+              <Mail className='h-4 w-4 shrink-0' />
               <span>Email</span>
             </TabsTrigger>
             <TabsTrigger
               value='password'
-              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2'
+              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
             >
-              <Lock className='h-4 w-4' />
+              <Lock className='h-4 w-4 shrink-0' />
               <span>Mật khẩu</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value='addresses'
+              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
+            >
+              <MapPin className='h-4 w-4 shrink-0' />
+              <span className='truncate'>Địa chỉ</span>
             </TabsTrigger>
           </TabsList>
 
@@ -198,6 +206,20 @@ export function UserProfileClient() {
                   transition={{ duration: 0.25 }}
                 >
                   <UserPasswordForm />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </TabsContent>
+
+          <TabsContent value='addresses'>
+            <AnimatePresence mode='wait'>
+              {activeTab === 'addresses' && (
+                <motion.div
+                  key='addresses'
+                  {...tabVariants}
+                  transition={{ duration: 0.25 }}
+                >
+                  <UserAddressesSection />
                 </motion.div>
               )}
             </AnimatePresence>

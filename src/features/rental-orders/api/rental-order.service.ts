@@ -1,6 +1,6 @@
 /**
  * Rental Order service — tất cả API calls cho rental orders module.
- * Dùng apiService.ts làm HTTP layer, KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 12: RENTAL ORDERS)
  *
@@ -11,7 +11,8 @@
  *  4. Records & Penalty
  */
 
-import { apiGet, apiPatch, apiPost } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse, PaginationResponse } from '@/types/api.types';
 import type {
   RentalOrderResponse,
   PaginatedRentalOrdersResponse,
@@ -24,8 +25,13 @@ import type {
   SetPenaltyInput,
   ExtendOrderInput,
   StaffOption,
+  ReportIssueInput,
+  AssignStaffToHubInput,
+  RentalContractResponse,
 } from '../types';
-import type { PaginatedData } from '@/api/apiService';
+import type { HubStaffResponse } from '@/features/hubs/types';
+
+const authOpts = { requireToken: true as const };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Queries
@@ -35,34 +41,42 @@ import type { PaginatedData } from '@/api/apiService';
  * API-075: Lấy danh sách đơn thuê (admin/staff)
  * GET /rental-orders?page=0&size=10&sort=placedAt,desc&filter=status:'PENDING_PAYMENT' [AUTH]
  */
-export function getRentalOrders(
+export async function getRentalOrders(
   params?: RentalOrderListParams,
 ): Promise<PaginatedRentalOrdersResponse> {
-  return apiGet<PaginatedRentalOrdersResponse>('/rental-orders', {
-    params: params as Record<string, string | number | boolean | undefined>,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedRentalOrdersResponse>>(
+    '/rental-orders',
+    { ...authOpts, params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-077: Lấy danh sách đơn thuê của user hiện tại
  * GET /rental-orders/my-orders?page=0&size=10 [AUTH]
  */
-export function getMyRentalOrders(
+export async function getMyRentalOrders(
   params?: RentalOrderListParams,
 ): Promise<PaginatedRentalOrdersResponse> {
-  return apiGet<PaginatedRentalOrdersResponse>('/rental-orders/my-orders', {
-    params: params as Record<string, string | number | boolean | undefined>,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedRentalOrdersResponse>>(
+    '/rental-orders/my-orders',
+    { ...authOpts, params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-074: Lấy đơn thuê theo ID
  * GET /rental-orders/{rentalOrderId} [AUTH]
  */
-export function getRentalOrderById(
+export async function getRentalOrderById(
   rentalOrderId: string,
 ): Promise<RentalOrderResponse> {
-  return apiGet<RentalOrderResponse>(`/rental-orders/${rentalOrderId}`);
+  const res = await httpService.get<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
@@ -73,15 +87,16 @@ export function getRentalOrderById(
  * → Lấy tất cả users có STAFF_ROLE qua GET /users với filter.
  * Sau đó filter local nếu cần.
  */
-export function getStaffUsers(params?: {
+export async function getStaffUsers(params?: {
   page?: number;
   size?: number;
   sort?: string;
   filter?: string;
-}): Promise<PaginatedData<StaffOption>> {
-  return apiGet<PaginatedData<StaffOption>>('/users', {
-    params: params as Record<string, string | number | boolean | undefined>,
-  });
+}): Promise<PaginationResponse<StaffOption>> {
+  const res = await httpService.get<
+    ApiResponse<PaginationResponse<StaffOption>>
+  >('/users', { ...authOpts, params });
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,14 +107,16 @@ export function getStaffUsers(params?: {
  * API-077: Cập nhật trạng thái đơn thuê
  * PATCH /rental-orders/{rentalOrderId}/status [AUTH]
  */
-export function updateRentalOrderStatus(
+export async function updateRentalOrderStatus(
   rentalOrderId: string,
   payload: UpdateOrderStatusInput,
 ): Promise<RentalOrderResponse> {
-  return apiPatch<RentalOrderResponse>(
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/status`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 /**
@@ -107,22 +124,29 @@ export function updateRentalOrderStatus(
  * POST /rental-orders/{rentalOrderId}/cancel [AUTH]
  * Body: không có
  */
-export function cancelRentalOrder(rentalOrderId: string): Promise<null> {
-  return apiPost<null>(`/rental-orders/${rentalOrderId}/cancel`);
+export async function cancelRentalOrder(rentalOrderId: string): Promise<null> {
+  await httpService.post(
+    `/rental-orders/${rentalOrderId}/cancel`,
+    {},
+    authOpts,
+  );
+  return null;
 }
 
 /**
  * API-079: Gia hạn đơn thuê
  * PATCH /rental-orders/{rentalOrderId}/extend [AUTH]
  */
-export function extendRentalOrder(
+export async function extendRentalOrder(
   rentalOrderId: string,
   payload: ExtendOrderInput,
 ): Promise<RentalOrderResponse> {
-  return apiPatch<RentalOrderResponse>(
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/extend`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,14 +157,16 @@ export function extendRentalOrder(
  * API-080: Gán hub cho đơn thuê
  * PATCH /rental-orders/{rentalOrderId}/assign-hub [AUTH]
  */
-export function assignHubToOrder(
+export async function assignHubToOrder(
   rentalOrderId: string,
   payload: AssignHubInput,
 ): Promise<RentalOrderResponse> {
-  return apiPatch<RentalOrderResponse>(
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/assign-hub`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 /**
@@ -148,14 +174,16 @@ export function assignHubToOrder(
  * PATCH /rental-orders/{rentalOrderId}/assign-staff [AUTH]
  * Tất cả field là tùy chọn.
  */
-export function assignStaffToOrder(
+export async function assignStaffToOrder(
   rentalOrderId: string,
   payload: AssignStaffInput,
 ): Promise<RentalOrderResponse> {
-  return apiPatch<RentalOrderResponse>(
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/assign-staff`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -166,40 +194,134 @@ export function assignStaffToOrder(
  * API-082: Ghi nhận giao hàng
  * PATCH /rental-orders/{rentalOrderId}/record-delivery [AUTH]
  */
-export function recordDelivery(
+export async function recordDelivery(
   rentalOrderId: string,
   payload: RecordDeliveryInput,
 ): Promise<RentalOrderResponse> {
-  return apiPatch<RentalOrderResponse>(
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/record-delivery`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 /**
  * API-083: Ghi nhận thu hồi
  * PATCH /rental-orders/{rentalOrderId}/record-pickup [AUTH]
  */
-export function recordPickup(
+export async function recordPickup(
   rentalOrderId: string,
   payload: RecordPickupInput,
 ): Promise<RentalOrderResponse> {
-  return apiPatch<RentalOrderResponse>(
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/record-pickup`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
 }
 
 /**
  * API-084: Cập nhật phí phạt
  * PATCH /rental-orders/{rentalOrderId}/set-penalty [AUTH]
  */
-export function setPenalty(
+export async function setPenalty(
   rentalOrderId: string,
   payload: SetPenaltyInput,
 ): Promise<RentalOrderResponse> {
-  return apiPatch<RentalOrderResponse>(
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/set-penalty`,
     payload,
+    authOpts,
   );
+  return res.data.data!;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Complete & Report Issue
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Hoàn tất đơn thuê — chuyển status PICKED_UP → COMPLETED.
+ * Sử dụng API-079: PATCH /rental-orders/{id}/status
+ */
+export async function completeRentalOrder(
+  rentalOrderId: string,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/status`,
+    { status: 'COMPLETED' },
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * Thu hồi sớm do sự cố — ADMIN only.
+ * Chuyển DELIVERED / IN_USE → PENDING_PICKUP kèm issueNote.
+ * API-079: PATCH /rental-orders/{id}/status
+ */
+export async function reportIssueRecall(
+  rentalOrderId: string,
+  payload: ReportIssueInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/status`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. Hub Staff Assignment
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-120: Gán nhiều staff vào hub
+ * PATCH /hubs/{hubId}/assign-staff
+ */
+export async function assignStaffToHub(
+  hubId: string,
+  payload: AssignStaffToHubInput,
+): Promise<HubStaffResponse[]> {
+  const res = await httpService.patch<ApiResponse<HubStaffResponse[]>>(
+    `/hubs/${hubId}/assign-staff`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * API-082: Xem chi tiết nhân sự xử lý đơn thuê
+ * GET /rental-orders/{rentalOrderId}/staff-detail
+ */
+export async function getRentalOrderStaffDetail(
+  rentalOrderId: string,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.get<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/staff-detail`,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. Contracts
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * API-094: Lấy hợp đồng thuê theo đơn hàng
+ * GET /contracts/rental-order/{rentalOrderId}
+ */
+export async function getContractByOrder(
+  rentalOrderId: string,
+): Promise<RentalContractResponse> {
+  const res = await httpService.get<ApiResponse<RentalContractResponse>>(
+    `/contracts/rental-order/${rentalOrderId}`,
+    authOpts,
+  );
+  return res.data.data!;
 }

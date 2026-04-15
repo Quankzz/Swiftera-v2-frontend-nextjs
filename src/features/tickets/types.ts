@@ -3,7 +3,7 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 16: CONTACT TICKETS)
  */
 
-import type { PaginatedData } from '@/api/apiService';
+import type { PaginationResponse } from '@/types/api.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status enum
@@ -91,7 +91,8 @@ export interface TicketListParams {
 // Paginated wrappers
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PaginatedTicketsResponse = PaginatedData<ContactTicketResponse>;
+export type PaginatedTicketsResponse =
+  PaginationResponse<ContactTicketResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API-104: Reply (PATCH /contact-tickets/{id}/reply)

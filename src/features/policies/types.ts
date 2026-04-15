@@ -3,7 +3,7 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 17: POLICIES
  */
 
-import type { PaginatedData } from '@/api/apiService';
+import type { PaginationResponse } from '@/types/api.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Policy Document Response (API-106 → API-110)
@@ -26,7 +26,8 @@ export interface PolicyDocumentResponse {
 // Paginated Response
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PaginatedPoliciesResponse = PaginatedData<PolicyDocumentResponse>;
+export type PaginatedPoliciesResponse =
+  PaginationResponse<PolicyDocumentResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // List Params (API-109)
@@ -51,4 +52,11 @@ export interface CreatePolicyInput {
   pdfUrl?: string | null;
   pdfHash?: string | null;
   effectiveFrom: string; // ISO 8601 e.g. "2026-04-01T00:00:00Z"
+}
+
+/** API-109A: PATCH /policies/{policyId} — tất cả field tùy chọn */
+export interface UpdatePolicyInput {
+  title?: string;
+  pdfUrl?: string | null;
+  effectiveFrom?: string; // ISO 8601
 }
