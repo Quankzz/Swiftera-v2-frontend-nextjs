@@ -9,7 +9,6 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, className }: CategoryCardProps) {
-  console.log('ca', category);
   return (
     <Link
       href={`/catalog?category=${category.categoryId}`}
