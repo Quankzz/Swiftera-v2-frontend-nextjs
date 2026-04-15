@@ -8,6 +8,7 @@ import type { HubTableMeta } from './hub-table';
 import { HubFormDialog } from './hub-form-dialog';
 import { HubDeleteDialog } from './hub-delete-dialog';
 import { HubViewDialog } from './hub-view-dialog';
+import { AssignStaffToHubDialog } from './assign-staff-to-hub-dialog';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dialog State
@@ -18,7 +19,8 @@ type DialogState =
   | { type: 'create' }
   | { type: 'edit'; hub: HubResponse }
   | { type: 'delete'; hub: HubResponse }
-  | { type: 'view'; hub: HubResponse };
+  | { type: 'view'; hub: HubResponse }
+  | { type: 'assign-staff'; hub: HubResponse };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Component
@@ -85,6 +87,7 @@ export function HubsPage() {
         onView={(hub) => setDialog({ type: 'view', hub })}
         onEdit={(hub) => setDialog({ type: 'edit', hub })}
         onDelete={(hub) => setDialog({ type: 'delete', hub })}
+        onAssignStaff={(hub) => setDialog({ type: 'assign-staff', hub })}
         onMetaChange={setMeta}
       />
 
@@ -109,6 +112,12 @@ export function HubsPage() {
       )}
       {dialog.type === 'delete' && (
         <HubDeleteDialog
+          hub={dialog.hub}
+          onClose={() => setDialog({ type: 'idle' })}
+        />
+      )}
+      {dialog.type === 'assign-staff' && (
+        <AssignStaffToHubDialog
           hub={dialog.hub}
           onClose={() => setDialog({ type: 'idle' })}
         />

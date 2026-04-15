@@ -6,7 +6,7 @@
  * Không đoán field — chỉ dùng field có trong spec.
  */
 
-import type { PaginatedData } from '@/api/apiService';
+import type { PaginationResponse } from '@/types/api.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Response Types (API-040 response example)
@@ -42,7 +42,7 @@ export interface HubResponse {
 // Paginated Response (API-042)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PaginatedHubsResponse = PaginatedData<HubResponse>;
+export type PaginatedHubsResponse = PaginationResponse<HubResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Query Params (API-042)

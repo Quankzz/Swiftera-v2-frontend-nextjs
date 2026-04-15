@@ -6,7 +6,7 @@
  * Không đoán field — chỉ dùng field có trong spec.
  */
 
-import type { PaginatedData } from '@/api/apiService';
+import type { PaginationResponse } from '@/types/api.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Enums / Union Types
@@ -57,7 +57,7 @@ export interface VoucherResponse {
 // Paginated Response (API-070)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PaginatedVouchersResponse = PaginatedData<VoucherResponse>;
+export type PaginatedVouchersResponse = PaginationResponse<VoucherResponse>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Request / Input Types

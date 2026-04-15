@@ -22,6 +22,7 @@ import {
   BookOpen,
   X,
   ExternalLink,
+  Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ import {
   useDeactivatePolicyMutation,
 } from '../hooks/use-policy-management';
 import { PolicyPdfPreview } from './policy-pdf-preview';
+import { PolicyEditDialog } from './policy-edit-dialog';
 import type { PolicyDocumentResponse } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,8 +71,8 @@ function FilterBar({
 }) {
   const opts: { value: ActiveFilter; label: string }[] = [
     { value: 'all', label: 'Tất cả' },
-    { value: 'active', label: '✅ Đang hoạt động' },
-    { value: 'inactive', label: '⛔ Đã vô hiệu' },
+    { value: 'active', label: 'Đang hoạt động' },
+    { value: 'inactive', label: 'Đã vô hiệu' },
   ];
   return (
     <div className='flex items-center gap-1 p-1 rounded-xl bg-gray-100 dark:bg-white/8'>
@@ -108,7 +110,7 @@ function PdfViewerDialog({
         className='absolute inset-0 bg-black/60 backdrop-blur-sm'
         onClick={onClose}
       />
-      <div className='relative z-10 w-full max-w-3xl mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col max-h-[96vh] overflow-hidden'>
+      <div className='relative z-10 w-full max-w-4xl mx-4 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col max-h-[96vh] overflow-hidden'>
         {/* Header */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10 shrink-0'>
           <div className='flex items-center gap-3'>
@@ -173,6 +175,8 @@ export function PolicyTable() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
   const [previewPolicy, setPreviewPolicy] =
+    useState<PolicyDocumentResponse | null>(null);
+  const [editingPolicy, setEditingPolicy] =
     useState<PolicyDocumentResponse | null>(null);
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
   const [confirmDeactivatePolicy, setConfirmDeactivatePolicy] =
@@ -309,6 +313,19 @@ export function PolicyTable() {
           const isDeactivating = deactivatingId === policy.policyDocumentId;
           return (
             <div className='flex items-center gap-1.5 justify-end'>
+              {/* Chỉnh sửa */}
+              {policy.isActive && (
+                <button
+                  type='button'
+                  onClick={() => setEditingPolicy(policy)}
+                  className='flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/15 transition-colors'
+                  title='Chỉnh sửa'
+                >
+                  <Pencil className='w-3.5 h-3.5' />
+                  Sửa
+                </button>
+              )}
+
               {/* Xem PDF */}
               <button
                 type='button'
@@ -343,7 +360,7 @@ export function PolicyTable() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [deactivatingId],
+    [deactivatingId, editingPolicy],
   );
 
   return (
@@ -384,37 +401,14 @@ export function PolicyTable() {
         onClose={() => setPreviewPolicy(null)}
       />
 
-      <Dialog
-        open={confirmDeactivatePolicy !== null}
-        onOpenChange={(open) => !open && setConfirmDeactivatePolicy(null)}
-      >
-        <DialogContent className='sm:max-w-md'>
-          <DialogHeader>
-            <DialogTitle>Xác nhận vô hiệu hóa chính sách</DialogTitle>
-            <DialogDescription>
-              {confirmDeactivatePolicy
-                ? `Bạn có chắc muốn vô hiệu hóa "${confirmDeactivatePolicy.title}"?`
-                : 'Bạn có chắc muốn vô hiệu hóa chính sách này?'}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setConfirmDeactivatePolicy(null)}
-              disabled={deactivateMutation.isPending}
-            >
-              Hủy
-            </Button>
-            <Button
-              variant='destructive'
-              onClick={() => void confirmDeactivate()}
-              disabled={deactivateMutation.isPending}
-            >
-              {deactivateMutation.isPending ? 'Đang xử lý…' : 'Vô hiệu hóa'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Dialog */}
+      {editingPolicy && (
+        <PolicyEditDialog
+          policy={editingPolicy}
+          isOpen={!!editingPolicy}
+          onClose={() => setEditingPolicy(null)}
+        />
+      )}
     </>
   );
 }

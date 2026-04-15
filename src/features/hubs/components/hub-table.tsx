@@ -5,7 +5,15 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, MapPin, Phone, Eye, Search } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  MapPin,
+  Phone,
+  Eye,
+  Search,
+  UserPlus,
+} from 'lucide-react';
 import type { HubResponse } from '@/features/hubs/types';
 import { useHubsQuery } from '@/features/hubs/hooks/use-hub-management';
 
@@ -142,6 +150,7 @@ interface HubTableProps {
   onEdit: (hub: HubResponse) => void;
   onDelete: (hub: HubResponse) => void;
   onView?: (hub: HubResponse) => void;
+  onAssignStaff?: (hub: HubResponse) => void;
   onMetaChange?: (meta: HubTableMeta) => void;
 }
 
@@ -153,6 +162,7 @@ export function HubTable({
   onEdit,
   onDelete,
   onView,
+  onAssignStaff,
   onMetaChange,
 }: HubTableProps) {
   const [page, setPage] = useState(0); // 0-based for DataTable UI; send page+1 to API
@@ -309,6 +319,17 @@ export function HubTable({
                 <Eye size={14} />
               </Button>
             )}
+            {onAssignStaff && (
+              <Button
+                variant='ghost'
+                size='icon'
+                className='size-8 text-text-sub hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
+                onClick={() => onAssignStaff(row.original)}
+                title='Gán nhân viên'
+              >
+                <UserPlus size={14} />
+              </Button>
+            )}
             <Button
               variant='ghost'
               size='icon'
@@ -331,7 +352,7 @@ export function HubTable({
         ),
       },
     ],
-    [onEdit, onDelete, onView],
+    [onEdit, onDelete, onView, onAssignStaff],
   );
 
   const errorMessage =

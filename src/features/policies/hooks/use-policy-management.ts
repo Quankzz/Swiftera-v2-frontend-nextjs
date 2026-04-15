@@ -15,8 +15,13 @@ import {
   getPolicyById,
   createPolicy,
   deactivatePolicy,
+  updatePolicy,
 } from '../api/policy.service';
-import type { PolicyListParams, CreatePolicyInput } from '../types';
+import type {
+  PolicyListParams,
+  CreatePolicyInput,
+  UpdatePolicyInput,
+} from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -72,6 +77,28 @@ export function useDeactivatePolicyMutation() {
     mutationFn: (policyDocumentId: string) =>
       deactivatePolicy(policyDocumentId),
     onSuccess: (_data, policyDocumentId) => {
+      queryClient.invalidateQueries({ queryKey: policyKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: policyKeys.detail(policyDocumentId),
+      });
+    },
+  });
+}
+
+/**
+ * useUpdatePolicyMutation — cập nhật chính sách (API-109A)
+ */
+export function useUpdatePolicyMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      policyDocumentId,
+      payload,
+    }: {
+      policyDocumentId: string;
+      payload: UpdatePolicyInput;
+    }) => updatePolicy(policyDocumentId, payload),
+    onSuccess: (_data, { policyDocumentId }) => {
       queryClient.invalidateQueries({ queryKey: policyKeys.lists() });
       queryClient.invalidateQueries({
         queryKey: policyKeys.detail(policyDocumentId),

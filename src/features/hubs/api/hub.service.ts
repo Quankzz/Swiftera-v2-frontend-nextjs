@@ -2,11 +2,12 @@
  * Hub API service — Module 6: HUBS
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (API-040 → API-044)
  *
- * Dùng apiService.ts — KHÔNG dùng client.ts.
+ * HTTP layer: httpService (axios) — dùng http.ts.
  * Service chỉ nhận payload đúng format API, không chứa UI logic.
  */
 
-import { apiGet, apiPost, apiPatch, apiDelete } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 import type {
   HubResponse,
   HubStaffResponse,
@@ -15,6 +16,8 @@ import type {
   UpdateHubInput,
   HubListParams,
 } from '../types';
+
+const authOpts = { requireToken: true as const };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -28,23 +31,23 @@ import type {
  *  - API này là PUBLIC (không cần token) nhưng dashboard gọi với auth header cũng không vấn đề
  *  - filter dùng SpringFilter DSL: "isActive:true", "city:'Hồ Chí Minh'"
  */
-export function getHubsList(
+export async function getHubsList(
   params?: HubListParams,
 ): Promise<PaginatedHubsResponse> {
-  return apiGet<PaginatedHubsResponse>('/hubs', {
-    params: params as Record<
-      string,
-      string | number | boolean | undefined | null
-    >,
-  });
+  const res = await httpService.get<ApiResponse<PaginatedHubsResponse>>(
+    '/hubs',
+    { params },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-041: GET /hubs/{hubId}
  * Lấy chi tiết hub theo ID
  */
-export function getHubById(hubId: string): Promise<HubResponse> {
-  return apiGet<HubResponse>(`/hubs/${hubId}`);
+export async function getHubById(hubId: string): Promise<HubResponse> {
+  const res = await httpService.get<ApiResponse<HubResponse>>(`/hubs/${hubId}`);
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,8 +61,13 @@ export function getHubById(hubId: string): Promise<HubResponse> {
  * Required: code, name
  * Optional: addressLine, ward, district, city, latitude, longitude, phone
  */
-export function createHub(payload: CreateHubInput): Promise<HubResponse> {
-  return apiPost<HubResponse>('/hubs', payload);
+export async function createHub(payload: CreateHubInput): Promise<HubResponse> {
+  const res = await httpService.post<ApiResponse<HubResponse>>(
+    '/hubs',
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
@@ -67,19 +75,25 @@ export function createHub(payload: CreateHubInput): Promise<HubResponse> {
  * Cập nhật hub (partial)
  * Tất cả field optional, có thể update isActive để toggle
  */
-export function updateHub(
+export async function updateHub(
   hubId: string,
   payload: UpdateHubInput,
 ): Promise<HubResponse> {
-  return apiPatch<HubResponse>(`/hubs/${hubId}`, payload);
+  const res = await httpService.patch<ApiResponse<HubResponse>>(
+    `/hubs/${hubId}`,
+    payload,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-044: DELETE /hubs/{hubId}
  * Xóa hub
  */
-export function deleteHub(hubId: string): Promise<null> {
-  return apiDelete<null>(`/hubs/${hubId}`);
+export async function deleteHub(hubId: string): Promise<null> {
+  await httpService.delete(`/hubs/${hubId}`, authOpts);
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -93,11 +107,13 @@ export function deleteHub(hubId: string): Promise<null> {
  * Response: plain array (không paginated).
  * activeOnly=false → trả về tất cả nhân viên kể cả chưa xác thực.
  */
-export function getHubStaff(
+export async function getHubStaff(
   hubId: string,
   activeOnly = false,
 ): Promise<HubStaffResponse[]> {
-  return apiGet<HubStaffResponse[]>(`/hubs/${hubId}/staff`, {
-    params: { activeOnly } as Record<string, boolean>,
-  });
+  const res = await httpService.get<ApiResponse<HubStaffResponse[]>>(
+    `/hubs/${hubId}/staff`,
+    { ...authOpts, params: { activeOnly } },
+  );
+  return res.data.data!;
 }

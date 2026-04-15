@@ -1,28 +1,16 @@
 /**
  * Dashboard service — API calls for the dashboards module.
- * HTTP layer: apiService.ts (same pattern as other features).
+ * HTTP layer: httpService (axios) — dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *   API-113: GET /api/v1/dashboards/admin
  */
 
-import { apiGet } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 import type { AdminDashboardData, AdminDashboardParams } from '../types';
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
-
-function buildQuery(
-  params: Record<string, string | number | boolean | undefined>,
-): string {
-  const q = new URLSearchParams();
-  for (const [key, val] of Object.entries(params)) {
-    if (val !== undefined && val !== null && val !== '') {
-      q.set(key, String(val));
-    }
-  }
-  const str = q.toString();
-  return str ? `?${str}` : '';
-}
+const authOpts = { requireToken: true as const };
 
 // ─── API-113: GET /api/v1/dashboards/admin ────────────────────────────────────
 // Không truyền hubId → toàn hệ thống.
@@ -31,6 +19,9 @@ function buildQuery(
 export async function getAdminDashboard(
   params: AdminDashboardParams = {},
 ): Promise<AdminDashboardData> {
-  const query = buildQuery({ hubId: params.hubId });
-  return apiGet<AdminDashboardData>(`/dashboards/admin${query}`);
+  const res = await httpService.get<ApiResponse<AdminDashboardData>>(
+    '/dashboards/admin',
+    { ...authOpts, params: { hubId: params.hubId } },
+  );
+  return res.data.data!;
 }

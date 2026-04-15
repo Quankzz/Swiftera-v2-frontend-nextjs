@@ -10,7 +10,8 @@
  * API-105: PATCH  /contact-tickets/{id}/close  [AUTH]    closeTicket
  */
 
-import { apiGet, apiPatch, apiPost } from '@/api/apiService';
+import { httpService } from '@/api/http';
+import type { ApiResponse } from '@/types/api.types';
 import type {
   ContactTicketResponse,
   ContactTicketStatus,
@@ -19,6 +20,8 @@ import type {
   ReplyTicketRequest,
   TicketListParams,
 } from '../types';
+
+const authOpts = { requireToken: true as const };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -44,32 +47,42 @@ function buildParams(
  * API-102: Lấy danh sách ticket (admin)
  * GET /contact-tickets?page=0&size=20&filter=status:'OPEN' [AUTH]
  */
-export function getTickets(
+export async function getTickets(
   params?: TicketListParams,
 ): Promise<PaginatedTicketsResponse> {
-  return apiGet<PaginatedTicketsResponse>('/contact-tickets', {
-    params: buildParams(params),
-  });
+  const res = await httpService.get<ApiResponse<PaginatedTicketsResponse>>(
+    '/contact-tickets',
+    { ...authOpts, params: buildParams(params) },
+  );
+  return res.data.data!;
 }
 
 /**
  * API-101: Lấy chi tiết một ticket
  * GET /contact-tickets/{id} [AUTH]
  */
-export function getTicketById(id: string): Promise<ContactTicketResponse> {
-  return apiGet<ContactTicketResponse>(`/contact-tickets/${id}`);
+export async function getTicketById(
+  id: string,
+): Promise<ContactTicketResponse> {
+  const res = await httpService.get<ApiResponse<ContactTicketResponse>>(
+    `/contact-tickets/${id}`,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-103: Lấy danh sách ticket của current user
  * GET /contact-tickets/my-tickets [AUTH]
  */
-export function getMyTickets(
+export async function getMyTickets(
   params?: TicketListParams,
 ): Promise<PaginatedTicketsResponse> {
-  return apiGet<PaginatedTicketsResponse>('/contact-tickets/my-tickets', {
-    params: buildParams(params),
-  });
+  const res = await httpService.get<ApiResponse<PaginatedTicketsResponse>>(
+    '/contact-tickets/my-tickets',
+    { ...authOpts, params: buildParams(params) },
+  );
+  return res.data.data!;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,29 +93,43 @@ export function getMyTickets(
  * API-100: Tạo ticket mới
  * POST /contact-tickets [PUBLIC]
  */
-export function createTicket(
+export async function createTicket(
   body: CreateTicketRequest,
 ): Promise<ContactTicketResponse> {
-  return apiPost<ContactTicketResponse>('/contact-tickets', body);
+  const res = await httpService.post<ApiResponse<ContactTicketResponse>>(
+    '/contact-tickets',
+    body,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-104: Admin phản hồi ticket
  * PATCH /contact-tickets/{id}/reply [AUTH]
  */
-export function replyTicket(
+export async function replyTicket(
   id: string,
   body: ReplyTicketRequest,
 ): Promise<ContactTicketResponse> {
-  return apiPatch<ContactTicketResponse>(`/contact-tickets/${id}/reply`, body);
+  const res = await httpService.patch<ApiResponse<ContactTicketResponse>>(
+    `/contact-tickets/${id}/reply`,
+    body,
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
  * API-105: Đóng ticket
  * PATCH /contact-tickets/{id}/close [AUTH]
  */
-export function closeTicket(id: string): Promise<ContactTicketResponse> {
-  return apiPatch<ContactTicketResponse>(`/contact-tickets/${id}/close`);
+export async function closeTicket(id: string): Promise<ContactTicketResponse> {
+  const res = await httpService.patch<ApiResponse<ContactTicketResponse>>(
+    `/contact-tickets/${id}/close`,
+    {},
+    authOpts,
+  );
+  return res.data.data!;
 }
 
 /**
@@ -113,9 +140,14 @@ export interface UpdateTicketStatusRequest {
   status: ContactTicketStatus;
 }
 
-export function updateTicketStatus(
+export async function updateTicketStatus(
   id: string,
   body: UpdateTicketStatusRequest,
 ): Promise<ContactTicketResponse> {
-  return apiPatch<ContactTicketResponse>(`/contact-tickets/${id}/status`, body);
+  const res = await httpService.patch<ApiResponse<ContactTicketResponse>>(
+    `/contact-tickets/${id}/status`,
+    body,
+    authOpts,
+  );
+  return res.data.data!;
 }

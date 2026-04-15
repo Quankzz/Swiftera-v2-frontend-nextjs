@@ -373,17 +373,31 @@ export function ProductFormPage({
               (item) => item.serialNumber && item.hubId,
             );
             if (pendingItems.length > 0) {
+              // Build a map: hex color code → real productColorId from BE
+              // Draft items store color.code (hex) as productColorId because
+              // real UUIDs don't exist yet during create mode.
+              const colorCodeToId = new Map<string, string>();
+              for (const c of newProduct.colors ?? []) {
+                colorCodeToId.set(c.code, c.productColorId);
+              }
+
               Promise.all(
-                pendingItems.map((item) =>
-                  createInventoryItemMutation.mutateAsync({
+                pendingItems.map((item) => {
+                  // Resolve draft colorId (hex code) → real UUID
+                  const resolvedColorId = item.productColorId
+                    ? (colorCodeToId.get(item.productColorId) ??
+                      item.productColorId)
+                    : undefined;
+
+                  return createInventoryItemMutation.mutateAsync({
                     productId: newProduct.productId,
                     hubId: item.hubId,
                     serialNumber: item.serialNumber,
                     conditionGrade: item.conditionGrade,
                     staffNote: item.staffNote || undefined,
-                    productColorId: item.productColorId || undefined,
-                  }),
-                ),
+                    productColorId: resolvedColorId || undefined,
+                  });
+                }),
               ).finally(() => router.push('/dashboard/products'));
             } else {
               router.push('/dashboard/products');

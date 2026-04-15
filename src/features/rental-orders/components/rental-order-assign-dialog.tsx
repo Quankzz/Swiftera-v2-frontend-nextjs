@@ -29,10 +29,15 @@ import {
   BadgeCheck,
   Banknote,
   CircleDot,
+  AlertTriangle,
+  QrCode,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAssignStaffMutation } from '@/features/rental-orders/hooks/use-rental-order-assignment';
+import { useRentalOrderContractQuery } from '@/features/rental-orders/hooks/use-rental-order-management';
 import { StaffPickerDialog } from '@/features/rental-orders/components/staff-picker-dialog';
 import {
   STATUS_LABELS,
@@ -60,12 +65,61 @@ function formatCurrency(v: number | null | undefined) {
   }).format(v);
 }
 
-function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('vi-VN', {
+/**
+ * Parse ngày giờ linh hoạt — hỗ trợ:
+ *  - ISO 8601: "2026-03-24T10:30:00Z"
+ *  - BE custom: "2026-03-24 10:30:00 AM"
+ *  - Date-only: "2026-03-24"
+ */
+function parseDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+
+  // Thử ISO trước
+  let d = new Date(raw);
+  if (!isNaN(d.getTime())) return d;
+
+  // BE custom format: "2026-03-24 10:30:00 AM"
+  const match = raw.match(
+    /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2}:\d{2})\s*(AM|PM)?$/i,
+  );
+  if (match) {
+    const [, datePart, timePart, ampm] = match;
+    if (ampm) {
+      const [hh, mm, ss] = timePart.split(':').map(Number);
+      let hour24 = hh;
+      if (ampm.toUpperCase() === 'PM' && hh !== 12) hour24 += 12;
+      if (ampm.toUpperCase() === 'AM' && hh === 12) hour24 = 0;
+      d = new Date(
+        `${datePart}T${String(hour24).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`,
+      );
+    } else {
+      d = new Date(`${datePart}T${timePart}`);
+    }
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  return null;
+}
+
+function formatDate(raw: string | null | undefined) {
+  const d = parseDate(raw);
+  if (!d) return '—';
+  return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+  });
+}
+
+function formatDateTime(raw: string | null | undefined) {
+  const d = parseDate(raw);
+  if (!d) return '—';
+  return d.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 
@@ -194,6 +248,10 @@ export function RentalOrderAssignDialog({
 
   const assignMutation = useAssignStaffMutation();
 
+  // ── Contract query (API-094) ───────────────────────────────────────────────
+  const { data: contract, isLoading: contractLoading } =
+    useRentalOrderContractQuery(order.rentalOrderId);
+
   const statusStyle = STATUS_STYLES[order.status] ?? {
     dot: 'bg-gray-400',
     cls: 'text-gray-600 bg-gray-100 border-gray-200',
@@ -249,15 +307,6 @@ export function RentalOrderAssignDialog({
 
   if (!isOpen) return null;
 
-  const address = [
-    order.deliveryAddressLine,
-    order.deliveryWard,
-    order.deliveryDistrict,
-    order.deliveryCity,
-  ]
-    .filter(Boolean)
-    .join(', ');
-
   return (
     <>
       {/* ── Main assign dialog ─────────────────────────────────────────── */}
@@ -282,7 +331,7 @@ export function RentalOrderAssignDialog({
                 </h2>
                 <p className='text-xs text-text-sub'>
                   #{order.rentalOrderId.slice(0, 8).toUpperCase()} —{' '}
-                  {order.deliveryRecipientName}
+                  {order.userAddress?.recipientName ?? '—'}
                 </p>
               </div>
             </div>
@@ -320,6 +369,7 @@ export function RentalOrderAssignDialog({
                   value={
                     order.hubName ? (
                       <span className='text-indigo-600 dark:text-indigo-400 font-semibold'>
+                        {order.hubCode ? `[${order.hubCode}] ` : ''}
                         {order.hubName}
                       </span>
                     ) : (
@@ -327,15 +377,47 @@ export function RentalOrderAssignDialog({
                     )
                   }
                 />
+                {order.hubAddressLine && (
+                  <InfoRow
+                    icon={MapPin}
+                    label='Địa chỉ hub'
+                    value={
+                      [
+                        order.hubAddressLine,
+                        order.hubWard,
+                        order.hubDistrict,
+                        order.hubCity,
+                      ]
+                        .filter(Boolean)
+                        .join(', ') || '—'
+                    }
+                  />
+                )}
+                {order.hubPhone && (
+                  <InfoRow
+                    icon={Phone}
+                    label='SĐT hub'
+                    value={order.hubPhone}
+                  />
+                )}
                 <InfoRow
                   icon={Phone}
                   label='Người nhận'
-                  value={`${order.deliveryRecipientName} · ${order.deliveryPhone}`}
+                  value={`${order.userAddress?.recipientName ?? '—'} · ${order.userAddress?.phoneNumber ?? '—'}`}
                 />
                 <InfoRow
                   icon={MapPin}
                   label='Địa chỉ giao'
-                  value={address || '—'}
+                  value={
+                    [
+                      order.userAddress?.addressLine,
+                      order.userAddress?.ward,
+                      order.userAddress?.district,
+                      order.userAddress?.city,
+                    ]
+                      .filter(Boolean)
+                      .join(', ') || '—'
+                  }
                 />
                 <InfoRow
                   icon={Calendar}
@@ -347,59 +429,254 @@ export function RentalOrderAssignDialog({
                   label='Ngày kết thúc'
                   value={formatDate(order.expectedRentalEndDate)}
                 />
+                {order.actualDeliveryAt && (
+                  <InfoRow
+                    icon={Calendar}
+                    label='Giao thực tế'
+                    value={formatDate(order.actualDeliveryAt)}
+                  />
+                )}
+                {order.actualRentalEndAt && (
+                  <InfoRow
+                    icon={Calendar}
+                    label='Kết thúc thực tế'
+                    value={formatDate(order.actualRentalEndAt)}
+                  />
+                )}
+                {order.pickedUpAt && (
+                  <InfoRow
+                    icon={Calendar}
+                    label='Ngày thu hồi'
+                    value={formatDate(order.pickedUpAt)}
+                  />
+                )}
               </div>
+            </div>
+
+            {/* ── Issue tracking ── */}
+            {order.issueReportNote && (
+              <div>
+                <SectionLabel>Sự cố</SectionLabel>
+                <div className='rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3 space-y-0.5'>
+                  <InfoRow
+                    icon={AlertTriangle}
+                    label='Ghi chú sự cố'
+                    value={
+                      <span className='text-amber-700 dark:text-amber-400'>
+                        {order.issueReportNote}
+                      </span>
+                    }
+                  />
+                  {order.issueReportedAt && (
+                    <InfoRow
+                      icon={Calendar}
+                      label='Báo cáo lúc'
+                      value={formatDate(order.issueReportedAt)}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── QR Code ── */}
+            {order.qrCode && (
+              <div>
+                <SectionLabel>Mã QR</SectionLabel>
+                <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-white/4 px-4 py-3 flex items-center justify-center'>
+                  {order.qrCode.startsWith('data:') ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={order.qrCode}
+                      alt='QR Code'
+                      className='w-36 h-36 rounded-lg'
+                    />
+                  ) : order.qrCode.length > 100 ? (
+                    // Raw base64 without data URI prefix
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`data:image/png;base64,${order.qrCode}`}
+                      alt='QR Code'
+                      className='w-36 h-36 rounded-lg'
+                    />
+                  ) : (
+                    <div className='flex items-center gap-3'>
+                      <QrCode className='w-5 h-5 text-text-sub shrink-0' />
+                      <span className='text-xs font-mono text-text-sub break-all'>
+                        {order.qrCode}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── Contract (API-094) ── */}
+            <div>
+              <SectionLabel>Hợp đồng thuê</SectionLabel>
+              {contractLoading ? (
+                <div className='flex items-center gap-2 rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3'>
+                  <Loader2 className='w-4 h-4 animate-spin text-text-sub' />
+                  <span className='text-xs text-text-sub'>
+                    Đang tải hợp đồng…
+                  </span>
+                </div>
+              ) : contract ? (
+                <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3 space-y-0.5'>
+                  <InfoRow
+                    icon={FileText}
+                    label='Số hợp đồng'
+                    value={
+                      <span className='font-mono font-semibold text-indigo-600 dark:text-indigo-400'>
+                        {contract.contractNumber}
+                      </span>
+                    }
+                  />
+                  <InfoRow
+                    icon={FileText}
+                    label='Phiên bản'
+                    value={`v${contract.contractVersion}`}
+                  />
+                  <InfoRow
+                    icon={BadgeCheck}
+                    label='Phương thức'
+                    value={
+                      contract.acceptMethod === 'SIGNATURE'
+                        ? 'Ký tay'
+                        : 'Click đồng ý'
+                    }
+                  />
+                  <InfoRow
+                    icon={Calendar}
+                    label='Đồng ý lúc'
+                    value={formatDateTime(contract.acceptedAt)}
+                  />
+                  <InfoRow
+                    icon={Calendar}
+                    label='Tạo lúc'
+                    value={formatDateTime(contract.createdAt)}
+                  />
+                  {contract.contractPdfUrl && (
+                    <div className='pt-2'>
+                      <a
+                        href={contract.contractPdfUrl}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors'
+                      >
+                        <ExternalLink className='w-3.5 h-3.5' />
+                        Xem hợp đồng PDF
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className='flex items-center gap-2 rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3'>
+                  <FileText className='w-4 h-4 text-text-sub' />
+                  <span className='text-xs text-text-sub italic'>
+                    Chưa có hợp đồng cho đơn hàng này.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* ── Financials ── */}
             <div>
               <SectionLabel>Tài chính</SectionLabel>
               <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
-                {[
-                  {
-                    label: 'Tiền thuê',
-                    value: formatCurrency(order.rentalSubtotalAmount),
-                    accent: false,
-                  },
-                  {
-                    label: 'Phí dịch vụ',
-                    value: formatCurrency(order.rentalFeeAmount),
-                    accent: false,
-                  },
-                  {
-                    label: 'Giảm giá',
-                    value: order.voucherDiscountAmount
-                      ? `- ${formatCurrency(order.voucherDiscountAmount)}`
-                      : '—',
-                    accent: false,
-                  },
-                  {
-                    label: 'Tiền đặt cọc',
-                    value: formatCurrency(order.depositHoldAmount),
-                    accent: false,
-                  },
-                  {
-                    label: 'Tổng thanh toán',
-                    value: formatCurrency(order.totalPayableAmount),
-                    accent: true,
-                  },
-                ].map(({ label, value, accent }) => (
-                  <div
-                    key={label}
-                    className='rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-white/4 px-3 py-2.5'
-                  >
-                    <p className='text-[11px] text-text-sub'>{label}</p>
-                    <p
-                      className={cn(
-                        'text-sm font-semibold mt-0.5',
-                        accent
-                          ? 'text-indigo-600 dark:text-indigo-400'
-                          : 'text-text-main',
-                      )}
+                {(
+                  [
+                    {
+                      label: 'Tiền thuê',
+                      value: formatCurrency(order.rentalSubtotalAmount),
+                      accent: false,
+                    },
+                    {
+                      label: 'Phí dịch vụ',
+                      value: formatCurrency(order.rentalFeeAmount),
+                      accent: false,
+                    },
+                    {
+                      label: 'Giảm giá',
+                      value: order.voucherDiscountAmount
+                        ? `- ${formatCurrency(order.voucherDiscountAmount)}`
+                        : '—',
+                      accent: false,
+                    },
+                    {
+                      label: 'Tiền đặt cọc',
+                      value: formatCurrency(order.depositHoldAmount),
+                      accent: false,
+                    },
+                    {
+                      label: 'Đã thanh toán',
+                      value: formatCurrency(order.totalPaidAmount),
+                      accent: false,
+                    },
+                    {
+                      label: 'Tổng thanh toán',
+                      value: formatCurrency(order.totalPayableAmount),
+                      accent: true,
+                    },
+                    // Penalty fields — chỉ hiện khi có giá trị
+                    order.damagePenaltyAmount != null && {
+                      label: 'Phí hư hại',
+                      value: formatCurrency(order.damagePenaltyAmount),
+                      accent: false,
+                    },
+                    order.overduePenaltyAmount != null && {
+                      label: 'Phí trễ hạn',
+                      value: formatCurrency(order.overduePenaltyAmount),
+                      accent: false,
+                    },
+                    order.provisionalOverduePenaltyAmount != null && {
+                      label: 'Phí trễ hạn (tạm)',
+                      value: formatCurrency(
+                        order.provisionalOverduePenaltyAmount,
+                      ),
+                      accent: false,
+                    },
+                    order.penaltyChargeAmount != null && {
+                      label: 'Tổng phí phạt',
+                      value: formatCurrency(order.penaltyChargeAmount),
+                      accent: false,
+                    },
+                    order.depositRefundAmount != null && {
+                      label: 'Hoàn cọc',
+                      value: formatCurrency(order.depositRefundAmount),
+                      accent: false,
+                    },
+                  ] as (
+                    | { label: string; value: string; accent: boolean }
+                    | false
+                  )[]
+                )
+                  .filter(
+                    (
+                      item,
+                    ): item is {
+                      label: string;
+                      value: string;
+                      accent: boolean;
+                    } => !!item,
+                  )
+                  .map(({ label, value, accent }) => (
+                    <div
+                      key={label}
+                      className='rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-white/4 px-3 py-2.5'
                     >
-                      {value}
-                    </p>
-                  </div>
-                ))}
+                      <p className='text-[11px] text-text-sub'>{label}</p>
+                      <p
+                        className={cn(
+                          'text-sm font-semibold mt-0.5',
+                          accent
+                            ? 'text-indigo-600 dark:text-indigo-400'
+                            : 'text-text-main',
+                        )}
+                      >
+                        {value}
+                      </p>
+                    </div>
+                  ))}
               </div>
             </div>
 
@@ -416,7 +693,15 @@ export function RentalOrderAssignDialog({
                       className='flex items-center gap-3 rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-white/4 px-4 py-3'
                     >
                       <div className='w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0'>
-                        <CircleDot className='w-4 h-4 text-indigo-500' />
+                        {line.colorCodeSnapshot ? (
+                          <div
+                            className='w-5 h-5 rounded-full border border-gray-200 dark:border-white/20'
+                            style={{ backgroundColor: line.colorCodeSnapshot }}
+                            title={line.colorNameSnapshot ?? ''}
+                          />
+                        ) : (
+                          <CircleDot className='w-4 h-4 text-indigo-500' />
+                        )}
                       </div>
                       <div className='flex-1 min-w-0'>
                         <p className='text-sm font-medium text-text-main truncate'>
@@ -428,9 +713,29 @@ export function RentalOrderAssignDialog({
                               S/N: {line.inventorySerialNumber}
                             </span>
                           )}
+                          {line.colorNameSnapshot && (
+                            <span className='text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-text-sub flex items-center gap-1'>
+                              {line.colorCodeSnapshot && (
+                                <span
+                                  className='inline-block w-2 h-2 rounded-full'
+                                  style={{
+                                    backgroundColor: line.colorCodeSnapshot,
+                                  }}
+                                />
+                              )}
+                              {line.colorNameSnapshot}
+                            </span>
+                          )}
                           <span className='text-[10px] text-text-sub'>
                             {line.rentalDurationDays} ngày
                           </span>
+                          {line.voucherCodeSnapshot && (
+                            <span className='text-[10px] px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'>
+                              🎟 {line.voucherCodeSnapshot}{' '}
+                              {line.voucherDiscountAmount > 0 &&
+                                `(-${formatCurrency(line.voucherDiscountAmount)})`}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className='text-right shrink-0'>

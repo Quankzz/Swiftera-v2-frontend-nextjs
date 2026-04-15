@@ -14,6 +14,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Search,
@@ -62,19 +63,21 @@ export function StaffPickerDialog({
     : 'Chọn nhân viên thu hồi';
   const RoleIcon = isDelivery ? Package : UserCheck;
   const headerGradient = isDelivery
-    ? 'bg-linear-to-r from-indigo-600 to-blue-600'
+    ? 'bg-linear-to-r from-theme-primary-start to-theme-primary-end'
     : 'bg-linear-to-r from-emerald-600 to-teal-600';
   const ringColor = isDelivery
-    ? 'focus:ring-indigo-500/30 focus:border-indigo-500'
+    ? 'focus:ring-theme-primary-start/30 focus:border-theme-primary-start'
     : 'focus:ring-emerald-500/30 focus:border-emerald-500';
   const selectedBorder = isDelivery
-    ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-400/30'
+    ? 'border-theme-primary-start bg-theme-primary-start/10 ring-2 ring-theme-primary-start/30'
     : 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 ring-2 ring-emerald-400/30';
-  const selectedIcon = isDelivery ? 'bg-indigo-500' : 'bg-emerald-500';
+  const selectedIcon = isDelivery ? 'bg-theme-primary-start' : 'bg-emerald-500';
   const confirmBtn = isDelivery
-    ? 'bg-indigo-600 hover:bg-indigo-700'
+    ? 'bg-theme-primary-start hover:brightness-110'
     : 'bg-emerald-600 hover:bg-emerald-700';
-  const loaderColor = isDelivery ? 'text-indigo-500' : 'text-emerald-500';
+  const loaderColor = isDelivery
+    ? 'text-theme-primary-start'
+    : 'text-emerald-500';
 
   const { data: staffData, isLoading } = useHubStaffForAssignQuery(hubId);
 
@@ -97,9 +100,9 @@ export function StaffPickerDialog({
 
   if (!isOpen) return null;
 
-  return (
-    <div className='fixed inset-0 z-60 flex items-center justify-center'>
-      {/* Backdrop — higher z than the parent dialog */}
+  const dialog = (
+    <div className='fixed inset-0 z-9999 flex items-center justify-center'>
+      {/* Backdrop — portal ensures full viewport coverage */}
       <div
         className='absolute inset-0 bg-black/40 backdrop-blur-sm'
         onClick={onClose}
@@ -229,7 +232,9 @@ export function StaffPickerDialog({
                     <CheckCircle2
                       className={cn(
                         'w-5 h-5 shrink-0',
-                        isDelivery ? 'text-indigo-500' : 'text-emerald-500',
+                        isDelivery
+                          ? 'text-theme-primary-start'
+                          : 'text-emerald-500',
                       )}
                     />
                   ) : (
@@ -279,4 +284,6 @@ export function StaffPickerDialog({
       </div>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }
