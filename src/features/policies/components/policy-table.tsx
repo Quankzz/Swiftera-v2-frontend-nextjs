@@ -27,6 +27,15 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
   usePoliciesQuery,
   useDeactivatePolicyMutation,
 } from '../hooks/use-policy-management';
@@ -170,6 +179,8 @@ export function PolicyTable() {
   const [editingPolicy, setEditingPolicy] =
     useState<PolicyDocumentResponse | null>(null);
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
+  const [confirmDeactivatePolicy, setConfirmDeactivatePolicy] =
+    useState<PolicyDocumentResponse | null>(null);
 
   const deactivateMutation = useDeactivatePolicyMutation();
 
@@ -211,11 +222,18 @@ export function PolicyTable() {
 
   // ── Deactivate ─────────────────────────────────────────────────────────────
   const handleDeactivate = async (policy: PolicyDocumentResponse) => {
-    if (!window.confirm(`Vô hiệu hóa "${policy.title}"?`)) return;
-    setDeactivatingId(policy.policyDocumentId);
+    setConfirmDeactivatePolicy(policy);
+  };
+
+  const confirmDeactivate = async () => {
+    if (!confirmDeactivatePolicy) return;
+    setDeactivatingId(confirmDeactivatePolicy.policyDocumentId);
     try {
-      await deactivateMutation.mutateAsync(policy.policyDocumentId);
-      toast.success(`Đã vô hiệu hóa "${policy.title}".`);
+      await deactivateMutation.mutateAsync(
+        confirmDeactivatePolicy.policyDocumentId,
+      );
+      toast.success(`Đã vô hiệu hóa "${confirmDeactivatePolicy.title}".`);
+      setConfirmDeactivatePolicy(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Vô hiệu hóa thất bại.');
     } finally {
