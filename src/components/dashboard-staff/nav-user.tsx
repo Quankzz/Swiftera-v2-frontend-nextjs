@@ -93,22 +93,24 @@ export function NavUser({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-2 py-2 text-left">
-                <Avatar className="size-9 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg bg-theme-primary-start/15 text-theme-primary-start text-xs font-bold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {user.email}
-                  </span>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-2 py-2 text-left">
+                  <Avatar className="size-9 rounded-lg">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback className="rounded-lg bg-theme-primary-start/15 text-theme-primary-start text-xs font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">{user.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </DropdownMenuLabel>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
@@ -130,7 +132,7 @@ export function NavUser({
               onClick={handleLogout}
               disabled={isLoggingOut}
             >
-              <LogOutIcon className="size-4" />
+              <LogOutIcon className="size-4 text-theme-primary-start" />
               {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -245,8 +245,10 @@ export interface SetPenaltyInput {
   note?: string;
 }
 
-/** API-086A GET — đề xuất phí phạt quá hạn tạm tính */
-export interface OverduePenaltySuggestionResponse {
+
+// ─── Overdue Penalty Suggestion ─────────────────────────────────────────────
+
+export interface OverduePenaltySuggestionData {
   rentalOrderId: string;
   status: RentalOrderStatus;
   overdue: boolean;
@@ -261,12 +263,11 @@ export interface OverduePenaltySuggestionResponse {
   suggestedDepositRefundAmount: number;
 }
 
-/** Envelope: có thể `success` hoặc `code` (1000) tùy phiên bản backend */
-export interface OverduePenaltySuggestionEnvelope {
-  success?: boolean;
-  code?: number;
-  message?: string;
-  data: OverduePenaltySuggestionResponse;
+
+export interface OverduePenaltySuggestionResponse {
+  code: number;
+  message: string;
+  data: OverduePenaltySuggestionData;
 }
 
 // ─── Staff Detail ────────────────────────────────────────────────────────────
@@ -536,14 +537,20 @@ export function setPenalty(
 }
 
 /**
- * API-086A: Lấy đề xuất phí phạt quá hạn tạm tính [AUTH]
+ * Lấy đề xuất phí phạt quá hạn tạm tính [AUTH]
  *
- * Dùng để prefill overduePenaltyAmount khi gọi set-penalty hoặc hiển thị cho khách.
+ * @param rentalOrderId - UUID của đơn thuê
+ *
+ * Business logic:
+ * - Khi IN_USE/PENDING_PICKUP và overdue: backend auto-refresh provisionalOverduePenaltyAmount mỗi ngày.
+ * - Khi PICKED_UP: backend dùng actualRentalEndAt để khóa số ngày overdue.
+ * - FE dùng provisionalOverduePenaltyAmount để prefill overduePenaltyAmount ở set-penalty,
+ *   hoặc cho staff nhập tay mức cuối cùng khác.
  */
 export function getOverduePenaltySuggestion(
   rentalOrderId: string,
-): Promise<AxiosResponse<OverduePenaltySuggestionEnvelope>> {
-  return httpService.get<OverduePenaltySuggestionEnvelope>(
+): Promise<AxiosResponse<OverduePenaltySuggestionResponse>> {
+  return httpService.get<OverduePenaltySuggestionResponse>(
     `/rental-orders/${rentalOrderId}/overdue-penalty-suggestion`,
     authOpts,
   );
