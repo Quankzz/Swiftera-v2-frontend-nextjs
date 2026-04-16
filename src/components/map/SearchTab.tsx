@@ -280,7 +280,12 @@ const HubCard: React.FC<HubCardProps> = ({
         <h3 className="font-bold text-[15px] text-foreground leading-tight truncate">
           {hub.name}
         </h3>
-        <p className="text-[13px] text-muted-foreground mt-1 truncate">
+        {hub.code && (
+          <span className="text-[11px] font-mono font-bold text-muted-foreground/70">
+            {hub.code}
+          </span>
+        )}
+        <p className="text-[13px] text-muted-foreground mt-0.5 truncate">
           {hub.address}
         </p>
       </div>
