@@ -63,6 +63,10 @@ export const authApi = {
     return httpService.post('/auth/verify-active-account', payload);
   },
 
+  verifyActiveAccount(payload: { token: string }) {
+    return httpService.post('/auth/verify-active-account', payload);
+  },
+
   resendEmail(payload: { email: string }) {
     return httpService.post('/auth/resend-verify', payload);
   },
