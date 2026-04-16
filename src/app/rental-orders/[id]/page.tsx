@@ -90,6 +90,12 @@ const OVERDUE_SUGGESTION_STATUSES: RentalOrderStatus[] = [
   'PICKED_UP',
 ];
 
+const CANCELABLE_STATUSES: RentalOrderStatus[] = [
+  'PENDING_PAYMENT',
+  'PAID',
+  'PREPARING',
+];
+
 function formatDate(iso: string) {
   try {
     return new Intl.DateTimeFormat('vi-VN', {
@@ -550,11 +556,20 @@ export default function RentalOrderDetailPage() {
 
   function handleCancel() {
     if (!order) return;
+    if (!CANCELABLE_STATUSES.includes(order.status as RentalOrderStatus)) {
+      toast.error('Chỉ có thể hủy đơn trước khi bắt đầu giao hàng.');
+      return;
+    }
     setCancelConfirmOpen(true);
   }
 
   function confirmCancel() {
     if (!order) return;
+    if (!CANCELABLE_STATUSES.includes(order.status as RentalOrderStatus)) {
+      setCancelConfirmOpen(false);
+      toast.error('Không thể hủy đơn khi đang giao hàng hoặc sau đó.');
+      return;
+    }
     cancelOrder.mutate(order.rentalOrderId, {
       onSuccess: () => setCancelConfirmOpen(false),
     });
@@ -723,7 +738,9 @@ export default function RentalOrderDetailPage() {
                 {/* Action buttons */}
                 {(() => {
                   const hasPay = order.status === 'PENDING_PAYMENT';
-                  const hasCancel = order.status === 'PENDING_PAYMENT';
+                  const hasCancel = CANCELABLE_STATUSES.includes(
+                    order.status as RentalOrderStatus,
+                  );
                   const hasStartUse = order.status === 'DELIVERED';
                   const hasRequestPickup = order.status === 'IN_USE';
                   const canRentalStatusTransition = Boolean(
