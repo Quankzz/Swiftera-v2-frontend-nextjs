@@ -3,17 +3,16 @@ import type {
   PaginationResponse,
   RentalOrderApiStatus,
   RentalOrderResponse,
-} from '@/types/api.types';
-import type {
-  DashboardOrder,
-  OrderItem,
+  StaffOrder,
+  StaffOrderItem,
+  RenterInfo,
   OrderStatus,
   PaymentStatus,
   DepositRefundStatus,
-} from '@/types/dashboard.types';
+} from '@/types/api.types';
 
-// Re-export for convenience
-export type { RentalOrderResponse, RentalOrderApiStatus };
+// Re-exports
+export type { RentalOrderResponse, RentalOrderApiStatus, StaffOrder };
 
 // ─── Request types ────────────────────────────────────────────────────────────
 
@@ -22,13 +21,13 @@ export interface UpdateStatusRequest {
 }
 
 export interface RecordDeliveryRequest {
-  deliveredAt?: string; // ISO-8601, optional — backend uses now() if omitted
+  deliveredAt?: string;
   deliveredLatitude?: number;
   deliveredLongitude?: number;
 }
 
 export interface RecordPickupRequest {
-  pickedUpAt?: string;
+  pickedAt?: string;
   pickedUpLatitude?: number;
   pickedUpLongitude?: number;
 }
@@ -40,62 +39,40 @@ export interface SetPenaltyRequest {
 
 export type StaffTransitionTargetStatus = Extract<
   OrderStatus,
-  | 'PREPARING'
-  | 'DELIVERING'
-  | 'DELIVERED'
-  | 'PICKING_UP'
-  | 'PICKED_UP'
-  | 'COMPLETED'
+  'PREPARING' | 'DELIVERING' | 'DELIVERED' | 'PICKING_UP' | 'PICKED_UP' | 'COMPLETED'
 >;
-
-export interface ApplyStaffOrderTransitionRequest {
-  orderId: string;
-  targetStatus: StaffTransitionTargetStatus;
-  latitude?: number;
-  longitude?: number;
-  penaltyTotal?: number;
-  note?: string;
-}
 
 // ─── Status mapper ────────────────────────────────────────────────────────────
 
 /**
- * Map backend statuses to UI OrderStatus. Now 1:1 since UI uses actual backend statuses.
+ * Map backend status to UI OrderStatus.
  *
- * Backend flow (doc 09 Appendix C, authoritative):
+ * Backend flow:
  *   PENDING_PAYMENT → PAID → PREPARING → DELIVERING → DELIVERED
  *     → IN_USE / PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED
+ *   or: PENDING_PAYMENT → CANCELLED
  *
  * OVERDUE is derived client-side: IN_USE + past expectedRentalEndDate.
+ * Backend has NO OVERDUE status.
  */
 export function mapApiStatusToUi(apiStatus: RentalOrderApiStatus): OrderStatus {
   switch (apiStatus) {
-    case 'PENDING_PAYMENT':
-      return 'PENDING_PAYMENT'; // shouldn't appear in staff view
-    case 'PAID':
-      return 'PAID';
-    case 'PREPARING':
-      return 'PREPARING';
-    case 'DELIVERING':
-      return 'DELIVERING';
-    case 'DELIVERED':
-      return 'DELIVERED';
-    case 'IN_USE':
-      return 'IN_USE';
-    case 'PENDING_PICKUP':
-      return 'PENDING_PICKUP';
-    case 'PICKING_UP':
-      return 'PICKING_UP';
-    case 'PICKED_UP':
-      return 'PICKED_UP';
-    case 'COMPLETED':
-      return 'COMPLETED';
-    case 'CANCELLED':
-      return 'CANCELLED';
-    default:
-      return 'CANCELLED';
+    case 'PENDING_PAYMENT': return 'PENDING_PAYMENT';
+    case 'PAID': return 'PAID';
+    case 'PREPARING': return 'PREPARING';
+    case 'DELIVERING': return 'DELIVERING';
+    case 'DELIVERED': return 'DELIVERED';
+    case 'IN_USE': return 'IN_USE';
+    case 'PENDING_PICKUP': return 'PENDING_PICKUP';
+    case 'PICKING_UP': return 'PICKING_UP';
+    case 'PICKED_UP': return 'PICKED_UP';
+    case 'COMPLETED': return 'COMPLETED';
+    case 'CANCELLED': return 'CANCELLED';
+    default: return 'CANCELLED';
   }
 }
+
+// ─── Derivation helpers ────────────────────────────────────────────────────────
 
 function derivePaymentStatus(o: RentalOrderResponse): PaymentStatus {
   if (o.status === 'PENDING_PAYMENT') return 'PENDING';
@@ -104,9 +81,7 @@ function derivePaymentStatus(o: RentalOrderResponse): PaymentStatus {
   return 'PENDING';
 }
 
-function deriveDepositRefundStatus(
-  o: RentalOrderResponse,
-): DepositRefundStatus {
+function deriveDepositRefundStatus(o: RentalOrderResponse): DepositRefundStatus {
   const refund = o.depositRefundAmount ?? 0;
   if (refund <= 0) return 'NOT_REFUNDED';
   if (refund >= o.depositHoldAmount) return 'REFUNDED';
@@ -114,35 +89,35 @@ function deriveDepositRefundStatus(
 }
 
 function buildDeliveryAddress(o: RentalOrderResponse): string {
-  return [
-    o.deliveryAddressLine,
-    o.deliveryWard,
-    o.deliveryDistrict,
-    o.deliveryCity,
-  ]
+  // Ưu tiên userAddress (nơi BE lưu địa chỉ đầy đủ)
+  if (o.userAddress) {
+    return [o.userAddress.addressLine, o.userAddress.ward, o.userAddress.district, o.userAddress.city]
+      .filter(Boolean)
+      .join(', ');
+  }
+  // Fallback về delivery snapshot fields
+  return [o.deliveryAddressLine, o.deliveryWard, o.deliveryDistrict, o.deliveryCity]
     .filter(Boolean)
     .join(', ');
 }
 
-/**
- * Adapt a backend RentalOrderResponse to the DashboardOrder shape expected by
- * staff dashboard UI components.  Fields not available from the order endpoint
- * (e.g. renter CCCD, product images) are left as empty/null — they can be
- * enriched with a subsequent user/product lookup if needed.
- */
-export function adaptOrder(o: RentalOrderResponse): DashboardOrder {
-  let uiStatus = mapApiStatusToUi(o.status);
+function buildRenter(o: RentalOrderResponse): RenterInfo {
+  // Lấy thông tin từ userAddress (nơi BE lưu thông tin khách hàng)
+  const ua = o.userAddress;
+  return {
+    user_id: o.userId ?? '',
+    // Ưu tiên: recipientName từ userAddress > deliveryRecipientName
+    full_name: ua?.recipientName ?? o.deliveryRecipientName ?? '',
+    email: o.userEmail ?? '',
+    // Ưu tiên: phoneNumber từ userAddress > deliveryPhone
+    phone_number: ua?.phoneNumber ?? o.deliveryPhone ?? '',
+    cccd_number: '',
+    address: buildDeliveryAddress(o),
+  };
+}
 
-  // Derive OVERDUE: backend has no OVERDUE status. If the order is IN_USE
-  // and the expected rental end date has already passed, surface it as OVERDUE
-  // so staff can act on it immediately.
-  if (uiStatus === 'IN_USE' && o.expectedRentalEndDate) {
-    if (new Date(o.expectedRentalEndDate).getTime() < Date.now()) {
-      uiStatus = 'OVERDUE';
-    }
-  }
-
-  const items: OrderItem[] = (o.rentalOrderLines ?? []).map((line) => {
+function buildStaffOrderItems(_o: RentalOrderResponse): StaffOrderItem[] {
+  return (_o.rentalOrderLines ?? []).map((line) => {
     const photos = line.photos ?? [];
     const checkoutPhotos = photos
       .filter((p) => p.photoPhase === 'CHECKOUT')
@@ -161,33 +136,46 @@ export function adaptOrder(o: RentalOrderResponse): DashboardOrder {
       category: '',
       daily_price: line.dailyPriceSnapshot,
       deposit_amount: line.depositAmountSnapshot,
-      image_url: '',
-      item_penalty_amount: line.itemPenaltyAmount,
+      image_url: checkoutPhotos[0] ?? checkinPhotos[0] ?? '',
+      checkin_photo_url: checkinPhotos[0],
+      checkout_photo_url: checkoutPhotos[0],
       checkout_photos: checkoutPhotos,
       checkin_photos: checkinPhotos,
-      checkout_photo_url: checkoutPhotos[0],
-      checkin_photo_url: checkinPhotos[0],
       checkout_condition_note: line.checkoutConditionNote ?? undefined,
       checkin_condition_note: line.checkinConditionNote ?? undefined,
-      staff_note:
-        line.checkoutConditionNote ?? line.checkinConditionNote ?? undefined,
+      staff_note: line.checkoutConditionNote ?? line.checkinConditionNote ?? undefined,
+      item_penalty_amount: line.itemPenaltyAmount,
     };
   });
+}
+
+// ─── Adapter ─────────────────────────────────────────────────────────────────
+
+/**
+ * Adapt a backend RentalOrderResponse to StaffOrder (staff dashboard UI shape).
+ * Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — API-074 / API-075 / API-076
+ *
+ * Fields not available from BE (always empty / undefined):
+ *   - cccd_number, cccd_front_url, cccd_back_url (BE does not expose CCCD in order API)
+ *   - avatar_url (BE not exposed)
+ *   - category (BE not exposed in order line)
+ */
+export function adaptStaffOrder(o: RentalOrderResponse): StaffOrder {
+  let uiStatus = mapApiStatusToUi(o.status);
+
+  // Derive OVERDUE client-side: IN_USE + past expectedRentalEndDate
+  if (uiStatus === 'IN_USE' && o.expectedRentalEndDate) {
+    if (new Date(o.expectedRentalEndDate).getTime() < Date.now()) {
+      uiStatus = 'OVERDUE';
+    }
+  }
 
   return {
     rental_order_id: o.rentalOrderId,
-    // Use a short display code derived from the UUID prefix + placed date
-    order_code: `SW-${o.placedAt?.slice(0, 10).replace(/-/g, '')}-${o.rentalOrderId.slice(0, 6).toUpperCase()}`,
+    order_code: `SW-${(o.placedAt ?? '').slice(0, 10).replace(/-/g, '')}-${o.rentalOrderId.slice(0, 6).toUpperCase()}`,
     hub_id: o.hubId ?? '',
-    renter: {
-      user_id: o.userId ?? '',
-      full_name: o.deliveryRecipientName,
-      email: o.userEmail ?? '',
-      phone_number: o.deliveryPhone,
-      cccd_number: '',
-      address: buildDeliveryAddress(o),
-    },
-    items,
+    renter: buildRenter(o),
+    items: buildStaffOrderItems(o),
     start_date: o.expectedDeliveryDate ?? o.placedAt?.slice(0, 10) ?? '',
     end_date: o.expectedRentalEndDate ?? '',
     actual_return_date: o.actualRentalEndAt ?? undefined,
@@ -196,22 +184,20 @@ export function adaptOrder(o: RentalOrderResponse): DashboardOrder {
     total_penalty_amount: o.penaltyChargeAmount ?? 0,
     status: uiStatus,
     created_at: o.placedAt,
+    staff_checkin_id: o.deliveryStaffId ?? o.deliveryStaff?.userId,
+    staff_checkout_id: o.pickupStaffId ?? o.pickupStaff?.userId,
     payment_status: derivePaymentStatus(o),
     deposit_refund_status: deriveDepositRefundStatus(o),
     delivery_latitude: o.deliveryLatitude ?? undefined,
     delivery_longitude: o.deliveryLongitude ?? undefined,
     delivery_address: buildDeliveryAddress(o),
     notes: o.deliveryNote ?? undefined,
-    // Backend may return the staff ID as a flat field (deliveryStaffId) OR as a
-    // nested object (deliveryStaff.userId). Read both to be robust.
-    staff_checkin_id: o.deliveryStaffId ?? o.deliveryStaff?.userId ?? undefined,
-    staff_checkout_id: o.pickupStaffId ?? o.pickupStaff?.userId ?? undefined,
+    qr_code: o.qrCode,
   };
 }
 
 // ─── API functions ────────────────────────────────────────────────────────────
 
-// All active workflow statuses for staff dashboard
 const ACTIVE_STAFF_STATUSES: RentalOrderApiStatus[] = [
   'PAID',
   'PREPARING',
@@ -224,93 +210,46 @@ const ACTIVE_STAFF_STATUSES: RentalOrderApiStatus[] = [
 ];
 
 /**
- * Build and execute two parallel SpringFilter queries by staff user ID.
- *
- * NOTE: `deliveryStaffId` / `pickupStaffId` are DTO projection fields — they
- * are NOT JPA entity fields and SpringFilter cannot filter by them (→ 500).
- * The correct JPA dot-notation for the ManyToOne relationship is:
- *   deliveryStaff.userId  /  pickupStaff.userId
- *
- * Two separate calls are required because SpringFilter does not support
- * nested (A or B) AND C expressions reliably.
- *
- * Delivery workflow:  PAID → PREPARING → DELIVERING → DELIVERED
- * Recovery workflow:  PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED
- *
- * @param staffUserId  UUID of the staff member
- * @param onlyStatuses Optional subset of statuses to fetch (e.g. ['PAID','PENDING_PICKUP'])
- *                     Defaults to all 8 active workflow statuses.
+ * Fetch orders assigned to a staff member.
+ * Two parallel SpringFilter queries: deliveryStaff.userId + pickupStaff.userId.
  */
 async function fetchOrdersByStaffId(
   staffUserId: string,
-  onlyStatuses: RentalOrderApiStatus[] = ACTIVE_STAFF_STATUSES,
-): Promise<DashboardOrder[]> {
+  statuses: RentalOrderApiStatus[] = ACTIVE_STAFF_STATUSES,
+): Promise<StaffOrder[]> {
   const makeUrl = (
     staffField: 'deliveryStaff.userId' | 'pickupStaff.userId',
-    statuses: RentalOrderApiStatus[],
+    active: RentalOrderApiStatus[],
   ) => {
-    const statusPart = statuses.map((s) => `status:'${s}'`).join(' or ');
+    const statusPart = active.map((s) => `status:'${s}'`).join(' or ');
     const filter = `${staffField}:'${staffUserId}' and (${statusPart})`;
     return `/rental-orders?page=1&size=200&filter=${encodeURIComponent(filter)}&sort=placedAt,desc`;
   };
 
-  // Delivery statuses only for deliveryStaff query, pickup statuses for pickupStaff
-  const deliveryStatuses = onlyStatuses.filter((s) =>
+  const deliveryStatuses = statuses.filter((s) =>
     ['PAID', 'PREPARING', 'DELIVERING', 'DELIVERED'].includes(s),
   );
-  const pickupStatuses = onlyStatuses.filter((s) =>
+  const pickupStatuses = statuses.filter((s) =>
     ['PENDING_PICKUP', 'PICKING_UP', 'PICKED_UP', 'COMPLETED'].includes(s),
   );
 
-  console.log('[getStaffOrders] staffUserId:', staffUserId);
-
-  const requests: Promise<PaginationResponse<RentalOrderResponse> | null>[] =
-    [];
-
-  if (deliveryStatuses.length > 0) {
-    const url = makeUrl('deliveryStaff.userId', deliveryStatuses);
-    console.log('[getStaffOrders] GET (delivery)', url);
-    requests.push(
-      apiGet<PaginationResponse<RentalOrderResponse>>(url).catch((err) => {
-        console.error(
-          '[getStaffOrders] delivery query error:',
-          err?.message ?? err,
-        );
-        return null;
-      }),
-    );
-  } else {
-    requests.push(Promise.resolve(null));
-  }
-
-  if (pickupStatuses.length > 0) {
-    const url = makeUrl('pickupStaff.userId', pickupStatuses);
-    console.log('[getStaffOrders] GET (pickup)', url);
-    requests.push(
-      apiGet<PaginationResponse<RentalOrderResponse>>(url).catch((err) => {
-        console.error(
-          '[getStaffOrders] pickup query error:',
-          err?.message ?? err,
-        );
-        return null;
-      }),
-    );
-  } else {
-    requests.push(Promise.resolve(null));
-  }
-
-  const [deliveryRes, pickupRes] = await Promise.all(requests);
+  const [deliveryRes, pickupRes] = await Promise.all([
+    deliveryStatuses.length > 0
+      ? apiGet<PaginationResponse<RentalOrderResponse>>(
+          makeUrl('deliveryStaff.userId', deliveryStatuses),
+        ).catch(() => null)
+      : Promise.resolve(null),
+    pickupStatuses.length > 0
+      ? apiGet<PaginationResponse<RentalOrderResponse>>(
+          makeUrl('pickupStaff.userId', pickupStatuses),
+        ).catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   const deliveryRaw = deliveryRes?.content ?? [];
   const pickupRaw = pickupRes?.content ?? [];
-  console.log(
-    '[getStaffOrders] from BE — delivery:',
-    deliveryRaw.length,
-    '| pickup:',
-    pickupRaw.length,
-  );
 
-  // Merge + dedup (an order could appear in both if same staff covers both roles)
+  // Merge + dedup
   const seen = new Set<string>();
   const merged: RentalOrderResponse[] = [];
   for (const o of [...deliveryRaw, ...pickupRaw]) {
@@ -320,181 +259,69 @@ async function fetchOrdersByStaffId(
     }
   }
 
-  const result = merged.map(adaptOrder);
-  console.log(
-    `[getStaffOrders] assigned to ${staffUserId}:`,
-    result.length,
-    'orders',
-  );
-  return result;
+  return merged.map(adaptStaffOrder);
 }
 
-/** All orders assigned to staff (all active statuses — used by dashboard). */
-export function getStaffOrders(staffUserId: string): Promise<DashboardOrder[]> {
+/** All active orders assigned to staff. */
+export function getStaffOrders(staffUserId: string): Promise<StaffOrder[]> {
   return fetchOrdersByStaffId(staffUserId);
 }
 
-/**
- * Only PAID + PENDING_PICKUP orders — "action needed" list for the orders page.
- * Staff must confirm PAID orders and perform PENDING_PICKUP pickups.
- */
-export function getStaffActionOrders(
-  staffUserId: string,
-): Promise<DashboardOrder[]> {
-  return fetchOrdersByStaffId(staffUserId, ['PAID', 'PENDING_PICKUP']);
-}
-
-/**
- * Fetch a single order by ID.
- * GET /rental-orders/{rentalOrderId}
- */
-export async function getStaffOrderById(
-  orderId: string,
-): Promise<DashboardOrder | null> {
+/** Fetch a single order by ID. */
+export async function getStaffOrderById(orderId: string): Promise<StaffOrder | null> {
   const res = await apiGet<RentalOrderResponse>(`/rental-orders/${orderId}`);
-  return res ? adaptOrder(res) : null;
+  return res ? adaptStaffOrder(res) : null;
 }
 
-/**
- * PATCH /rental-orders/{id}/status
- * Transition the order to the next status in the state machine.
- *
- * Staff transitions (doc 09 API-078):
- *   PAID → PREPARING  (staff confirms and starts preparing)
- *   PREPARING → DELIVERING  (staff picks up from hub, starts delivery)
- *   PENDING_PICKUP → PICKING_UP  (staff starts pickup)
- *   PICKED_UP → COMPLETED  (inspection done at hub, order finalized)
- */
+/** PATCH /rental-orders/{id}/status */
 export async function updateOrderStatus(
   orderId: string,
   status: RentalOrderApiStatus,
-): Promise<DashboardOrder | null> {
-  console.log('[staff-orders] PATCH status', { orderId, status });
+): Promise<StaffOrder | null> {
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/status`,
     { status } satisfies UpdateStatusRequest,
   );
-  return res ? adaptOrder(res) : null;
+  return res ? adaptStaffOrder(res) : null;
 }
 
-/**
- * PATCH /rental-orders/{id}/record-delivery
- * Records the physical delivery of goods to the customer.
- * Transitions order: DELIVERING → ACTIVE
- * Inventory: AVAILABLE → RENTED
- */
+/** PATCH /rental-orders/{id}/record-delivery — transitions DELIVERING → DELIVERED */
 export async function recordDelivery(
   orderId: string,
   data: RecordDeliveryRequest = {},
-): Promise<DashboardOrder | null> {
-  console.log('[staff-orders] PATCH record-delivery', { orderId, data });
+): Promise<StaffOrder | null> {
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/record-delivery`,
     data,
   );
-  return res ? adaptOrder(res) : null;
+  return res ? adaptStaffOrder(res) : null;
 }
 
-/**
- * PATCH /rental-orders/{id}/record-pickup
- * Records the physical pickup (return) of goods from the customer.
- * Transitions order: PICKING_UP → PICKED_UP
- * Inventory: RENTED → AVAILABLE
- */
+/** PATCH /rental-orders/{id}/record-pickup — transitions PICKING_UP → PICKED_UP */
 export async function recordPickup(
   orderId: string,
   data: RecordPickupRequest = {},
-): Promise<DashboardOrder | null> {
-  console.log('[staff-orders] PATCH record-pickup', { orderId, data });
+): Promise<StaffOrder | null> {
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/record-pickup`,
     data,
   );
-  return res ? adaptOrder(res) : null;
+  return res ? adaptStaffOrder(res) : null;
 }
 
-/**
- * PATCH /rental-orders/{id}/set-penalty
- * Sets the damage penalty amount and computes the deposit refund.
- * depositRefundAmount = depositHoldAmount - penaltyTotal
- */
+/** PATCH /rental-orders/{id}/set-penalty */
 export async function setPenalty(
   orderId: string,
   data: SetPenaltyRequest,
-): Promise<DashboardOrder | null> {
-  console.log('[staff-orders] PATCH set-penalty', { orderId, data });
+): Promise<StaffOrder | null> {
   const res = await apiPatch<RentalOrderResponse>(
     `/rental-orders/${orderId}/set-penalty`,
     data,
   );
-  return res ? adaptOrder(res) : null;
+  return res ? adaptStaffOrder(res) : null;
 }
 
-/**
- * Resolve one staff workflow step to the correct backend endpoint.
- * This keeps UI code from spreading transition-specific API knowledge.
- */
-export async function applyStaffOrderTransition({
-  orderId,
-  targetStatus,
-  latitude,
-  longitude,
-  penaltyTotal,
-  note,
-}: ApplyStaffOrderTransitionRequest): Promise<DashboardOrder | null> {
-  console.log('[staff-orders] apply transition', {
-    orderId,
-    targetStatus,
-    latitude,
-    longitude,
-    penaltyTotal,
-    note,
-  });
-
-  switch (targetStatus) {
-    case 'DELIVERED':
-      return recordDelivery(orderId, {
-        deliveredLatitude: latitude,
-        deliveredLongitude: longitude,
-      });
-
-    case 'PICKED_UP':
-      if (penaltyTotal !== undefined || note) {
-        await setPenalty(orderId, {
-          penaltyTotal: penaltyTotal ?? 0,
-          note,
-        });
-      }
-      return recordPickup(orderId, {
-        pickedUpLatitude: latitude,
-        pickedUpLongitude: longitude,
-      });
-
-    case 'COMPLETED':
-      if (penaltyTotal !== undefined || note) {
-        await setPenalty(orderId, {
-          penaltyTotal: penaltyTotal ?? 0,
-          note,
-        });
-      }
-      return updateOrderStatus(orderId, 'COMPLETED');
-
-    case 'PREPARING':
-    case 'DELIVERING':
-    case 'PICKING_UP':
-      return updateOrderStatus(orderId, targetStatus);
-
-    default:
-      throw new Error(
-        `Transition không được hỗ trợ cho staff: ${targetStatus}`,
-      );
-  }
-}
-
-/**
- * POST /rental-orders/{id}/cancel
- * Cancels an order. Only allowed when status is PENDING_PAYMENT.
- */
+/** POST /rental-orders/{id}/cancel */
 export async function cancelOrder(orderId: string): Promise<void> {
   await apiPost(`/rental-orders/${orderId}/cancel`);
 }

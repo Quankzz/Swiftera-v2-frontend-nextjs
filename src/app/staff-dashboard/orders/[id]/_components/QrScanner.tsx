@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { DashboardOrder } from '@/types/dashboard.types';
+import type { StaffOrder } from '@/types/api.types';
 import { fmt, fmtDate } from './utils';
 
 const CONDITION_COLOR: Record<string, string> = {
@@ -42,7 +42,7 @@ export function QrScanner({
   expectedCode: string;
   onSuccess: () => void;
   onCancel: () => void;
-  order?: DashboardOrder;
+  order?: StaffOrder;
   /** Pass 'confirmed' or 'failed' to bypass camera and jump to that state (dev/mock). */
   simulate?: 'confirmed' | 'failed';
 }) {

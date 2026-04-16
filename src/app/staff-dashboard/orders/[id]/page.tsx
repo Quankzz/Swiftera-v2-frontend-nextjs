@@ -18,10 +18,13 @@ import axios from 'axios';
 import '@goongmaps/goong-js/dist/goong-js.css';
 import { cn } from '@/lib/utils';
 import { apiKey } from '@/configs/goongmapKeys';
-import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
+import type { StaffOrder, OrderStatus } from '@/types/api.types';
 import {
   getStaffOrderById,
-  applyStaffOrderTransition,
+  updateOrderStatus,
+  recordDelivery,
+  recordPickup,
+  setPenalty,
   type StaffTransitionTargetStatus,
 } from '@/api/staff-orders';
 import { getHubById } from '@/api/hubs';
@@ -51,7 +54,7 @@ export default function OrderDetailPage({
   const { id } = use(params);
   const { user } = useAuthStore();
   const updateCount = useStaffOrderCounts((s) => s.updateCount);
-  const [order, setOrder] = useState<DashboardOrder | null>(null);
+  const [order, setOrder] = useState<StaffOrder | null>(null);
   const [hubInfo, setHubInfo] = useState<HubResponse | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -120,16 +123,14 @@ export default function OrderDetailPage({
     };
   }, [order]);
 
-  // GPS state — lifted so map panel in right column can read and update it
+  // GPS state — local to this page; initialized from order delivery coordinates
   const [localLat, setLocalLat] = useState<number | undefined>(
-    order?.staff_current_latitude,
+    order?.delivery_latitude,
   );
   const [localLng, setLocalLng] = useState<number | undefined>(
-    order?.staff_current_longitude,
+    order?.delivery_longitude,
   );
-  const [localLocAt, setLocalLocAt] = useState<string | undefined>(
-    order?.staff_location_updated_at,
-  );
+  const [localLocAt, setLocalLocAt] = useState<string | undefined>(undefined);
   // Auto-watch GPS whenever staff is on the move (DELIVERING or PICKING_UP)
   const gpsWatchRef = useRef<number | null>(null);
   useEffect(() => {
@@ -168,40 +169,61 @@ export default function OrderDetailPage({
     async (
       newStatus: StaffTransitionTargetStatus,
       options?: {
-        extra?: Partial<DashboardOrder>;
         penaltyTotal?: number;
         note?: string;
       },
-    ) => {
-      if (!order) return;
+    ): Promise<StaffOrder | null> => {
+      if (!order) return null;
       setStatusLoading(true);
       setActionError(null);
       try {
-        console.log('[order-detail] handleStatusChange', {
-          orderId: order.rental_order_id,
-          currentStatus: order.status,
-          nextStatus: newStatus,
-          options,
-        });
-        const updated = await applyStaffOrderTransition({
-          orderId: order.rental_order_id,
-          targetStatus: newStatus,
-          latitude: localLat,
-          longitude: localLng,
-          penaltyTotal: options?.penaltyTotal,
-          note: options?.note,
-        });
-        if (!updated) {
-          throw new Error(
-            'API không trả về dữ liệu cập nhật trạng thái đơn hàng',
-          );
+        let updated: StaffOrder | null = null;
+
+        // Call penalty endpoint first if needed
+        if (
+          (options?.penaltyTotal !== undefined && options.penaltyTotal > 0) ||
+          (options?.note?.trim().length ?? 0) > 0
+        ) {
+          updated = await setPenalty(order.rental_order_id, {
+            penaltyTotal: options?.penaltyTotal ?? 0,
+            note: options?.note,
+          });
         }
+
+        // Route to the correct status-update endpoint
+        switch (newStatus) {
+          case 'DELIVERED':
+            updated = await recordDelivery(order.rental_order_id, {
+              deliveredLatitude: localLat,
+              deliveredLongitude: localLng,
+            });
+            break;
+          case 'PICKED_UP':
+            updated = await recordPickup(order.rental_order_id, {
+              pickedUpLatitude: localLat,
+              pickedUpLongitude: localLng,
+            });
+            break;
+          case 'COMPLETED':
+          case 'PREPARING':
+          case 'DELIVERING':
+          case 'PICKING_UP':
+            updated = await updateOrderStatus(order.rental_order_id, newStatus);
+            break;
+        }
+
+        if (!updated) {
+          throw new Error('API không trả về dữ liệu cập nhật trạng thái đơn hàng');
+        }
+
         updateCount(order.status, newStatus);
-        setOrder({ ...updated, ...options?.extra });
+        setOrder(updated);
+        return updated;
       } catch (err) {
         setActionError(
           err instanceof Error ? err.message : 'Không thể cập nhật trạng thái',
         );
+        return null;
       } finally {
         setStatusLoading(false);
       }
@@ -213,12 +235,8 @@ export default function OrderDetailPage({
     async (refundNote?: string) => {
       if (!order) return;
       await handleStatusChange('COMPLETED', {
-        penaltyTotal: order.total_penalty_amount ?? 0,
+        penaltyTotal: order.total_penalty_amount,
         note: refundNote,
-        extra: {
-          total_penalty_amount: order.total_penalty_amount ?? 0,
-          deposit_refund_status: 'REFUNDED',
-        },
       });
     },
     [order, handleStatusChange],
@@ -452,11 +470,7 @@ export default function OrderDetailPage({
                   <PendingWorkflow
                     order={order}
                     onConfirm={() =>
-                      handleStatusChange('PREPARING', {
-                        extra: {
-                          staff_checkin_id: user?.userId,
-                        },
-                      })
+                      handleStatusChange('PREPARING')
                     }
                     loading={statusLoading}
                   />
@@ -517,13 +531,15 @@ export default function OrderDetailPage({
                     const penaltyTotal =
                       (damagePenalty ?? 0) + (overduePenalty ?? 0);
                     try {
-                      await handleStatusChange('PICKED_UP', {
-                        extra: {
-                          staff_checkout_id: user?.userId,
-                          total_penalty_amount: penaltyTotal,
-                        },
+                      const updated = await handleStatusChange('PICKED_UP', {
                         penaltyTotal,
                       });
+                      if (updated) {
+                        setOrder({
+                          ...updated,
+                          staff_checkout_id: user?.userId,
+                        });
+                      }
                     } catch (err) {
                       setActionError(
                         err instanceof Error

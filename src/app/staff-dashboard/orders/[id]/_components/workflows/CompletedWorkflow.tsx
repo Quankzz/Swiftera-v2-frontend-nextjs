@@ -20,15 +20,16 @@ import {
   Wallet,
   Building2,
   Clock,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { DashboardOrder } from '@/types/dashboard.types';
+import type { StaffOrder } from '@/types/api.types';
 import { fmt, fmtDate } from '../utils';
 import { WorkflowFooter } from '../WorkflowFooter';
 
 interface CompletedWorkflowProps {
-  order: DashboardOrder;
+  order: StaffOrder;
   onDepositRefund: (refundNote?: string) => void;
   loading?: boolean;
 }
@@ -155,6 +156,21 @@ export function CompletedWorkflow({
                       </p>
                     </div>
                   </div>
+                  {order.renter.email && (
+                    <div className="flex items-center gap-4">
+                      <div className="size-11 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
+                        <Mail className="size-5 text-theme-primary-start dark:text-blue-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                          Email
+                        </p>
+                        <p className="text-[15px] font-medium text-foreground truncate">
+                          {order.renter.email}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center gap-4 pt-3 border-t border-border/60 dark:border-slate-800">
                     <div className="size-11 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
                       <Calendar className="size-5 text-theme-primary-start dark:text-blue-400" />

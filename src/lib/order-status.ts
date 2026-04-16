@@ -17,7 +17,7 @@ import {
   AlertCircle,
   Package,
 } from 'lucide-react';
-import type { OrderStatus } from '@/types/dashboard.types';
+import type { OrderStatus } from '@/types/api.types';
 
 export interface StatusConfig {
   label: string;
