@@ -153,22 +153,26 @@ export const catalogKeys = {
  * Uses `keepPreviousData` so the UI doesn't flash empty while params change.
  */
 export function useCatalogProductsQuery(params: CatalogQueryParams = {}) {
-  const { sort = 'createdAt,desc', page = 1, size = 12 } = params;
+  const page = params.page ?? 1;
+  const size = params.size ?? 12;
+  const sort = params.sort;
 
   // includeDescendants=true when a root categoryId is selected but no
   // subcategoryId — tells BE to return products from all child categories too.
   const includeDescendants =
     params.includeDescendants ?? (!!params.categoryId && !params.subcategoryId);
 
-  const beParams = {
+  const beParams: Record<string, unknown> = {
     page, // backend one-indexed: page=1 is first page
     size,
-    sort,
     filter: buildFilter(params),
     ...(includeDescendants && params.categoryId && !params.subcategoryId
       ? { includeDescendants: true as const }
       : {}),
   };
+  if (sort) {
+    (beParams as any).sort = sort;
+  }
 
   return useQuery<PaginatedProductsResponse, Error, CatalogResult>({
     queryKey: catalogKeys.list(params),

@@ -30,8 +30,11 @@ const VALID_SORTS: SortOption[] = [
 ];
 
 /** Map UI SortOption → BE sort string */
-const SORT_MAP: Record<SortOption, string> = {
-  relevance: 'createdAt,desc',
+const SORT_MAP: Record<SortOption, string | undefined> = {
+  // `relevance` intentionally maps to `undefined` so FE won't send a
+  // `sort` param to the backend and the backend can apply its default
+  // relevance ordering. Other options map to explicit sort strings.
+  relevance: undefined,
   'price-asc': 'dailyPrice,asc',
   'price-desc': 'dailyPrice,desc',
   newest: 'createdAt,desc',
@@ -105,6 +108,8 @@ export function CatalogView({
   );
 
   // ── Products query ────────────────────────────────────────────────────────
+  const apiSort = SORT_MAP[sort];
+
   const { data, isLoading, isFetching } = useCatalogProductsQuery({
     categoryId: categoryId ?? undefined,
     subcategoryId: subcategoryId ?? undefined,
@@ -112,7 +117,7 @@ export function CatalogView({
     brands: filterState.brands.length > 0 ? filterState.brands : undefined,
     minPrice: filterState.priceMin || undefined,
     maxPrice: filterState.priceMax || undefined,
-    sort: SORT_MAP[sort],
+      ...(apiSort ? { sort: apiSort } : {}),
     page,
     size: PAGE_SIZE,
   });
@@ -176,7 +181,12 @@ export function CatalogView({
 
   const handleSortChange = (s: SortOption) => {
     const next = new URLSearchParams(searchParams.toString());
-    next.set('sort', s);
+      // `relevance` = backend default ordering → remove `sort` param.
+      if (s === 'relevance') {
+        next.delete('sort');
+      } else {
+        next.set('sort', s);
+      }
     next.delete('page');
     router.push(`?${next.toString()}`);
   };
