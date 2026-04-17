@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
@@ -89,7 +89,7 @@ export default function ProductDetailPage() {
   }, [ordersData?.items, productId]);
 
   const [currentImage, setCurrentImage] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState('2');
+  const [selectedDuration, setSelectedDuration] = useState<string>(String(1));
   const [quantity, setQuantity] = useState(1);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
 
@@ -100,9 +100,11 @@ export default function ProductDetailPage() {
   );
 
   // Khi product load xong thì reset selectedDuration về minRentalDays
-  useState(() => {
-    if (defaultDurationId) setSelectedDuration(defaultDurationId);
-  });
+  useEffect(() => {
+    if (product?.minRentalDays) {
+      setSelectedDuration(String(product.minRentalDays));
+    }
+  }, [product?.minRentalDays]);
 
   // Build durations từ BE dailyPrice, lọc theo minRentalDays
   const durations = useMemo(
@@ -122,13 +124,25 @@ export default function ProductDetailPage() {
     return sorted.map((img) => img.imageUrl);
   }, [product?.images]);
 
-  const currentDuration = useMemo(
-    () =>
-      durations.find((d) => d.id === selectedDuration) ??
-      durations.find((d) => d.id === defaultDurationId) ??
-      durations[0],
-    [durations, selectedDuration, defaultDurationId],
-  );
+  const currentDuration = useMemo(() => {
+    const found = durations.find((d) => d.id === selectedDuration);
+    if (found) return found;
+    // If selectedDuration is a numeric custom value, compute price on the fly
+    const days = parseInt(selectedDuration, 10);
+    if (!isNaN(days) && days >= (product?.minRentalDays ?? 1) && product?.dailyPrice) {
+      const total = product.dailyPrice * days;
+      const discount = days >= 7 ? 0.15 : days >= 3 ? 0.1 : 0;
+      const original = Math.round(total);
+      const price = discount > 0 ? Math.round(total * (1 - discount)) : original;
+      return {
+        id: String(days),
+        label: `${days} ngày`,
+        price,
+        originalPrice: discount > 0 ? original : undefined,
+      } as RentalDuration;
+    }
+    return durations.find((d) => d.id === defaultDurationId) ?? durations[0];
+  }, [durations, selectedDuration, defaultDurationId, product?.dailyPrice, product?.minRentalDays]);
 
   const currentPrice = currentDuration?.price ?? product?.dailyPrice ?? 0;
   const originalPrice = currentDuration?.originalPrice;
@@ -299,6 +313,7 @@ export default function ProductDetailPage() {
                   rentedCount: 0,
                   colors,
                   durations,
+                  minRentalDays: product.minRentalDays ?? 1,
                 }}
                 selectedColorId={selectedColorId}
                 onColorChange={setSelectedColorId}

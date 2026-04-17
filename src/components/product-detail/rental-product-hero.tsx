@@ -496,6 +496,8 @@ interface RentalProductSummaryProps {
     variants?: ProductVariant[];
     durations: RentalDuration[];
   };
+  /** Minimum allowed rental days for the product (from BE) */
+  minRentalDays?: number;
   selectedColorId?: string | null;
   onColorChange?: (colorId: string) => void;
   selectedVariant: string;
@@ -529,6 +531,7 @@ export function RentalProductSummary({
     colors = [],
     variants = [],
     durations,
+    minRentalDays = 1,
   } = productData;
 
   const selectedRing =
@@ -727,6 +730,42 @@ export function RentalProductSummary({
               </div>
             </button>
           ))}
+        </div>
+        {/* Custom duration input + slider */}
+        <div className='mt-3'>
+          <label className='mb-2 block text-sm font-medium text-foreground'>Tuỳ chọn khác</label>
+          <div className='flex items-center gap-3'>
+            <input
+              type='number'
+              min={minRentalDays}
+              value={
+                isNaN(Number(selectedDuration))
+                  ? minRentalDays
+                  : Number(selectedDuration)
+              }
+              onChange={(e) => {
+                let v = parseInt(e.target.value, 10) || minRentalDays;
+                if (v < minRentalDays) v = minRentalDays;
+                onDurationChange(String(v));
+              }}
+              className='h-10 w-24 rounded-lg border px-3 text-sm'
+            />
+            <input
+              type='range'
+              min={minRentalDays}
+              max={365}
+              value={isNaN(Number(selectedDuration)) ? minRentalDays : Number(selectedDuration)}
+              onChange={(e) => {
+                let v = parseInt(e.target.value, 10) || minRentalDays;
+                if (v < minRentalDays) v = minRentalDays;
+                onDurationChange(String(v));
+              }}
+              className='flex-1'
+            />
+            <div className='ml-2 text-sm text-muted-foreground'>
+              tối đa 365 ngày
+            </div>
+          </div>
         </div>
       </div>
     </div>
