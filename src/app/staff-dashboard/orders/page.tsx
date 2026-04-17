@@ -23,7 +23,7 @@ import { fmt, fmtDateShort } from '@/lib/formatters';
 import { getStaffOrders } from '@/api/staff-orders';
 import { useAuthStore } from '@/stores/auth-store';
 import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
-import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
+import type { StaffOrder, OrderStatus } from '@/types/api.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -79,7 +79,7 @@ function OrdersPageInner() {
   const [search, setSearch] = useState('');
 
   // ─── API data ────────────────────────────────────────────────────
-  const [allOrders, setAllOrders] = useState<DashboardOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<StaffOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -231,7 +231,6 @@ function OrdersPageInner() {
   // Reset trang về 1 khi filter/search/sort thay đổi
   useEffect(() => {
     setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, activeStatuses, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
@@ -508,9 +507,6 @@ function OrdersPageInner() {
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                       (page) => {
                         const isActive = page === safePage;
-                        const showEllipsisStart = page === 2 && safePage > 3;
-                        const showEllipsisEnd =
-                          page === totalPages - 1 && safePage < totalPages - 2;
                         const isHidden =
                           page !== 1 &&
                           page !== totalPages &&
@@ -565,7 +561,7 @@ function OrdersPageInner() {
   );
 }
 
-function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
+function OrderCard({ order, now }: { order: StaffOrder; now: number }) {
   const cfg = STATUS_CFG[order.status];
   const Icon = cfg.icon;
   const daysOverdue =
@@ -651,6 +647,11 @@ function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
                 <Phone className="w-3.5 h-3.5 shrink-0" />
                 {order.renter.phone_number}
               </div>
+              {order.renter.email && (
+                <p className="text-[12px] text-muted-foreground truncate">
+                  {order.renter.email}
+                </p>
+              )}
             </div>
 
             {/* 2. Products */}

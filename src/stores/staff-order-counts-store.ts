@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import type { OrderStatus } from '@/types/dashboard.types';
+import type { OrderStatus } from '@/types/api.types';
+
+export type { OrderStatus };
 
 interface StaffOrderCountsState {
   /** Count of orders per status — empty until the orders page loads data. */

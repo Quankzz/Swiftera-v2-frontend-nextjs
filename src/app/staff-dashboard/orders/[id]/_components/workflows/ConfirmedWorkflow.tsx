@@ -15,10 +15,13 @@ import {
   Navigation,
   Wifi,
   Navigation2,
+  User,
+  Phone,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { DashboardOrder, OrderItem } from '@/types/dashboard.types';
+import type { StaffOrder, StaffOrderItem } from '@/types/api.types';
 import { WorkflowBanner } from '../WorkflowBanner';
 import { CameraCapture } from '../CameraCapture';
 import type { HubResponse } from '@/api/hubs';
@@ -26,7 +29,7 @@ import { WorkflowFooter } from '../WorkflowFooter';
 import { DeliveryMiniMap } from '../DeliveryMiniMap';
 
 interface ConfirmedWorkflowProps {
-  order: DashboardOrder;
+  order: StaffOrder;
   hubInfo?: HubResponse | null;
   onStartDelivery: () => void;
   loading?: boolean;
@@ -41,7 +44,7 @@ function ItemPickupCard({
   onAdd,
   onRemove,
 }: {
-  item: OrderItem;
+  item: StaffOrderItem;
   photos: string[];
   onAdd: (url: string) => void;
   onRemove: (idx: number) => void;
@@ -227,6 +230,72 @@ export function ConfirmedWorkflow({
           desc="Đến hub lấy thiết bị và chụp ảnh kiểm tra từng sản phẩm. Tất cả thiết bị phải được chụp ảnh trước khi xuất kho."
           variant="primary"
         />
+
+        {/* Customer info */}
+        <div className="rounded-2xl border border-border/80 dark:border-slate-800 bg-card shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/80 dark:border-slate-800 bg-muted/30 dark:bg-slate-900/50 flex items-center gap-2.5">
+            <User className="size-5 text-foreground" />
+            <h3 className="text-[15px] font-bold text-foreground">
+              Thông tin khách hàng & giao hàng
+            </h3>
+          </div>
+          <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
+                <User className="size-4 text-theme-primary-start dark:text-blue-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Người nhận
+                </p>
+                <p className="text-[14px] font-bold text-foreground truncate">
+                  {order.renter.full_name}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
+                <Phone className="size-4 text-theme-primary-start dark:text-blue-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Điện thoại
+                </p>
+                <p className="text-[14px] font-bold text-foreground font-mono">
+                  {order.renter.phone_number}
+                </p>
+              </div>
+            </div>
+            {order.renter.email && (
+              <div className="flex items-start gap-3">
+                <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
+                  <Mail className="size-4 text-theme-primary-start dark:text-blue-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Email
+                  </p>
+                  <p className="text-[14px] font-medium text-foreground truncate">
+                    {order.renter.email}
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="sm:col-span-3 flex items-start gap-3 pt-3 border-t border-border/60 dark:border-slate-800">
+              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
+                <MapPin className="size-4 text-theme-primary-start dark:text-blue-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  Địa chỉ giao hàng
+                </p>
+                <p className="text-[14px] font-medium text-foreground leading-relaxed">
+                  {order.delivery_address || order.renter.address || '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Hub info */}
         {hubInfo && (

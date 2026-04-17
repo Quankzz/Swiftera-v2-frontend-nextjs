@@ -14,15 +14,16 @@ import {
   ChevronRight,
   Loader2,
   AlertCircle,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { DashboardOrder } from '@/types/dashboard.types';
+import type { StaffOrder } from '@/types/api.types';
 import { fmt, fmtDate } from '../utils';
 import { WorkflowBanner } from '../WorkflowBanner';
 import { WorkflowFooter } from '../WorkflowFooter';
 
 interface PendingWorkflowProps {
-  order: DashboardOrder;
+  order: StaffOrder;
   onConfirm: () => void;
   loading?: boolean;
 }
@@ -86,6 +87,23 @@ export function PendingWorkflow({
                     </p>
                   </div>
                 </div>
+
+                {/* Hàng 2b: Email */}
+                {order.renter.email && (
+                  <div className="flex items-center gap-4">
+                    <div className="size-11 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
+                      <Mail className="size-5 text-theme-primary-start dark:text-blue-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                        Email
+                      </p>
+                      <p className="text-[15px] font-medium text-foreground truncate">
+                        {order.renter.email}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Hàng 3: Địa chỉ */}
                 <div className="flex items-start gap-4 pt-3 border-t border-border/60 dark:border-slate-800">

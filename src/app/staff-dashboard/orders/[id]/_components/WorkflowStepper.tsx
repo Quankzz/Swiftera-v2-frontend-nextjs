@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { OrderStatus } from '@/types/dashboard.types';
+import type { OrderStatus } from '@/types/api.types';
 import {
   CheckCircle2,
   ClipboardList,

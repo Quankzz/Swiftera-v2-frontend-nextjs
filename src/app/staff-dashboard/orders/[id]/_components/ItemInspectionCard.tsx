@@ -3,14 +3,14 @@ import Image from 'next/image';
 import { CameraCapture } from './CameraCapture';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { OrderItem } from '@/types/dashboard.types';
+import type { StaffOrderItem } from '@/types/api.types';
 import { fmt } from './utils';
 
 export function ItemInspectionCard({
   item,
   phase,
 }: {
-  item: OrderItem;
+  item: StaffOrderItem;
   phase: 'checkin' | 'checkout';
 }) {
   const [photos, setPhotos] = useState<string[]>(() => {

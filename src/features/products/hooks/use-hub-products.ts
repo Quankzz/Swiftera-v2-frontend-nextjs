@@ -75,7 +75,7 @@ export function useHubAvailableProducts(
   enabled = true,
 ) {
   return useQuery<HubAvailableProductsResult>({
-    queryKey: hubId ? hubProductKeys.byHub(hubId) : hubProductKeys.all,
+    queryKey: hubProductKeys.byHub(hubId ?? '__none__'),
     queryFn: () => fetchHubAvailableProducts(hubId!),
     enabled: !!hubId && enabled,
     staleTime: 60 * 1000,

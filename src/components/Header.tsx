@@ -64,7 +64,7 @@ function CartFlyOverlayInner() {
         return (
           <div
             key={item.id}
-            className="pointer-events-none fixed z-[9999]"
+            className="pointer-events-none fixed z-9999"
             style={
               {
                 left: startX,
@@ -94,7 +94,7 @@ function CartFlyOverlayInner() {
               }}
             >
               {item.imageUrl ? (
-                <img
+                <Image
                   src={item.imageUrl}
                   alt=""
                   className="w-full h-full object-cover"
@@ -128,7 +128,9 @@ export function Header({ stickyHeader = false }: HeaderProps) {
 
   // Hydration-safe: chỉ render icon sau khi mount để tránh mismatch server/client
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // ── Real API data for search ────────────────────────────────────────────────
   const search = useHeaderSearch();
@@ -250,7 +252,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
 
       <header
         className={cn(
-          'top-0 w-full bg-white dark:bg-surface-base',
+          'relative top-0 w-full bg-white dark:bg-surface-base',
           stickyHeader && 'sticky',
           isSearchOpen
             ? 'z-50 border-transparent'
@@ -268,7 +270,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
       >
         {isSearchOpen && (
           <div
-            className="fixed inset-0 z-40 h-screen w-screen bg-black/40 backdrop-blur-xs"
+            className="fixed inset-0 z-40 h-screen w-full bg-black/40 backdrop-blur-xs"
             onClick={() => setIsSearchOpen(false)}
           />
         )}
@@ -597,7 +599,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
 
           {/* Nav categories */}
           <div
-            className="relative hidden lg:block"
+            className="hidden lg:block"
             onMouseLeave={() => setHoveredCategoryId(null)}
           >
             <div className="relative z-30 mt-3 hidden flex-wrap items-center gap-6 text-sm font-semibold text-text-main lg:flex">
@@ -630,18 +632,18 @@ export function Header({ stickyHeader = false }: HeaderProps) {
             {/* Global Full-Width Mega Menu Dropdown */}
             {hoveredCategoryData && hoveredCategoryData.children?.length ? (
               <div
-                className="absolute left-1/2 w-screen -translate-x-1/2 border-t border-border/40 dark:border-white/5 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default"
-                style={{ top: `calc(100% + ${HOVER_BRIDGE_HEIGHT}px)` }}
+                className="absolute top-full px-4 lg:px-18 left-0 w-full border-t border-border/40 dark:border-white/5 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default"
                 onMouseEnter={() =>
                   setHoveredCategoryId(hoveredCategoryData.categoryId)
                 }
               >
-                <div className="mx-auto max-w-full px-4 py-4 lg:px-18 flex gap-32">
+                <div className="px-4 w-full max-w-full py-4 flex gap-32">
                   {hoveredCategoryData.children &&
                     hoveredCategoryData.children.length > 0 && (
                       <div className="w-70 shrink-0">
                         <h3 className="text-lg font-bold text-text-main mb-6">
-                          {hoveredCategoryData.name}
+                          {hoveredCategoryData.name.charAt(0).toUpperCase() +
+                            hoveredCategoryData.name.slice(1)}
                         </h3>
                         <ul className="space-y-2">
                           {hoveredCategoryData.children.map((child) => (

@@ -31,7 +31,7 @@ const HubModal = ({
 }) => {
   const { isHubModalOpen, selectedHub, closeHubModal } = useMapStore();
 
-  const { data, isLoading } = useHubAvailableProducts(
+  const { data, isLoading, isError, refetch } = useHubAvailableProducts(
     selectedHub?.hub_id,
     isHubModalOpen,
   );
@@ -76,13 +76,21 @@ const HubModal = ({
           >
             {/* Header */}
             <div className="px-5 pt-6 pb-4 pr-14 shrink-0 border-b border-border flex items-center justify-between gap-3">
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate flex-1">
-                {selectedHub.name}
-              </h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate flex-1">
+                  {selectedHub.name}
+                </h2>
+                {selectedHub.code && (
+                  <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-[11px] font-mono font-bold text-muted-foreground border border-border/50 shrink-0">
+                    {selectedHub.code}
+                  </span>
+                )}
+              </div>
               <button
                 onClick={() => {
+                  const hub = selectedHub; // capture before closing
                   closeHubModal();
-                  onNavigateToHub?.(selectedHub);
+                  onNavigateToHub?.(hub);
                 }}
                 title="Chỉ đường đến đây"
                 className="
@@ -151,7 +159,7 @@ const HubModal = ({
                 <span className="text-sm font-semibold text-foreground">
                   Thiết bị có sẵn
                 </span>
-                {!isLoading && (
+                {!isLoading && !isError && (
                   <span className="ml-auto text-xs text-muted-foreground">
                     {totalAvailable > 0
                       ? `${totalAvailable} chiếc · ${hubProducts.length} loại`
@@ -166,15 +174,59 @@ const HubModal = ({
                   <span className="text-sm">Đang tải thiết bị…</span>
                 </div>
               )}
+              {/* Error */}
+              {!isLoading && isError && (
+                <div className="flex flex-col items-center justify-center gap-3 py-10 px-4 text-center">
+                  <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <Package
+                      size={22}
+                      strokeWidth={1.4}
+                      className="text-destructive opacity-50"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      Không thể tải thiết bị
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Vui lòng thử lại
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => void refetch()}
+                    className="
+                      mt-1 px-4 py-2 rounded-xl text-xs font-bold
+                      bg-destructive/10 text-destructive
+                      hover:bg-destructive/20 transition-all active:scale-95
+                    "
+                  >
+                    Tải lại
+                  </button>
+                </div>
+              )}
               {/* Empty */}
-              {!isLoading && hubProducts.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
-                  <Package size={36} strokeWidth={1.2} className="opacity-30" />
-                  <span className="text-sm">Hub chưa có thiết bị khả dụng</span>
+              {!isLoading && !isError && hubProducts.length === 0 && (
+                <div className="flex flex-col items-center justify-center gap-2.5 py-10 px-4 text-center">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                    <Package
+                      size={22}
+                      strokeWidth={1.4}
+                      className="text-muted-foreground/40"
+                    />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-foreground">
+                      Hub chưa có thiết bị khả dụng
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedHub.name} hiện chưa có sản phẩm nào sẵn sàng cho
+                      thuê.
+                    </p>
+                  </div>
                 </div>
               )}
               {/* Product list */}
-              {!isLoading && hubProducts.length > 0 && (
+              {!isLoading && !isError && hubProducts.length > 0 && (
                 <div className="block divide-y divide-border/60">
                   {hubProducts.map(({ product, availableCount }) => {
                     const primaryImage =
@@ -215,13 +267,20 @@ const HubModal = ({
                             </span>
                           </div>
 
-                          {(product.brand ?? product.color) && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {[product.brand, product.color]
-                                .filter(Boolean)
-                                .join(' · ')}
-                            </p>
-                          )}
+                          {(() => {
+                            const colorLabel =
+                              product.colors.length > 0
+                                ? product.colors.map((c) => c.name).join(', ')
+                                : product.color;
+                            if (!colorLabel && !product.brand) return null;
+                            return (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {[product.brand, colorLabel]
+                                  .filter(Boolean)
+                                  .join(' · ')}
+                              </p>
+                            );
+                          })()}
 
                           {product.dailyPrice > 0 && (
                             <div className="flex items-center justify-between gap-2 mt-1">

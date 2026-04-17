@@ -171,8 +171,11 @@ const MapView: React.FC = () => {
       .then((hubResponses: HubResponse[]) => {
         setHubs(hubResponses.map(adaptHubForMap));
       })
-      .catch(() => {}); // fail silently
-  }, [setHubs]);
+      .catch(() => {
+        showNotification('error', 'Không thể tải danh sách hub. Vui lòng tải lại trang.');
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setHubs, showNotification]);
 
   // ── Silent geolocation on mount ────────────────────────────────────────────
   useEffect(() => {

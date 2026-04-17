@@ -47,6 +47,7 @@ import {
   selectCount,
   selectUrgentTotal,
   selectTotalOrders,
+  type OrderStatus,
 } from '@/stores/staff-order-counts-store';
 
 // ── Giao hàng: PAID → PREPARING → DELIVERING → DELIVERED ─────────────────────
@@ -251,9 +252,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         ? 'bg-destructive text-white'
                         : 'bg-sidebar-accent text-sidebar-foreground/70',
                     )}
-                  >
-                    {totalOrders}
-                  </span>
+                  ></span>
                 )}
               </SidebarMenuButton>
               <SidebarMenuAction
@@ -267,7 +266,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <span className="sr-only">Mở rộng</span>
               </SidebarMenuAction>
               <CollapsibleContent>
-                <SidebarMenuSub className="ml-4 mt-0.5 w-full">
+                <SidebarMenuSub className="pl-4 mt-0.5 ">
+                  {' '}
                   {/* ── Giao hàng ── */}
                   <div className="px-2 pt-2 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
                     <Truck className="size-3" />
@@ -276,7 +276,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {DELIVERY_WORKFLOW_TABS.map((tab) => {
                     const count = selectCount(
                       counts,
-                      tab.status as import('@/types/dashboard.types').OrderStatus,
+                      tab.status as OrderStatus,
                     );
                     const isTabActive =
                       isOrdersActive && currentStatus === tab.status;
@@ -286,7 +286,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           render={<Link href={tab.url} />}
                           isActive={isTabActive}
                           className={cn(
-                            'py-4 transition-colors',
+                            'py-2.5 transition-colors', // <-- Đổi py-4 thành py-2.5
                             isTabActive &&
                               'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
                           )}
@@ -318,7 +318,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       </SidebarMenuSubItem>
                     );
                   })}
-
                   {/* ── Thu hồi ── */}
                   <div className="px-2 pt-3 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
                     <RotateCcw className="size-3" />
@@ -327,7 +326,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {PICKUP_WORKFLOW_TABS.map((tab) => {
                     const count = selectCount(
                       counts,
-                      tab.status as import('@/types/dashboard.types').OrderStatus,
+                      tab.status as OrderStatus,
                     );
                     const isTabActive =
                       isOrdersActive && currentStatus === tab.status;
