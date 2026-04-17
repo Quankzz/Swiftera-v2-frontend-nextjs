@@ -29,7 +29,7 @@ const FALLBACK_SLIDES: SlideData[] = [
   {
     title: 'Yêu công nghệ',
     description:
-      'Thuê thiết bị linh hoạt, chi phí hợp lý — giao hàng nhanh, đổi trả dễ dàng.',
+      'Thuê thiết bị linh hoạt, chi phí hợp lý, giao hàng nhanh và đổi trả dễ dàng.',
     image: '',
   },
 ];
@@ -93,7 +93,7 @@ export function HeroBanner() {
     return roots.map((node) => ({
       title: node.name,
       description:
-        'Thuê thiết bị linh hoạt, chi phí hợp lý — giao hàng nhanh, đổi trả dễ dàng.',
+        'Thuê thiết bị linh hoạt, chi phí hợp lý, giao hàng nhanh và đổi trả dễ dàng.',
       image: node.imageUrl ?? '',
     }));
   }, [categoryTree]);

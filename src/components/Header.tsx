@@ -162,6 +162,23 @@ export function Header({ stickyHeader = false }: HeaderProps) {
     null,
   );
   const cartBtnRef = useRef<HTMLButtonElement>(null);
+  const hideTimeoutRef = useRef<number | null>(null);
+
+  const scheduleHide = useCallback(() => {
+    if (hideTimeoutRef.current) window.clearTimeout(hideTimeoutRef.current);
+    // small delay to allow moving pointer to submenu
+    hideTimeoutRef.current = window.setTimeout(() => {
+      setHoveredCategoryId(null);
+      hideTimeoutRef.current = null;
+    }, 180) as unknown as number;
+  }, []);
+
+  const cancelHide = useCallback(() => {
+    if (hideTimeoutRef.current) {
+      window.clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+  }, []);
 
   const hoveredCategoryData = useMemo(
     () => sortedCategories.find((c) => c.categoryId === hoveredCategoryId),
@@ -235,6 +252,15 @@ export function Header({ stickyHeader = false }: HeaderProps) {
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('mousedown', onClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -565,18 +591,16 @@ export function Header({ stickyHeader = false }: HeaderProps) {
           </div>
 
           {/* Nav categories */}
-          <div
-            className="hidden lg:block"
-            onMouseLeave={() => setHoveredCategoryId(null)}
-          >
+          <div className="hidden lg:block" onMouseEnter={cancelHide} onMouseLeave={scheduleHide}>
             <div className="relative z-30 mt-3 hidden flex-wrap items-center gap-6 text-sm font-semibold text-text-main lg:flex">
               {sortedCategories.map((category) => (
                 <div key={category.categoryId}>
                   <Link
                     href={`/catalog?categoryId=${category.categoryId}`}
-                    onMouseEnter={() =>
-                      setHoveredCategoryId(category.categoryId)
-                    }
+                    onMouseEnter={() => {
+                      cancelHide();
+                      setHoveredCategoryId(category.categoryId);
+                    }}
                     className={cn(
                       `flex items-center gap-2 rounded-full ${category.sortOrder === 1 ? 'pr-3' : 'px-3'} py-2 transition-colors shrink-0`,
                       hoveredCategoryId === category.categoryId
@@ -597,12 +621,13 @@ export function Header({ stickyHeader = false }: HeaderProps) {
             />
 
             {/* Global Full-Width Mega Menu Dropdown */}
-            {hoveredCategoryData && hoveredCategoryData.children?.length ? (
+              {hoveredCategoryData && hoveredCategoryData.children?.length ? (
               <div
                 className="absolute top-full px-4 lg:px-18 left-0 w-full border-t border-border/40 dark:border-white/5 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default"
-                onMouseEnter={() =>
-                  setHoveredCategoryId(hoveredCategoryData.categoryId)
-                }
+                onMouseEnter={() => {
+                  cancelHide();
+                  setHoveredCategoryId(hoveredCategoryData.categoryId);
+                }}
               >
                 <div className="px-4 w-full max-w-full py-4 flex gap-32">
                   {hoveredCategoryData.children &&

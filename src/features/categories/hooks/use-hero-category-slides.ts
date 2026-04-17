@@ -44,7 +44,7 @@ function toHeroSlide(node: CategoryTreeNode): HeroCategorySlide {
     title: node.name,
     subtitle: 'Chọn Swiftera',
     description:
-      'Thuê thiết bị linh hoạt, chi phí hợp lý — giao hàng nhanh, đổi trả dễ dàng.',
+      'Thuê thiết bị linh hoạt, chi phí hợp lý, giao hàng nhanh và đổi trả dễ dàng.',
     categoryId: node.categoryId,
     image: node.imageUrl ?? imgs[0] ?? '',
     orbitImages: imgs.length > 0 ? imgs : [],
