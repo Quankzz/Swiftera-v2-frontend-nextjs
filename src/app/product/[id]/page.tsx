@@ -22,7 +22,6 @@ import {
   RentalReviewsSection,
   RentalRelatedProducts,
 } from '@/components/product-detail/rental-product-relations';
-import { RentalStockSection } from '@/components/product-detail/rental-product-stock';
 import { useProductDetailQuery } from '@/features/products/hooks/use-product-detail';
 import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
 import { useAuthStore } from '@/stores/auth-store';
@@ -166,17 +165,7 @@ export default function ProductDetailPage() {
   // Cần chọn màu khi product có >1 màu và chưa chọn
   const requireColorSelection = colors.length > 1 && !selectedColorId;
 
-  // Đếm AVAILABLE stock — nếu đã chọn màu, lọc theo màu đó
-  const availableStock = useMemo(() => {
-    if (!product?.inventoryItems) return 0;
-    const items = product.inventoryItems.filter(
-      (i) => i.status === 'AVAILABLE',
-    );
-    if (selectedColorId) {
-      return items.filter((i) => i.productColorId === selectedColorId).length;
-    }
-    return items.length;
-  }, [product?.inventoryItems, selectedColorId]);
+  // (Inventory details removed from UI per request)
 
   // Thông số kỹ thuật
   const specifications = useMemo(() => {
@@ -196,20 +185,13 @@ export default function ProductDetailPage() {
           : '—',
       },
       {
-        label: 'Tình trạng kho',
-        value:
-          availableStock > 0
-            ? `${availableStock} thiết bị sẵn sàng`
-            : 'Hết hàng',
-      },
-      {
         label: 'Đánh giá',
         value: product.averageRating
           ? `${product.averageRating} / 5`
           : 'Chưa có đánh giá',
       },
     ];
-  }, [product, availableStock]);
+  }, [product]);
 
   // Short description (hiển thị phía dưới title)
   const shortDesc = useMemo(
@@ -375,15 +357,7 @@ export default function ProductDetailPage() {
             {/* Specifications */}
             <RentalSpecifications specifications={specifications} />
 
-            {/* Inventory Items / Stock */}
-            {product.inventoryItems && product.inventoryItems.length > 0 && (
-              <RentalStockSection
-                inventoryItems={product.inventoryItems}
-                availableStock={availableStock}
-                totalStock={product.inventoryItems.length}
-                minRentalDays={product.minRentalDays}
-              />
-            )}
+            {/* Inventory Items / Stock removed per request */}
           </div>
 
           <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4'>
