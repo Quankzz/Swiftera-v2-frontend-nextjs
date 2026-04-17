@@ -118,6 +118,7 @@ export function CatalogView({
     minPrice: filterState.priceMin || undefined,
     maxPrice: filterState.priceMax || undefined,
       ...(apiSort ? { sort: apiSort } : {}),
+    onlyWithStock: true,
     page,
     size: PAGE_SIZE,
   });

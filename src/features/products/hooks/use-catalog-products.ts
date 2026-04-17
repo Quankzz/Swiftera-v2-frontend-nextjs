@@ -42,6 +42,8 @@ export interface CatalogQueryParams {
   maxPrice?: string;
   /** Sort string — same format as BE: "field,direction" */
   sort?: string;
+  /** When true, only return products that have at least one AVAILABLE inventory item */
+  onlyWithStock?: boolean;
   /** 1-based page index (URL-visible) */
   page?: number;
   /** Page size */
@@ -172,6 +174,9 @@ export function useCatalogProductsQuery(params: CatalogQueryParams = {}) {
   };
   if (sort) {
     (beParams as any).sort = sort;
+  }
+  if (params.onlyWithStock) {
+    (beParams as any).onlyWithStock = true;
   }
 
   return useQuery<PaginatedProductsResponse, Error, CatalogResult>({

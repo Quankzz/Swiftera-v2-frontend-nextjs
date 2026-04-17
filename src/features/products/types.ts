@@ -173,6 +173,8 @@ export interface ProductListParams {
   filter?: string;
   /** API-054: include products from descendant categories when filtering by categoryId */
   includeDescendants?: boolean;
+  /** API-054: when true, only return products that have at least one InventoryItem in AVAILABLE state */
+  onlyWithStock?: boolean;
 }
 
 // ── Inventory Item Types (Module 9: INVENTORY ITEMS — API-056 to API-060) ──

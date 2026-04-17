@@ -69,6 +69,7 @@ const FEATURED_PARAMS = {
   size: 8,
   sort: 'dailyPrice,desc',
   filter: 'isActive:true',
+  onlyWithStock: true,
 } as const;
 
 /**
@@ -91,6 +92,7 @@ const BUDGET_PARAMS = {
   size: 8,
   sort: 'dailyPrice,asc',
   filter: 'isActive:true',
+  onlyWithStock: true,
 } as const;
 
 /**

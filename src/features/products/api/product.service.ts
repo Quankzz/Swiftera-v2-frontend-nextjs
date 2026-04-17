@@ -39,16 +39,17 @@ const authOpts = { requireToken: true as const };
 export async function getProducts(
   params: ProductListParams = {},
 ): Promise<PaginatedProductsResponse> {
-  const { page = 1, size = 12, sort, filter, includeDescendants } = params;
+  const { page = 1, size = 12, sort, filter, includeDescendants, onlyWithStock } = params;
   const res = await httpService.get<ApiResponse<PaginatedProductsResponse>>(
     '/products',
     {
       params: {
         page,
         size,
-        sort,
+        ...(sort ? { sort } : {}),
         filter,
         ...(includeDescendants ? { includeDescendants: true } : {}),
+        ...(onlyWithStock ? { onlyWithStock: true } : {}),
       },
     },
   );
