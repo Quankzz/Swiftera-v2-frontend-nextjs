@@ -31,6 +31,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /** Tạo các gói thời gian thuê từ dailyPrice của BE, lọc theo minRentalDays */
 function buildDurations(
   dailyPrice: number,
+  oldDailyPrice: number | undefined,
   minRentalDays: number,
 ): RentalDuration[] {
   const packs = [
@@ -45,15 +46,14 @@ function buildDurations(
   return packs
     .filter((p) => p.days >= minRentalDays)
     .map((p) => {
-      const total = dailyPrice * p.days;
-      const discount = p.days >= 7 ? 0.15 : p.days >= 3 ? 0.1 : 0;
-      const original = total;
-      const price = discount > 0 ? Math.round(total * (1 - discount)) : total;
+      const total = Math.round(dailyPrice * p.days);
+      const original =
+        oldDailyPrice != null ? Math.round(oldDailyPrice * p.days) : undefined;
       return {
         id: String(p.days), // plain number string, e.g. "2"
         label: p.label,
-        price,
-        originalPrice: discount > 0 ? original : undefined,
+        price: total,
+        originalPrice: original && original > total ? original : undefined,
       };
     });
 }
@@ -107,13 +107,15 @@ export default function ProductDetailPage() {
   }, [product?.minRentalDays]);
 
   // Build durations từ BE dailyPrice, lọc theo minRentalDays
-  const durations = useMemo(
-    () =>
-      product?.dailyPrice
-        ? buildDurations(product.dailyPrice, product.minRentalDays ?? 1)
-        : [],
-    [product?.dailyPrice, product?.minRentalDays],
-  );
+  const durations = useMemo(() => {
+    if (!product?.dailyPrice) return [];
+    return buildDurations(
+      product.dailyPrice,
+      // product.oldDailyPrice may be used to display original price
+      product.oldDailyPrice as unknown as number | undefined,
+      product.minRentalDays ?? 1,
+    );
+  }, [product?.dailyPrice, product?.oldDailyPrice, product?.minRentalDays]);
 
   // Lấy image URLs
   const imageUrls = useMemo(() => {
@@ -130,15 +132,15 @@ export default function ProductDetailPage() {
     // If selectedDuration is a numeric custom value, compute price on the fly
     const days = parseInt(selectedDuration, 10);
     if (!isNaN(days) && days >= (product?.minRentalDays ?? 1) && product?.dailyPrice) {
-      const total = product.dailyPrice * days;
-      const discount = days >= 7 ? 0.15 : days >= 3 ? 0.1 : 0;
-      const original = Math.round(total);
-      const price = discount > 0 ? Math.round(total * (1 - discount)) : original;
+      const total = Math.round(product.dailyPrice * days);
+      const original = product.oldDailyPrice
+        ? Math.round(product.oldDailyPrice * days)
+        : undefined;
       return {
         id: String(days),
         label: `${days} ngày`,
-        price,
-        originalPrice: discount > 0 ? original : undefined,
+        price: total,
+        originalPrice: original && original > total ? original : undefined,
       } as RentalDuration;
     }
     return durations.find((d) => d.id === defaultDurationId) ?? durations[0];
