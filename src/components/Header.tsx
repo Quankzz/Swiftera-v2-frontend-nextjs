@@ -644,7 +644,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                               className="group/child relative"
                             >
                               <Link
-                                href={`/catalog?categoryId=${child.categoryId}`}
+                                href={`/catalog?categoryId=${hoveredCategoryData.categoryId}&subcategoryId=${child.categoryId}`}
                                 className="flex items-center justify-between py-2 text-text-main hover:text-theme-primary-start font-medium transition-colors"
                               >
                                 {child.name}
@@ -660,7 +660,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                                       {child.children.map((subChild) => (
                                         <li key={subChild.categoryId}>
                                           <Link
-                                            href={`/catalog?categoryId=${subChild.categoryId}`}
+                                            href={`/catalog?categoryId=${hoveredCategoryData.categoryId}&subcategoryId=${subChild.categoryId}`}
                                             className="block px-4 py-2.5 rounded-xl hover:bg-rose-50/50 dark:hover:bg-theme-primary-start/10 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors"
                                           >
                                             {subChild.name}
