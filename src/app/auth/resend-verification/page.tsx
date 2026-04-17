@@ -41,7 +41,6 @@ function ResendVerificationForm() {
       title="Gửi lại email xác thực"
       description="Dùng khi tài khoản chưa được kích hoạt hoặc chưa nhận được mail."
       footerLinks={[
-        { href: '/auth/verify-email', label: 'Nhập mã xác thực' },
         { href: '/auth/login', label: 'Quay lại đăng nhập' },
       ]}
     >

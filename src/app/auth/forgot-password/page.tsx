@@ -40,16 +40,15 @@ export default function ForgotPasswordPage() {
   return (
     <AuthActionCard
       title="Quên mật khẩu"
-      description="Nhập email để nhận hướng dẫn hoặc mã đặt lại mật khẩu."
+      description="Nhập email đã đăng ký tài khoản để nhận liên kết đặt lại mật khẩu qua email."
       footerLinks={[
         { href: '/auth/login', label: 'Quay lại đăng nhập' },
-        { href: '/auth/resend-verification', label: 'Gửi lại mail xác thực' },
       ]}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           type="email"
-          placeholder="Email"
+          placeholder="Email đã đăng ký"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -67,20 +66,12 @@ export default function ForgotPasswordPage() {
           {isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Đang gửi
+              Gửi liên kết
             </>
           ) : (
-            'Gửi yêu cầu'
+            'Gửi liên kết đặt lại'
           )}
         </Button>
-
-        <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-          Nếu backend yêu cầu mã OTP, bạn có thể nhập ở trang{' '}
-          <Link href="/auth/reset-password" className="text-[#fe1451] hover:underline">
-            đặt lại mật khẩu
-          </Link>
-          .
-        </p>
       </form>
     </AuthActionCard>
   );

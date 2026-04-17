@@ -3,13 +3,54 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 const inputClassName =
   'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
+
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  required,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  required?: boolean;
+  className?: string;
+}) {
+  const [showPassword, setShowPassword] = useState(false);
+
+  return (
+    <div className="relative my-2 w-full">
+      <Input
+        type={showPassword ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className={className}
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword((v) => !v)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+        tabIndex={-1}
+      >
+        {showPassword ? (
+          <EyeOff className="size-4" />
+        ) : (
+          <Eye className="size-4" />
+        )}
+      </button>
+    </div>
+  );
+}
 
 export function SignInForm() {
   const router = useRouter();
@@ -55,11 +96,10 @@ export function SignInForm() {
         required
         className={inputClassName}
       />
-      <Input
-        type="password"
-        placeholder="Mật khẩu"
+      <PasswordInput
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={setPassword}
+        placeholder="Mật khẩu"
         required
         className={inputClassName}
       />

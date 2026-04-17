@@ -6,21 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  ChevronRight,
-  Heart,
-  LayoutDashboard,
-  LogOut,
-  LogIn,
-  Menu,
-  Moon,
-  Search,
-  ShoppingCart,
-  Sun,
-  UserRound,
-  FileText,
-  Settings,
-} from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,6 +16,20 @@ import logo from '../../public/logo.png';
 import { useHeaderSearch } from '@/features/products/hooks/use-header-search';
 import { useCategoryTreeQuery } from '@/features/categories/hooks/use-category-tree';
 import { HeaderSearchDropdown } from '@/components/header/HeaderSearchDropdown';
+import {
+  ChevronRight,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Menu,
+  Moon,
+  Search,
+  ShoppingCart,
+  Sun,
+  UserRound,
+  FileText,
+  User,
+} from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
 /*  Cart fly overlay – rendered inside Header so store is shared       */
@@ -395,15 +394,6 @@ export function Header({ stickyHeader = false }: HeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Wishlist"
-                className="dark:hover:bg-white/10"
-              >
-                <Heart className="size-5 text-text-main" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
                 aria-label="Chuyển chế độ sáng/tối"
                 onClick={toggleTheme}
                 className="dark:hover:bg-white/10"
@@ -452,20 +442,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                 </Button>
               </Link>
 
-              {!isAuthenticated && (
-                <Link href="/auth/login">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Đi tới trang đăng nhập"
-                    className="dark:hover:bg-white/10"
-                  >
-                    <LogIn className="size-5 text-text-main" />
-                  </Button>
-                </Link>
-              )}
-
-              {/* User dropdown */}
+              {/* User icon — opens login/register dropdown when guest */}
               <div ref={userMenuRef} className="relative">
                 <Button
                   variant="ghost"
@@ -483,33 +460,59 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                       <AvatarFallback>{userInitials}</AvatarFallback>
                     </Avatar>
                   ) : (
-                    <UserRound className="size-5 text-text-main" />
+                    <User className="size-5 text-text-main" />
                   )}
                 </Button>
 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1">
-                    <div className="px-4 py-3 border-b border-gray-100 dark:border-white/8">
-                      <p className="text-sm font-semibold text-text-main">
-                        {userDisplayName}
-                      </p>
-                      <p className="text-xs text-text-sub truncate">
-                        {user?.email || 'guest@swiftera.com'}
-                      </p>
-                    </div>
+                    {!isAuthenticated ? (
+                      <>
+                        <div className="px-4 py-3 border-b border-gray-100 dark:border-white/8">
+                          <p className="text-sm font-semibold text-text-main">
+                            Khách hàng
+                          </p>
+                          <p className="text-xs text-text-sub">
+                            Vui lòng đăng nhập để tiếp tục
+                          </p>
+                        </div>
+                        <div className="py-1">
+                          <Link
+                            href="/auth/login"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
+                          >
+                            <LogIn size={15} className="text-text-sub shrink-0" />
+                            Đăng nhập
+                          </Link>
+                          <Link
+                            href="/auth/register"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
+                          >
+                            <User size={15} className="text-text-sub shrink-0" />
+                            Đăng ký
+                          </Link>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="px-4 py-3 border-b border-gray-100 dark:border-white/8">
+                          <p className="text-sm font-semibold text-text-main">
+                            {userDisplayName}
+                          </p>
+                          <p className="text-xs text-text-sub truncate">
+                            {user?.email || 'guest@swiftera.com'}
+                          </p>
+                        </div>
 
-                    <div className="py-1">
-                      {isAuthenticated ? (
-                        <>
+                        <div className="py-1">
                           <Link
                             href="/profile"
                             onClick={() => setIsUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
                           >
-                            <UserRound
-                              size={15}
-                              className="text-text-sub shrink-0"
-                            />
+                            <UserRound size={15} className="text-text-sub shrink-0" />
                             Thông tin cá nhân
                           </Link>
                           <Link
@@ -517,10 +520,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                             onClick={() => setIsUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
                           >
-                            <FileText
-                              size={15}
-                              className="text-text-sub shrink-0"
-                            />
+                            <FileText size={15} className="text-text-sub shrink-0" />
                             Đơn thuê của tôi
                           </Link>
                           {isAdminUser && (
@@ -529,10 +529,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                               onClick={() => setIsUserMenuOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
                             >
-                              <LayoutDashboard
-                                size={15}
-                                className="text-text-sub shrink-0"
-                              />
+                              <LayoutDashboard size={15} className="text-text-sub shrink-0" />
                               Trang quản trị
                             </Link>
                           )}
@@ -542,54 +539,24 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                               onClick={() => setIsUserMenuOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
                             >
-                              <LayoutDashboard
-                                size={15}
-                                className="text-text-sub shrink-0"
-                              />
+                              <LayoutDashboard size={15} className="text-text-sub shrink-0" />
                               Kiểm đơn
                             </Link>
                           )}
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            href="/auth/login"
-                            onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
-                          >
-                            <LogIn
-                              size={15}
-                              className="text-text-sub shrink-0"
-                            />
-                            Đăng nhập
-                          </Link>
-                          <Link
-                            href="/auth/register"
-                            onClick={() => setIsUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
-                          >
-                            <Settings
-                              size={15}
-                              className="text-text-sub shrink-0"
-                            />
-                            Tạo tài khoản
-                          </Link>
-                        </>
-                      )}
-                    </div>
+                        </div>
 
-                    {isAuthenticated && (
-                      <div className="border-t border-gray-100 dark:border-white/8 py-1">
-                        <button
-                          onClick={() => {
-                            void handleLogout();
-                          }}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-theme-primary-start/10 transition-colors"
-                        >
-                          <LogOut size={15} className="shrink-0" />
-                          Đăng xuất
-                        </button>
-                      </div>
+                        <div className="border-t border-gray-100 dark:border-white/8 py-1">
+                          <button
+                            onClick={() => {
+                              void handleLogout();
+                            }}
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-theme-primary-start/10 transition-colors"
+                          >
+                            <LogOut size={15} className="shrink-0" />
+                            Đăng xuất
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
                 )}

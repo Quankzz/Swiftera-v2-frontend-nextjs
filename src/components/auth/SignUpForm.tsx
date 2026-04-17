@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,47 @@ import { PasswordStrength } from './PasswordStrength';
 const inputClassName =
   'my-1.5 h-auto border-none bg-zinc-100 px-4 py-2 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
 
+function PasswordInput({
+  value,
+  onChange,
+  placeholder,
+  required,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  required?: boolean;
+  className?: string;
+}) {
+  const [showPassword, setShowPassword] = useState(false);
+
+  return (
+    <div className="relative my-1.5 w-full">
+      <Input
+        type={showPassword ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className={className}
+      />
+      <button
+        type="button"
+        onClick={() => setShowPassword((v) => !v)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+        tabIndex={-1}
+      >
+        {showPassword ? (
+          <EyeOff className="size-4" />
+        ) : (
+          <Eye className="size-4" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function SignUpForm() {
   const { register, isLoading } = useAuth();
   const [firstName, setFirstName] = useState('');
@@ -27,6 +68,7 @@ export function SignUpForm() {
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -108,28 +150,41 @@ export function SignUpForm() {
           required
           className={inputClassName}
         />
-        <Input
-          type='password'
-          placeholder='Mật khẩu'
+        <PasswordInput
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={setPassword}
+          placeholder='Mật khẩu'
           required
           className={inputClassName}
         />
         <PasswordStrength password={password} />
-        <Input
-          type='password'
-          placeholder='Xác nhận mật khẩu'
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          className={cn(
-            inputClassName,
-            confirmPassword &&
-              password !== confirmPassword &&
-              'ring-1 ring-red-400',
-          )}
-        />
+        <div className="relative my-1.5 w-full">
+          <Input
+            type={showConfirmPassword ? 'text' : 'password'}
+            placeholder='Xác nhận mật khẩu'
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className={cn(
+              inputClassName,
+              confirmPassword &&
+                password !== confirmPassword &&
+                'ring-1 ring-red-400',
+            )}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+            tabIndex={-1}
+          >
+            {showConfirmPassword ? (
+              <EyeOff className="size-4" />
+            ) : (
+              <Eye className="size-4" />
+            )}
+          </button>
+        </div>
         {confirmPassword && password !== confirmPassword && (
           <p className='mt-0.5 self-start text-[11px] text-red-500'>
             Mật khẩu không khớp

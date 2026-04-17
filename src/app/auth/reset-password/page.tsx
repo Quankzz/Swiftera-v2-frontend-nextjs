@@ -56,10 +56,9 @@ function ResetPasswordForm() {
   return (
     <AuthActionCard
       title="Đặt lại mật khẩu"
-      description="Nhập mật khẩu mới để hoàn tất quá trình đặt lại mật khẩu."
+      description="Nhập mật khẩu mới để thay thế mật khẩu cũ."
       footerLinks={[
         { href: '/auth/login', label: 'Đăng nhập' },
-        { href: '/auth/forgot-password', label: 'Gửi lại yêu cầu' },
       ]}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
