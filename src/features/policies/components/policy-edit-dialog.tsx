@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { storageApi } from '@/api/storageApi';
+import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 import { useUpdatePolicyMutation } from '../hooks/use-policy-management';
 import { PolicyPdfPreview } from './policy-pdf-preview';
 import type { PolicyDocumentResponse } from '../types';
@@ -142,6 +143,19 @@ export function PolicyEditDialog({
       });
       const url = res.data?.data?.fileUrl;
       if (!url) throw new Error('Không nhận được URL file.');
+
+      // Delete old PDF from Azure Blob if it's a Swiftera blob URL
+      if (policy.pdfUrl && isAzureBlobUrl(policy.pdfUrl)) {
+        const oldPath = extractBlobPathFromUrl(policy.pdfUrl);
+        if (oldPath) {
+          try {
+            await storageApi.deleteSingleFile({ filePath: oldPath });
+          } catch {
+            // ignore delete error — non-critical
+          }
+        }
+      }
+
       setUploadedUrl(url);
       setCurrentPdfUrl(url);
       toast.success('Upload PDF mới thành công!');

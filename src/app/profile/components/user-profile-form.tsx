@@ -19,6 +19,7 @@ import {
   type UpdateProfileRequest,
 } from '@/api/userProfileApi';
 import { storageApi } from '@/api/storageApi';
+import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 import { getApiErrorMessage, getApiSuccessMessage } from '../utils';
 
 type CropArea = { width: number; height: number; x: number; y: number };
@@ -67,23 +68,6 @@ async function getCroppedImageBlob(
         quality,
       );
     });
-  } catch {
-    return null;
-  }
-}
-
-/** Trích `filePath` từ Azure Blob URL để gọi API delete, ví dụ:
- *  https://<account>.blob.core.windows.net/<container>/avatars/12345.jpg
- *  → "avatars/12345.jpg" */
-function extractBlobPathFromUrl(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    const segments = parsed.pathname.split('/').filter(Boolean);
-    // Loại bỏ container name (segment đầu tiên)
-    if (segments.length >= 2) {
-      return segments.slice(1).join('/');
-    }
-    return null;
   } catch {
     return null;
   }

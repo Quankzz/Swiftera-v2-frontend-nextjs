@@ -787,6 +787,8 @@ interface RentalCheckoutCardProps {
   durationId: string;
   quantity: number;
   setQuantity: (qty: number) => void;
+  /** Giới hạn tối đa có thể thuê (dựa trên stock hiện tại) */
+  maxQuantity?: number;
   vouchers?: RentalVoucher[];
   /** Bắt buộc để thêm vào giỏ */
   cartProduct?: {
@@ -814,6 +816,7 @@ export function RentalCheckoutCard({
   durationId,
   quantity,
   setQuantity,
+  maxQuantity = 99,
   vouchers = defaultRentalVouchers,
   cartProduct,
   requireColorSelection = false,
@@ -963,7 +966,7 @@ export function RentalCheckoutCard({
             type='button'
             variant='ghost'
             className='size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11'
-            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            onClick={() => setQuantity(Math.max(1, Math.min(maxQuantity, quantity - 1)))}
             aria-label='Giảm số lượng'
           >
             <Minus className='size-6' />
@@ -973,7 +976,7 @@ export function RentalCheckoutCard({
             min={1}
             value={quantity}
             onChange={(e) =>
-              setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
+              setQuantity(Math.max(1, Math.min(maxQuantity, parseInt(e.target.value, 10) || 1)))
             }
             className='h-full w-12 border-0 bg-transparent text-center text-lg font-bold tabular-nums text-foreground outline-none sm:w-14 sm:text-xl'
           />
@@ -981,7 +984,8 @@ export function RentalCheckoutCard({
             type='button'
             variant='ghost'
             className='size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11'
-            onClick={() => setQuantity(quantity + 1)}
+            onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+            disabled={quantity >= maxQuantity}
             aria-label='Tăng số lượng'
           >
             <Plus className='size-6' />

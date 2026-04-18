@@ -1,6 +1,6 @@
 /**
  * Reviews hooks — TanStack Query
- * Module 15: REVIEWS (API-095 → API-099)
+ * Module 15: REVIEWS (API-095 → API-100)
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +12,7 @@ import {
   getReviewById,
   createReview,
   deleteReview,
+  markHelpful,
 } from './review.service';
 import type { CreateReviewInput } from '@/api/reviews';
 
@@ -23,7 +24,7 @@ import type { CreateReviewInput } from '@/api/reviews';
  */
 export function useProductReviewsQuery(
   productId: string,
-  params?: { page?: number; size?: number },
+  params?: { page?: number; size?: number; rating?: number },
 ) {
   return useQuery({
     queryKey: reviewKeys.byProduct(productId, params),
@@ -133,6 +134,31 @@ export function useDeleteReview(options?: {
   return useMutation({
     mutationFn: async (reviewId: string) => {
       await deleteReview(reviewId);
+    },
+
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: reviewKeys.all });
+      options?.onSuccess?.();
+    },
+
+    onError: (error: Error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Đánh dấu đánh giá là hữu ích [AUTH]
+ */
+export function useMarkHelpfulReview(options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (reviewId: string) => {
+      return markHelpful(reviewId);
     },
 
     onSuccess: () => {

@@ -29,7 +29,8 @@ import {
   Minus,
   Quote,
 } from 'lucide-react';
-import { uploadSingleFile } from '@/features/files/api/file.service';
+import { uploadSingleFile, deleteSingleFile } from '@/features/files/api/file.service';
+import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 import ColorPicker from './color-picker';
 import VideoModal from './video-modal';
 
@@ -38,6 +39,8 @@ interface RichEditorProps {
   onChange?: (html: string) => void;
   minHeight?: string;
   initialContent?: string;
+  /** Folder name used for uploaded images. E.g. 'products/{productId}' or 'policies/{policyId}' */
+  uploadFolder?: string;
 }
 
 // ─── Toolbar separator ────────────────────────────────────────────
@@ -136,6 +139,7 @@ export default function RichEditor({
   onChange,
   minHeight = '180px',
   initialContent = '',
+  uploadFolder = 'products',
 }: RichEditorProps) {
   const imgPickerRef = useRef<HTMLInputElement>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -260,7 +264,7 @@ export default function RichEditor({
         .run();
 
       try {
-        const result = await uploadSingleFile(file, 'products');
+        const result = await uploadSingleFile(file, uploadFolder);
 
         // Find and delete the placeholder node by searching for data-upload-placeholder
         const { state } = editor;
@@ -331,7 +335,7 @@ export default function RichEditor({
         }
       }
     },
-    [editor],
+    [editor, uploadFolder],
   );
 
   const handleColorChange = useCallback(

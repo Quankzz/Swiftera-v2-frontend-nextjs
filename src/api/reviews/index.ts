@@ -134,3 +134,16 @@ export function deleteReview(
     authOpts,
   );
 }
+
+/**
+ * API-100: Đánh dấu đánh giá là hữu ích [AUTH]
+ */
+export function markHelpful(
+  reviewId: string,
+): Promise<AxiosResponse<ReviewSingleResponse>> {
+  return httpService.post<ReviewSingleResponse>(
+    `/reviews/${reviewId}/helpful`,
+    {},
+    authOpts,
+  );
+}

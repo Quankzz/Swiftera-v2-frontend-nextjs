@@ -36,29 +36,16 @@ import { Magnetic } from '@/components/ui/magnetic';
 import { SpotlightCard } from '@/components/common/spotlight-card';
 import { ShinyText } from '@/components/common/shiny-text';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  useCartQuery,
+import { useCartQuery,
   useRemoveCartLine,
   useUpdateCartLineQuantity,
   useClearCart,
 } from '@/hooks/api/use-cart';
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
-import dynamic from 'next/dynamic';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
-const PolicyConsentDialog = dynamic(
-  () =>
-    import('@/components/checkout/policy-consent-dialog').then(
-      (m) => m.PolicyConsentDialog,
-    ),
-  { ssr: false },
-);
-import {
-  useCustomerVouchersQuery,
-  useValidateVoucherMutation,
-} from '@/features/vouchers/hooks/use-customer-vouchers';
+import { PolicyConsentDialog } from '@/components/checkout/policy-consent-dialog';
 import { toast } from 'sonner';
-import type { VoucherResponse } from '@/features/vouchers/types';
 import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
 import { useDeliveryInfo } from '@/hooks/use-delivery-info';
 import { useAuth } from '@/hooks/useAuth';
@@ -151,8 +138,10 @@ function CartLineRow({
   const depositHoldAmount =
     line.depositHoldAmount ??
     (line.depositAmount != null ? line.depositAmount * qty : 0);
+  const maxQty = line.availableStock ?? 99;
 
   const isMutating = isRemoving || isUpdating;
+  const isOverStock = qty > maxQty;
 
   return (
     <motion.div
@@ -285,8 +274,15 @@ function CartLineRow({
               </Button>
             </div>
 
-            {/* Quantity + Price + Voucher */}
+              {/* Quantity + Price + Voucher */}
             <div className='flex flex-col gap-3 border-t border-border/60 pt-3'>
+              {isOverStock && (
+                <div className='flex items-center gap-1.5 rounded-lg border border-amber-300/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200'>
+                  <AlertCircle className='size-3.5 shrink-0' />
+                  Số lượng vượt quá tồn kho ({maxQty} sản phẩm). Đang điều chỉnh…
+                </div>
+              )}
+
               <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div className='flex items-center gap-1 rounded-xl border border-input bg-muted/30 p-1 dark:bg-muted/20'>
                   <Button
@@ -295,7 +291,7 @@ function CartLineRow({
                     size='sm'
                     className='size-9 rounded-lg p-0'
                     disabled={qty <= 1 || isMutating}
-                    onClick={() => onUpdateQty(line.cartLineId, qty - 1)}
+                    onClick={() => onUpdateQty(line.cartLineId, Math.max(1, qty - 1))}
                   >
                     <Minus className='size-4' />
                   </Button>
@@ -309,8 +305,8 @@ function CartLineRow({
                     variant='ghost'
                     size='sm'
                     className='size-9 rounded-lg p-0'
-                    disabled={isMutating}
-                    onClick={() => onUpdateQty(line.cartLineId, qty + 1)}
+                    disabled={qty >= maxQty || isMutating}
+                    onClick={() => onUpdateQty(line.cartLineId, Math.min(maxQty, qty + 1))}
                   >
                     <Plus className='size-4' />
                   </Button>
@@ -439,121 +435,6 @@ function SummarySkeleton() {
       </div>
       <Skeleton className='h-12 w-full rounded-xl' />
       <Skeleton className='h-11 w-full rounded-xl' />
-    </div>
-  );
-}
-
-/* ─── Voucher input section ────────────────────────────────────────────────── */
-
-function VoucherSection({
-  voucherCode,
-  onApply,
-  onClear,
-  cartRentalSubtotal,
-  cartRentalDays,
-}: {
-  voucherCode: string;
-  onApply: (code: string) => void;
-  onClear: () => void;
-  cartRentalSubtotal: number;
-  cartRentalDays: number;
-}) {
-  const [input, setInput] = useState(voucherCode);
-  const { data: vouchersData, isLoading } = useCustomerVouchersQuery();
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const vouchers: VoucherResponse[] = vouchersData?.items ?? [];
-
-  // Validate voucher trước khi apply
-  const validateVoucher = useValidateVoucherMutation();
-
-  async function handleApply() {
-    if (!input.trim()) return;
-    try {
-      const result = await validateVoucher.mutateAsync({
-        code: input.trim().toUpperCase(),
-        rentalDurationDays: cartRentalDays,
-        rentalSubtotalAmount: cartRentalSubtotal,
-      });
-      if (result.valid) {
-        onApply(input.trim().toUpperCase());
-      } else {
-        toast.error('Voucher không hợp lệ hoặc chưa đủ điều kiện.');
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Mã voucher không đúng.';
-      toast.error(msg);
-    }
-  }
-
-  function handlePick(v: VoucherResponse) {
-    setInput(v.code);
-    onApply(v.code);
-    setDialogOpen(false);
-  }
-
-  return (
-    <div className='space-y-2'>
-      <label className='flex items-center gap-1.5 text-sm font-semibold text-foreground'>
-        <TicketPercent className='size-4 text-rose-600 dark:text-rose-400' />
-        Mã voucher
-      </label>
-
-      {voucherCode ? (
-        <div className='flex items-center justify-between rounded-lg border border-rose-500/40 bg-rose-50/60 px-3 py-2 dark:bg-rose-950/30'>
-          <span className='font-mono text-sm font-bold text-rose-600 dark:text-rose-400'>
-            {voucherCode}
-          </span>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon-sm'
-            className='size-7 shrink-0 text-destructive hover:bg-red-50 dark:hover:bg-red-950/30'
-            onClick={onClear}
-          >
-            <X className='size-3.5' />
-          </Button>
-        </div>
-      ) : (
-        <div className='flex gap-2'>
-          <input
-            type='text'
-            placeholder='Nhập mã voucher…'
-            value={input}
-            onChange={(e) => setInput(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === 'Enter' && void handleApply()}
-            className='h-10 w-full rounded-lg border border-input bg-background px-3 font-mono text-sm uppercase placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200'
-          />
-          <Button
-            type='button'
-            size='sm'
-            className='h-10 shrink-0 gap-1.5 bg-rose-600 px-3 hover:bg-rose-700'
-            onClick={() => void handleApply()}
-            disabled={!input.trim()}
-          >
-            Áp dụng
-          </Button>
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            className='h-10 shrink-0 gap-1.5 border-rose-500/30'
-            onClick={() => setDialogOpen(true)}
-          >
-            Chọn voucher
-          </Button>
-        </div>
-      )}
-
-      <VoucherLinePickerDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        lineRentalSubtotal={cartRentalSubtotal}
-        lineRentalDays={cartRentalDays}
-        appliedCode={voucherCode}
-        onApply={(v) => handlePick(v)}
-        onClear={() => setDialogOpen(false)}
-      />
     </div>
   );
 }
@@ -954,7 +835,10 @@ export default function CartPage() {
 
   const handleUpdateQty = (cartLineId: string, quantity: number) => {
     if (quantity < 1) return;
-    updateQtyMutation.mutate({ cartLineId, quantity });
+    const line = lines.find((l) => l.cartLineId === cartLineId);
+    const maxQty = line?.availableStock ?? 99;
+    const clampedQty = Math.min(Math.max(1, quantity), maxQty);
+    updateQtyMutation.mutate({ cartLineId, quantity: clampedQty });
   };
 
   const handleClear = () => {
@@ -1735,7 +1619,7 @@ export default function CartPage() {
               appliedCode={
                 lineVouchers.get(voucherDialogLine.cartLineId) ?? null
               }
-              suggestedVouchers={voucherDialogLine.availableVouchers}
+              availableVouchers={voucherDialogLine.availableVouchers}
               productId={voucherDialogLine.productId}
               usedCodes={usedByOtherLines}
               onApply={(v) => {

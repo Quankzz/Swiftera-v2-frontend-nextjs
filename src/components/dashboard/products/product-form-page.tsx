@@ -37,8 +37,12 @@ import {
   useCreateInventoryItemMutation,
   useUpdateInventoryItemMutation,
 } from '@/features/products/hooks/use-inventory-items';
-import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import {
+  useUploadFileMutation,
+  useDeleteFileMutation,
+} from '@/features/files/hooks/use-files';
 import { toast } from 'sonner';
+import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 
 // ─── Helper format VND ────────────────────────────────────────────
 function formatVND(val: string) {
@@ -125,11 +129,13 @@ function TextInput({
 // ─── Image item inside Section 3 ──────────────────────────────────
 function ImageItem({
   img,
+  productId,
   onSetPrimary,
   onRemove,
   onUpdateUrl,
 }: {
   img: DraftImage;
+  productId?: string;
   onSetPrimary: () => void;
   onRemove: () => void;
   onUpdateUrl: (url: string) => void;
@@ -138,18 +144,28 @@ function ImageItem({
   const [urlMode, setUrlMode] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const uploadMutation = useUploadFileMutation();
+  const deleteMutation = useDeleteFileMutation();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // reset input để có thể upload lại cùng file
     e.target.value = '';
     setIsUploading(true);
     try {
+      const folder = productId ? `products/${productId}` : 'products';
       const result = await uploadMutation.mutateAsync({
         file,
-        folder: 'products',
+        folder,
       });
+
+      // Delete old image from Azure Blob if it's a Swiftera blob URL
+      if (img.imageUrl && isAzureBlobUrl(img.imageUrl)) {
+        const oldPath = extractBlobPathFromUrl(img.imageUrl);
+        if (oldPath) {
+          void deleteMutation.mutateAsync(oldPath);
+        }
+      }
+
       onUpdateUrl(result.fileUrl);
       setUrlMode(false);
     } catch {
@@ -585,6 +601,11 @@ export function ProductFormPage({
                 onChange={(html) =>
                   setField('description', html === '<br>' ? '' : html)
                 }
+                uploadFolder={
+                  form.productId
+                    ? `products/${form.productId}`
+                    : 'products'
+                }
               />
             </Field>
 
@@ -741,6 +762,7 @@ export function ProductFormPage({
               <ImageItem
                 key={img.draftId}
                 img={img}
+                productId={initialProduct?.productId}
                 onSetPrimary={() => setPrimary(img.draftId)}
                 onRemove={() => removeImage(img.draftId)}
                 onUpdateUrl={(url: string) => updateImageUrl(img.draftId, url)}

@@ -23,6 +23,7 @@ import {
   RentalRelatedProducts,
 } from '@/components/product-detail/rental-product-relations';
 import { useProductDetailQuery } from '@/features/products/hooks/use-product-detail';
+import { useProductReviewsQuery } from '@/hooks/api/use-reviews';
 import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
 import { useAuthStore } from '@/stores/auth-store';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -86,6 +87,10 @@ export default function ProductDetailPage() {
       )?.rentalOrderId ?? null
     );
   }, [ordersData?.items, productId]);
+
+  // Lấy tổng số đánh giá (dùng để hiển thị count ở summary)
+  const { data: reviewsMeta } = useProductReviewsQuery(productId, { page: 0, size: 1 });
+  const reviewsCount = reviewsMeta?.totalItems ?? 0;
 
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedDuration, setSelectedDuration] = useState<string>(String(1));
@@ -162,10 +167,26 @@ export default function ProductDetailPage() {
     [colors, selectedColorId],
   );
 
+  // Reset quantity when color changes to stay within new color's stock
+  useEffect(() => {
+    const max = selectedColorId && selectedColor
+      ? selectedColor.availableQuantity ?? 99
+      : (product?.availableStock ?? 99);
+    if (quantity > max) {
+      setQuantity(max);
+    }
+  }, [selectedColorId, selectedColor, product?.availableStock, quantity]);
+
   // Cần chọn màu khi product có >1 màu và chưa chọn
   const requireColorSelection = colors.length > 1 && !selectedColorId;
 
-  // (Inventory details removed from UI per request)
+  // Tính maxQuantity dựa trên stock hiện tại
+  const maxQuantity = useMemo(() => {
+    if (selectedColorId && selectedColor) {
+      return selectedColor.availableQuantity ?? 99;
+    }
+    return product?.availableStock ?? 99;
+  }, [selectedColorId, selectedColor, product?.availableStock]);
 
   // Thông số kỹ thuật
   const specifications = useMemo(() => {
@@ -293,7 +314,7 @@ export default function ProductDetailPage() {
                   productType: product.categoryName ?? '—',
                   discount,
                   rating: product.averageRating ?? 0,
-                  reviews: 0,
+                  reviews: reviewsCount,
                   rentedCount: 0,
                   colors,
                   durations,
@@ -325,6 +346,7 @@ export default function ProductDetailPage() {
               durationId={selectedDuration}
               quantity={quantity}
               setQuantity={setQuantity}
+              maxQuantity={maxQuantity}
               requireColorSelection={requireColorSelection}
               cartProduct={{
                 productId: product.productId,
@@ -371,7 +393,6 @@ export default function ProductDetailPage() {
           <RentalReviewsSection
             productId={product.productId}
             rating={product.averageRating ?? 0}
-            reviewCount={0}
             currentUserId={currentUserId}
             userCompletedOrderId={completedOrderId}
           />

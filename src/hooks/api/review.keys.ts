@@ -5,7 +5,10 @@
 export const reviewKeys = {
   all: ['reviews'] as const,
 
-  byProduct: (productId: string, params?: { page?: number; size?: number }) =>
+  byProduct: (
+    productId: string,
+    params?: { page?: number; size?: number; rating?: number; filter?: string },
+  ) =>
     [...reviewKeys.all, 'product', productId, params ?? {}] as const,
 
   list: (params?: {

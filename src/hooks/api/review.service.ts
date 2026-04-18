@@ -38,11 +38,16 @@ function normalize(
 
 export async function getReviewsByProduct(
   productId: string,
-  params?: { page?: number; size?: number },
+  params?: { page?: number; size?: number; rating?: number },
 ): Promise<NormalizedPaginatedReviews> {
+  const queryParams: Record<string, string | number> = { ...params };
+  if (params?.rating != null) {
+    queryParams.filter = `rating:${params.rating}`;
+    delete queryParams.rating;
+  }
   const res = await httpService.get<ReviewListResponse>(
     `/reviews/product/${productId}`,
-    { ...authOpts, params },
+    { ...authOpts, params: queryParams },
   );
   return normalize(res);
 }
@@ -101,4 +106,15 @@ export async function deleteReview(reviewId: string): Promise<void> {
     `/reviews/${reviewId}`,
     authOpts,
   );
+}
+
+export async function markHelpful(
+  reviewId: string,
+): Promise<ProductReviewResponse> {
+  const res = await httpService.post<ReviewSingleResponse>(
+    `/reviews/${reviewId}/helpful`,
+    {},
+    authOpts,
+  );
+  return res.data.data;
 }

@@ -51,6 +51,8 @@ export interface CartLineResponse {
   /** dailyPrice × quantity × rentalDurationDays */
   lineTotal: number;
   availableVouchers: CartLineVoucherItem[];
+  /** Số lượng tồn kho AVAILABLE hiện tại (FE dùng để giới hạn quantity) */
+  availableStock?: number;
 }
 
 export interface CartResponse {
