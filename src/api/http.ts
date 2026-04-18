@@ -111,7 +111,6 @@ class Http {
                   if (newAccessToken) {
                     console.log('✅ Token refresh successful');
                     storageService.setAccessToken(newAccessToken);
-                    // Sync to localStorage so fetch-based apiService also picks it up
                     if (typeof window !== 'undefined') {
                       localStorage.setItem('accessToken', newAccessToken);
                     }
@@ -123,16 +122,22 @@ class Http {
                   );
                 })
                 .catch((refreshError: unknown) => {
-                  console.error('❌ Token refresh failed:', refreshError);
+                  const safeError = refreshError instanceof Error
+                    ? { message: refreshError.message, name: refreshError.name }
+                    : String(refreshError);
+                  console.error('❌ Token refresh failed:', safeError);
                   storageService.removeAccessToken();
                   if (logoutCallback) {
                     logoutCallback();
                   }
                   return Promise.reject(refreshError);
-                })
-                .finally(() => {
-                  refreshTokenPromise = null;
                 });
+
+              // After the promise settles, clear the shared slot so subsequent
+              // 401 responses can start a fresh refresh cycle.
+              refreshTokenPromise.finally(() => {
+                refreshTokenPromise = null;
+              });
             }
 
             const tokenRefresh = refreshTokenPromise;

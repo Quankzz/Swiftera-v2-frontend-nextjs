@@ -96,7 +96,9 @@ function CartFlyOverlayInner() {
                 <Image
                   src={item.imageUrl}
                   alt=""
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="80px"
                 />
               ) : (
                 <div className="w-full h-full bg-rose-100 flex items-center justify-center rounded-xl">

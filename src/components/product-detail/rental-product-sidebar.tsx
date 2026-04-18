@@ -14,7 +14,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -58,11 +57,6 @@ function RentalDeliveryAddressDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger>
-        <button className='mt-2 inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'>
-          Nhập địa chỉ
-        </button>
-      </DialogTrigger>
       <DialogContent className='max-h-[min(90dvh,720px)] overflow-y-auto overflow-x-hidden w-full sm:max-w-125'>
         <DialogHeader>
           <DialogTitle className='text-xl font-bold tracking-tight text-foreground'>
