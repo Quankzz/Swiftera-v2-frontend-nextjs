@@ -175,9 +175,9 @@ export default function ProductDetailClient({
   const specifications = useMemo(() => {
     if (!product) return [];
     return [
-      { label: 'Thương hiệu', value: product.brand ?? '-' },
-      { label: 'Danh mục', value: product.categoryName ?? '-' },
-      { label: 'Màu sắc', value: product.color ?? '-' },
+    { label: 'Thương hiệu', value: product.brand ?? '-' },
+    { label: 'Danh mục', value: product.categoryName ?? '-' },
+    { label: 'Màu sắc', value: colors && colors.length > 0 ? colors.map((c) => c.name).join(', ') : '-' },
       {
         label: 'Số ngày thuê tối thiểu',
         value: `${product.minRentalDays} ngày`,

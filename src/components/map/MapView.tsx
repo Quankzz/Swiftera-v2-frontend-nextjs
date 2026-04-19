@@ -20,7 +20,7 @@ import type { Hub, HubWithDistance, RouteInfo } from '@/types/map.types';
 import MapSidebar from '@/components/map/MapSidebar';
 import LocationButton from '@/components/map/LocationButton';
 import HubModal from '@/components/map/HubModal';
-import { MapHeader } from '@/components/map/MapHeader';
+import { Header } from '@/components/Header';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 const ROUTE_ACTIVE_COLOR = '#0EA5E9';
@@ -959,7 +959,9 @@ const MapView: React.FC = () => {
         className="absolute inset-0 w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150 transition-all duration-500 ease-in-out"
       />
 
-      <MapHeader />
+      <div className="fixed inset-x-0 top-0 z-50">
+        <Header stickyHeader showSearchAndCategories={false} />
+      </div>
 
       <MapSidebar
         onRouteSearch={handleRouteSearch}

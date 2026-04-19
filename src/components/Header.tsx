@@ -119,9 +119,13 @@ function CartFlyOverlayInner() {
 /* ------------------------------------------------------------------ */
 interface HeaderProps {
   stickyHeader?: boolean;
+  showSearchAndCategories?: boolean;
 }
 
-export function Header({ stickyHeader = false }: HeaderProps) {
+export function Header({
+  stickyHeader = false,
+  showSearchAndCategories = true,
+}: HeaderProps) {
   const HOVER_BRIDGE_HEIGHT = 10;
   const router = useRouter();
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -295,7 +299,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
             : 'transform 500ms cubic-bezier(0.4,0,0.2,1) 700ms, box-shadow 500ms 700ms',
         }}
       >
-        {isSearchOpen && (
+        {showSearchAndCategories && isSearchOpen && (
           <div
             className="fixed inset-0 z-40 h-screen w-full bg-black/40 backdrop-blur-xs"
             onClick={() => setIsSearchOpen(false)}
@@ -325,92 +329,94 @@ export function Header({ stickyHeader = false }: HeaderProps) {
             <div></div>
 
             {/* Search */}
-            <div className="relative hidden flex-1 lg:flex z-50">
-              <div
-                className="flex h-12 w-full max-w-2xl cursor-text items-center rounded-full border border-border/60 dark:border-white/10 bg-white dark:bg-white/5 px-4 shadow-sm transition-all"
-                onClick={() => setIsSearchOpen(true)}
-              >
-                <Search className="mr-3 size-5 text-text-sub" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm thiết bị, điện thoại, máy tính..."
-                  className="w-full border-none bg-transparent text-sm text-text-main placeholder:text-text-sub focus:outline-none"
-                  readOnly={!isSearchOpen}
-                />
-              </div>
-
-              {isSearchOpen && (
-                <div className="absolute -top-2 left-0 z-50 p-2 w-full rounded-3xl bg-white dark:bg-surface-card shadow-2xl dark:shadow-black/60">
-                  <div className="flex h-12 items-center gap-3 border-2 border-theme-primary-start rounded-full px-4">
-                    <Search className="size-5 text-text-sub" />
-                    <input
-                      type="text"
-                      autoFocus
-                      value={search.inputValue}
-                      onChange={(e) => search.setInputValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && search.inputValue.trim()) {
-                          setIsSearchOpen(false);
-                          const q = search.inputValue.trim();
-                          search.setInputValue('');
-                          router.push(`/catalog?q=${encodeURIComponent(q)}`);
-                        }
-                      }}
-                      placeholder="Tìm kiếm thiết bị, điện thoại, máy tính..."
-                      className="flex-1 border-none bg-transparent text-sm text-text-main placeholder:text-text-sub focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        search.setInputValue('');
-                        setIsSearchOpen(false);
-                      }}
-                      className="flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-text-sub"
-                      >
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Dynamic dropdown content */}
-                  <HeaderSearchDropdown
-                    categories={categoryTree}
-                    query={search.inputValue}
-                    isQueryActive={search.isQueryActive}
-                    results={search.results}
-                    totalElements={search.totalElements}
-                    isLoading={search.isLoading}
-                    isEmpty={search.isEmpty}
-                    onViewAll={() => {
-                      setIsSearchOpen(false);
-                      search.setInputValue('');
-                      router.push(
-                        `/catalog?q=${encodeURIComponent(search.debouncedQuery)}`,
-                      );
-                    }}
-                    onCategoryClick={(categoryId) => {
-                      setIsSearchOpen(false);
-                      search.setInputValue('');
-                      router.push(`/catalog?categoryId=${categoryId}`);
-                    }}
+            {showSearchAndCategories && (
+              <div className="relative hidden flex-1 lg:flex z-50">
+                <div
+                  className="flex h-12 w-full max-w-2xl cursor-text items-center rounded-full border border-border/60 dark:border-white/10 bg-white dark:bg-white/5 px-4 shadow-sm transition-all"
+                  onClick={() => setIsSearchOpen(true)}
+                >
+                  <Search className="mr-3 size-5 text-text-sub" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm thiết bị, điện thoại, máy tính..."
+                    className="w-full border-none bg-transparent text-sm text-text-main placeholder:text-text-sub focus:outline-none"
+                    readOnly={!isSearchOpen}
                   />
                 </div>
-              )}
-            </div>
+
+                {isSearchOpen && (
+                  <div className="absolute -top-2 left-0 z-50 p-2 w-full rounded-3xl bg-white dark:bg-surface-card shadow-2xl dark:shadow-black/60">
+                    <div className="flex h-12 items-center gap-3 border-2 border-theme-primary-start rounded-full px-4">
+                      <Search className="size-5 text-text-sub" />
+                      <input
+                        type="text"
+                        autoFocus
+                        value={search.inputValue}
+                        onChange={(e) => search.setInputValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && search.inputValue.trim()) {
+                            setIsSearchOpen(false);
+                            const q = search.inputValue.trim();
+                            search.setInputValue('');
+                            router.push(`/catalog?q=${encodeURIComponent(q)}`);
+                          }
+                        }}
+                        placeholder="Tìm kiếm thiết bị, điện thoại, máy tính..."
+                        className="flex-1 border-none bg-transparent text-sm text-text-main placeholder:text-text-sub focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          search.setInputValue('');
+                          setIsSearchOpen(false);
+                        }}
+                        className="flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-text-sub"
+                        >
+                          <path d="M18 6 6 18" />
+                          <path d="m6 6 12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Dynamic dropdown content */}
+                    <HeaderSearchDropdown
+                      categories={categoryTree}
+                      query={search.inputValue}
+                      isQueryActive={search.isQueryActive}
+                      results={search.results}
+                      totalElements={search.totalElements}
+                      isLoading={search.isLoading}
+                      isEmpty={search.isEmpty}
+                      onViewAll={() => {
+                        setIsSearchOpen(false);
+                        search.setInputValue('');
+                        router.push(
+                          `/catalog?q=${encodeURIComponent(search.debouncedQuery)}`,
+                        );
+                      }}
+                      onCategoryClick={(categoryId) => {
+                        setIsSearchOpen(false);
+                        search.setInputValue('');
+                        router.push(`/catalog?categoryId=${categoryId}`);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Right actions */}
             <div
@@ -593,95 +599,97 @@ export function Header({ stickyHeader = false }: HeaderProps) {
           </div>
 
           {/* Nav categories */}
-          <div className="hidden lg:block" onMouseEnter={cancelHide} onMouseLeave={scheduleHide}>
-            <div className="relative z-30 mt-3 hidden flex-wrap items-center gap-6 text-sm font-semibold text-text-main lg:flex">
-              {sortedCategories.map((category) => (
-                <div key={category.categoryId}>
-                  <Link
-                    href={`/catalog?categoryId=${category.categoryId}`}
-                    onMouseEnter={() => {
-                      cancelHide();
-                      setHoveredCategoryId(category.categoryId);
-                    }}
-                    className={cn(
-                      `flex items-center gap-2 rounded-full ${category.sortOrder === 1 ? 'pr-3' : 'px-3'} py-2 transition-colors shrink-0`,
-                      hoveredCategoryId === category.categoryId
-                        ? 'text-theme-primary-start'
-                        : 'hover:text-theme-primary-start',
-                    )}
-                  >
-                    {category.name}
-                  </Link>
-                </div>
-              ))}
-            </div>
-
-            <div
-              className="absolute left-0 top-full w-full"
-              style={{ height: HOVER_BRIDGE_HEIGHT }}
-              aria-hidden
-            />
-
-            {/* Global Full-Width Mega Menu Dropdown */}
-              {hoveredCategoryData && hoveredCategoryData.children?.length ? (
-              <div
-                className="absolute top-full px-4 lg:px-18 left-0 w-full border-t border-border/40 dark:border-white/5 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default"
-                onMouseEnter={() => {
-                  cancelHide();
-                  setHoveredCategoryId(hoveredCategoryData.categoryId);
-                }}
-              >
-                <div className="px-4 w-full max-w-full py-4 flex gap-32">
-                  {hoveredCategoryData.children &&
-                    hoveredCategoryData.children.length > 0 && (
-                      <div className="w-70 shrink-0">
-                        <h3 className="text-lg font-bold text-text-main mb-6">
-                          {hoveredCategoryData.name.charAt(0).toUpperCase() +
-                            hoveredCategoryData.name.slice(1)}
-                        </h3>
-                        <ul className="space-y-2">
-                          {hoveredCategoryData.children.map((child) => (
-                            <li
-                              key={child.categoryId}
-                              className="group/child relative"
-                            >
-                              <Link
-                                href={`/catalog?categoryId=${hoveredCategoryData.categoryId}&subcategoryId=${child.categoryId}`}
-                                className="flex items-center justify-between py-2 text-text-main hover:text-theme-primary-start font-medium transition-colors"
-                              >
-                                {child.name}
-                                {child.children &&
-                                  child.children.length > 0 && (
-                                    <ChevronRight className="size-5 text-text-sub group-hover/child:text-theme-primary-start transition-colors" />
-                                  )}
-                              </Link>
-                              {child.children && child.children.length > 0 && (
-                                <div className="absolute left-full top-0 pl-8 hidden group-hover/child:block z-50">
-                                  <div className="w-64 rounded-2xl bg-white dark:bg-[#1e1e26] shadow-xl dark:shadow-black/50 border border-gray-100 dark:border-white/8 p-4">
-                                    <ul className="space-y-1.5">
-                                      {child.children.map((subChild) => (
-                                        <li key={subChild.categoryId}>
-                                          <Link
-                                            href={`/catalog?categoryId=${hoveredCategoryData.categoryId}&subcategoryId=${subChild.categoryId}`}
-                                            className="block px-4 py-2.5 rounded-xl hover:bg-rose-50/50 dark:hover:bg-theme-primary-start/10 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors"
-                                          >
-                                            {subChild.name}
-                                          </Link>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                </div>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                </div>
+          {showSearchAndCategories && (
+            <div className="hidden lg:block" onMouseEnter={cancelHide} onMouseLeave={scheduleHide}>
+              <div className="relative z-30 mt-3 hidden flex-wrap items-center gap-6 text-sm font-semibold text-text-main lg:flex">
+                {sortedCategories.map((category) => (
+                  <div key={category.categoryId}>
+                    <Link
+                      href={`/catalog?categoryId=${category.categoryId}`}
+                      onMouseEnter={() => {
+                        cancelHide();
+                        setHoveredCategoryId(category.categoryId);
+                      }}
+                      className={cn(
+                        `flex items-center gap-2 rounded-full ${category.sortOrder === 1 ? 'pr-3' : 'px-3'} py-2 transition-colors shrink-0`,
+                        hoveredCategoryId === category.categoryId
+                          ? 'text-theme-primary-start'
+                          : 'hover:text-theme-primary-start',
+                      )}
+                    >
+                      {category.name}
+                    </Link>
+                  </div>
+                ))}
               </div>
-            ) : null}
-          </div>
+
+              <div
+                className="absolute left-0 top-full w-full"
+                style={{ height: HOVER_BRIDGE_HEIGHT }}
+                aria-hidden
+              />
+
+              {/* Global Full-Width Mega Menu Dropdown */}
+                {hoveredCategoryData && hoveredCategoryData.children?.length ? (
+                <div
+                  className="absolute top-full px-4 lg:px-18 left-0 w-full border-t border-border/40 dark:border-white/5 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 animate-in fade-in slide-in-from-top-1 z-50 cursor-default"
+                  onMouseEnter={() => {
+                    cancelHide();
+                    setHoveredCategoryId(hoveredCategoryData.categoryId);
+                  }}
+                >
+                  <div className="px-4 w-full max-w-full py-4 flex gap-32">
+                    {hoveredCategoryData.children &&
+                      hoveredCategoryData.children.length > 0 && (
+                        <div className="w-70 shrink-0">
+                          <h3 className="text-lg font-bold text-text-main mb-6">
+                            {hoveredCategoryData.name.charAt(0).toUpperCase() +
+                              hoveredCategoryData.name.slice(1)}
+                          </h3>
+                          <ul className="space-y-2">
+                            {hoveredCategoryData.children.map((child) => (
+                              <li
+                                key={child.categoryId}
+                                className="group/child relative"
+                              >
+                                <Link
+                                  href={`/catalog?categoryId=${hoveredCategoryData.categoryId}&subcategoryId=${child.categoryId}`}
+                                  className="flex items-center justify-between py-2 text-text-main hover:text-theme-primary-start font-medium transition-colors"
+                                >
+                                  {child.name}
+                                  {child.children &&
+                                    child.children.length > 0 && (
+                                      <ChevronRight className="size-5 text-text-sub group-hover/child:text-theme-primary-start transition-colors" />
+                                    )}
+                                </Link>
+                                {child.children && child.children.length > 0 && (
+                                  <div className="absolute left-full top-0 pl-8 hidden group-hover/child:block z-50">
+                                    <div className="w-64 rounded-2xl bg-white dark:bg-[#1e1e26] shadow-xl dark:shadow-black/50 border border-gray-100 dark:border-white/8 p-4">
+                                      <ul className="space-y-1.5">
+                                        {child.children.map((subChild) => (
+                                          <li key={subChild.categoryId}>
+                                            <Link
+                                              href={`/catalog?categoryId=${hoveredCategoryData.categoryId}&subcategoryId=${subChild.categoryId}`}
+                                              className="block px-4 py-2.5 rounded-xl hover:bg-rose-50/50 dark:hover:bg-theme-primary-start/10 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors"
+                                            >
+                                              {subChild.name}
+                                            </Link>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
 
         <style>{`

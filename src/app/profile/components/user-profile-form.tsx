@@ -23,6 +23,22 @@ import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 import { getApiErrorMessage, getApiSuccessMessage } from '../utils';
 
 type CropArea = { width: number; height: number; x: number; y: number };
+type CountryOption = { code: string; name: string };
+
+type RestCountryApiItem = {
+  name?: { common?: string };
+  cca2?: string;
+};
+
+type CountryCitiesApiResponse = {
+  error: boolean;
+  msg?: string;
+  data?: string[];
+};
+
+const COUNTRIES_API_URL = 'https://restcountries.com/v3.1/all?fields=name,cca2';
+const CITIES_BY_COUNTRY_API_URL =
+  'https://countriesnow.space/api/v0.1/countries/cities';
 
 /** Blob của ảnh đã crop + preview URL để hiển thị tạm */
 type AvatarBlob = Blob & { preview?: string };
@@ -91,6 +107,13 @@ export function UserProfileForm({
   const [biography, setBiography] = useState(profile.biography ?? '');
   const [city, setCity] = useState(profile.city ?? '');
   const [nationality, setNationality] = useState(profile.nationality ?? '');
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [countriesLoading, setCountriesLoading] = useState(false);
+  const [citiesLoading, setCitiesLoading] = useState(false);
+  const [countriesError, setCountriesError] = useState('');
+  const [citiesError, setCitiesError] = useState('');
+  const cityOptionsCacheRef = useRef<Map<string, string[]>>(new Map());
 
   const [finalAvatarUrl, setFinalAvatarUrl] = useState<string | null>(
     profile.avatarUrl ?? null,
@@ -127,6 +150,134 @@ export function UserProfileForm({
   useEffect(() => {
     setAvatarBroken(false);
   }, [finalAvatarUrl]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+
+    async function fetchCountries() {
+      setCountriesLoading(true);
+      setCountriesError('');
+
+      try {
+        const response = await fetch(COUNTRIES_API_URL, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error('Không thể tải danh sách quốc gia.');
+        }
+
+        const payload = (await response.json()) as RestCountryApiItem[];
+        const normalized = payload
+          .map((item) => ({
+            code: item.cca2?.trim() ?? '',
+            name: item.name?.common?.trim() ?? '',
+          }))
+          .filter((item) => item.code !== '' && item.name !== '')
+          .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+
+        if (!cancelled) {
+          setCountries(normalized);
+        }
+      } catch (error) {
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+        if (!cancelled) {
+          setCountries([]);
+          setCountriesError('Không tải được danh sách quốc gia. Vui lòng thử lại.');
+        }
+      } finally {
+        if (!cancelled) {
+          setCountriesLoading(false);
+        }
+      }
+    }
+
+    void fetchCountries();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    const countryName = nationality.trim();
+    if (!countryName) {
+      setCities([]);
+      setCitiesError('');
+      return;
+    }
+
+    const cached = cityOptionsCacheRef.current.get(countryName);
+    if (cached) {
+      setCities(cached);
+      setCitiesError('');
+      return;
+    }
+
+    const controller = new AbortController();
+    let cancelled = false;
+
+    async function fetchCities() {
+      setCitiesLoading(true);
+      setCitiesError('');
+
+      try {
+        const response = await fetch(CITIES_BY_COUNTRY_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ country: countryName }),
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error('Không thể tải danh sách thành phố.');
+        }
+
+        const payload = (await response.json()) as CountryCitiesApiResponse;
+        if (payload.error || !Array.isArray(payload.data)) {
+          throw new Error(payload.msg ?? 'Không thể tải danh sách thành phố.');
+        }
+
+        const normalizedCities = Array.from(
+          new Set(
+            payload.data
+              .map((item) => (typeof item === 'string' ? item.trim() : ''))
+              .filter((item) => item !== ''),
+          ),
+        ).sort((a, b) => a.localeCompare(b, 'vi'));
+
+        cityOptionsCacheRef.current.set(countryName, normalizedCities);
+
+        if (!cancelled) {
+          setCities(normalizedCities);
+        }
+      } catch (error) {
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+        if (!cancelled) {
+          setCities([]);
+          setCitiesError('Không tải được danh sách thành phố. Vui lòng thử lại.');
+        }
+      } finally {
+        if (!cancelled) {
+          setCitiesLoading(false);
+        }
+      }
+    }
+
+    void fetchCities();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [nationality]);
 
   const onCropComplete = useCallback((_: unknown, pixels: CropArea) => {
     setCroppedAreaPixels(pixels);
@@ -508,25 +659,67 @@ export function UserProfileForm({
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <div className='space-y-1.5'>
             <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
-              Thành phố
+              Quốc gia
             </label>
-            <Input
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder='Ho Chi Minh'
-              className='bg-gray-50/50 dark:bg-white/5'
-            />
+            <select
+              value={
+                countries.some((country) => country.name === nationality)
+                  ? nationality
+                  : ''
+              }
+              onChange={(e) => {
+                setNationality(e.target.value);
+                setCity('');
+              }}
+              disabled={countriesLoading}
+              className='h-10 w-full rounded-md border border-input bg-gray-50/50 px-3 text-sm text-text-main outline-none transition-colors focus:border-rose-400 focus:ring-2 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:focus:ring-rose-900/20'
+            >
+              <option value=''>
+                {countriesLoading ? 'Đang tải quốc gia...' : 'Chọn quốc gia'}
+              </option>
+              {!countries.some((country) => country.name === nationality) &&
+                nationality.trim() !== '' && (
+                  <option value={nationality}>{nationality} (hiện tại)</option>
+                )}
+              {countries.map((country) => (
+                <option key={country.code} value={country.name}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+            {countriesError && (
+              <p className='text-xs text-red-500'>{countriesError}</p>
+            )}
           </div>
           <div className='space-y-1.5'>
             <label className='text-xs font-semibold text-text-sub uppercase tracking-wide'>
-              Quốc tịch
+              Thành phố
             </label>
-            <Input
-              value={nationality}
-              onChange={(e) => setNationality(e.target.value)}
-              placeholder='Vietnamese'
-              className='bg-gray-50/50 dark:bg-white/5'
-            />
+            <select
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              disabled={!nationality.trim() || citiesLoading}
+              className='h-10 w-full rounded-md border border-input bg-gray-50/50 px-3 text-sm text-text-main outline-none transition-colors focus:border-rose-400 focus:ring-2 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:focus:ring-rose-900/20'
+            >
+              <option value=''>
+                {!nationality.trim()
+                  ? 'Chọn quốc gia trước'
+                  : citiesLoading
+                    ? 'Đang tải thành phố...'
+                    : 'Chọn thành phố'}
+              </option>
+              {!cities.some((name) => name === city) && city.trim() !== '' && (
+                <option value={city}>{city} (hiện tại)</option>
+              )}
+              {cities.map((cityName) => (
+                <option key={cityName} value={cityName}>
+                  {cityName}
+                </option>
+              ))}
+            </select>
+            {citiesError && nationality.trim() !== '' && (
+              <p className='text-xs text-red-500'>{citiesError}</p>
+            )}
           </div>
         </div>
 

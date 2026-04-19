@@ -260,7 +260,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
     <>
       <div
         className={`
-          fixed top-14 left-0 h-[calc(100%-3.5rem)] z-20 flex
+          fixed top-18 left-0 h-[calc(100%-4.5rem)] z-20 flex
           transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
