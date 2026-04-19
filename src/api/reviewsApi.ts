@@ -121,18 +121,18 @@ export function getReviews(params?: {
 }
 
 /**
- * API-098: Lấy đánh giá theo sản phẩm [AUTH]
+ * API-098: Lấy đánh giá theo sản phẩm [PUBLIC]
  *
  * @param productId - UUID của sản phẩm
  * @param params - page, size
  */
 export function getReviewsByProduct(
   productId: string,
-  params?: { page?: number; size?: number },
+  params?: { page?: number; size?: number; rating?: number },
 ): Promise<AxiosResponse<PaginatedReviewsResponse>> {
   return httpService.get<PaginatedReviewsResponse>(
     `/reviews/product/${productId}`,
-    { ...authOpts, params },
+    { params },
   );
 }
 

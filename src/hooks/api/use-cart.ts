@@ -3,6 +3,7 @@
  * Module 10: CART (API-061 → API-065)
  */
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { cartKeys } from './cart.keys';
@@ -57,19 +58,171 @@ function patchLineTotals(
   };
 }
 
+const CART_CACHE_KEY = 'swiftera:cart:cache:v1';
+const CART_CACHE_TTL_MS = 5 * 60 * 1000;
+
+type PersistedCartPayload = {
+  cachedAt: number;
+  cart: CartResponse;
+};
+
+function readPersistedCart(): CartResponse | undefined {
+  if (typeof window === 'undefined') return undefined;
+
+  try {
+    const raw = window.localStorage.getItem(CART_CACHE_KEY);
+    if (!raw) return undefined;
+
+    const parsed = JSON.parse(raw) as PersistedCartPayload;
+    if (!parsed?.cachedAt || !parsed?.cart) {
+      window.localStorage.removeItem(CART_CACHE_KEY);
+      return undefined;
+    }
+
+    if (Date.now() - parsed.cachedAt > CART_CACHE_TTL_MS) {
+      window.localStorage.removeItem(CART_CACHE_KEY);
+      return undefined;
+    }
+
+    return parsed.cart;
+  } catch {
+    return undefined;
+  }
+}
+
+function persistCart(cart: CartResponse | undefined): void {
+  if (typeof window === 'undefined') return;
+
+  if (!cart) {
+    window.localStorage.removeItem(CART_CACHE_KEY);
+    return;
+  }
+
+  const payload: PersistedCartPayload = {
+    cachedAt: Date.now(),
+    cart,
+  };
+  window.localStorage.setItem(CART_CACHE_KEY, JSON.stringify(payload));
+}
+
+function clearPersistedCart(): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(CART_CACHE_KEY);
+}
+
+function normalizeColorId(value: string | null | undefined): string | null {
+  return value ?? null;
+}
+
+function hasMatchingCartLine(cart: CartResponse, input: AddCartLineInput): boolean {
+  return cart.cartLines.some((line) => {
+    return (
+      line.productId === input.productId &&
+      normalizeColorId(line.productColorId) ===
+        normalizeColorId(input.productColorId) &&
+      line.rentalDurationDays === input.rentalDurationDays
+    );
+  });
+}
+
+function applyOptimisticAdd(
+  old: CartResponse | undefined,
+  input: AddCartLineInput,
+): CartResponse {
+  const now = new Date().toISOString();
+  const quantity = Math.max(1, input.quantity ?? 1);
+
+  const base: CartResponse = old ?? {
+    cartId: 'optimistic-cart',
+    userId: 'optimistic-user',
+    cartLines: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const existingIndex = base.cartLines.findIndex(
+    (line) =>
+      line.productId === input.productId &&
+      normalizeColorId(line.productColorId) ===
+        normalizeColorId(input.productColorId) &&
+      line.rentalDurationDays === input.rentalDurationDays,
+  );
+
+  if (existingIndex >= 0) {
+    const lines = [...base.cartLines];
+    const existing = lines[existingIndex];
+    lines[existingIndex] = patchLineTotals(
+      existing,
+      existing.quantity + quantity,
+      existing.rentalDurationDays,
+    );
+    return {
+      ...base,
+      cartLines: lines,
+      updatedAt: now,
+    };
+  }
+
+  return {
+    ...base,
+    cartLines: [
+      ...base.cartLines,
+      {
+        cartLineId: `optimistic-${Date.now()}-${Math.random()}`,
+        productId: input.productId,
+        productColorId: input.productColorId ?? null,
+        colorName: null,
+        colorCode: null,
+        productName: 'Đang thêm sản phẩm...',
+        productImageUrl: null,
+        dailyPrice: 0,
+        rentalDurationDays: input.rentalDurationDays,
+        quantity,
+        lineTotal: 0,
+        rentalFeeAmount: 0,
+        depositHoldAmount: 0,
+        totalPayableAmount: 0,
+        availableVouchers: [],
+      },
+    ],
+    updatedAt: now,
+  };
+}
+
 /**
  * Lấy giỏ hàng hiện tại [AUTH]
  */
 export function useCartQuery() {
   const { isAuthenticated } = useAuth();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: cartKeys.cart(),
-    queryFn: getCart,
+    queryFn: async () => {
+      const cart = await getCart();
+      persistCart(cart);
+      return cart;
+    },
     enabled: isAuthenticated,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    gcTime: 30 * 60_000,
+    initialData: isAuthenticated ? readPersistedCart : undefined,
+    placeholderData: (previousData) => previousData,
     retry: false,
   });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      clearPersistedCart();
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated && query.data) {
+      persistCart(query.data);
+    }
+  }, [isAuthenticated, query.data]);
+
+  return query;
 }
 
 /**
@@ -88,87 +241,68 @@ export function useAddToCart(options?: {
 
   return useMutation({
     mutationFn: async (input: AddCartLineInput) => {
-      requireAuthForMutation({
-        isAuthenticated,
-        isAuthLoading,
-        router,
-        fallbackPath: '/cart',
-        errorMessage: 'Vui lòng đăng nhập để thêm vào giỏ hàng.',
-      });
+      if (!isAuthenticated) {
+        if (!isAuthLoading) {
+          router.push(
+            buildLoginHref(getCurrentPathWithSearch('/cart')),
+          );
+        }
+        throw new Error(
+          isAuthLoading
+            ? 'Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.'
+            : 'Vui lòng đăng nhập để thêm vào giỏ hàng.',
+        );
+      }
 
-      return addCartLine(input);
+      const normalizedInput: AddCartLineInput = {
+        ...input,
+        quantity: Math.max(1, input.quantity ?? 1),
+      };
+
+      const addedCart = await addCartLine(normalizedInput);
+      if (hasMatchingCartLine(addedCart, normalizedInput)) {
+        return addedCart;
+      }
+
+      // Fallback lấy cart authoritative từ backend khi response add-line chưa phản ánh merge line.
+      return getCart();
     },
 
     onMutate: async (input) => {
+      if (!isAuthenticated) {
+        return;
+      }
+
       await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
-      const previousCart = queryClient.getQueryData<CartResponse>(
-        cartKeys.cart(),
-      );
+      const previousCart =
+        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
 
-      queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
-        if (!old) return old;
-
-        const quantity = Math.max(1, input.quantity ?? 1);
-        const existingIndex = old.cartLines.findIndex(
-          (line) =>
-            line.productId === input.productId &&
-            line.productColorId === (input.productColorId ?? null) &&
-            line.rentalDurationDays === input.rentalDurationDays,
-        );
-
-        if (existingIndex >= 0) {
-          const lines = [...old.cartLines];
-          const existing = lines[existingIndex];
-          lines[existingIndex] = patchLineTotals(
-            existing,
-            existing.quantity + quantity,
-            existing.rentalDurationDays,
-          );
-
-          return {
-            ...old,
-            cartLines: lines,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-
-        return {
-          ...old,
-          cartLines: [
-            ...old.cartLines,
-            {
-              cartLineId: `optimistic-${Date.now()}-${Math.random()}`,
-              productId: input.productId,
-              productColorId: input.productColorId ?? null,
-              colorName: null,
-              colorCode: null,
-              productName: 'Đang thêm sản phẩm...',
-              productImageUrl: null,
-              dailyPrice: 0,
-              rentalDurationDays: input.rentalDurationDays,
-              quantity,
-              lineTotal: 0,
-              availableVouchers: [],
-            },
-          ],
-          updatedAt: new Date().toISOString(),
-        };
-      });
+      const optimisticCart = applyOptimisticAdd(previousCart, input);
+      queryClient.setQueryData<CartResponse>(cartKeys.cart(), optimisticCart);
+      persistCart(optimisticCart);
 
       return { previousCart };
     },
 
     onSuccess: (data) => {
       queryClient.setQueryData(cartKeys.cart(), data);
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      persistCart(data);
       options?.onSuccess?.();
     },
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        persistCart(context.previousCart);
+      } else {
+        queryClient.removeQueries({ queryKey: cartKeys.cart(), exact: true });
+        clearPersistedCart();
       }
       options?.onError?.(error);
+    },
+
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
     },
   });
 }
@@ -201,12 +335,15 @@ export function useUpdateCartLine(
     },
 
     onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
-      const previousCart = queryClient.getQueryData<CartResponse>(
-        cartKeys.cart(),
-      );
+      if (!isAuthenticated) {
+        return;
+      }
 
-      queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
+      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      const previousCart =
+        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+
+      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
         if (!old) return old;
 
         return {
@@ -225,20 +362,27 @@ export function useUpdateCartLine(
         };
       });
 
+      persistCart(optimisticCart);
+
       return { previousCart };
     },
 
     onSuccess: (data) => {
       queryClient.setQueryData(cartKeys.cart(), data);
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      persistCart(data);
       options?.onSuccess?.();
     },
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        persistCart(context.previousCart);
       }
       options?.onError?.(error);
+    },
+
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
     },
   });
 }
@@ -268,12 +412,15 @@ export function useRemoveCartLine(options?: {
     },
 
     onMutate: async (cartLineId) => {
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
-      const previousCart = queryClient.getQueryData<CartResponse>(
-        cartKeys.cart(),
-      );
+      if (!isAuthenticated) {
+        return;
+      }
 
-      queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
+      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      const previousCart =
+        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+
+      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
         if (!old) return old;
 
         return {
@@ -285,6 +432,8 @@ export function useRemoveCartLine(options?: {
         };
       });
 
+      persistCart(optimisticCart);
+
       return { previousCart };
     },
 
@@ -295,6 +444,7 @@ export function useRemoveCartLine(options?: {
     onError: (error: Error, _cartLineId, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        persistCart(context.previousCart);
       }
       options?.onError?.(error);
     },
@@ -330,12 +480,15 @@ export function useClearCart(options?: {
     },
 
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
-      const previousCart = queryClient.getQueryData<CartResponse>(
-        cartKeys.cart(),
-      );
+      if (!isAuthenticated) {
+        return;
+      }
 
-      queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
+      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      const previousCart =
+        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+
+      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
         if (!old) return old;
         return {
           ...old,
@@ -344,16 +497,20 @@ export function useClearCart(options?: {
         };
       });
 
+      persistCart(optimisticCart);
+
       return { previousCart };
     },
 
     onSuccess: () => {
+      clearPersistedCart();
       options?.onSuccess?.();
     },
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        persistCart(context.previousCart);
       }
       options?.onError?.(error);
     },
@@ -398,12 +555,15 @@ export function useUpdateCartLineQuantity(options?: {
     },
 
     onMutate: async ({ cartLineId, quantity, rentalDurationDays }) => {
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
-      const previousCart = queryClient.getQueryData<CartResponse>(
-        cartKeys.cart(),
-      );
+      if (!isAuthenticated) {
+        return;
+      }
 
-      queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
+      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      const previousCart =
+        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+
+      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
         if (!old) return old;
 
         return {
@@ -422,20 +582,27 @@ export function useUpdateCartLineQuantity(options?: {
         };
       });
 
+      persistCart(optimisticCart);
+
       return { previousCart };
     },
 
     onSuccess: (data) => {
       queryClient.setQueryData(cartKeys.cart(), data);
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      persistCart(data);
       options?.onSuccess?.();
     },
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
         queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        persistCart(context.previousCart);
       }
       options?.onError?.(error);
+    },
+
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
     },
   });
 }

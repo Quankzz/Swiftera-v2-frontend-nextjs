@@ -180,6 +180,15 @@ export interface RentalOrderResponse {
   // Delivery snapshot
   deliveryRecipientName: string;
   deliveryPhone: string;
+  /** Optional user address object returned by some backend endpoints */
+  userAddress?: {
+    recipientName?: string | null;
+    phoneNumber?: string | null;
+    addressLine?: string | null;
+    ward?: string | null;
+    district?: string | null;
+    city?: string | null;
+  } | null;
   deliveryAddressLine: string | null;
   deliveryWard: string | null;
   deliveryDistrict: string | null;

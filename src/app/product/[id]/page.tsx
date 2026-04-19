@@ -1,414 +1,134 @@
-'use client';
+import {
+  ProductJsonLd,
+  ProductBreadcrumbJsonLd,
+} from '@/components/product-detail/product-json-ld';
+import { getProductByIdServer, getReviewsByProductServer } from '@/lib/server-api';
+import ProductDetailClient from './product-detail-client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
-import {
-  RentalProductGallery,
-  RentalProductSummary,
-  RentalCheckoutCard,
-  type RentalDuration,
-} from '@/components/product-detail/rental-product-hero';
-import {
-  RentalDeliverySection,
-  RentalProcessSection,
-} from '@/components/product-detail/rental-product-sidebar';
-import {
-  RentalSpecifications,
-  RentalProductDescription,
-} from '@/components/product-detail/rental-product-content';
-import {
-  RentalReviewsSection,
-  RentalRelatedProducts,
-} from '@/components/product-detail/rental-product-relations';
-import { useProductDetailQuery } from '@/features/products/hooks/use-product-detail';
-import { useProductReviewsQuery } from '@/hooks/api/use-reviews';
-import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
-import { useAuthStore } from '@/stores/auth-store';
-import { Skeleton } from '@/components/ui/skeleton';
-
-/** Tạo các gói thời gian thuê từ dailyPrice của BE, lọc theo minRentalDays */
-function buildDurations(
-  dailyPrice: number,
-  oldDailyPrice: number | undefined,
-  minRentalDays: number,
-): RentalDuration[] {
-  const packs = [
-    { days: 1, label: '1 ngày' },
-    { days: 2, label: '2 ngày' },
-    { days: 3, label: '3 ngày' },
-    { days: 5, label: '5 ngày' },
-    { days: 7, label: '7 ngày' },
-    { days: 14, label: '14 ngày' },
-    { days: 30, label: '30 ngày' },
-  ];
-  return packs
-    .filter((p) => p.days >= minRentalDays)
-    .map((p) => {
-      const total = Math.round(dailyPrice * p.days);
-      const original =
-        oldDailyPrice != null ? Math.round(oldDailyPrice * p.days) : undefined;
-      return {
-        id: String(p.days), // plain number string, e.g. "2"
-        label: p.label,
-        price: total,
-        originalPrice: original && original > total ? original : undefined,
-      };
-    });
+interface Props {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-const formatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
-  maximumFractionDigits: 0,
-});
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const productId = typeof params?.id === 'string' ? params.id : '';
-  const currentUserId = useAuthStore((s) => s.user?.userId ?? null);
+  try {
+    const product = await getProductByIdServer(id);
+    const p = product as Record<string, unknown>;
+    const name = String(p?.name ?? 'Sản phẩm');
+    const categoryName = String(p?.categoryName ?? 'sản phẩm');
+    const dailyPrice = p?.dailyPrice as number | undefined;
+    const brand = p?.brand as string | undefined;
+    const images = Array.isArray(p?.images) ? p.images as Array<{ imageUrl?: string }> : [];
+    const title = `${name} - Thuê ${categoryName} tại Swiftera`;
+    const description =
+      (p?.shortDescription as string) ??
+      `${name} với giá thuê chỉ từ ${dailyPrice ? `${dailyPrice.toLocaleString('vi-VN')}₫/ngày` : ''}. ${brand ? `Thương hiệu ${brand}.` : ''} Đặt thuê ngay tại Swiftera!`;
+    const url = `https://swiftera.vn/product/${id}`;
 
-  const {
-    data: product,
-    isLoading,
-    isError,
-  } = useProductDetailQuery(productId);
-
-  // Lấy tất cả đơn của user để tìm order COMPLETED cho sản phẩm này
-  const { data: ordersData } = useMyOrdersQuery(
-    { size: 50 },
-    { enabled: !!currentUserId },
-  );
-  const completedOrderId = useMemo(() => {
-    if (!ordersData?.items) return null;
-    return (
-      ordersData.items.find(
-        (o) =>
-          o.status === 'COMPLETED' &&
-          o.rentalOrderLines.some((l) => l.productId === productId),
-      )?.rentalOrderId ?? null
-    );
-  }, [ordersData?.items, productId]);
-
-  // Lấy tổng số đánh giá (dùng để hiển thị count ở summary)
-  const { data: reviewsMeta } = useProductReviewsQuery(productId, {
-    page: 1,
-    size: 1,
-  });
-  const reviewsCount = reviewsMeta?.totalItems ?? 0;
-
-  const [currentImage, setCurrentImage] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState<string>(String(1));
-  const [quantity, setQuantity] = useState(1);
-  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
-
-  // Mặc định chọn duration = minRentalDays
-  const defaultDurationId = useMemo(
-    () => String(product?.minRentalDays ?? 1),
-    [product?.minRentalDays],
-  );
-
-  // Khi product load xong thì reset selectedDuration về minRentalDays
-  useEffect(() => {
-    if (product?.minRentalDays) {
-      setSelectedDuration(String(product.minRentalDays));
-    }
-  }, [product?.minRentalDays]);
-
-  // Build durations từ BE dailyPrice, lọc theo minRentalDays
-  const durations = useMemo(() => {
-    if (!product?.dailyPrice) return [];
-    return buildDurations(
-      product.dailyPrice,
-      // product.oldDailyPrice may be used to display original price
-      product.oldDailyPrice as unknown as number | undefined,
-      product.minRentalDays ?? 1,
-    );
-  }, [product?.dailyPrice, product?.oldDailyPrice, product?.minRentalDays]);
-
-  // Lấy image URLs
-  const imageUrls = useMemo(() => {
-    if (!product?.images?.length) return [];
-    const sorted = [...product.images].sort(
-      (a, b) => b.sortOrder - a.sortOrder,
-    );
-    return sorted.map((img) => img.imageUrl);
-  }, [product?.images]);
-
-  const currentDuration = useMemo(() => {
-    const found = durations.find((d) => d.id === selectedDuration);
-    if (found) return found;
-    // If selectedDuration is a numeric custom value, compute price on the fly
-    const days = parseInt(selectedDuration, 10);
-    if (!isNaN(days) && days >= (product?.minRentalDays ?? 1) && product?.dailyPrice) {
-      const total = Math.round(product.dailyPrice * days);
-      const original = product.oldDailyPrice
-        ? Math.round(product.oldDailyPrice * days)
-        : undefined;
-      return {
-        id: String(days),
-        label: `${days} ngày`,
-        price: total,
-        originalPrice: original && original > total ? original : undefined,
-      } as RentalDuration;
-    }
-    return durations.find((d) => d.id === defaultDurationId) ?? durations[0];
-  }, [durations, selectedDuration, defaultDurationId, product?.dailyPrice, product?.minRentalDays]);
-
-  const currentPrice = currentDuration?.price ?? product?.dailyPrice ?? 0;
-  const originalPrice = currentDuration?.originalPrice;
-
-  const discount = useMemo(() => {
-    if (!originalPrice || !currentPrice || originalPrice <= currentPrice)
-      return 0;
-    return Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
-  }, [originalPrice, currentPrice]);
-
-  // Tự động chọn màu đầu tiên khi có colors và chưa chọn
-  const colors = useMemo(() => product?.colors ?? [], [product?.colors]);
-
-  const selectedColor = useMemo(
-    () => colors.find((c) => c.productColorId === selectedColorId) ?? null,
-    [colors, selectedColorId],
-  );
-
-  // Reset quantity when color changes to stay within new color's stock
-  useEffect(() => {
-    const max = selectedColorId && selectedColor
-      ? selectedColor.availableQuantity ?? 99
-      : (product?.availableStock ?? 99);
-    if (quantity > max) {
-      setQuantity(max);
-    }
-  }, [selectedColorId, selectedColor, product?.availableStock, quantity]);
-
-  // Cần chọn màu khi product có >1 màu và chưa chọn
-  const requireColorSelection = colors.length > 1 && !selectedColorId;
-
-  // Tính maxQuantity dựa trên stock hiện tại
-  const maxQuantity = useMemo(() => {
-    if (selectedColorId && selectedColor) {
-      return selectedColor.availableQuantity ?? 99;
-    }
-    return product?.availableStock ?? 99;
-  }, [selectedColorId, selectedColor, product?.availableStock]);
-
-  // Thông số kỹ thuật
-  const specifications = useMemo(() => {
-    if (!product) return [];
-    return [
-      { label: 'Thương hiệu', value: product.brand ?? '-' },
-      { label: 'Danh mục', value: product.categoryName ?? '-' },
-      { label: 'Màu sắc', value: product.color ?? '-' },
-      {
-        label: 'Số ngày thuê tối thiểu',
-        value: `${product.minRentalDays} ngày`,
+    return {
+      title,
+      description,
+      alternates: { canonical: url },
+      openGraph: {
+        type: 'website',
+        locale: 'vi_VN',
+        url,
+        siteName: 'Swiftera',
+        title,
+        description,
+        images: images.length
+          ? images.slice(0, 4).map((img) => ({
+              url: img.imageUrl ?? '',
+              width: 800,
+              height: 600,
+              alt: `${name} - Swiftera`,
+            }))
+          : [{ url: 'https://swiftera.vn/og-image.png', width: 1200, height: 630, alt: 'Swiftera' }],
       },
-      {
-        label: 'Tiền cọc',
-        value: product.depositAmount
-          ? `${formatter.format(product.depositAmount)} (hoàn trả khi trả thiết bị)`
-          : '-',
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: images.length ? [images[0].imageUrl ?? 'https://swiftera.vn/og-image.png'] : ['https://swiftera.vn/og-image.png'],
+        site: '@swiftera_vn',
       },
-      {
-        label: 'Đánh giá',
-        value: product.averageRating
-          ? `${product.averageRating} / 5`
-          : 'Chưa có đánh giá',
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
       },
-    ];
-  }, [product]);
+    };
+  } catch {
+    return {
+      title: 'Sản phẩm - Swiftera',
+      description:
+        'Nền tảng cho thuê sản phẩm linh hoạt, nhanh chóng và tin cậy tại Việt Nam.',
+    };
+  }
+}
 
-  // Short description (hiển thị phía dưới title)
-  const shortDesc = useMemo(
-    () => product?.shortDescription ?? null,
-    [product?.shortDescription],
-  );
+export default async function ProductPage({ params }: Props) {
+  const { id } = await params;
 
-  if (isLoading) {
-    return (
-      <div className='min-h-screen bg-white font-sans dark:bg-surface-base'>
-        <div className='mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8'>
-          <Skeleton className='mb-6 h-4 w-64' />
-          <div className='grid grid-cols-12 gap-4 sm:gap-6'>
-            <div className='col-span-12 lg:col-span-5'>
-              <Skeleton className='aspect-square w-full rounded-xl' />
-            </div>
-            <div className='col-span-12 lg:col-span-7'>
-              <Skeleton className='h-80 w-full rounded-xl' />
-              <Skeleton className='mt-4 h-40 w-full rounded-xl' />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  let product: Record<string, unknown> | null = null;
+  let reviewsCount = 0;
+
+  try {
+    product = await getProductByIdServer(id) as Record<string, unknown>;
+  } catch {
+    // Product not found - handled client-side
   }
 
-  if (isError || !product) {
-    return (
-      <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-white font-sans dark:bg-surface-base'>
-        <p className='text-lg font-semibold text-text-sub'>
-          Không tìm thấy sản phẩm.
-        </p>
-        <Link
-          href='/'
-          className='text-sm font-medium text-rose-600 hover:underline dark:text-rose-400'
-        >
-          Quay về trang chủ
-        </Link>
-      </div>
-    );
+  try {
+    const reviewsMeta = await getReviewsByProductServer(id, { page: 1, size: 1 });
+    reviewsCount = reviewsMeta.totalItems;
+  } catch {
+    // Reviews not available
   }
+
+  const p = product;
+  const imageUrl = Array.isArray(p?.images) && (p.images as unknown[]).length > 0
+    ? ((p.images as Array<{ imageUrl?: string }>)[0]?.imageUrl)
+    : undefined;
 
   return (
-    <div className='min-h-screen bg-white font-sans dark:bg-surface-base'>
-      <div className='mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8'>
-        {/* Breadcrumb */}
-        <nav className='mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm'>
-          <ol className='flex flex-wrap items-center gap-x-1.5 gap-y-1'>
-            <li>
-              <Link
-                href='/'
-                className='flex items-center gap-1 font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
-              >
-                Trang chủ
-              </Link>
-            </li>
-            <li className='text-border'>
-              <ChevronRight className='size-3' />
-            </li>
-            <li>
-              <Link
-                href='/catalog'
-                className='font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
-              >
-                {product.categoryName || 'Sản phẩm'}
-              </Link>
-            </li>
-            <li className='text-border'>
-              <ChevronRight className='size-3' />
-            </li>
-            <li className='min-w-0 max-w-full flex-[1_1_100%] font-semibold text-foreground sm:max-w-xs sm:flex-[unset] sm:truncate'>
-              {product.name}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Hero: Gallery + Summary + Checkout */}
-        <div className='grid grid-cols-12 gap-4 sm:gap-6'>
-          {/* Gallery */}
-          <div className='col-span-12 lg:col-span-5'>
-            <div className='rounded-xl border border-border/60 bg-card p-3 ambient-glow sm:p-4 lg:sticky lg:top-24'>
-              <RentalProductGallery
-                images={imageUrls}
-                currentImage={currentImage}
-                setCurrentImage={setCurrentImage}
-              />
-            </div>
-          </div>
-
-          {/* Summary + Checkout */}
-          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-7'>
-            {/* Product Summary */}
-            <div className='rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5'>
-              <RentalProductSummary
-                productData={{
-                  name: product.name,
-                  sku: product.productId.slice(0, 8).toUpperCase(),
-                  brand: product.brand ?? '-',
-                  productType: product.categoryName ?? '-',
-                  discount,
-                  rating: product.averageRating ?? 0,
-                  reviews: reviewsCount,
-                  rentedCount: 0,
-                  colors,
-                  durations,
-                  minRentalDays: product.minRentalDays ?? 1,
-                }}
-                selectedColorId={selectedColorId}
-                onColorChange={setSelectedColorId}
-                selectedVariant='default'
-                onVariantChange={() => {}}
-                selectedDuration={selectedDuration}
-                onDurationChange={setSelectedDuration}
-                currentPrice={currentPrice}
-                originalPrice={originalPrice}
-              />
-            </div>
-
-            {/* Short description badge */}
-            {shortDesc && (
-              <div className='rounded-xl border border-border/60 bg-muted/30 p-3 text-sm text-muted-foreground'>
-                {shortDesc}
-              </div>
-            )}
-
-            {/* Checkout Card */}
-            <RentalCheckoutCard
-              rentalPrice={currentPrice}
-              deposit={product.depositAmount ?? 0}
-              selectedDuration={currentDuration?.label ?? '1 ngày'}
-              durationId={selectedDuration}
-              quantity={quantity}
-              setQuantity={setQuantity}
-              maxQuantity={maxQuantity}
-              requireColorSelection={requireColorSelection}
-              cartProduct={{
-                productId: product.productId,
-                name: product.name,
-                image: imageUrls[0] ?? '',
-                sku: product.productId.slice(0, 8).toUpperCase(),
-                productColorId: selectedColorId,
-                colorName: selectedColor?.name ?? null,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Content: Description + Specifications + Sidebar */}
-        <div className='mt-4 grid grid-cols-12 gap-4 sm:mt-6 sm:gap-6'>
-          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-8'>
-            {/* Description */}
-            {product.description && (
-              <div className='rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5'>
-                <h2 className='mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg'>
-                  Mô tả sản phẩm
-                </h2>
-                <RentalProductDescription
-                  text={product.description}
-                  maxHeight={300}
-                />
-              </div>
-            )}
-
-            {/* Specifications */}
-            <RentalSpecifications specifications={specifications} />
-
-            {/* Inventory Items / Stock removed per request */}
-          </div>
-
-          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4'>
-            <RentalDeliverySection />
-            <RentalProcessSection />
-          </div>
-        </div>
-
-        {/* Reviews */}
-        <div className='mt-4 sm:mt-6'>
-          <RentalReviewsSection
-            productId={product.productId}
-            rating={product.averageRating ?? 0}
-            currentUserId={currentUserId}
-            userCompletedOrderId={completedOrderId}
+    <>
+      {p && (
+        <>
+          <ProductJsonLd
+            productId={String(p.productId ?? id)}
+            name={String(p.name ?? 'Sản phẩm')}
+            description={
+              typeof p.description === 'string'
+                ? p.description
+                : typeof p.shortDescription === 'string'
+                  ? p.shortDescription
+                  : undefined
+            }
+            imageUrl={imageUrl}
+            price={typeof p.dailyPrice === 'number' ? p.dailyPrice : undefined}
+            currency='VND'
+            brand={typeof p.brand === 'string' ? p.brand : undefined}
+            category={typeof p.categoryName === 'string' ? p.categoryName : undefined}
+            rating={typeof p.averageRating === 'number' ? p.averageRating : undefined}
+            reviewCount={reviewsCount}
           />
-        </div>
-
-        {/* Related Products - API-054, loại trừ id ở client */}
-        <div className='mt-4 sm:mt-6'>
-          <RentalRelatedProducts currentProductId={product.productId} />
-        </div>
-      </div>
-    </div>
+          <ProductBreadcrumbJsonLd
+            productId={String(p.productId ?? id)}
+            productName={String(p.name ?? 'Sản phẩm')}
+            categoryName={typeof p.categoryName === 'string' ? p.categoryName : undefined}
+          />
+        </>
+      )}
+      <ProductDetailClient productId={id} />
+    </>
   );
 }

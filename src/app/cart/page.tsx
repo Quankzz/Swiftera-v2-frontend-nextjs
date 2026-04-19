@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import nextDynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
@@ -9,7 +12,6 @@ import {
   Minus,
   Plus,
   ShoppingBag,
-  Sparkles,
   Truck,
   AlertCircle,
   TicketPercent,
@@ -45,7 +47,6 @@ import { useCartQuery,
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
-import { PolicyConsentDialog } from '@/components/checkout/policy-consent-dialog';
 import { toast } from 'sonner';
 import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
 import { useDeliveryInfo } from '@/hooks/use-delivery-info';
@@ -61,6 +62,14 @@ import {
 import type { UserAddressResponse } from '@/api/userAddressApi';
 import { getApiErrorMessage } from '@/app/profile/utils';
 import { buildLoginHref } from '@/lib/auth-redirect';
+
+const PolicyConsentDialog = nextDynamic(
+  () =>
+    import('@/components/checkout/policy-consent-dialog').then(
+      (module) => module.PolicyConsentDialog,
+    ),
+  { ssr: false },
+);
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -108,8 +117,6 @@ function calcLineVoucherDiscount(
 
 /* ─── Inline duration editor for cart lines ─────────────────────────────────── */
 
-const PRESET_DURATIONS = [1, 3, 7, 14, 30];
-
 function DurationEditor({
   days,
   cartLineId,
@@ -156,7 +163,10 @@ function DurationEditor({
         type='number'
         min={1}
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={(e) => {
+          const parsed = Number.parseInt(e.target.value, 10);
+          setDraft(Number.isNaN(parsed) ? 1 : Math.max(1, parsed));
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') handleCommit();
           if (e.key === 'Escape') setEditing(false);
@@ -738,6 +748,30 @@ export default function CartPage() {
   const { data: savedAddresses, isLoading: savedAddressesLoading } =
     useUserAddressesQuery({ enabled: !!isAuthenticated });
 
+  const delivery = useMemo(
+    () => ({
+      setRecipientName,
+      setPhone,
+      setAddressLine,
+      setWard,
+      setDistrict,
+      setCity,
+    }),
+    [setRecipientName, setPhone, setAddressLine, setWard, setDistrict, setCity],
+  );
+
+  const syncDeliveryFromSaved = useCallback(
+    (addr: UserAddressResponse) => {
+      delivery.setRecipientName(addr.recipientName);
+      delivery.setPhone(addr.phoneNumber);
+      delivery.setAddressLine(addr.addressLine ?? '');
+      delivery.setWard(addr.ward ?? '');
+      delivery.setDistrict(addr.district ?? '');
+      delivery.setCity(addr.city ?? '');
+    },
+    [delivery],
+  );
+
   const createAddressMutation = useCreateUserAddress({
     onSuccess: (addr) => {
       if (!addr) return;
@@ -769,31 +803,13 @@ export default function CartPage() {
     });
   }
 
-  const delivery = useMemo(
-    () => ({
-      setRecipientName,
-      setPhone,
-      setAddressLine,
-      setWard,
-      setDistrict,
-      setCity,
-    }),
-    [setRecipientName, setPhone, setAddressLine, setWard, setDistrict, setCity],
-  );
-
-  function syncDeliveryFromSaved(addr: UserAddressResponse) {
-    delivery.setRecipientName(addr.recipientName);
-    delivery.setPhone(addr.phoneNumber);
-    delivery.setAddressLine(addr.addressLine ?? '');
-    delivery.setWard(addr.ward ?? '');
-    delivery.setDistrict(addr.district ?? '');
-    delivery.setCity(addr.city ?? '');
-  }
-
   useEffect(() => {
     if (!isAuthenticated) {
       addressesInitRef.current = false;
-      setSelectedUserAddressId(null);
+      const timeoutId = window.setTimeout(() => {
+        setSelectedUserAddressId(null);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
   }, [isAuthenticated]);
 
@@ -802,16 +818,22 @@ export default function CartPage() {
       return;
     addressesInitRef.current = true;
     const pick = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
-    setSelectedUserAddressId(pick.userAddressId);
-    syncDeliveryFromSaved(pick);
-  }, [isAuthenticated, savedAddresses]);
+    const timeoutId = window.setTimeout(() => {
+      setSelectedUserAddressId(pick.userAddressId);
+      syncDeliveryFromSaved(pick);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [isAuthenticated, savedAddresses, syncDeliveryFromSaved]);
 
   useEffect(() => {
     if (!savedAddresses?.length || !selectedUserAddressId) return;
     if (
       !savedAddresses.some((a) => a.userAddressId === selectedUserAddressId)
     ) {
-      setSelectedUserAddressId(null);
+      const timeoutId = window.setTimeout(() => {
+        setSelectedUserAddressId(null);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
   }, [savedAddresses, selectedUserAddressId]);
 
@@ -826,7 +848,7 @@ export default function CartPage() {
   // Policy consent dialog
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
 
-  const lines: CartLineResponse[] = cart?.cartLines ?? [];
+  const lines = useMemo<CartLineResponse[]>(() => cart?.cartLines ?? [], [cart]);
 
   // Toggle checkbox
   function toggleSelect(cartLineId: string) {
@@ -931,14 +953,6 @@ export default function CartPage() {
       setSelectedIds(new Set());
     }
   };
-
-  function handleApplyVoucher(code: string) {
-    setVoucherCode(code.toUpperCase());
-  }
-
-  function handleRemoveVoucher() {
-    setVoucherCode('');
-  }
 
   function handleOpenLineVoucher(line: CartLineResponse) {
     setVoucherDialogLine(line);
@@ -1725,7 +1739,7 @@ export default function CartPage() {
               appliedCode={
                 lineVouchers.get(voucherDialogLine.cartLineId) ?? null
               }
-              availableVouchers={voucherDialogLine.availableVouchers}
+              suggestedVouchers={voucherDialogLine.availableVouchers}
               productId={voucherDialogLine.productId}
               usedCodes={usedByOtherLines}
               onApply={(v) => {

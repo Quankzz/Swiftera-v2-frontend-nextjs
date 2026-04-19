@@ -3,7 +3,12 @@
  * Module 15: REVIEWS (API-095 → API-100)
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { reviewKeys } from './review.keys';
 import {
   getReviewsByProduct,
@@ -30,7 +35,9 @@ export function useProductReviewsQuery(
     queryKey: reviewKeys.byProduct(productId, params),
     queryFn: () => getReviewsByProduct(productId, params),
     enabled: !!productId,
-    staleTime: 30_000,
+    staleTime: 3 * 60_000,
+    gcTime: 30 * 60_000,
+    placeholderData: keepPreviousData,
     retry: false,
   });
 }
@@ -47,7 +54,9 @@ export function useReviewsQuery(params?: {
   return useQuery({
     queryKey: reviewKeys.list(params),
     queryFn: () => getReviews(params),
-    staleTime: 30_000,
+    staleTime: 3 * 60_000,
+    gcTime: 30 * 60_000,
+    placeholderData: keepPreviousData,
     retry: false,
   });
 }
@@ -60,7 +69,8 @@ export function useReviewQuery(reviewId: string) {
     queryKey: reviewKeys.detail(reviewId),
     queryFn: () => getReviewById(reviewId),
     enabled: !!reviewId,
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     retry: false,
   });
 }
@@ -82,7 +92,8 @@ export function useMyReviewForProductQuery(
     queryKey: ['reviews', 'my', productId, userId] as const,
     queryFn: () => getMyReviewForProduct(productId, userId!),
     enabled: !!productId && !!userId,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
     retry: false,
   });
 }

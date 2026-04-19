@@ -40,14 +40,18 @@ export async function getReviewsByProduct(
   productId: string,
   params?: { page?: number; size?: number; rating?: number },
 ): Promise<NormalizedPaginatedReviews> {
-  const queryParams: Record<string, string | number> = { ...params };
-  if (params?.rating != null) {
-    queryParams.filter = `rating:${params.rating}`;
-    delete queryParams.rating;
+  // API /reviews/product/{productId} chỉ hỗ trợ page/size.
+  // Rating filter cần xử lý ở phía FE để tránh sai lệch dữ liệu.
+  const queryParams: Record<string, string | number> = {};
+  if (typeof params?.page === 'number') {
+    queryParams.page = params.page;
+  }
+  if (typeof params?.size === 'number') {
+    queryParams.size = params.size;
   }
   const res = await httpService.get<ReviewListResponse>(
     `/reviews/product/${productId}`,
-    { ...authOpts, params: queryParams },
+    { params: queryParams },
   );
   return normalize(res);
 }

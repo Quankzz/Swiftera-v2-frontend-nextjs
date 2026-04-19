@@ -510,6 +510,7 @@ interface RentalProductSummaryProps {
 
 export function RentalProductSummary({
   productData,
+  minRentalDays = 1,
   selectedColorId,
   onColorChange,
   selectedVariant,
@@ -531,7 +532,6 @@ export function RentalProductSummary({
     colors = [],
     variants = [],
     durations,
-    minRentalDays = 1,
   } = productData;
 
   const selectedRing =
@@ -848,7 +848,10 @@ export function RentalCheckoutCard({
   useEffect(() => {
     if (!appliedVoucher) return;
     if (computeVoucherDiscount(totalRental, appliedVoucher) <= 0) {
-      setAppliedVoucher(null);
+      const timeoutId = window.setTimeout(() => {
+        setAppliedVoucher(null);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
   }, [appliedVoucher, totalRental]);
 

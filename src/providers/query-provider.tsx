@@ -9,13 +9,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Dữ liệu được coi là fresh trong 3 phút - tránh refetch khi navigate qua lại
             staleTime: 3 * 60 * 1000,
-            // Giữ cache trong 10 phút sau khi không còn observer
-            gcTime: 10 * 60 * 1000,
-            // Không refetch khi user focus window (tránh flicker)
+            gcTime: 30 * 60 * 1000,
             refetchOnWindowFocus: false,
-            // Retry 1 lần sau khi thất bại (thay vì 3 lần default)
             retry: 1,
           },
         },
@@ -23,7 +19,22 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <QueryClientScript queryClient={queryClient} />
+      {children}
+    </QueryClientProvider>
   );
+}
+
+function QueryClientScript({
+  queryClient,
+}: {
+  queryClient: QueryClient;
+}) {
+  if (typeof window !== "undefined") {
+    (window as Window & { __swifteraQueryClient?: QueryClient }).__swifteraQueryClient =
+      queryClient;
+  }
+  return null;
 }
 

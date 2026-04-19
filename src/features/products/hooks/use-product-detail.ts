@@ -15,6 +15,8 @@ export function useProductDetailQuery(productId: string) {
     queryKey: productKeys.detail(productId),
     queryFn: () => getProductById(productId),
     enabled: !!productId,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
 }

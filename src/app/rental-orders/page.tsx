@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
+import { useRentalContractByOrderQuery } from '@/hooks/api/use-contract';
 import {
   RENTAL_ORDER_STATUS_LABELS,
   RENTAL_ORDER_STATUS_COLORS,
@@ -80,6 +81,78 @@ function formatDate(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function OrderContractAction({
+  rentalOrderId,
+  enabled,
+}: {
+  rentalOrderId: string;
+  enabled: boolean;
+}) {
+  const { data: contract, isLoading, isError } = useRentalContractByOrderQuery(
+    rentalOrderId,
+    { enabled },
+  );
+
+  if (!enabled) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground/50'
+        title='Hợp đồng sẽ có sau khi thanh toán thành công.'
+      >
+        <FileText className='size-4' />
+      </span>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground'
+        title='Đang tải hợp đồng...'
+      >
+        <Loader2 className='size-4 animate-spin' />
+      </span>
+    );
+  }
+
+  if (isError) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-amber-300/60 bg-amber-50/40 text-amber-600 dark:border-amber-700/60 dark:bg-amber-950/20 dark:text-amber-400'
+        title='Không tải được hợp đồng cho đơn này.'
+      >
+        <AlertCircle className='size-4' />
+      </span>
+    );
+  }
+
+  const contractPdfUrl = contract?.contractPdfUrl;
+  if (!contractPdfUrl) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground/50'
+        title='Đơn này chưa có hợp đồng thuê.'
+      >
+        <FileText className='size-4' />
+      </span>
+    );
+  }
+
+  return (
+    <a
+      href={contractPdfUrl}
+      target='_blank'
+      rel='noopener noreferrer'
+      className='inline-flex size-8 items-center justify-center rounded-lg border border-rose-300/60 bg-rose-50/50 text-rose-600 transition-colors hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/20 dark:text-rose-400 dark:hover:bg-rose-950/40'
+      title='Xem hợp đồng thuê (PDF)'
+      aria-label='Xem hợp đồng thuê (PDF)'
+      onClick={(e) => e.stopPropagation()}
+    >
+      <FileText className='size-4' />
+    </a>
+  );
 }
 
 function OrderRowSkeleton() {
@@ -501,7 +574,7 @@ export default function RentalOrdersPage() {
                         className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-opacity hover:opacity-80 dark:bg-rose-950/50 dark:text-rose-400'
                         tabIndex={-1}
                       >
-                        <FileText className='size-[18px]' />
+                        <FileText className='size-4.5' />
                       </Link>
 
                       {/* Info - chiếm phần lớn width, click → detail */}
@@ -559,48 +632,60 @@ export default function RentalOrdersPage() {
                       {/* Right side */}
                       {isPending ? (
                         /* ── Nút thanh toán cho PENDING_PAYMENT ── */
-                        <button
-                          type='button'
-                          disabled={!!payingId}
-                          onClick={(e) =>
-                            void handlePay(e, order.rentalOrderId)
-                          }
-                          className={cn(
-                            'flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
-                            isPaying
-                              ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                              : payingId
-                                ? 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
-                                : 'bg-amber-500 text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-95 dark:bg-amber-500 dark:hover:bg-amber-600',
-                          )}
-                        >
-                          {isPaying ? (
-                            <>
-                              <Loader2 className='size-3.5 animate-spin' />
-                              <span className='hidden sm:inline'>
-                                Đang xử lý…
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <CreditCard className='size-3.5' />
-                              <span className='hidden sm:inline'>
-                                Thanh toán
-                              </span>
-                            </>
-                          )}
-                        </button>
+                        <div className='flex shrink-0 items-center gap-2'>
+                          <OrderContractAction
+                            rentalOrderId={order.rentalOrderId}
+                            enabled={false}
+                          />
+                          <button
+                            type='button'
+                            disabled={!!payingId}
+                            onClick={(e) =>
+                              void handlePay(e, order.rentalOrderId)
+                            }
+                            className={cn(
+                              'flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
+                              isPaying
+                                ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                : payingId
+                                  ? 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
+                                  : 'bg-amber-500 text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-95 dark:bg-amber-500 dark:hover:bg-amber-600',
+                            )}
+                          >
+                            {isPaying ? (
+                              <>
+                                <Loader2 className='size-3.5 animate-spin' />
+                                <span className='hidden sm:inline'>
+                                  Đang xử lý…
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className='size-3.5' />
+                                <span className='hidden sm:inline'>
+                                  Thanh toán
+                                </span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       ) : (
                         /* ── Amount + chevron cho status khác ── */
-                        <Link
-                          href={`/rental-orders/${order.rentalOrderId}`}
-                          className='flex shrink-0 items-center gap-2'
-                        >
-                          <span className='text-sm font-semibold tabular-nums text-foreground'>
-                            {fmt.format(order.totalPayableAmount)}
-                          </span>
-                          <ChevronRight className='size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
-                        </Link>
+                        <div className='flex shrink-0 items-center gap-2'>
+                          <OrderContractAction
+                            rentalOrderId={order.rentalOrderId}
+                            enabled
+                          />
+                          <Link
+                            href={`/rental-orders/${order.rentalOrderId}`}
+                            className='flex items-center gap-2'
+                          >
+                            <span className='text-sm font-semibold tabular-nums text-foreground'>
+                              {fmt.format(order.totalPayableAmount)}
+                            </span>
+                            <ChevronRight className='size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
+                          </Link>
+                        </div>
                       )}
                     </div>
 
