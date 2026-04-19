@@ -160,7 +160,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
 
   return (
     <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-      <div className='flex min-w-[min(100%,520px)] items-start py-1 sm:min-w-0'>
+      <div className='flex w-full items-start py-1'>
         {STEP_LABELS.map((label, i) => {
           const done = i < active || status === 'COMPLETED';
           const current = i === active && status !== 'COMPLETED';
@@ -172,13 +172,13 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
               {i > 0 && (
                 <div
                   className={cn(
-                    'mt-[15px] h-px min-w-[8px] flex-1',
+                    'mt-[15px] h-px flex-1',
                     segmentDone ? 'bg-rose-500' : 'bg-border',
                   )}
                   aria-hidden
                 />
               )}
-              <div className='flex w-12 shrink-0 flex-col items-center sm:w-16'>
+              <div className='flex shrink-0 flex-col items-center'>
                 <div
                   className={cn(
                     'flex size-[30px] items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
@@ -197,7 +197,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
                 </div>
                 <span
                   className={cn(
-                    'mt-2 text-center text-[10px] font-medium leading-tight sm:text-[11px]',
+                    'mt-2 text-center text-[10px] font-medium leading-tight',
                     done || current
                       ? 'text-foreground'
                       : 'text-muted-foreground',
@@ -751,6 +751,25 @@ export default function RentalOrderDetailPage() {
                   </div>
                 )}
 
+                {/* ── Pending pickup banner ── */}
+                {order.status === 'PENDING_PICKUP' && (
+                  <div className='mt-4 flex flex-col gap-3 rounded-xl border border-orange-300/70 bg-orange-50/80 p-4 dark:border-orange-700/40 dark:bg-orange-950/30 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className='flex items-start gap-3'>
+                      <div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400'>
+                        <RotateCcw className='size-4' />
+                      </div>
+                      <div>
+                        <p className='text-sm font-bold text-orange-800 dark:text-orange-300'>
+                          Yêu cầu thu hồi đã được tiếp nhận
+                        </p>
+                        <p className='mt-0.5 text-xs text-orange-700/80 dark:text-orange-400/80'>
+                          Nhân viên sẽ liên hệ và đến thu hồi thiết bị theo lịch trình. Cảm ơn bạn đã sử dụng dịch vụ.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Status stepper */}
                 <div className='mt-5 border-t border-border/60 pt-5'>
                   <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
@@ -884,30 +903,22 @@ export default function RentalOrderDetailPage() {
                           </Button>
                         )}
 
-                        {hasRequestPickup && (
-                          <Button
-                            size='default'
-                            variant='outline'
-                            title={
-                              !canRentalStatusTransition
-                                ? 'Cần có thời điểm giao hàng và bắt đầu thuê thực tế trước khi yêu cầu thu hồi.'
-                                : undefined
-                            }
-                            className='gap-2 rounded-xl border-orange-300 px-5 font-semibold text-orange-800 hover:bg-orange-50 hover:border-orange-400 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/50'
-                            onClick={handleInUseToPendingPickup}
-                            disabled={
-                              updateOrderStatus.isPending ||
-                              !canRentalStatusTransition
-                            }
-                          >
-                            {updateOrderStatus.isPending ? (
-                              <Loader2 className='size-4 animate-spin' />
-                            ) : (
-                              <PackageMinus className='size-4' />
-                            )}
-                            Yêu cầu thu hồi
-                          </Button>
-                        )}
+                          {hasRequestPickup && (
+                            <Button
+                              size='default'
+                              variant='default'
+                              className='gap-2 rounded-xl border-orange-400 bg-orange-600 px-5 font-semibold text-white shadow-sm hover:bg-orange-700 active:scale-[0.98]'
+                              onClick={handleInUseToPendingPickup}
+                              disabled={updateOrderStatus.isPending}
+                            >
+                              {updateOrderStatus.isPending ? (
+                                <Loader2 className='size-4 animate-spin' />
+                              ) : (
+                                <PackageMinus className='size-4' />
+                              )}
+                              Tôi muốn trả hàng
+                            </Button>
+                          )}
 
                         {hasReview && (
                           <Button
@@ -1029,10 +1040,9 @@ export default function RentalOrderDetailPage() {
             >
               <DialogContent className='sm:max-w-md'>
                 <DialogHeader>
-                  <DialogTitle>Xác nhận yêu cầu thu hồi</DialogTitle>
+                  <DialogTitle>Xác nhận trả hàng sớm</DialogTitle>
                   <DialogDescription>
-                    Trạng thái đơn sẽ chuyển sang chờ thu hồi
-                    (`PENDING_PICKUP`).
+                    Sau khi xác nhận, nhân viên sẽ liên hệ và sắp xếp lịch thu hồi thiết bị theo địa chỉ giao hàng của bạn.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -1050,7 +1060,7 @@ export default function RentalOrderDetailPage() {
                   >
                     {updateOrderStatus.isPending
                       ? 'Đang xử lý…'
-                      : 'Xác nhận thu hồi'}
+                      : 'Xác nhận trả hàng'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1215,19 +1225,19 @@ export default function RentalOrderDetailPage() {
                       <Truck className='mt-0.5 size-4 shrink-0 text-sky-600 dark:text-sky-400' />
                       <div className='min-w-0 space-y-0.5'>
                         <p className='font-semibold text-foreground'>
-                          {order.deliveryRecipientName}
+                          {order.deliveryRecipientName ?? order.userAddress?.recipientName ?? '—'}
                         </p>
                         <p className='text-muted-foreground'>
-                          {order.deliveryPhone}
+                          {order.deliveryPhone ?? order.userAddress?.phoneNumber ?? '—'}
                         </p>
                       </div>
                     </div>
                     <p className='text-sm leading-relaxed text-muted-foreground'>
                       {[
-                        order.deliveryAddressLine,
-                        order.deliveryWard,
-                        order.deliveryDistrict,
-                        order.deliveryCity,
+                        order.deliveryAddressLine ?? order.userAddress?.addressLine,
+                        order.deliveryWard ?? order.userAddress?.ward,
+                        order.deliveryDistrict ?? order.userAddress?.district,
+                        order.deliveryCity ?? order.userAddress?.city,
                       ]
                         .filter(Boolean)
                         .join(', ')}

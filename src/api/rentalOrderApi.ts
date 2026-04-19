@@ -110,6 +110,17 @@ export interface RentalOrderResponse {
   deliveryCity: string;
   deliveryLatitude: number | null;
   deliveryLongitude: number | null;
+  /** Nested address object from backend (available when backend is deployed with new mapping) */
+  userAddress?: {
+    recipientName: string | null;
+    phoneNumber: string | null;
+    addressLine: string | null;
+    ward: string | null;
+    district: string | null;
+    city: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  } | null;
   expectedDeliveryDate: string;
   expectedRentalEndDate: string;
   plannedDeliveryAt: string | null;
