@@ -7,17 +7,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Star,
   ThumbsUp,
-  Share2,
   ChevronDown,
   ChevronUp,
   MessageSquare,
   Loader2,
-  ExternalLink,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -245,214 +239,7 @@ function formatTooltipTime(primaryDate?: unknown, fallbackDate?: unknown): strin
    SHARE MODAL
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function ShareReviewModal({
-  open,
-  onOpenChange,
-  reviewId,
-  productName,
-  productId,
-}: {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  reviewId: string;
-  productName: string;
-  productId: string;
-}) {
-  const [copied, setCopied] = useState(false);
-  const shareUrl = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return `/product/${productId}?review=${reviewId}`;
-    }
-    return new URL(
-      `/product/${productId}?review=${encodeURIComponent(reviewId)}`,
-      window.location.origin,
-    ).toString();
-  }, [productId, reviewId]);
-  const shareTitle = `Đánh giá ${productName} trên Swiftera`;
-
-  async function handleNativeShare() {
-    if (typeof navigator === 'undefined' || !('share' in navigator)) {
-      return;
-    }
-
-    try {
-      await navigator.share({ title: shareTitle, url: shareUrl });
-    } catch {
-      // Người dùng có thể đóng native share sheet, không cần báo lỗi.
-    }
-  }
-
-  function fallbackCopy(text: string): boolean {
-    if (typeof document === 'undefined') return false;
-
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-
-    const success = document.execCommand('copy');
-    document.body.removeChild(textarea);
-    return success;
-  }
-
-  async function handleCopyLink() {
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else if (!fallbackCopy(shareUrl)) {
-        throw new Error('COPY_FAILED');
-      }
-
-      setCopied(true);
-      toast.success('Đã sao chép liên kết chia sẻ.');
-      window.setTimeout(() => setCopied(false), 2500);
-    } catch {
-      toast.error('Không thể sao chép liên kết. Vui lòng thử lại.');
-    }
-  }
-
-  function handleFacebook() {
-    if (typeof window === 'undefined') return;
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-    window.open(fbUrl, '_blank', 'width=600,height=500,noopener,noreferrer');
-  }
-
-  function handleX() {
-    if (typeof window === 'undefined') return;
-    const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`;
-    window.open(xUrl, '_blank', 'width=600,height=500,noopener,noreferrer');
-  }
-
-  function handleZalo() {
-    if (typeof window === 'undefined') return;
-    const zaloUrl = `https://zalo.me/share?url=${encodeURIComponent(shareUrl)}`;
-    window.open(zaloUrl, '_blank', 'width=600,height=500,noopener,noreferrer');
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='overflow-hidden p-0 sm:max-w-sm'>
-        {/* Header */}
-        <div className='px-6 pt-6 pb-4'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-3'>
-              <div className='flex size-10 items-center justify-center rounded-2xl bg-linear-to-br from-rose-500 to-pink-500 shadow-sm shadow-rose-500/25'>
-                <Share2 className='size-5 text-white' />
-              </div>
-              <div>
-                <h2 className='text-base font-bold text-foreground'>
-                  Chia sẻ đánh giá
-                </h2>
-                <p className='max-w-48 truncate text-xs text-muted-foreground'>
-                  {productName}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className='space-y-4 px-6 pb-6 pt-2'>
-          {typeof navigator !== 'undefined' && 'share' in navigator && (
-            <button
-              type='button'
-              onClick={handleNativeShare}
-              className='flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200/70 bg-rose-50/60 p-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/20 dark:text-rose-300 dark:hover:bg-rose-950/40'
-            >
-              <Share2 className='size-4' />
-              Chia sẻ qua ứng dụng
-            </button>
-          )}
-
-          {/* Social buttons grid */}
-          <div className='grid grid-cols-3 gap-2.5'>
-            <button
-              type='button'
-              onClick={handleFacebook}
-              className='flex flex-col items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/10 active:translate-y-0 dark:border-blue-900/40 dark:bg-blue-950/20 dark:hover:bg-blue-950/40'
-            >
-              <div className='flex size-9 items-center justify-center rounded-xl bg-white shadow-sm'>
-                <svg
-                  viewBox='0 0 24 24'
-                  className='size-5 text-blue-600'
-                  fill='currentColor'
-                >
-                  <path d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' />
-                </svg>
-              </div>
-              <span className='text-[11px] font-semibold text-blue-700 dark:text-blue-300'>
-                Facebook
-              </span>
-            </button>
-
-            <button
-              type='button'
-              onClick={handleX}
-              className='flex flex-col items-center gap-1.5 rounded-2xl border border-gray-100 bg-gray-50/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gray-500/10 active:translate-y-0 dark:border-gray-800/40 dark:bg-gray-900/20 dark:hover:bg-gray-900/40'
-            >
-              <div className='flex size-9 items-center justify-center rounded-xl bg-white shadow-sm'>
-                <svg
-                  viewBox='0 0 24 24'
-                  className='size-5 text-gray-900 dark:text-gray-100'
-                  fill='currentColor'
-                >
-                  <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
-                </svg>
-              </div>
-              <span className='text-[11px] font-semibold text-gray-900 dark:text-gray-100'>
-                X
-              </span>
-            </button>
-
-            <button
-              type='button'
-              onClick={handleZalo}
-              className='flex flex-col items-center gap-1.5 rounded-2xl border border-blue-100 bg-blue-50/80 p-3 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/10 active:translate-y-0 dark:border-blue-900/40 dark:bg-blue-950/20 dark:hover:bg-blue-950/40'
-            >
-              <div className='flex size-9 items-center justify-center rounded-xl bg-white shadow-sm'>
-                <svg
-                  viewBox='0 0 24 24'
-                  className='size-5 text-blue-600'
-                  fill='currentColor'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12c0 3.54 1.83 6.65 4.63 8.55L2.1 24l3.95-1.55C7.3 22.82 9.56 24 12 24c5.52 0 10-4.48 10-10S17.52 2 12 2zm4.5 14.25c-.48.9-1.78 1.55-2.95 1.55-.43 0-.83-.06-1.2-.18-.5-.15-.95-.45-1.35-.9l-.6-.7.1-.4c.1-.4-.05-.8-.4-1.05-.35-.25-.8-.2-1.1.05l-.7.6c-.3-.35-.5-.8-.5-1.3 0-.2.03-.4.08-.6l-.35-.7.6-.55c.3-.25.35-.7.1-1.05-.25-.35-.7-.4-1.05-.1l-.7.6c-.35-.4-.55-.95-.55-1.5 0-.15.01-.3.03-.45l-.7-.35.55-.6c.25-.3.2-.75-.05-1.05-.25-.3-.7-.35-1.05-.1l-.6.7c-.2-.1-.4-.15-.6-.15-.2 0-.4.05-.6.15l-.6-.7c-.3-.25-.75-.2-1.05.05-.25.3-.35.7-.1 1.05l.55.6-.7.35c-.15-.05-.3-.08-.45-.08-.55 0-1.1.2-1.5.55l-.6-.7c-.3-.25-.75-.2-1.05.1-.25.3-.2.75.1 1.05l.7.55-.35.7c-.1.2-.15.4-.15.6 0 .55.2 1.1.55 1.5l-.7.6c-.25.3-.2.75.1 1.05.3.25.75.2 1.05-.1l.6-.7c.4.35.9.55 1.3.55.2 0 .4-.03.6-.08l.35.7-.6.6c-.25.3-.2.75.1 1.05.3.25.75.2 1.05-.1l.7-.55.7.35c.05.15.08.3.08.45 0 .55-.2 1.1-.55 1.5l.6.7c.25.3.7.35 1.05.1.3-.25.35-.7.1-1.05l-.55-.6.7-.35c.15.05.3.08.45.08.55 0 1.1-.2 1.5-.55l.6.7c.25.3.7.35 1.05.1.3-.25.35-.7.1-1.05l-.7-.55.35-.7c.1.05.2.08.3.08z' />
-                </svg>
-              </div>
-              <span className='text-[11px] font-semibold text-blue-700 dark:text-blue-300'>
-                Zalo
-              </span>
-            </button>
-          </div>
-
-          {/* Copy link */}
-          <div className='group/rounded-xl overflow-hidden rounded-xl border border-border/60 bg-muted/40'>
-            <div className='flex items-center gap-2 p-3'>
-              <ExternalLink className='size-3.5 shrink-0 text-rose-500' />
-              <p className='min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground'>
-                {shareUrl}
-              </p>
-              <button
-                type='button'
-                onClick={handleCopyLink}
-                className={cn(
-                  'shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all',
-                  copied
-                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                    : 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:hover:bg-rose-900/60',
-                )}
-              >
-                {copied ? 'Đã sao chép!' : 'Sao chép'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+/* Share modal removed per request: UI and logic deleted. */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    REVIEW CARD
@@ -463,7 +250,6 @@ function ReviewCard({
   currentUserId,
   highlighted,
   isHelpfulPending,
-  onShare,
   onDelete,
   onMarkHelpful,
 }: {
@@ -471,7 +257,6 @@ function ReviewCard({
   currentUserId: string | null;
   highlighted?: boolean;
   isHelpfulPending?: boolean;
-  onShare: (review: ProductReviewResponse) => void;
   onDelete: (reviewId: string) => void;
   onMarkHelpful: (reviewId: string) => void;
 }) {
@@ -593,15 +378,7 @@ function ReviewCard({
           )}
         </button>
 
-        {/* Share */}
-        <button
-          type='button'
-          onClick={() => onShare(review)}
-          className='flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400'
-        >
-          <Share2 className='size-3.5' />
-          <span>Chia sẻ</span>
-        </button>
+        {/* Share button removed per request */}
 
         {/* Delete (owner only) */}
         {isOwner && (
@@ -798,7 +575,6 @@ export function RentalReviewsSection({
   const PAGE_SIZE = 5;
   const FILTER_FETCH_SIZE = 1000;
   const [showWriteForm, setShowWriteForm] = useState(false);
-  const [shareTarget, setShareTarget] = useState<ProductReviewResponse | null>(null);
   const [helpfulPendingId, setHelpfulPendingId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const deepLinkedReviewId = searchParams.get('review');
@@ -905,9 +681,7 @@ export function RentalReviewsSection({
     [deleteReview],
   );
 
-  const handleShare = useCallback((review: ProductReviewResponse) => {
-    setShareTarget(review);
-  }, []);
+  // Share functionality removed per request.
 
   const RATING_OPTIONS: { label: string; value: number | null }[] = [
     { label: 'Tất cả', value: null },
@@ -1034,7 +808,6 @@ export function RentalReviewsSection({
               currentUserId={currentUserId}
               highlighted={deepLinkedReviewId === review.productReviewId}
               isHelpfulPending={helpfulPendingId === review.productReviewId}
-              onShare={handleShare}
               onDelete={handleDelete}
               onMarkHelpful={handleMarkHelpful}
             />
@@ -1079,14 +852,7 @@ export function RentalReviewsSection({
         </>
       )}
 
-      {/* Share modal */}
-      <ShareReviewModal
-        open={!!shareTarget}
-        onOpenChange={(o) => !o && setShareTarget(null)}
-        reviewId={shareTarget?.productReviewId ?? ''}
-        productName={shareTarget?.productName ?? ''}
-        productId={productId}
-      />
+      {/* Share modal removed per request */}
     </div>
   );
 }
