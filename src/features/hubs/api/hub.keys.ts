@@ -1,5 +1,5 @@
 /**
- * Hub query key factory — TanStack Query
+ * Hub query key factory - TanStack Query
  * Module 6: HUBS (API-040 → API-044)
  */
 

@@ -15,7 +15,7 @@ import { CatalogHeader, type SortOption } from './catalog-header';
 
 /**
  * @deprecated Use CatalogView instead. This component uses static mock data.
- * Kept for reference only — not rendered by any live page.
+ * Kept for reference only - not rendered by any live page.
  */
 
 // ─── Config ──────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 'use client';
 
-// Adapted from React Bits — OrbitImages (ts-tailwind version)
-// Component created by Dominik Koch — https://x.com/dominikkoch
+// Adapted from React Bits - OrbitImages (ts-tailwind version)
+// Component created by Dominik Koch - https://x.com/dominikkoch
 // https://github.com/DavidHDev/react-bits
 // Dependency: motion/react (already in package.json as "motion")
 

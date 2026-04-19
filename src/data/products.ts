@@ -8,8 +8,8 @@ export const products: Product[] = [
     dailyPrice: 350000,
     oldDailyPrice: 450000,
     depositAmount: 3000000,
-    description: `<h2>iPhone 15 Pro Max — Đỉnh cao titanium</h2>
-<p>iPhone 15 Pro Max là chiếc flagship <strong>mạnh nhất</strong> từ Apple năm 2023, được trang bị chip <strong>A17 Pro</strong> được sản xuất trên tiến trình 3nm — chip di động đầu tiên trên thế giới với hiệu năng vượt trội.</p>
+    description: `<h2>iPhone 15 Pro Max - Đỉnh cao titanium</h2>
+<p>iPhone 15 Pro Max là chiếc flagship <strong>mạnh nhất</strong> từ Apple năm 2023, được trang bị chip <strong>A17 Pro</strong> được sản xuất trên tiến trình 3nm - chip di động đầu tiên trên thế giới với hiệu năng vượt trội.</p>
 
 <h3>🎬 Video giới thiệu</h3>
 <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;margin:12px 0;">
@@ -22,7 +22,7 @@ export const products: Product[] = [
   <li>Camera chính <strong>48MP</strong>, khẩu độ f/1.78, chống rung cơ học</li>
   <li>Camera telephoto <strong>12MP</strong> tetraprism zoom quang học <strong>5x</strong></li>
   <li>Camera góc siêu rộng <strong>12MP</strong>, f/2.2</li>
-  <li>Quay video <strong>4K/120fps</strong> ProRes — chất lượng điện ảnh</li>
+  <li>Quay video <strong>4K/120fps</strong> ProRes - chất lượng điện ảnh</li>
 </ul>
 
 <h3>⚡ Thông số kỹ thuật</h3>
@@ -40,7 +40,7 @@ export const products: Product[] = [
 <h3>✅ Lý do nên thuê</h3>
 <ol>
   <li>Trải nghiệm chip A17 Pro mạnh nhất trước khi quyết định mua</li>
-  <li>Camera tetraprism 5x — lý tưởng cho nhiếp ảnh và video chuyên nghiệp</li>
+  <li>Camera tetraprism 5x - lý tưởng cho nhiếp ảnh và video chuyên nghiệp</li>
   <li>Khung titanium sang trọng, cầm nhẹ hơn thế hệ trước</li>
 </ol>
 
@@ -109,7 +109,7 @@ export const products: Product[] = [
     dailyPrice: 320000,
     oldDailyPrice: 400000,
     depositAmount: 2800000,
-    description: `<h2>Samsung Galaxy S24 Ultra — AI Phone dành cho người sáng tạo</h2>
+    description: `<h2>Samsung Galaxy S24 Ultra - AI Phone dành cho người sáng tạo</h2>
 <p>Galaxy S24 Ultra là đỉnh cao của dòng flagship Samsung, tích hợp <strong>Galaxy AI</strong> với hàng loạt tính năng AI tiên tiến như Circle to Search, Live Translate và Generative Edit.</p>
 
 <h3>🎬 Video trải nghiệm thực tế</h3>
@@ -117,11 +117,11 @@ export const products: Product[] = [
   <iframe src="https://www.youtube.com/embed/SFgSS3PaRRo" title="Samsung S24 Ultra" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
 </div>
 
-<h3>✏️ S Pen — Bút thông minh tích hợp</h3>
+<h3>✏️ S Pen - Bút thông minh tích hợp</h3>
 <img src="https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=800&q=80" alt="Samsung S24 Ultra S Pen" style="width:100%;border-radius:12px;margin:8px 0;" />
 <p>S Pen được tích hợp trực tiếp vào thân máy với độ trễ <strong>2.8ms</strong>, hỗ trợ ghi chú tức thì ngay cả khi màn hình tắt.</p>
 
-<h3>📷 Camera 200MP — Zoom không giới hạn</h3>
+<h3>📷 Camera 200MP - Zoom không giới hạn</h3>
 <ul>
   <li>Camera chính <strong>200MP</strong>, f/1.7, chống rung quang học OIS</li>
   <li>Telephoto <strong>50MP</strong> zoom quang học 5x (tương đương 111mm)</li>

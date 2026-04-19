@@ -1,5 +1,5 @@
 /**
- * useCatalogProductsQuery — API-054 GET /api/v1/products
+ * useCatalogProductsQuery - API-054 GET /api/v1/products
  *
  * Powers the public catalog page with:
  *  - category / subcategory filtering
@@ -25,14 +25,14 @@ import type { Product } from '@/types/catalog';
 export interface CatalogQueryParams {
   /** Top-level category ID (required to scope the catalog page) */
   categoryId?: string;
-  /** Subcategory ID — if present, products are filtered to this child category */
+  /** Subcategory ID - if present, products are filtered to this child category */
   subcategoryId?: string;
   /**
    * When true, pass includeDescendants=true to BE so products from all
    * descendant categories are returned (used when only root categoryId is set).
    */
   includeDescendants?: boolean;
-  /** Free-text search query — matched against product name (contains) */
+  /** Free-text search query - matched against product name (contains) */
   searchQuery?: string;
   /** Multi-select brand names (BE stores brand as a single string per product) */
   brands?: string[];
@@ -40,7 +40,7 @@ export interface CatalogQueryParams {
   minPrice?: string;
   /** Maximum daily price in VND */
   maxPrice?: string;
-  /** Sort string — same format as BE: "field,direction" */
+  /** Sort string - same format as BE: "field,direction" */
   sort?: string;
   /** When true, only return products that have at least one AVAILABLE inventory item */
   onlyWithStock?: boolean;
@@ -59,7 +59,7 @@ export interface CatalogResult {
   currentPage: number;
   hasNext: boolean;
   hasPrevious: boolean;
-  /** Unique brand names extracted from this page's products — used by filter sidebar */
+  /** Unique brand names extracted from this page's products - used by filter sidebar */
   brands: string[];
 }
 
@@ -160,7 +160,7 @@ export function useCatalogProductsQuery(params: CatalogQueryParams = {}) {
   const sort = params.sort;
 
   // includeDescendants=true when a root categoryId is selected but no
-  // subcategoryId — tells BE to return products from all child categories too.
+  // subcategoryId - tells BE to return products from all child categories too.
   const includeDescendants =
     params.includeDescendants ?? (!!params.categoryId && !params.subcategoryId);
 

@@ -310,7 +310,7 @@ export function CategoryFormDialog({
                 onChange={(id) => setForm((f) => ({ ...f, parentId: id }))}
                 excludeId={target?.categoryId}
                 allowRoot
-                rootLabel='— Danh mục gốc —'
+                rootLabel='- Danh mục gốc -'
                 disabled={isPending}
               />
             </div>
@@ -337,7 +337,7 @@ export function CategoryFormDialog({
             </div>
           </div>
 
-          {/* isActive — edit mode only */}
+          {/* isActive - edit mode only */}
           {isEdit && (
             <div className='flex items-center justify-between rounded-lg border border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3 px-4 py-3'>
               <div>

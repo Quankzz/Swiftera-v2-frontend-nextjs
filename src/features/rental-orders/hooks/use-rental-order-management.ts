@@ -98,7 +98,7 @@ export function useCancelOrderMutation() {
 }
 
 /**
- * Hoàn tất đơn thuê — PICKED_UP → COMPLETED (API-079)
+ * Hoàn tất đơn thuê - PICKED_UP → COMPLETED (API-079)
  */
 export function useCompleteOrderMutation() {
   const qc = useQueryClient();
@@ -118,7 +118,7 @@ export function useCompleteOrderMutation() {
 }
 
 /**
- * Thu hồi sớm do sự cố — DELIVERED/IN_USE → PENDING_PICKUP (API-079, ADMIN only)
+ * Thu hồi sớm do sự cố - DELIVERED/IN_USE → PENDING_PICKUP (API-079, ADMIN only)
  */
 export function useReportIssueMutation() {
   const qc = useQueryClient();

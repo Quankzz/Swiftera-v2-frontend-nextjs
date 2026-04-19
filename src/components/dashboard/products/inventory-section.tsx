@@ -26,7 +26,7 @@ import type { DraftInventoryItem } from './use-product-form';
 import { HubPickerDialog } from './hub-picker-dialog';
 
 // ─── Status meta ──────────────────────────────────────────────────
-// Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 9
+// Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 9
 // Status enum: AVAILABLE | RESERVED | RENTED | MAINTENANCE | DAMAGED | RETIRED
 const STATUS_OPTIONS: {
   value: InventoryItemStatus;
@@ -90,10 +90,10 @@ const CONDITION_GRADES: {
   value: InventoryItemConditionGrade;
   label: string;
 }[] = [
-  { value: 'NEW', label: 'Mới — Như hộp' },
-  { value: 'GOOD', label: 'Tốt — Vài vết nhỏ' },
-  { value: 'FAIR', label: 'Trung bình — Dùng nhiều' },
-  { value: 'POOR', label: 'Kém — Cần kiểm tra' },
+  { value: 'NEW', label: 'Mới - Như hộp' },
+  { value: 'GOOD', label: 'Tốt - Vài vết nhỏ' },
+  { value: 'FAIR', label: 'Trung bình - Dùng nhiều' },
+  { value: 'POOR', label: 'Kém - Cần kiểm tra' },
 ];
 
 function StatusBadge({ status }: { status: InventoryItemStatus }) {
@@ -130,7 +130,7 @@ function InventoryItemRow({
 }) {
   const [expanded, setExpanded] = useState(!item.serialNumber);
   const [hubDialogOpen, setHubDialogOpen] = useState(false);
-  // Local hubName for display — initialized from item data (pre-loaded from product detail)
+  // Local hubName for display - initialized from item data (pre-loaded from product detail)
   const [hubName, setHubName] = useState<string>(item.hubName ?? '');
 
   const inputCls =
@@ -192,7 +192,7 @@ function InventoryItemRow({
       {/* Expanded detail */}
       {expanded && (
         <div className='border-t border-gray-200 dark:border-white/8 px-4 py-4 grid grid-cols-1 gap-3 sm:grid-cols-2'>
-          {/* Color — chỉ hiện khi product có >0 màu */}
+          {/* Color - chỉ hiện khi product có >0 màu */}
           {productColors.length > 0 && (
             <div className='flex flex-col gap-1.5 sm:col-span-2'>
               <label className='text-xs font-medium text-text-sub'>
@@ -234,7 +234,7 @@ function InventoryItemRow({
               </div>
               {productColors.length > 1 && !item.productColorId && (
                 <p className='text-[11px] text-amber-500'>
-                  Sản phẩm có nhiều màu — nên chọn màu cho thiết bị này
+                  Sản phẩm có nhiều màu - nên chọn màu cho thiết bị này
                 </p>
               )}
             </div>

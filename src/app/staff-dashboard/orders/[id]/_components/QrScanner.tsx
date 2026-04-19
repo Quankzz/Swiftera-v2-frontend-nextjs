@@ -106,7 +106,7 @@ export function QrScanner({
           return;
         } else {
           setError(
-            `QR không khớp (${code.data}) — yêu cầu khách mở đúng mã đơn.`,
+            `QR không khớp (${code.data}) - yêu cầu khách mở đúng mã đơn.`,
           );
         }
       }
@@ -163,7 +163,7 @@ export function QrScanner({
     }
     if (simulate === 'failed') {
       setError(
-        'Giả lập thất bại: QR không khớp — mã QR không thuộc đơn hàng này.',
+        'Giả lập thất bại: QR không khớp - mã QR không thuộc đơn hàng này.',
       );
       setLastDetected('WRONG-QR-MOCK');
       return;
@@ -508,7 +508,7 @@ export function QrScanner({
             stopAll();
             setScanning(false);
             setError(
-              'Giả lập thất bại: QR không khớp — mã không thuộc đơn hàng này.',
+              'Giả lập thất bại: QR không khớp - mã không thuộc đơn hàng này.',
             );
             setLastDetected('WRONG-QR-MOCK');
           }}

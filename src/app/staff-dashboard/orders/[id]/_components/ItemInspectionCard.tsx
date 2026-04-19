@@ -80,7 +80,7 @@ export function ItemInspectionCard({
         placeholder={
           isCheckin
             ? 'Ghi chú tình trạng: màu sắc, vết trầy, phụ kiện...'
-            : 'Chi tiết hư hỏng, thiếu phụ kiện — căn cứ tính phạt.'
+            : 'Chi tiết hư hỏng, thiếu phụ kiện - căn cứ tính phạt.'
         }
         value={note}
         onChange={(e) => setNote(e.target.value)}

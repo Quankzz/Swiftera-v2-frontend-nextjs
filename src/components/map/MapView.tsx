@@ -230,7 +230,7 @@ const MapView: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Hub markers — re-drawn whenever hubs load or map becomes ready ────────
+  // ── Hub markers - re-drawn whenever hubs load or map becomes ready ────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isMapReady || hubs.length === 0) return;
@@ -332,7 +332,7 @@ const MapView: React.FC = () => {
   }, [selectedRouteIndex]);
   // ── Auto-clear routes when either address field becomes empty ───────────────
   useEffect(() => {
-    // Both filled — nothing to clear
+    // Both filled - nothing to clear
     if (startAddress.trim() && endAddress.trim()) return;
 
     // Cancel any in-flight search so stale results won’t re-draw routes
@@ -497,7 +497,7 @@ const MapView: React.FC = () => {
         },
       });
 
-      // Wide transparent hit-area layer — makes it easy to click narrow lines
+      // Wide transparent hit-area layer - makes it easy to click narrow lines
       map.addLayer({
         id: hitLayerId,
         type: 'line',

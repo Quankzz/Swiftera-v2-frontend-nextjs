@@ -1,6 +1,6 @@
 /**
- * Product service — tất cả API calls cho products module (dashboard).
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * Product service - tất cả API calls cho products module (dashboard).
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *   Module 8: PRODUCTS (API-051 → API-055)

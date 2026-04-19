@@ -223,7 +223,7 @@ export async function generateContractPdf(input: ContractPdfInput): Promise<Uint
 
   // Bottom bar
   page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: 30, color: TEAL });
-  page.drawText('Tài liệu được tạo tự động bởi hệ thống Swiftera — swiftera.vn', {
+  page.drawText('Tài liệu được tạo tự động bởi hệ thống Swiftera - swiftera.vn', {
     x: MARGIN,
     y: 10,
     size: 7,

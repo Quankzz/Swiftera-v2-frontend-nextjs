@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * useCartSync — Hướng B: Zustand làm local cart, sync lên API khi đăng nhập.
+ * useCartSync - Hướng B: Zustand làm local cart, sync lên API khi đăng nhập.
  *
  * Luồng:
  *  1. User chưa đăng nhập → addLine vào Zustand (localStorage persist)

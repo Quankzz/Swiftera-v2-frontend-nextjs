@@ -1,5 +1,5 @@
 /**
- * Shared formatting utilities — used across dashboard pages and order components.
+ * Shared formatting utilities - used across dashboard pages and order components.
  * All functions are pure (no side-effects, no Date.now() internally in render).
  */
 
@@ -17,7 +17,7 @@ export const fmtDate = (s: string): string =>
     year: 'numeric',
   });
 
-/** Format a date string as dd/mm (no year) — for compact displays. */
+/** Format a date string as dd/mm (no year) - for compact displays. */
 export const fmtDateShort = (s: string): string =>
   new Date(s).toLocaleDateString('vi-VN', {
     day: '2-digit',
@@ -36,7 +36,7 @@ export const fmtDatetime = (s: string): string =>
 
 /**
  * Parse backend date strings that may contain an AM/PM suffix.
- * Backend trả format: "2026-04-07 20:22:35 PM" — JS không parse được do
+ * Backend trả format: "2026-04-07 20:22:35 PM" - JS không parse được do
  * vừa có 24h clock vừa có AM/PM. Strip suffix trước khi parse.
  *
  * Ví dụ: "2026-04-07 20:22:35 PM" → new Date("2026-04-07 20:22:35") → OK

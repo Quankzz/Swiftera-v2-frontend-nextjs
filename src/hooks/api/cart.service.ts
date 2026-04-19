@@ -1,5 +1,5 @@
 /**
- * Cart API service — Module 10: CART (API-061 → API-065)
+ * Cart API service - Module 10: CART (API-061 → API-065)
  *
  * Dùng httpService (axios) giống các service khác trong hooks/api/
  */

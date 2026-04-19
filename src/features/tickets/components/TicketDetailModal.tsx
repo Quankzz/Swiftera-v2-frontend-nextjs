@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * TicketDetailModal — Right slide-over panel for admin ticket detail
+ * TicketDetailModal - Right slide-over panel for admin ticket detail
  *
  * Shows:
  *  - Customer info & ticket metadata
@@ -105,7 +105,7 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
   const { mutate: reply, isPending: replying } = useReplyTicket();
   const { mutate: close, isPending: closing } = useCloseTicket();
 
-  // Reset reply text when the selected ticket changes (during render — avoids useEffect setState)
+  // Reset reply text when the selected ticket changes (during render - avoids useEffect setState)
   const currentId = ticket?.contactTicketId;
   if (currentId !== prevIdRef.current) {
     prevIdRef.current = currentId;
@@ -247,7 +247,7 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
 
         {/* ── Footer: actions ───────────────────────────── */}
         <div className='shrink-0 border-t border-gray-100 dark:border-white/8 px-5 py-4 space-y-3 bg-white dark:bg-surface-base'>
-          {/* Status update — always visible */}
+          {/* Status update - always visible */}
           <div className='space-y-2'>
             <label className='text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1.5'>
               <RefreshCw size={12} />
@@ -279,7 +279,7 @@ export function TicketDetailModal({ ticket, onClose }: TicketDetailModalProps) {
             </div>
           </div>
 
-          {/* Reply + Close ticket — only when not closed */}
+          {/* Reply + Close ticket - only when not closed */}
           {isOpen && (
             <>
               {/* Reply */}

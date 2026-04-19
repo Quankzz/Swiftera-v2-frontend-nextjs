@@ -117,7 +117,7 @@ export type RentalOrderApiStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
-/** Derived UI-only status — never comes from backend */
+/** Derived UI-only status - never comes from backend */
 export type OverdueStatus = 'OVERDUE';
 
 /** Full UI order status (includes derived OVERDUE) */
@@ -151,7 +151,7 @@ export interface RentalOrderLineResponse {
   itemPenaltyAmount: number;
   checkoutConditionNote: string | null;
   checkinConditionNote: string | null;
-  /** Evidence photos — CHECKOUT: taken at hub before delivery; CHECKIN: taken when pickup */
+  /** Evidence photos - CHECKOUT: taken at hub before delivery; CHECKIN: taken when pickup */
   photos: RentalOrderLinePhotoResponse[];
   /** Color info from inventory item */
   productColorId: string | null;
@@ -164,12 +164,12 @@ export interface RentalOrderLineResponse {
 
 /**
  * Backend RentalOrderResponse (API-074 / API-075 / API-076).
- * Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 11: RENTAL ORDERS
+ * Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 11: RENTAL ORDERS
  */
 export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
-  // Staff assignment — API-076 (list) returns flat IDs;
+  // Staff assignment - API-076 (list) returns flat IDs;
   // API-082 (assign-staff) returns nested HubStaffResponse objects.
   deliveryStaffId: string | null;
   pickupStaffId: string | null;
@@ -219,7 +219,7 @@ export interface RentalOrderResponse {
   depositRefundAmount: number | null;
   /** Backend key is 'rentalOrderLines', not 'orderLines' */
   rentalOrderLines: RentalOrderLineResponse[];
-  /** QR code as base64 PNG data URI — bind directly to <img src>. Backend generates on PAID. */
+  /** QR code as base64 PNG data URI - bind directly to <img src>. Backend generates on PAID. */
   qrCode: string | null;
   // Timestamps
   createdAt: string;
@@ -240,9 +240,9 @@ export interface RentalOrderResponse {
  */
 export interface RenterInfo {
   user_id: string;
-  /** From deliveryRecipientName snapshot — not the user's legal name */
+  /** From deliveryRecipientName snapshot - not the user's legal name */
   full_name: string;
-  /** From RentalOrderResponse.userEmail — BE enriched field */
+  /** From RentalOrderResponse.userEmail - BE enriched field */
   email: string;
   /** From deliveryPhone snapshot */
   phone_number: string;
@@ -267,7 +267,7 @@ export interface StaffOrderItem {
   product_item_id: string;
   product_name: string;
   serial_number: string;
-  /** (n/a BE) Category is not exposed in order line — always empty string */
+  /** (n/a BE) Category is not exposed in order line - always empty string */
   category: string;
   daily_price: number;
   deposit_amount: number;
@@ -325,7 +325,7 @@ export interface StaffOrder {
   notes?: string;
   /** QR code: base64 PNG data URI from RentalOrderResponse.qrCode */
   qr_code?: string | null;
-  /** Short code customer shows to staff on delivery — from qrCode token (BE generates internally) */
+  /** Short code customer shows to staff on delivery - from qrCode token (BE generates internally) */
   confirmation_code?: string;
 }
 

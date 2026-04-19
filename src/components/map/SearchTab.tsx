@@ -120,7 +120,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
           )}
         </div>
 
-        {/* Radius slider — shown only when "nearby" filter is active */}
+        {/* Radius slider - shown only when "nearby" filter is active */}
         {showNearbyOnly && hasLocation && (
           <div className="rounded-2xl border border-theme-primary-start/20 bg-theme-primary-start/5 px-4 py-3 space-y-2.5">
             <div className="flex items-center justify-between">

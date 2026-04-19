@@ -37,7 +37,7 @@ export function HomeStepsProcess() {
         </h2>
 
         <div className='relative grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-16'>
-          {/* Dashed connector line — visible in both light and dark mode */}
+          {/* Dashed connector line - visible in both light and dark mode */}
           <div
             aria-hidden
             className='hidden md:block absolute top-10 left-1/2 -translate-x-1/2 w-2/3 h-px'

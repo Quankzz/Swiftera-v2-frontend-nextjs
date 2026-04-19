@@ -15,7 +15,7 @@ export type AppErrorCode =
   | 'SERVER_ERROR'
   | 'UNKNOWN';
 
-/** Cấu trúc lỗi chuẩn — backend trả về trong mảng errors */
+/** Cấu trúc lỗi chuẩn - backend trả về trong mảng errors */
 export interface ApiErrorDetail {
   code: number;
   message: string;
@@ -113,7 +113,7 @@ export function normalizeError(error: unknown): AppError {
 }
 
 export interface ApiRequestOptions {
-  /** Query params — sẽ được serialize vào URL */
+  /** Query params - sẽ được serialize vào URL */
   params?: Record<string, string | number | boolean | undefined | null>;
   /** Request body (sẽ JSON.stringify) */
   body?: unknown;
@@ -170,7 +170,7 @@ function buildQueryString(
 function mapAxiosError(error: unknown): AppError {
   if (error instanceof AppError) return error;
 
-  // AxiosError — network error hoặc lỗi chưa qua interceptor transform
+  // AxiosError - network error hoặc lỗi chưa qua interceptor transform
   if (axios.isAxiosError(error)) {
     if (!error.response) {
       if (error.code === 'ECONNABORTED') {
@@ -314,7 +314,7 @@ export function apiDelete<T>(
  * Upload file(s) qua multipart/form-data.
  * Dùng cho module files (Azure Blob Storage).
  *
- * KHÔNG set Content-Type — để browser/Axios tự thêm boundary.
+ * KHÔNG set Content-Type - để browser/Axios tự thêm boundary.
  */
 export async function apiUpload<T>(
   endpoint: string,
@@ -332,7 +332,7 @@ export async function apiUpload<T>(
       method: 'POST',
       url,
       data: formData,
-      headers: extraHeaders, // Không override Content-Type — Axios/browser tự xử lý boundary
+      headers: extraHeaders, // Không override Content-Type - Axios/browser tự xử lý boundary
       signal,
       requireToken: !skipAuth,
     });
@@ -350,7 +350,7 @@ export async function apiUpload<T>(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Legacy export — giữ tương thích với code cũ đang import fetchApi
+// Legacy export - giữ tương thích với code cũ đang import fetchApi
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**

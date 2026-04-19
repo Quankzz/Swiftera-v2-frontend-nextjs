@@ -151,7 +151,7 @@ export function PolicyEditDialog({
           try {
             await storageApi.deleteSingleFile({ filePath: oldPath });
           } catch {
-            // ignore delete error — non-critical
+            // ignore delete error - non-critical
           }
         }
       }
@@ -181,7 +181,7 @@ export function PolicyEditDialog({
   const handleSubmit = async () => {
     if (!validate()) return;
 
-    // Build payload — chỉ gửi field thay đổi
+    // Build payload - chỉ gửi field thay đổi
     const payload: Record<string, unknown> = {};
 
     if (title.trim() !== policy.title) {

@@ -8,7 +8,7 @@
  * Field mapping:
  *   ProductResponse.images[]          → Product.productImages[]
  *   ProductResponse.color (string)    → Product.colors[]  (mapped to {name, value})
- *   ProductResponse.brand             → (ignored by ProductCard — no field used)
+ *   ProductResponse.brand             → (ignored by ProductCard - no field used)
  *   All other fields are 1-to-1.
  *
  * Note on `color`:
@@ -31,7 +31,7 @@ import type { Product } from '@/types/catalog';
  * Map a BE ProductResponse to the local Product type that ProductCard expects.
  *
  * `productImages` ← `images`  (field rename)
- * `colors`        ← []        (BE has only a single color name, no hex — skipped)
+ * `colors`        ← []        (BE has only a single color name, no hex - skipped)
  */
 function toLocalProduct(p: ProductResponse): Product {
   return {
@@ -73,7 +73,7 @@ const FEATURED_PARAMS = {
 } as const;
 
 /**
- * "Sản phẩm nổi bật" — products sorted by dailyPrice descending.
+ * "Sản phẩm nổi bật" - products sorted by dailyPrice descending.
  * staleTime 60 s (home page content, refreshed on each visit).
  */
 export function useHomeFeaturedProductsQuery() {
@@ -96,7 +96,7 @@ const BUDGET_PARAMS = {
 } as const;
 
 /**
- * "Có thể bạn thích" — products sorted by dailyPrice ascending.
+ * "Có thể bạn thích" - products sorted by dailyPrice ascending.
  * staleTime 60 s.
  */
 export function useHomeBudgetProductsQuery() {

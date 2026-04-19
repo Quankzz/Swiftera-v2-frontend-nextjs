@@ -1,5 +1,5 @@
 /**
- * Contact Tickets — API Service
+ * Contact Tickets - API Service
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 16: CONTACT TICKETS)
  *
  * API-100: POST   /contact-tickets             [PUBLIC]  createTicket

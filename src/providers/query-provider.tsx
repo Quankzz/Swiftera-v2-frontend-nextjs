@@ -9,7 +9,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Dữ liệu được coi là fresh trong 3 phút — tránh refetch khi navigate qua lại
+            // Dữ liệu được coi là fresh trong 3 phút - tránh refetch khi navigate qua lại
             staleTime: 3 * 60 * 1000,
             // Giữ cache trong 10 phút sau khi không còn observer
             gcTime: 10 * 60 * 1000,

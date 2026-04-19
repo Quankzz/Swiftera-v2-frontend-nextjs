@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * KpiCards — Hàng đầu tiên dashboard: 4 thẻ KPI.
+ * KpiCards - Hàng đầu tiên dashboard: 4 thẻ KPI.
  *
  * - Đơn hoàn thành hôm nay + so sánh với hôm qua
  * - Doanh thu thuê hôm nay

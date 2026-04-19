@@ -1,5 +1,5 @@
 /**
- * Review query keys — dùng chung cho TanStack Query
+ * Review query keys - dùng chung cho TanStack Query
  */
 
 export const reviewKeys = {

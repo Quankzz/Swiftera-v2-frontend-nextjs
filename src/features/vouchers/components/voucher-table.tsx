@@ -42,7 +42,7 @@ function formatCurrency(amount: number): string {
 
 function parseBEDate(dateStr: string): Date | null {
   // Thử parse trực tiếp (ISO 8601 hoặc format BE trả về local time)
-  // BE trả "2026-12-31 11:59:59 PM" — local Vietnam time, không phải UTC
+  // BE trả "2026-12-31 11:59:59 PM" - local Vietnam time, không phải UTC
   const ampmMatch = dateStr.match(
     /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i,
   );
@@ -62,11 +62,11 @@ function parseBEDate(dateStr: string): Date | null {
 }
 
 function formatDateString(dateStr: string | null): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   try {
     const d = parseBEDate(dateStr);
     if (!d) return dateStr;
-    // Luôn hiển thị cả ngày lẫn giờ — giờ hết hạn quan trọng
+    // Luôn hiển thị cả ngày lẫn giờ - giờ hết hạn quan trọng
     return d.toLocaleString('vi-VN', {
       day: '2-digit',
       month: '2-digit',

@@ -20,7 +20,7 @@ type DialogState =
 
 export function VouchersPage() {
   const [dialog, setDialog] = useState<DialogState>({ type: 'idle' });
-  // Stats đến từ VoucherTable qua callback — không cần query riêng size:100
+  // Stats đến từ VoucherTable qua callback - không cần query riêng size:100
   const [meta, setMeta] = useState<VoucherTableMeta>({
     totalElements: 0,
     activeCount: 0,
@@ -50,7 +50,7 @@ export function VouchersPage() {
         </button>
       </div>
 
-      {/* Stats — phản ánh trang hiện tại trong bảng */}
+      {/* Stats - phản ánh trang hiện tại trong bảng */}
       <div className='flex flex-wrap gap-4'>
         <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
           <Tag className='size-4 text-theme-primary-start' />

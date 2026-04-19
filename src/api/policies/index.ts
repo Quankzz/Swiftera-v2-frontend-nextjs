@@ -1,12 +1,12 @@
 /**
- * Policies API — /api/v1/policies
+ * Policies API - /api/v1/policies
  *
- * Module 17 trong tài liệu API: POLICIES (7 endpoints — API-105 → API-111)
+ * Module 17 trong tài liệu API: POLICIES (7 endpoints - API-105 → API-111)
  * Base URL: /api/v1
  *
  * Access:
- *   PUBLIC  — API-106 (getById), API-107 (getLatestByCode), API-108 (list)
- *   AUTH    — API-105 (create), API-109 (deactivate), API-110 (consent), API-111 (myConsents)
+ *   PUBLIC  - API-106 (getById), API-107 (getLatestByCode), API-108 (list)
+ *   AUTH    - API-105 (create), API-109 (deactivate), API-110 (consent), API-111 (myConsents)
  */
 
 import type { AxiosResponse } from 'axios';
@@ -28,24 +28,24 @@ export type PolicyCode =
 
 /**
  * Loại đồng ý của user với chính sách.
- *   ACCEPTED  — đồng ý (default)
- *   DECLINED  — từ chối (nếu BE cho phép)
- *   WITHDRAWN — thu hồi đồng ý
+ *   ACCEPTED  - đồng ý (default)
+ *   DECLINED  - từ chối (nếu BE cho phép)
+ *   WITHDRAWN - thu hồi đồng ý
  */
 export type ConsentType = 'ACCEPTED' | 'DECLINED' | 'WITHDRAWN';
 
 /**
  * Ngữ cảnh ghi nhận đồng ý.
- *   ACCOUNT  — khi đăng ký / đăng nhập (default)
- *   CHECKOUT — khi thanh toán
- *   CONTRACT — khi ký hợp đồng
+ *   ACCOUNT  - khi đăng ký / đăng nhập (default)
+ *   CHECKOUT - khi thanh toán
+ *   CONTRACT - khi ký hợp đồng
  */
 export type ConsentContext = 'ACCOUNT' | 'CHECKOUT' | 'CONTRACT';
 
 // ─── Response Types ────────────────────────────────────────────────────────────
 
 /**
- * PolicyDocumentResponse — trả về từ API-105 → API-109.
+ * PolicyDocumentResponse - trả về từ API-105 → API-109.
  *
  * Ghi chú:
  *   - `effectiveFrom` BE trả chuỗi dạng "2026-04-01 07:00:00 AM"
@@ -56,10 +56,10 @@ export interface PolicyDocumentResponse {
   policyDocumentId: string;
   /** Mã phân loại: RENTAL_TERMS, PRIVACY_POLICY, v.v. */
   code: PolicyCode;
-  /** Số phiên bản — số nguyên dương, tăng dần */
+  /** Số phiên bản - số nguyên dương, tăng dần */
   policyVersion: number;
   title: string;
-  /** URL PDF lưu trên Azure Blob / S3 — có thể null */
+  /** URL PDF lưu trên Azure Blob / S3 - có thể null */
   pdfUrl: string | null;
   /** Thời điểm có hiệu lực */
   effectiveFrom: string;
@@ -69,7 +69,7 @@ export interface PolicyDocumentResponse {
 }
 
 /**
- * UserConsentResponse — trả về từ API-110 và API-111.
+ * UserConsentResponse - trả về từ API-110 và API-111.
  *
  * Ghi chú:
  *   - API-110 là idempotent: cùng user + policy + consentType + consentContext → trả record cũ
@@ -125,7 +125,7 @@ export interface ConsentSingleResponse {
   meta?: { timestamp: string; instance: string };
 }
 
-/** API-111: GET /policies/my-consents — trả mảng trực tiếp trong data */
+/** API-111: GET /policies/my-consents - trả mảng trực tiếp trong data */
 export interface MyConsentsResponse {
   success: boolean;
   message?: string;
@@ -136,7 +136,7 @@ export interface MyConsentsResponse {
 // ─── Request Payloads ──────────────────────────────────────────────────────────
 
 /**
- * CreatePolicyInput — payload cho API-105 POST /policies
+ * CreatePolicyInput - payload cho API-105 POST /policies
  *
  * Required: code, policyVersion, title, effectiveFrom
  * Optional: pdfUrl
@@ -144,17 +144,17 @@ export interface MyConsentsResponse {
 export interface CreatePolicyInput {
   /** Mã phân loại: RENTAL_TERMS, PRIVACY_POLICY, ... */
   code: PolicyCode;
-  /** Số phiên bản nguyên dương — nên lớn hơn phiên bản active hiện tại */
+  /** Số phiên bản nguyên dương - nên lớn hơn phiên bản active hiện tại */
   policyVersion: number;
   title: string;
   /** ISO 8601 UTC, VD: "2026-04-01T00:00:00Z" */
   effectiveFrom: string;
-  /** URL PDF — tùy chọn */
+  /** URL PDF - tùy chọn */
   pdfUrl?: string;
 }
 
 /**
- * ConsentInput — payload cho API-110 POST /policies/{policyId}/consent
+ * ConsentInput - payload cho API-110 POST /policies/{policyId}/consent
  *
  * Tất cả field đều tùy chọn; backend dùng giá trị mặc định nếu bỏ trống.
  * Idempotent: gửi lại với cùng key không tạo bản ghi mới.
@@ -171,7 +171,7 @@ export interface ConsentInput {
 }
 
 /**
- * PolicyListParams — query params cho API-108 GET /policies
+ * PolicyListParams - query params cho API-108 GET /policies
  */
 export interface PolicyListParams {
   /** 1-indexed (BE spec) */

@@ -11,7 +11,7 @@ export function extractBlobPathFromUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
     const segments = parsed.pathname.split('/').filter(Boolean);
-    // First segment is the container name — skip it
+    // First segment is the container name - skip it
     if (segments.length >= 2) {
       return segments.slice(1).join('/');
     }

@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { normalizeRedirectPath } from '@/lib/auth-redirect';
 
 const inputClassName =
   'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
@@ -54,6 +55,7 @@ function PasswordInput({
 
 export function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -70,8 +72,13 @@ export function SignInForm() {
       const result = await login({ email, password });
       const roles = result?.data?.userSecured?.rolesSecured ?? [];
       const isStaff = roles.some((r) => r.name === 'STAFF');
-      if (isStaff) router.push('/staff-dashboard');
-      else router.push('/');
+
+      const requestedRedirect = normalizeRedirectPath(
+        searchParams.get('redirect'),
+      );
+      const destination = requestedRedirect ?? (isStaff ? '/staff-dashboard' : '/');
+
+      router.push(destination);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại');

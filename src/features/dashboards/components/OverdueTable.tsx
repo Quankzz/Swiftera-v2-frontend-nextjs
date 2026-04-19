@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * OverdueTable — Hàng thứ ba (phải 50%):
+ * OverdueTable - Hàng thứ ba (phải 50%):
  * Bảng đơn hàng quá hạn từ overdueOrders.topItems.
  */
 

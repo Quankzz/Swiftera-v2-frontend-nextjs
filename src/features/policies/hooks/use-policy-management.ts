@@ -1,5 +1,5 @@
 /**
- * Policy management hooks — TanStack Query
+ * Policy management hooks - TanStack Query
  * Module 17: POLICIES (API-106, API-109, API-110)
  */
 
@@ -28,7 +28,7 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * usePoliciesQuery — phân trang danh sách chính sách (API-109)
+ * usePoliciesQuery - phân trang danh sách chính sách (API-109)
  */
 export function usePoliciesQuery(params?: PolicyListParams) {
   return useQuery({
@@ -40,7 +40,7 @@ export function usePoliciesQuery(params?: PolicyListParams) {
 }
 
 /**
- * usePolicyQuery — chi tiết 1 chính sách (API-107)
+ * usePolicyQuery - chi tiết 1 chính sách (API-107)
  */
 export function usePolicyQuery(policyDocumentId?: string) {
   return useQuery({
@@ -56,7 +56,7 @@ export function usePolicyQuery(policyDocumentId?: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * useCreatePolicyMutation — tạo chính sách mới (API-106)
+ * useCreatePolicyMutation - tạo chính sách mới (API-106)
  */
 export function useCreatePolicyMutation() {
   const queryClient = useQueryClient();
@@ -69,7 +69,7 @@ export function useCreatePolicyMutation() {
 }
 
 /**
- * useDeactivatePolicyMutation — vô hiệu hóa chính sách (API-110)
+ * useDeactivatePolicyMutation - vô hiệu hóa chính sách (API-110)
  */
 export function useDeactivatePolicyMutation() {
   const queryClient = useQueryClient();
@@ -86,7 +86,7 @@ export function useDeactivatePolicyMutation() {
 }
 
 /**
- * useUpdatePolicyMutation — cập nhật chính sách (API-109A)
+ * useUpdatePolicyMutation - cập nhật chính sách (API-109A)
  */
 export function useUpdatePolicyMutation() {
   const queryClient = useQueryClient();

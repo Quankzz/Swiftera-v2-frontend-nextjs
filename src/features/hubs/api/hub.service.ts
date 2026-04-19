@@ -1,8 +1,8 @@
 /**
- * Hub API service — Module 6: HUBS
+ * Hub API service - Module 6: HUBS
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (API-040 → API-044)
  *
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  * Service chỉ nhận payload đúng format API, không chứa UI logic.
  */
 

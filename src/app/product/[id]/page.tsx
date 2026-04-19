@@ -76,7 +76,10 @@ export default function ProductDetailPage() {
   } = useProductDetailQuery(productId);
 
   // Lấy tất cả đơn của user để tìm order COMPLETED cho sản phẩm này
-  const { data: ordersData } = useMyOrdersQuery({ size: 50 });
+  const { data: ordersData } = useMyOrdersQuery(
+    { size: 50 },
+    { enabled: !!currentUserId },
+  );
   const completedOrderId = useMemo(() => {
     if (!ordersData?.items) return null;
     return (
@@ -89,7 +92,10 @@ export default function ProductDetailPage() {
   }, [ordersData?.items, productId]);
 
   // Lấy tổng số đánh giá (dùng để hiển thị count ở summary)
-  const { data: reviewsMeta } = useProductReviewsQuery(productId, { page: 0, size: 1 });
+  const { data: reviewsMeta } = useProductReviewsQuery(productId, {
+    page: 1,
+    size: 1,
+  });
   const reviewsCount = reviewsMeta?.totalItems ?? 0;
 
   const [currentImage, setCurrentImage] = useState(0);
@@ -192,9 +198,9 @@ export default function ProductDetailPage() {
   const specifications = useMemo(() => {
     if (!product) return [];
     return [
-      { label: 'Thương hiệu', value: product.brand ?? '—' },
-      { label: 'Danh mục', value: product.categoryName ?? '—' },
-      { label: 'Màu sắc', value: product.color ?? '—' },
+      { label: 'Thương hiệu', value: product.brand ?? '-' },
+      { label: 'Danh mục', value: product.categoryName ?? '-' },
+      { label: 'Màu sắc', value: product.color ?? '-' },
       {
         label: 'Số ngày thuê tối thiểu',
         value: `${product.minRentalDays} ngày`,
@@ -203,7 +209,7 @@ export default function ProductDetailPage() {
         label: 'Tiền cọc',
         value: product.depositAmount
           ? `${formatter.format(product.depositAmount)} (hoàn trả khi trả thiết bị)`
-          : '—',
+          : '-',
       },
       {
         label: 'Đánh giá',
@@ -310,8 +316,8 @@ export default function ProductDetailPage() {
                 productData={{
                   name: product.name,
                   sku: product.productId.slice(0, 8).toUpperCase(),
-                  brand: product.brand ?? '—',
-                  productType: product.categoryName ?? '—',
+                  brand: product.brand ?? '-',
+                  productType: product.categoryName ?? '-',
                   discount,
                   rating: product.averageRating ?? 0,
                   reviews: reviewsCount,
@@ -398,7 +404,7 @@ export default function ProductDetailPage() {
           />
         </div>
 
-        {/* Related Products — API-054, loại trừ id ở client */}
+        {/* Related Products - API-054, loại trừ id ở client */}
         <div className='mt-4 sm:mt-6'>
           <RentalRelatedProducts currentProductId={product.productId} />
         </div>

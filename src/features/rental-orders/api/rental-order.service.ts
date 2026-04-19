@@ -1,6 +1,6 @@
 /**
- * Rental Order service — tất cả API calls cho rental orders module.
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * Rental Order service - tất cả API calls cho rental orders module.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 12: RENTAL ORDERS)
  *
@@ -243,7 +243,7 @@ export async function setPenalty(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Hoàn tất đơn thuê — chuyển status PICKED_UP → COMPLETED.
+ * Hoàn tất đơn thuê - chuyển status PICKED_UP → COMPLETED.
  * Sử dụng API-079: PATCH /rental-orders/{id}/status
  */
 export async function completeRentalOrder(
@@ -258,7 +258,7 @@ export async function completeRentalOrder(
 }
 
 /**
- * Thu hồi sớm do sự cố — ADMIN only.
+ * Thu hồi sớm do sự cố - ADMIN only.
  * Chuyển DELIVERED / IN_USE → PENDING_PICKUP kèm issueNote.
  * API-079: PATCH /rental-orders/{id}/status
  */

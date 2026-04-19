@@ -27,7 +27,7 @@ function formatCurrency(v: number) {
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -248,7 +248,7 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
               <div className='rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-500/30 p-3 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400'>
                 <CheckCircle2 className='w-4 h-4 shrink-0' />
                 Đơn hàng này đang ở trạng thái{' '}
-                <strong>{statusMeta.label}</strong> — chỉ có thể xem, không thể
+                <strong>{statusMeta.label}</strong> - chỉ có thể xem, không thể
                 chỉnh sửa gán đơn.
               </div>
             )}
@@ -266,7 +266,7 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
                 required
                 className='w-full rounded-xl border border-gray-200 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50'
               >
-                <option value=''>— Chọn hub —</option>
+                <option value=''>- Chọn hub -</option>
                 {hubs.map((hub) => (
                   <option key={hub.hubId} value={hub.hubId}>
                     {hub.name} ({hub.district}, {hub.city})
@@ -291,16 +291,16 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
                 >
                   <option value=''>
                     {!selectedHubId
-                      ? '— Chọn hub trước —'
+                      ? '- Chọn hub trước -'
                       : staffLoading
                         ? 'Đang tải...'
                         : deliveryStaff.length === 0
                           ? 'Không có nhân viên'
-                          : '— Chọn nhân viên giao —'}
+                          : '- Chọn nhân viên giao -'}
                   </option>
                   {deliveryStaff.map((s) => (
                     <option key={s.userId} value={s.userId}>
-                      {s.firstName} {s.lastName} — {s.phoneNumber}
+                      {s.firstName} {s.lastName} - {s.phoneNumber}
                     </option>
                   ))}
                 </select>
@@ -320,10 +320,10 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
                   disabled={!canAssign || !selectedHubId || staffLoading}
                   className='w-full rounded-xl border border-gray-200 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50'
                 >
-                  <option value=''>— Chưa phân công —</option>
+                  <option value=''>- Chưa phân công -</option>
                   {pickupStaff.map((s) => (
                     <option key={s.userId} value={s.userId}>
-                      {s.firstName} {s.lastName} — {s.phoneNumber}
+                      {s.firstName} {s.lastName} - {s.phoneNumber}
                     </option>
                   ))}
                 </select>

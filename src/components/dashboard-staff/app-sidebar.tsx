@@ -157,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       currentStatus === 'PAID,PENDING_PICKUP' ||
       currentStatus === 'PENDING_PICKUP,PAID');
 
-  // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
+  // Controlled open state - avoids the Base UI "uncontrolled → defaultOpen changed" warning
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
   React.useEffect(() => {
     if (isOrdersActive) setOrdersOpen(true);
@@ -226,7 +226,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {/* Đơn hàng — collapsible */}
+            {/* Đơn hàng - collapsible */}
             <Collapsible
               open={ordersOpen}
               onOpenChange={setOrdersOpen}

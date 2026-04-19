@@ -107,7 +107,7 @@ export function DashboardHeader() {
 
   return (
     <header className='sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 dark:border-white/8 bg-white/90 dark:bg-surface-base/95 px-4 backdrop-blur shrink-0'>
-      {/* Left — page title */}
+      {/* Left - page title */}
       {/* <div className='hidden sm:flex flex-col min-w-0'>
         <h1 className='text-sm font-semibold text-text-main leading-none truncate'>
           {page.title}
@@ -119,7 +119,7 @@ export function DashboardHeader() {
         )}
       </div> */}
 
-      {/* Right — actions */}
+      {/* Right - actions */}
       <div className='flex items-center gap-1 ml-auto'>
         {/* Theme toggle */}
         <ThemeToggle />

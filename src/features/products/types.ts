@@ -56,7 +56,7 @@ export interface ProductColorResponse {
 
 /**
  * Inventory item as embedded in a product detail response (API-053).
- * Subset of InventoryItemResponse — productId/productName are omitted
+ * Subset of InventoryItemResponse - productId/productName are omitted
  * because they're implicit (you're already in the product context).
  * The full InventoryItemResponse (with productId/productName) is used
  * by the standalone inventory-items API (API-057..061).
@@ -77,18 +77,18 @@ export interface InventoryItemInProduct {
 }
 
 // InventoryItemStatus / InventoryItemConditionGrade are declared later in
-// the Inventory Item Types section — forward references are fine in TS.
+// the Inventory Item Types section - forward references are fine in TS.
 
 // ── Product response (API-051 / API-052 / API-053 / API-054) ────────────────
 //
 // API-053 (GET /api/v1/products/{productId}) returns inventoryItems embedded
-// in the product detail response — no separate inventory API call needed.
+// in the product detail response - no separate inventory API call needed.
 
 export interface ProductResponse {
   productId: string;
   categoryId: string;
   categoryName: string;
-  /** e.g. "Canon", "Sony" — single string, not array */
+  /** e.g. "Canon", "Sony" - single string, not array */
   brand: string | null;
   /**
    * voucherId linked to this product (PRODUCT_DISCOUNT voucher).
@@ -100,7 +100,7 @@ export interface ProductResponse {
    * Use `colors[]` for structured data.
    */
   color: string | null;
-  /** Structured color list — canonical source for UI */
+  /** Structured color list - canonical source for UI */
   colors: ProductColorResponse[];
   name: string;
   shortDescription: string | null;
@@ -113,7 +113,7 @@ export interface ProductResponse {
   /** BE field name is `images` (not `productImages`) */
   images: ProductImageResponse[];
   /**
-   * Embedded inventory items — only present in detail responses (API-053).
+   * Embedded inventory items - only present in detail responses (API-053).
    * List responses (API-054) do NOT include inventoryItems.
    */
   inventoryItems?: InventoryItemInProduct[];
@@ -149,7 +149,7 @@ export interface CreateProductInput {
   /** optional, must be >= dailyPrice if provided */
   oldDailyPrice?: number;
   minRentalDays?: number;
-  /** Structured color list — preferred over legacy `color` string */
+  /** Structured color list - preferred over legacy `color` string */
   colors?: ProductColorInput[];
   /** array of image URL strings (upload first, then pass URLs) */
   imageUrls?: string[];
@@ -177,7 +177,7 @@ export interface ProductListParams {
   onlyWithStock?: boolean;
 }
 
-// ── Inventory Item Types (Module 9: INVENTORY ITEMS — API-056 to API-060) ──
+// ── Inventory Item Types (Module 9: INVENTORY ITEMS - API-056 to API-060) ──
 // Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
 
 export type InventoryItemStatus =

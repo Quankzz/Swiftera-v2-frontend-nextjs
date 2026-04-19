@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * InventoryStatus — Hàng thứ hai (phải 33%):
+ * InventoryStatus - Hàng thứ hai (phải 33%):
  * Donut chart hiển thị phân bổ trạng thái tồn kho.
  */
 

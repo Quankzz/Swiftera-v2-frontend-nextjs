@@ -111,7 +111,7 @@ export function DeliveredWorkflow({ order }: DeliveredWorkflowProps) {
                       Địa chỉ đã giao
                     </p>
                     <p className="text-[15px] font-medium text-foreground leading-relaxed whitespace-normal">
-                      {order.delivery_address || order.renter.address || '—'}
+                      {order.delivery_address || order.renter.address || '-'}
                     </p>
                   </div>
                 </div>

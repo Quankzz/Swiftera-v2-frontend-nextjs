@@ -2,6 +2,7 @@
 
 import { useState, useDeferredValue, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   Package,
@@ -28,6 +29,8 @@ import {
 } from '@/api/rentalOrderApi';
 import type { RentalOrderStatus } from '@/api/rentalOrderApi';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { buildLoginHref } from '@/lib/auth-redirect';
 
 const PolicyConsentDialog = dynamic(
   () =>
@@ -220,6 +223,9 @@ function PaginationControls({
 }
 
 export default function RentalOrdersPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(SORT_OPTIONS[0].value);
   const [statusFilter, setStatusFilter] = useState('');
@@ -237,12 +243,35 @@ export default function RentalOrdersPage() {
   async function handlePay(e: React.MouseEvent, rentalOrderId: string) {
     e.preventDefault(); // ngăn Link navigate
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
+      toast.error('Vui lòng đăng nhập để thanh toán đơn thuê.');
+      router.push(buildLoginHref('/rental-orders'));
+      return;
+    }
+
     if (payingId) return;
     setPendingPayOrderId(rentalOrderId);
     setPolicyOpen(true);
   }
 
   async function handlePayAfterConsent() {
+    if (!isAuthenticated) {
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
+      toast.error('Vui lòng đăng nhập để thanh toán đơn thuê.');
+      router.push(buildLoginHref('/rental-orders'));
+      return;
+    }
+
     if (!pendingPayOrderId || payingId) return;
     setPolicyOpen(false);
     setPayingId(pendingPayOrderId);
@@ -400,7 +429,7 @@ export default function RentalOrdersPage() {
               </p>
               <Button
                 className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
-                render={<Link href='/login?redirect=/rental-orders' />}
+                render={<Link href={buildLoginHref('/rental-orders')} />}
               >
                 Đăng nhập
               </Button>
@@ -475,7 +504,7 @@ export default function RentalOrdersPage() {
                         <FileText className='size-[18px]' />
                       </Link>
 
-                      {/* Info — chiếm phần lớn width, click → detail */}
+                      {/* Info - chiếm phần lớn width, click → detail */}
                       <Link
                         href={`/rental-orders/${order.rentalOrderId}`}
                         className='min-w-0 flex-1'
@@ -519,7 +548,7 @@ export default function RentalOrdersPage() {
                             </p>
                           )}
 
-                        {/* Amount — hiển thị trong info khi có nút Pay để tránh crowding */}
+                        {/* Amount - hiển thị trong info khi có nút Pay để tránh crowding */}
                         {isPending && (
                           <p className='mt-1 text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-400'>
                             {fmt.format(order.totalPayableAmount)}
@@ -580,7 +609,7 @@ export default function RentalOrdersPage() {
                       <div className='flex items-center gap-1.5 border-t border-amber-200/60 bg-amber-50/80 px-5 py-2 dark:border-amber-900/30 dark:bg-amber-950/20'>
                         <AlertCircle className='size-3 shrink-0 text-amber-600 dark:text-amber-400' />
                         <p className='text-[11px] text-amber-700 dark:text-amber-300'>
-                          Đơn chờ thanh toán — ấn{' '}
+                          Đơn chờ thanh toán - ấn{' '}
                           <span className='font-semibold'>Thanh toán</span> để
                           tiếp tục qua cổng VNPay.
                         </p>

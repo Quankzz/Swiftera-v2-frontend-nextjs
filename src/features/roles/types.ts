@@ -1,5 +1,5 @@
 /**
- * Roles & Permissions module types — source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
+ * Roles & Permissions module types - source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *
  * Module 3: ROLES (API-020 → API-025)
  * Module 4: PERMISSIONS (API-026 → API-033)
@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * PermissionResponse — trả về trong:
+ * PermissionResponse - trả về trong:
  *  - API-029 POST /permissions (create)
  *  - API-030 PATCH /permissions/{permissionId} (update)
  *  - API-031 GET /permissions/{permissionId}
@@ -30,7 +30,7 @@ export interface PermissionResponse {
 }
 
 /**
- * API-029: POST /permissions — tạo permission
+ * API-029: POST /permissions - tạo permission
  */
 export interface CreatePermissionInput {
   name: string;
@@ -40,7 +40,7 @@ export interface CreatePermissionInput {
 }
 
 /**
- * API-030: PATCH /permissions/{permissionId} — cập nhật permission (all optional)
+ * API-030: PATCH /permissions/{permissionId} - cập nhật permission (all optional)
  */
 export interface UpdatePermissionInput {
   name?: string;
@@ -50,7 +50,7 @@ export interface UpdatePermissionInput {
 }
 
 /**
- * API-032: GET /permissions — query params
+ * API-032: GET /permissions - query params
  */
 export interface PermissionListParams {
   page?: number;
@@ -60,7 +60,7 @@ export interface PermissionListParams {
 }
 
 /**
- * Paginated permissions response — API-032
+ * Paginated permissions response - API-032
  */
 export interface PaginatedPermissionsResponse {
   meta: {
@@ -75,7 +75,7 @@ export interface PaginatedPermissionsResponse {
 }
 
 /**
- * API-026: POST /permissions/module — gán module cho permissions
+ * API-026: POST /permissions/module - gán module cho permissions
  */
 export interface CreateModuleInput {
   moduleName: string;
@@ -87,7 +87,7 @@ export interface CreateModuleInput {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * RoleResponse — trả về trong:
+ * RoleResponse - trả về trong:
  *  - API-020 POST /roles (create)
  *  - API-021 GET /roles/{roleId}
  *  - API-023 PATCH /roles/{roleId} (update)
@@ -104,7 +104,7 @@ export interface RoleResponse {
 }
 
 /**
- * API-022: GET /roles — paginated
+ * API-022: GET /roles - paginated
  */
 export interface PaginatedRolesResponse {
   meta: {
@@ -119,7 +119,7 @@ export interface PaginatedRolesResponse {
 }
 
 /**
- * API-020: POST /roles — tạo vai trò
+ * API-020: POST /roles - tạo vai trò
  */
 export interface CreateRoleInput {
   name: string;
@@ -129,7 +129,7 @@ export interface CreateRoleInput {
 }
 
 /**
- * API-023: PATCH /roles/{roleId} — cập nhật vai trò (all optional)
+ * API-023: PATCH /roles/{roleId} - cập nhật vai trò (all optional)
  */
 export interface UpdateRoleInput {
   name?: string;
@@ -139,14 +139,14 @@ export interface UpdateRoleInput {
 }
 
 /**
- * API-024: DELETE /roles/{roleId}/permissions — xóa permissions khỏi role
+ * API-024: DELETE /roles/{roleId}/permissions - xóa permissions khỏi role
  */
 export interface RemoveRolePermissionsInput {
   permissionIds: string[];
 }
 
 /**
- * API-022: GET /roles — query params
+ * API-022: GET /roles - query params
  */
 export interface RoleListParams {
   page?: number;

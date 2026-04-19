@@ -166,7 +166,7 @@ export function UserFormDialog({
         // Thêm role mới qua PATCH (API-016)
         if (addedRoleIds.length > 0) payload.roleIds = addedRoleIds;
 
-        // Xóa role cũ qua DELETE /users/{userId}/roles (API-018) — gọi song song sau update
+        // Xóa role cũ qua DELETE /users/{userId}/roles (API-018) - gọi song song sau update
         // Avatar: nếu user chọn ảnh mới → upload → lấy URL
         if (avatarFile) {
           const uploadResult = await uploadMutation.mutateAsync({
@@ -414,7 +414,7 @@ export function UserFormDialog({
           </div>
         </div>
 
-        {/* ── Roles & Last login — OUTSIDE scroll container so dropdown isn't clipped ── */}
+        {/* ── Roles & Last login - OUTSIDE scroll container so dropdown isn't clipped ── */}
         <div className='grid grid-cols-2 gap-4 px-0'>
           {/* Role multi-select */}
           <div className='space-y-1.5'>
@@ -422,7 +422,7 @@ export function UserFormDialog({
               <Shield size={11} /> Vai trò
             </label>
             <div className='relative'>
-              {/* Trigger — div avoids nested <button> hydration error */}
+              {/* Trigger - div avoids nested <button> hydration error */}
               <div
                 role='button'
                 tabIndex={0}
@@ -433,7 +433,7 @@ export function UserFormDialog({
                 }
                 className='w-full h-10 flex items-center justify-between gap-2 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 cursor-pointer hover:border-blue-300 transition-colors select-none overflow-hidden'
               >
-                {/* Pills — single row, never wrap */}
+                {/* Pills - single row, never wrap */}
                 <span className='flex items-center gap-1.5 flex-1 min-w-0 overflow-hidden'>
                   {selectedRoleIds.length === 0 ? (
                     <span className='text-text-sub opacity-50 italic text-xs'>
@@ -567,7 +567,7 @@ export function UserFormDialog({
             </div>
           </div>
 
-          {/* Nickname — below role select */}
+          {/* Nickname - below role select */}
           <div className='space-y-1.5'>
             <label className='text-xs font-semibold text-text-sub uppercase tracking-wide flex items-center gap-1'>
               <UserIcon size={11} /> Nickname

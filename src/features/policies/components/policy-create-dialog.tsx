@@ -6,9 +6,9 @@
  * Dialog tạo tài liệu chính sách mới.
  *
  * Flow:
- *  Bước 1 — Điền thông tin (code, version, title, ngày hiệu lực).
- *  Bước 2 — Upload PDF → preview bằng react-pageflip.
- *  Bước 3 — Xác nhận submit → gọi API-106 POST /policies.
+ *  Bước 1 - Điền thông tin (code, version, title, ngày hiệu lực).
+ *  Bước 2 - Upload PDF → preview bằng react-pageflip.
+ *  Bước 3 - Xác nhận submit → gọi API-106 POST /policies.
  *
  * Upload PDF:
  *  1. Người dùng chọn file PDF.
@@ -480,7 +480,7 @@ export function PolicyCreateDialog({
                           month: '2-digit',
                           year: 'numeric',
                         })
-                      : '—',
+                      : '-',
                   },
                   {
                     label: 'File PDF',

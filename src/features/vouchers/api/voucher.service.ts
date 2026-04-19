@@ -1,8 +1,8 @@
 /**
- * Voucher API service — Module 11: VOUCHERS
+ * Voucher API service - Module 11: VOUCHERS
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (API-067 → API-073)
  *
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  * Service chỉ nhận payload đúng format API, không chứa UI logic.
  */
 
@@ -64,7 +64,7 @@ export async function getVoucherByCode(code: string): Promise<VoucherResponse> {
 
 /**
  * API-070: GET /vouchers/validate
- * Kiểm tra & tính giảm giá voucher theo mã — dùng cho khách hàng
+ * Kiểm tra & tính giảm giá voucher theo mã - dùng cho khách hàng
  *
  * Query params:
  *   - code                 (bắt buộc) mã voucher

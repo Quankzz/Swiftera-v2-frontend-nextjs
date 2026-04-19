@@ -607,7 +607,7 @@ export function RentalProductSummary({
               Màu sắc
               {selectedColorId && (
                 <span className='ml-2 font-normal text-muted-foreground'>
-                  —{' '}
+                  -{' '}
                   {colors.find((c) => c.productColorId === selectedColorId)
                     ?.name ?? ''}
                 </span>
@@ -624,7 +624,7 @@ export function RentalProductSummary({
                   type='button'
                   disabled={isUnavailable}
                   onClick={() => onColorChange?.(color.productColorId)}
-                  title={`${color.name}${isUnavailable ? ' — Hết hàng' : ` — ${color.availableQuantity} sẵn sàng`}`}
+                  title={`${color.name}${isUnavailable ? ' - Hết hàng' : ` - ${color.availableQuantity} sẵn sàng`}`}
                   className={[
                     'relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-all',
                     isUnavailable
@@ -796,7 +796,7 @@ interface RentalCheckoutCardProps {
     name: string;
     image: string;
     sku: string;
-    /** productColorId được chọn — bắt buộc nếu sản phẩm có >1 màu */
+    /** productColorId được chọn - bắt buộc nếu sản phẩm có >1 màu */
     productColorId?: string | null;
     /** Hiển thị tên màu đang chọn */
     colorName?: string | null;

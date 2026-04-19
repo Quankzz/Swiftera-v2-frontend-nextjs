@@ -1,5 +1,5 @@
 /**
- * useHomeCategoriesQuery — API-048 GET /api/v1/categories/tree
+ * useHomeCategoriesQuery - API-048 GET /api/v1/categories/tree
  *
  * Maps CategoryTreeNode[] (BE) → Category[] (local @/types/catalog)
  * so that CategoryCarousel / CategoryCard can stay untouched.
@@ -44,7 +44,7 @@ export function useHomeCategoriesQuery() {
   return useQuery<CategoryTreeNode[], Error, Category[]>({
     queryKey: categoryKeys.tree(),
     queryFn: getCategoriesTree,
-    staleTime: 5 * 60 * 1000, // 5 min — tree changes are infrequent
+    staleTime: 5 * 60 * 1000, // 5 min - tree changes are infrequent
     select: (data) =>
       (data ?? [])
         .filter((node) => node.isActive)

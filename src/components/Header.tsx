@@ -470,7 +470,7 @@ export function Header({ stickyHeader = false }: HeaderProps) {
                 </Button>
               </Link>
 
-              {/* User icon — opens login/register dropdown when guest */}
+              {/* User icon - opens login/register dropdown when guest */}
               <div ref={userMenuRef} className="relative">
                 <Button
                   variant="ghost"

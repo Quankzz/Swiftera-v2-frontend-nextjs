@@ -1,5 +1,5 @@
 /**
- * Cart API — /api/v1/cart
+ * Cart API - /api/v1/cart
  *
  * Module 10 trong tài liệu API: CART (5 endpoints)
  * Base URL: /api/v1

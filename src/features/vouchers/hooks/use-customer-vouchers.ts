@@ -1,5 +1,5 @@
 /**
- * Customer voucher hooks — dùng cho phía khách hàng (cart, checkout, product detail)
+ * Customer voucher hooks - dùng cho phía khách hàng (cart, checkout, product detail)
  * Module 11: VOUCHERS (API-070)
  */
 
@@ -24,7 +24,7 @@ export interface CustomerVouchersData {
 
 /**
  * Lấy danh sách voucher đang active cho phía khách hàng
- * Filter: isActive:true — chỉ lấy voucher còn hiệu lực
+ * Filter: isActive:true - chỉ lấy voucher còn hiệu lực
  */
 export function useCustomerVouchersQuery() {
   return useQuery({
@@ -43,7 +43,7 @@ export function useCustomerVouchersQuery() {
 }
 
 /**
- * Validate voucher theo mã — gọi API-070 mỗi khi user nhập mã.
+ * Validate voucher theo mã - gọi API-070 mỗi khi user nhập mã.
  * Truyền productId khi validate per-line voucher (ITEM_VOUCHER / PRODUCT_DISCOUNT).
  */
 export function useValidateVoucherMutation() {

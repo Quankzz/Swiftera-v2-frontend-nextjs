@@ -1,5 +1,5 @@
 /**
- * Canonical order-status configuration — single source of truth used by both
+ * Canonical order-status configuration - single source of truth used by both
  * the order list page and the order detail components.
  *
  * Status flow (doc 09 Appendix C, authoritative):

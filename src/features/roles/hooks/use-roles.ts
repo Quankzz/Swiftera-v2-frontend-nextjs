@@ -60,11 +60,11 @@ import type {
 } from '../types';
 
 // ═════════════════════════════════════════════════════════════════════════════
-// ROLES — Queries
+// ROLES - Queries
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**
- * Danh sách vai trò (paginated) — API-022
+ * Danh sách vai trò (paginated) - API-022
  */
 export function useRolesListQuery(params?: RoleListParams) {
   return useQuery<PaginatedRolesResponse>({
@@ -75,7 +75,7 @@ export function useRolesListQuery(params?: RoleListParams) {
 }
 
 /**
- * Chi tiết vai trò — API-021
+ * Chi tiết vai trò - API-021
  */
 export function useRoleDetailQuery(roleId: string | undefined) {
   return useQuery<RoleResponse>({
@@ -87,11 +87,11 @@ export function useRoleDetailQuery(roleId: string | undefined) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// ROLES — Mutations
+// ROLES - Mutations
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**
- * Tạo vai trò — API-020
+ * Tạo vai trò - API-020
  */
 export function useCreateRoleMutation() {
   const qc = useQueryClient();
@@ -102,7 +102,7 @@ export function useCreateRoleMutation() {
 }
 
 /**
- * Cập nhật vai trò — API-023
+ * Cập nhật vai trò - API-023
  */
 export function useUpdateRoleMutation() {
   const qc = useQueryClient();
@@ -120,7 +120,7 @@ export function useUpdateRoleMutation() {
 }
 
 /**
- * Xóa vai trò — API-025
+ * Xóa vai trò - API-025
  */
 export function useDeleteRoleMutation() {
   const qc = useQueryClient();
@@ -131,7 +131,7 @@ export function useDeleteRoleMutation() {
 }
 
 /**
- * Xóa permissions khỏi vai trò — API-024
+ * Xóa permissions khỏi vai trò - API-024
  */
 export function useRemoveRolePermsMutation() {
   const qc = useQueryClient();
@@ -148,11 +148,11 @@ export function useRemoveRolePermsMutation() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// PERMISSIONS — Queries
+// PERMISSIONS - Queries
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**
- * Danh sách permissions (paginated) — API-032
+ * Danh sách permissions (paginated) - API-032
  */
 export function usePermissionsListQuery(params?: PermissionListParams) {
   return useQuery<PaginatedPermissionsResponse>({
@@ -163,7 +163,7 @@ export function usePermissionsListQuery(params?: PermissionListParams) {
 }
 
 /**
- * Chi tiết permission — API-031
+ * Chi tiết permission - API-031
  */
 export function usePermissionDetailQuery(permissionId: string | undefined) {
   return useQuery<PermissionResponse>({
@@ -177,7 +177,7 @@ export function usePermissionDetailQuery(permissionId: string | undefined) {
 }
 
 /**
- * Danh sách tên module — API-028
+ * Danh sách tên module - API-028
  */
 export function useModulesQuery() {
   return useQuery<string[]>({
@@ -188,11 +188,11 @@ export function useModulesQuery() {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// PERMISSIONS — Mutations
+// PERMISSIONS - Mutations
 // ═════════════════════════════════════════════════════════════════════════════
 
 /**
- * Tạo permission — API-029
+ * Tạo permission - API-029
  */
 export function useCreatePermissionMutation() {
   const qc = useQueryClient();
@@ -206,7 +206,7 @@ export function useCreatePermissionMutation() {
 }
 
 /**
- * Cập nhật permission — API-030
+ * Cập nhật permission - API-030
  */
 export function useUpdatePermissionMutation() {
   const qc = useQueryClient();
@@ -228,7 +228,7 @@ export function useUpdatePermissionMutation() {
 }
 
 /**
- * Xóa permission — API-033
+ * Xóa permission - API-033
  */
 export function useDeletePermissionMutation() {
   const qc = useQueryClient();
@@ -242,7 +242,7 @@ export function useDeletePermissionMutation() {
 }
 
 /**
- * Tạo/gán module cho permissions — API-026
+ * Tạo/gán module cho permissions - API-026
  */
 export function useCreateModuleMutation() {
   const qc = useQueryClient();
@@ -256,7 +256,7 @@ export function useCreateModuleMutation() {
 }
 
 /**
- * Xóa module — API-027
+ * Xóa module - API-027
  */
 export function useDeleteModuleMutation() {
   const qc = useQueryClient();

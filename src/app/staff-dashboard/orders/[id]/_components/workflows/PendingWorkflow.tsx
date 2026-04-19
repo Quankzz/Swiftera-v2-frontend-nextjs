@@ -115,7 +115,7 @@ export function PendingWorkflow({
                       Địa chỉ giao hàng
                     </p>
                     <p className="text-[15px] font-medium text-foreground leading-relaxed wrap-break-words whitespace-normal">
-                      {order.delivery_address || order.renter.address || '—'}
+                      {order.delivery_address || order.renter.address || '-'}
                     </p>
                   </div>
                 </div>

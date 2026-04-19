@@ -1,8 +1,8 @@
 /**
- * Users module types — source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
+ * Users module types - source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *
  * Tất cả field dùng camelCase theo JSON từ BE spec.
- * Không đoán field — chỉ dùng field có trong spec.
+ * Không đoán field - chỉ dùng field có trong spec.
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,7 +19,7 @@ export interface RoleSecured {
 
 /**
  * Role tóm tắt trả về trong danh sách users (API-015 GET /users).
- * KHÔNG có roleId — chỉ có name, description, active.
+ * KHÔNG có roleId - chỉ có name, description, active.
  */
 export interface RoleSummary {
   name: string;
@@ -32,7 +32,7 @@ export interface RoleSummary {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * UserSecureResponse — trả về cho self-service endpoints:
+ * UserSecureResponse - trả về cho self-service endpoints:
  *  - API-006: GET /auth/account
  *  - API-010: PATCH /users/update-profile
  *  - API-011: PUT /users/update-password
@@ -56,15 +56,15 @@ export interface UserSecureResponse {
 }
 
 /**
- * UserResponse — trả về cho admin endpoints:
+ * UserResponse - trả về cho admin endpoints:
  *  - API-014: GET /users/{userId}
  *  - API-015: GET /users (list, trong content[])
  *  - API-016: PATCH /users/{userId}
  *
  * Giống UserSecureResponse nhưng thêm isVerified và roles kèm permissions.
  * NOTE:
- *  - API-015 (list) trả `roles[]` (RoleSummary — không có roleId)
- *  - API-014 (detail) trả `rolesSecured[]` (RoleSecured — có roleId)
+ *  - API-015 (list) trả `roles[]` (RoleSummary - không có roleId)
+ *  - API-014 (detail) trả `rolesSecured[]` (RoleSecured - có roleId)
  */
 export interface UserResponse {
   userId: string;
@@ -78,16 +78,16 @@ export interface UserResponse {
   city: string | null;
   nationality: string | null;
   isVerified?: boolean;
-  /** Có trong list response (API-015) — không có roleId */
+  /** Có trong list response (API-015) - không có roleId */
   roles?: RoleSummary[];
-  /** Có trong detail response (API-014) — có roleId */
+  /** Có trong detail response (API-014) - có roleId */
   rolesSecured?: RoleSecured[];
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * Paginated users response — API-015: GET /users
+ * Paginated users response - API-015: GET /users
  */
 export interface PaginatedUsersResponse {
   meta: {
@@ -143,7 +143,7 @@ export interface VerifyChangeEmailInput {
 }
 
 /**
- * API-015: GET /users — query params
+ * API-015: GET /users - query params
  * Dùng Spring pagination conventions: page (0-based), size, sort, filter
  */
 export interface UserListParams {
@@ -154,7 +154,7 @@ export interface UserListParams {
 }
 
 /**
- * API-016: PATCH /users/{userId} — admin update user
+ * API-016: PATCH /users/{userId} - admin update user
  * Tất cả field tùy chọn
  */
 export interface UpdateUserInput {
@@ -170,7 +170,7 @@ export interface UpdateUserInput {
 }
 
 /**
- * API-018: DELETE /users/{userId}/roles — remove roles from user
+ * API-018: DELETE /users/{userId}/roles - remove roles from user
  */
 export interface RemoveUserRolesInput {
   roleIds: string[];

@@ -1,5 +1,5 @@
 /**
- * Contact Tickets — Types & Interfaces
+ * Contact Tickets - Types & Interfaces
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 16: CONTACT TICKETS)
  */
 
@@ -84,7 +84,7 @@ export interface TicketListParams {
   size?: number;
   sort?: string;
   filter?: string;
-  status?: ContactTicketStatus; // convenience — converted to SpringFilter DSL in service
+  status?: ContactTicketStatus; // convenience - converted to SpringFilter DSL in service
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

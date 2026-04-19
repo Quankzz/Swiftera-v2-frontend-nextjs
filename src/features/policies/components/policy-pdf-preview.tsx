@@ -124,7 +124,7 @@ export function PolicyPdfPreview({
         msg.includes('ERR_NAME_NOT_RESOLVED');
       setError(
         isNetwork
-          ? 'Không thể tải file PDF — URL không hợp lệ hoặc không truy cập được.'
+          ? 'Không thể tải file PDF - URL không hợp lệ hoặc không truy cập được.'
           : `Không thể đọc file PDF: ${msg}`,
       );
     } finally {
@@ -259,7 +259,7 @@ export function PolicyPdfPreview({
           Trước
         </button>
 
-        {/* Page dots — tối đa 7 chấm */}
+        {/* Page dots - tối đa 7 chấm */}
         <div className='flex items-center gap-1'>
           {Array.from({ length: Math.min(totalPages, 7) }).map((_, i) => {
             const pageIdx =

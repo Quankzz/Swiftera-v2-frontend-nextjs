@@ -87,9 +87,13 @@ function StarRating({
   );
 }
 
-/** Hiển thị thời gian tương đối bằng Intl.RelativeTimeFormat — chính xác */
-function formatRelativeTime(dateStr: string): string {
+/** Hiển thị thời gian tương đối bằng Intl.RelativeTimeFormat - chính xác.
+ *  Trả về fallback khi không có hoặc giá trị thời gian không hợp lệ. */
+function formatRelativeTime(dateStr?: string | null): string {
+  if (!dateStr) return 'Không rõ';
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return 'Không rõ';
+
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -489,11 +493,24 @@ function normalizeReviewsData(
 ): NormalizedReviewsData | undefined {
   if (!data || typeof data !== 'object') return undefined;
   const d = data as Record<string, unknown>;
+
+  if (Array.isArray(d.items)) {
+    return {
+      items: d.items as NormalizedReview[],
+      totalPages:
+        typeof d.totalPages === 'number' && d.totalPages > 0
+          ? d.totalPages
+          : 1,
+      totalItems: typeof d.totalItems === 'number' ? d.totalItems : 0,
+    };
+  }
+
   const meta = d.meta as Record<string, unknown> | undefined;
   const content = Array.isArray(d.content) ? d.content : [];
   return {
     items: content as NormalizedReview[],
-    totalPages: typeof meta?.totalPages === 'number' ? (meta.totalPages as number) : 1,
+    totalPages:
+      typeof meta?.totalPages === 'number' ? (meta.totalPages as number) : 1,
     totalItems:
       typeof meta?.totalElements === 'number'
         ? (meta.totalElements as number)
@@ -521,7 +538,7 @@ export function RentalReviewsSection({
     onError: (err) => toast.error(err.message),
   });
 
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const PAGE_SIZE = 5;
   const [showWriteForm, setShowWriteForm] = useState(false);
@@ -576,7 +593,7 @@ export function RentalReviewsSection({
 
   // Reset when filter changes
   useEffect(() => {
-    setPage(0);
+    setPage(1);
     setAllReviews([]);
   }, [ratingFilter]);
 
@@ -593,6 +610,13 @@ export function RentalReviewsSection({
     }
   }, []);
 
+  const performScrollAndHighlight = useCallback((reviewId: string) => {
+    const el = document.getElementById(`review-${reviewId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedId(reviewId);
+  }, []);
+
   useEffect(() => {
     if (!targetReviewId) return;
 
@@ -606,19 +630,19 @@ export function RentalReviewsSection({
       return;
     }
 
-    if (!fetchReviews.isLoading && page < totalPages - 1) {
+    if (!fetchReviews.isLoading && page < totalPages) {
       setPage((p) => p + 1);
-    } else if (!fetchReviews.isLoading && page >= totalPages - 1) {
+    } else if (!fetchReviews.isLoading && page >= totalPages) {
       setDeepLinkActive(false);
     }
-  }, [targetReviewId, allReviews, page, totalPages, fetchReviews.isLoading]);
-
-  function performScrollAndHighlight(reviewId: string) {
-    const el = document.getElementById(`review-${reviewId}`);
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setHighlightedId(reviewId);
-  }
+  }, [
+    targetReviewId,
+    allReviews,
+    page,
+    totalPages,
+    fetchReviews.isLoading,
+    performScrollAndHighlight,
+  ]);
 
   useEffect(() => {
     if (!highlightedId) return;
@@ -800,20 +824,20 @@ export function RentalReviewsSection({
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => setPage(0)}
-                disabled={page === 0}
+                onClick={() => setPage(1)}
+                disabled={page === 1}
                 className='rounded-xl'
               >
                 <ChevronUp className='size-4 rotate-90' />
               </Button>
               <span className='px-3 text-sm text-muted-foreground'>
-                {page + 1} / {totalPages}
+                {page} / {totalPages}
               </span>
               <Button
                 variant='outline'
                 size='sm'
-                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
                 className='rounded-xl'
               >
                 <ChevronDown className='size-4 rotate-90' />
@@ -822,7 +846,7 @@ export function RentalReviewsSection({
           )}
 
           {/* Auto-load more in deep-link mode */}
-          {deepLinkActive && page < totalPages - 1 && !fetchReviews.isLoading && (
+          {deepLinkActive && page < totalPages && !fetchReviews.isLoading && (
             <div className='mt-4 flex justify-center'>
               <Button
                 variant='outline'

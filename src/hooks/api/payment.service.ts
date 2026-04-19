@@ -1,8 +1,8 @@
 /**
- * Payment API service — Module 13: PAYMENTS (API-086 → API-089)
+ * Payment API service - Module 13: PAYMENTS (API-086 → API-089)
  *
  * Service layer chỉ chứa hàm gọi API thuần túy.
- * Không chứa UI logic — chỉ trả về raw data.
+ * Không chứa UI logic - chỉ trả về raw data.
  */
 
 import { httpService } from '@/api/http';

@@ -1,5 +1,5 @@
 /**
- * Reviews API — Module 15: REVIEWS (API-095 → API-099)
+ * Reviews API - Module 15: REVIEWS (API-095 → API-099)
  *
  * Base URL: /api/v1
  * Tất cả endpoints yêu cầu xác thực [AUTH]

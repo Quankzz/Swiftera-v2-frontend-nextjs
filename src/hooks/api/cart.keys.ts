@@ -1,5 +1,5 @@
 /**
- * Cart API keys — dùng chung cho TanStack Query
+ * Cart API keys - dùng chung cho TanStack Query
  */
 
 export const cartKeys = {

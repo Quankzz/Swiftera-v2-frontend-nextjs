@@ -48,7 +48,7 @@ import type { PolicyDocumentResponse } from '../types';
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   return isNaN(d.getTime())
     ? iso

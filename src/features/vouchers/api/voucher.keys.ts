@@ -1,5 +1,5 @@
 /**
- * Voucher query key factory — TanStack Query
+ * Voucher query key factory - TanStack Query
  * Module 11: VOUCHERS
  */
 

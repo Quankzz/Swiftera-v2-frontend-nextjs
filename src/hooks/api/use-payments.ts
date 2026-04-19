@@ -1,5 +1,5 @@
 /**
- * Payments hooks — TanStack Query
+ * Payments hooks - TanStack Query
  * Module 13: PAYMENTS (API-086 → API-091)
  */
 
@@ -15,7 +15,7 @@ import {
 // ─── Queries ──────────────────────────────────────────────────────────────────
 
 /**
- * Lấy chi tiết giao dịch theo ID [AUTH] — API-086
+ * Lấy chi tiết giao dịch theo ID [AUTH] - API-086
  * Dùng để hiển thị trạng thái thanh toán
  */
 export function usePaymentTransactionQuery(paymentTransactionId: string) {
@@ -29,7 +29,7 @@ export function usePaymentTransactionQuery(paymentTransactionId: string) {
 }
 
 /**
- * Lấy danh sách giao dịch (phân trang, filter) [AUTH] — API-087
+ * Lấy danh sách giao dịch (phân trang, filter) [AUTH] - API-087
  * Dùng cho trang quản lý thanh toán
  */
 export function usePaymentsQuery(params?: {
@@ -47,7 +47,7 @@ export function usePaymentsQuery(params?: {
 }
 
 /**
- * Lấy danh sách giao dịch theo đơn thuê [AUTH] — API-088
+ * Lấy danh sách giao dịch theo đơn thuê [AUTH] - API-088
  * Dùng để hiển thị lịch sử thanh toán trên trang chi tiết đơn thuê
  */
 export function usePaymentsByOrderQuery(
@@ -66,7 +66,7 @@ export function usePaymentsByOrderQuery(
 // ─── Mutations ───────────────────────────────────────────────────────────────────
 
 /**
- * Tạo link thanh toán VNPay [AUTH] — API-089
+ * Tạo link thanh toán VNPay [AUTH] - API-089
  *
  * Trả về URL thanh toán VNPay (sandbox hoặc production).
  * Frontend redirect window.location.href sang URL này.

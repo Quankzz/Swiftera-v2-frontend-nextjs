@@ -60,7 +60,7 @@ export function getDeliveryStepIndex(status: OrderStatus): number {
 }
 
 export function getPickupStepIndex(status: OrderStatus): number {
-  // IN_USE and OVERDUE map to step -1 (before PENDING_PICKUP) — show as "upcoming"
+  // IN_USE and OVERDUE map to step -1 (before PENDING_PICKUP) - show as "upcoming"
   if (status === 'IN_USE' || status === 'OVERDUE') return -1;
   const idx = PICKUP_STEPS.findIndex((s) => s.key === status);
   return idx === -1 ? 0 : idx;
@@ -184,7 +184,7 @@ export function WorkflowStepper({
         <div className="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/25 px-3 py-2">
           <AlertCircle className="size-4 text-destructive shrink-0" />
           <p className="text-sm font-bold text-destructive">
-            Đơn quá hạn — cần khởi động thu hồi ngay
+            Đơn quá hạn - cần khởi động thu hồi ngay
           </p>
         </div>
       )}

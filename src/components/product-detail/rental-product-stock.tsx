@@ -147,7 +147,7 @@ export function RentalStockSection({
           </div>
         </div>
 
-        {/* Color breakdown — chỉ hiển thị khi có màu */}
+        {/* Color breakdown - chỉ hiển thị khi có màu */}
         {hasColors && (
           <div className='mt-3 flex flex-wrap gap-2'>
             {colorGroups
@@ -186,7 +186,7 @@ export function RentalStockSection({
         )}
       </div>
 
-      {/* Danh sách serial — nếu có màu thì group; nếu không thì flat */}
+      {/* Danh sách serial - nếu có màu thì group; nếu không thì flat */}
       {hasColors ? (
         <div className='space-y-4'>
           {colorGroups.map((group) => {

@@ -27,7 +27,7 @@ export interface ProductColor {
 }
 
 // ─── Inventory Item (bảng inventory_items) ────────────────────────
-// Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 9: INVENTORY ITEMS
+// Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 9: INVENTORY ITEMS
 export type InventoryItemStatus =
   | 'AVAILABLE'
   | 'RESERVED'

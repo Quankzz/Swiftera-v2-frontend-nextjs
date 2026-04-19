@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * CategoryTreeSelect — custom dropdown chọn danh mục theo dạng cây.
+ * CategoryTreeSelect - custom dropdown chọn danh mục theo dạng cây.
  *
  * Props:
- *   value          — categoryId đang chọn ('' = placeholder)
- *   onChange       — callback(categoryId) khi chọn
- *   excludeId      — loại trừ node này khỏi danh sách (tránh self-parent)
- *   placeholder    — text hiển thị khi chưa chọn
- *   disabled       — disable toàn bộ
- *   className      — override class cho trigger button
+ *   value          - categoryId đang chọn ('' = placeholder)
+ *   onChange       - callback(categoryId) khi chọn
+ *   excludeId      - loại trừ node này khỏi danh sách (tránh self-parent)
+ *   placeholder    - text hiển thị khi chưa chọn
+ *   disabled       - disable toàn bộ
+ *   className      - override class cho trigger button
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -60,7 +60,7 @@ interface CategoryTreeSelectProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
-  /** If true, allow clearing the selection (show "— root —" option) */
+  /** If true, allow clearing the selection (show "- root -" option) */
   allowRoot?: boolean;
   rootLabel?: string;
 }
@@ -69,11 +69,11 @@ export function CategoryTreeSelect({
   value,
   onChange,
   excludeId,
-  placeholder = '— Chọn danh mục —',
+  placeholder = '- Chọn danh mục -',
   disabled = false,
   className,
   allowRoot = false,
-  rootLabel = '— Danh mục gốc —',
+  rootLabel = '- Danh mục gốc -',
 }: CategoryTreeSelectProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

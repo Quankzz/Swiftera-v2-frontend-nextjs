@@ -132,7 +132,7 @@ export function ProductCard({
               {product.dailyPrice ? (
                 formatter.format(product.dailyPrice)
               ) : (
-                <span className='text-text-sub italic text-base'>—</span>
+                <span className='text-text-sub italic text-base'>-</span>
               )}
             </span>
             {product.oldDailyPrice && (

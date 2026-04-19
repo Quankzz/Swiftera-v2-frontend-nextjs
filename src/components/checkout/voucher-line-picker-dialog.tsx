@@ -41,7 +41,7 @@ type VoucherLinePickerDialogProps = {
   /** Voucher BE trả về riêng cho dòng này (từ cartLines[].availableVouchers) */
   suggestedVouchers?: CartLineVoucherItem[];
   /**
-   * productId của dòng — truyền vào API-070 validate để BE check scope
+   * productId của dòng - truyền vào API-070 validate để BE check scope
    * ITEM_VOUCHER / PRODUCT_DISCOUNT. Nếu không truyền, BE validate
    * như voucher toàn đơn.
    */

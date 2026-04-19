@@ -29,7 +29,7 @@ export function ProductCardSkeleton({ className }: { className?: string }) {
   );
 }
 
-/** Grid of skeleton cards — used while products are loading. */
+/** Grid of skeleton cards - used while products are loading. */
 export function ProductGridSkeleton({ count = 12 }: { count?: number }) {
   return (
     <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3'>

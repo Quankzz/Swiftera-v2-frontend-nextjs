@@ -1,9 +1,9 @@
 /**
- * Hub module types — source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
+ * Hub module types - source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  * Module 6: HUBS (API-040 → API-044)
  *
  * Tất cả field dùng camelCase theo JSON từ BE spec.
- * Không đoán field — chỉ dùng field có trong spec.
+ * Không đoán field - chỉ dùng field có trong spec.
  */
 
 import type { PaginationResponse } from '@/types/api.types';
@@ -13,7 +13,7 @@ import type { PaginationResponse } from '@/types/api.types';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * HubResponse — trả về cho mọi endpoint hub.
+ * HubResponse - trả về cho mọi endpoint hub.
  * Field map đúng từ BE spec (API-040 response example).
  *
  * NOTE:
@@ -49,7 +49,7 @@ export type PaginatedHubsResponse = PaginationResponse<HubResponse>;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * HubListParams — params cho GET /hubs
+ * HubListParams - params cho GET /hubs
  * BE hỗ trợ: page (1-based), size, filter (SpringFilter DSL)
  *
  * NOTE: page ở đây là 0-based từ UI.
@@ -67,7 +67,7 @@ export interface HubListParams {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * CreateHubInput — payload cho API-040 POST /hubs
+ * CreateHubInput - payload cho API-040 POST /hubs
  *
  * Required: code, name
  * Optional: addressLine, ward, district, city, latitude, longitude, phone
@@ -89,7 +89,7 @@ export interface CreateHubInput {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * HubStaffResponse — một nhân viên thuộc hub.
+ * HubStaffResponse - một nhân viên thuộc hub.
  * Trả về từ GET /api/v1/hubs/{hubId}/staff?activeOnly=false
  *
  * Response là plain array (không paginated).
@@ -109,7 +109,7 @@ export interface HubStaffResponse {
 }
 
 /**
- * UpdateHubInput — payload cho API-043 PATCH /hubs/{hubId}
+ * UpdateHubInput - payload cho API-043 PATCH /hubs/{hubId}
  * Tất cả field đều optional (partial update).
  * Có thêm `isActive` để toggle trạng thái.
  *

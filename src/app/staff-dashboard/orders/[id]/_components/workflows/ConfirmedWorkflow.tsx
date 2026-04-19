@@ -81,7 +81,7 @@ function ItemPickupCard({
             {item.product_name}
           </p>
           <p className="text-xs text-muted-foreground font-mono mt-0.5">
-            {item.serial_number || '—'}
+            {item.serial_number || '-'}
           </p>
         </div>
         <div
@@ -158,7 +158,7 @@ export function ConfirmedWorkflow({
         hasHubMap && 'lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-5',
       )}
     >
-      {/* Map panel — right on desktop, top on mobile */}
+      {/* Map panel - right on desktop, top on mobile */}
       {hasHubMap && (
         <div className="order-first lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-7rem)] flex flex-col z-10">
           <div className="rounded-2xl border border-border bg-card shadow-md flex flex-col h-full overflow-hidden">
@@ -200,7 +200,7 @@ export function ConfirmedWorkflow({
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-foreground">
                   {staffLocAt
-                    ? 'GPS đang theo dõi — tự động chỉ đường đến hub'
+                    ? 'GPS đang theo dõi - tự động chỉ đường đến hub'
                     : 'Đang lấy vị trí GPS… Tuyến đường sẽ hiện sau'}
                 </p>
                 {staffLocAt && (
@@ -221,7 +221,7 @@ export function ConfirmedWorkflow({
         </div>
       )}
 
-      {/* Main content — left on desktop */}
+      {/* Main content - left on desktop */}
       <div className="order-last lg:order-1 flex flex-col gap-4">
         {/* Status banner */}
         <WorkflowBanner
@@ -290,7 +290,7 @@ export function ConfirmedWorkflow({
                   Địa chỉ giao hàng
                 </p>
                 <p className="text-[14px] font-medium text-foreground leading-relaxed">
-                  {order.delivery_address || order.renter.address || '—'}
+                  {order.delivery_address || order.renter.address || '-'}
                 </p>
               </div>
             </div>
@@ -413,7 +413,7 @@ export function ConfirmedWorkflow({
               {allPhotographed ? (
                 <span className="flex items-center gap-2 text-success font-semibold">
                   <CheckCircle2 className="size-5" />
-                  Đã hoàn tất kiểm kho — sẵn sàng xuất hàng.
+                  Đã hoàn tất kiểm kho - sẵn sàng xuất hàng.
                 </span>
               ) : (
                 <span className="flex items-center gap-2">

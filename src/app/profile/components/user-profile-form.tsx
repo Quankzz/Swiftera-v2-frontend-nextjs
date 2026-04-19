@@ -76,7 +76,7 @@ async function getCroppedImageBlob(
 interface UserProfileFormProps {
   profile: UserSecure;
   onUpdated: (next: UserSecure) => void;
-  /** Hiển thị badge cảnh báo chưa xác thực (UI cũ) — mặc định ẩn */
+  /** Hiển thị badge cảnh báo chưa xác thực (UI cũ) - mặc định ẩn */
   isVerified?: boolean;
 }
 
@@ -475,7 +475,7 @@ export function UserProfileForm({
           <Input
             value={profile.phoneNumber ?? ''}
             disabled
-            placeholder='—'
+            placeholder='-'
             className='bg-gray-100 dark:bg-white/10 opacity-70 cursor-not-allowed'
           />
         </div> */}

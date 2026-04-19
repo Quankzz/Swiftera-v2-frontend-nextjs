@@ -1,5 +1,5 @@
 /**
- * Auth API — wraps all endpoints under /api/v1/auth
+ * Auth API - wraps all endpoints under /api/v1/auth
  *
  * HOW TO MERGE (for the auth owner):
  *  1. This file handles HTTP transport only. Business logic / routing

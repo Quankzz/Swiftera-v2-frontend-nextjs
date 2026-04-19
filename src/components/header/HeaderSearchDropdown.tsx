@@ -8,7 +8,7 @@
  *   1. Idle (no query typed): shows a grid of root categories from real API data.
  *   2. Searching (query active): shows loading / results list / empty state.
  *
- * The component is purely presentational — all data fetching is done by the
+ * The component is purely presentational - all data fetching is done by the
  * parent via `useHeaderSearch` and `useCategoryTreeQuery`.
  */
 
@@ -27,11 +27,11 @@ interface HeaderSearchDropdownProps {
   categories: CategoryTreeNode[];
   /** Search query the user typed */
   query: string;
-  /** Debounced query — determines whether we're in search mode */
+  /** Debounced query - determines whether we're in search mode */
   isQueryActive: boolean;
   /** Preview results (max 5) */
   results: SearchProduct[];
-  /** Total count from API — used for "Xem tất cả X sản phẩm" */
+  /** Total count from API - used for "Xem tất cả X sản phẩm" */
   totalElements: number;
   /** True while the API call is in-flight */
   isLoading: boolean;

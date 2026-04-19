@@ -1,5 +1,5 @@
 /**
- * Rental Order query keys — dùng chung cho TanStack Query
+ * Rental Order query keys - dùng chung cho TanStack Query
  */
 
 export const rentalOrderKeys = {

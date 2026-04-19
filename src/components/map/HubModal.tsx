@@ -128,7 +128,7 @@ const HubModal = ({
                   className="text-theme-primary-start mt-0.5 shrink-0"
                 />
                 <span className="leading-snug">
-                  {selectedHub.address || '—'}
+                  {selectedHub.address || '-'}
                 </span>
               </div>
 

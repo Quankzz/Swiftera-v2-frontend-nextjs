@@ -204,7 +204,7 @@ export function DeliveringWorkflow({
                   Địa chỉ giao hàng
                 </p>
                 <p className="text-[14px] font-medium text-foreground leading-relaxed">
-                  {order.delivery_address || order.renter.address || '—'}
+                  {order.delivery_address || order.renter.address || '-'}
                 </p>
               </div>
             </div>

@@ -65,7 +65,7 @@ interface MapState {
 
   // Actions
   clearDirections: () => void;
-  /** Clear only route results (not addresses) — used for partial resets */
+  /** Clear only route results (not addresses) - used for partial resets */
   clearRouteResults: () => void;
   isRouteLoading: boolean;
   setIsRouteLoading: (loading: boolean) => void;

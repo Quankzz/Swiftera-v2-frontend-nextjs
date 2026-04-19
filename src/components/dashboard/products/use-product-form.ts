@@ -19,7 +19,7 @@ export interface DraftImage {
 }
 
 /**
- * DraftInventoryItem — đại diện cho một thiết bị vật lý đang được soạn trong UI.
+ * DraftInventoryItem - đại diện cho một thiết bị vật lý đang được soạn trong UI.
  * Dùng trong edit mode (productId đã tồn tại).
  * Khi submit sẽ gọi createInventoryItem / updateInventoryItem.
  */
@@ -30,14 +30,14 @@ export interface DraftInventoryItem {
   inventoryItemId?: string;
   serialNumber: string;
   hubId: string;
-  /** Tên hub để hiển thị trong UI — không gửi lên BE */
+  /** Tên hub để hiển thị trong UI - không gửi lên BE */
   hubName: string;
   hubCode?: string;
   conditionGrade: InventoryItemConditionGrade;
   staffNote: string;
   /** status chỉ dùng trong edit/display, không gửi khi create */
   status: InventoryItemStatus;
-  /** UUID màu đã chọn — maps to productColorId từ product.colors[] */
+  /** UUID màu đã chọn - maps to productColorId từ product.colors[] */
   productColorId: string;
   /**
    * Snapshot của các trường updatable khi item được load từ BE.
@@ -80,7 +80,7 @@ function inventoryItemToDraft(
 }
 
 /**
- * ProductFormData — ánh xạ 1-1 với CreateProductInput / UpdateProductInput.
+ * ProductFormData - ánh xạ 1-1 với CreateProductInput / UpdateProductInput.
  * Giá trị số lưu dạng string vì input HTML luôn trả về string.
  */
 export interface ProductFormData {
@@ -91,7 +91,7 @@ export interface ProductFormData {
   description: string;
   shortDescription: string;
   brand: string;
-  /** Danh sách màu — mảng { name, code } */
+  /** Danh sách màu - mảng { name, code } */
   colors: ProductColorInput[];
   dailyPrice: string;
   oldDailyPrice: string;

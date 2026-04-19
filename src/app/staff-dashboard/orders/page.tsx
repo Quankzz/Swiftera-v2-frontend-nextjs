@@ -88,7 +88,7 @@ function OrdersPageInner() {
   const setCounts = useStaffOrderCounts((s) => s.setCounts);
 
   useEffect(() => {
-    // Auth bootstrap not finished yet — keep showing spinner
+    // Auth bootstrap not finished yet - keep showing spinner
     if (!isAuthenticated && user === null) return;
 
     // Bootstrap done but no user → not logged in

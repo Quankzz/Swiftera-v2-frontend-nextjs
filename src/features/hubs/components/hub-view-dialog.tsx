@@ -22,7 +22,7 @@ import { useHubStaffQuery } from '@/features/hubs/hooks/use-hub-management';
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatDateTime(raw: string | null | undefined): string {
-  if (!raw) return '—';
+  if (!raw) return '-';
   const d = new Date(raw);
   if (isNaN(d.getTime())) return raw;
   return d.toLocaleString('vi-VN', {
@@ -38,7 +38,7 @@ function buildAddress(hub: HubResponse): string {
   return (
     [hub.addressLine, hub.ward, hub.district, hub.city]
       .filter(Boolean)
-      .join(', ') || '—'
+      .join(', ') || '-'
   );
 }
 
@@ -162,7 +162,7 @@ export function HubViewDialog({ hub, onClose }: HubViewDialogProps) {
               <DetailRow
                 icon={Phone}
                 label='Số điện thoại'
-                value={hub.phone ?? '—'}
+                value={hub.phone ?? '-'}
               />
               <div className='sm:col-span-2'>
                 <DetailRow
@@ -179,7 +179,7 @@ export function HubViewDialog({ hub, onClose }: HubViewDialogProps) {
                     value={
                       hub.latitude != null && hub.longitude != null
                         ? `${hub.latitude}, ${hub.longitude}`
-                        : '—'
+                        : '-'
                     }
                   />
                 </div>
@@ -308,7 +308,7 @@ export function HubViewDialog({ hub, onClose }: HubViewDialogProps) {
                         </td>
                         {/* Phone */}
                         <td className='hidden md:table-cell px-4 py-3 text-text-sub'>
-                          {member.phoneNumber ?? '—'}
+                          {member.phoneNumber ?? '-'}
                         </td>
                         {/* Status */}
                         <td className='px-4 py-3 text-right'>

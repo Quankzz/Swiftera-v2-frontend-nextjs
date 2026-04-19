@@ -1,5 +1,5 @@
 /**
- * Contact Tickets — TanStack Query Hooks
+ * Contact Tickets - TanStack Query Hooks
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,7 +23,7 @@ import type {
 // Queries
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** API-102: Admin — danh sách tất cả tickets */
+/** API-102: Admin - danh sách tất cả tickets */
 export function useTickets(params?: TicketListParams) {
   return useQuery({
     queryKey: ticketKeys.list(params),
@@ -31,7 +31,7 @@ export function useTickets(params?: TicketListParams) {
   });
 }
 
-/** API-103: User — danh sách ticket của chính mình */
+/** API-103: User - danh sách ticket của chính mình */
 export function useMyTickets(params?: TicketListParams) {
   return useQuery({
     queryKey: ticketKeys.myList(params),
@@ -52,7 +52,7 @@ export function useTicketDetail(id: string | null) {
 // Mutations
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** API-100: Tạo ticket mới (PUBLIC — form feedback) */
+/** API-100: Tạo ticket mới (PUBLIC - form feedback) */
 export function useCreateTicket() {
   const queryClient = useQueryClient();
   return useMutation<ContactTicketResponse, Error, CreateTicketRequest>({

@@ -1,5 +1,5 @@
 /**
- * useHeaderSearch — debounced product search for the Header search dropdown.
+ * useHeaderSearch - debounced product search for the Header search dropdown.
  *
  * - Waits 350 ms after the user stops typing before calling the API.
  * - Returns at most 5 results (for preview list in dropdown).

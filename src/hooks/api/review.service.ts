@@ -1,5 +1,5 @@
 /**
- * Review API service — dùng cho TanStack Query hooks
+ * Review API service - dùng cho TanStack Query hooks
  * Module 15: REVIEWS (API-095 → API-099)
  */
 

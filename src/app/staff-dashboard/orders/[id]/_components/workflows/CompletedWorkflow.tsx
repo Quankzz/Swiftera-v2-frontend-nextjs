@@ -702,7 +702,7 @@ export function CompletedWorkflow({
               <span className="flex items-center gap-2">
                 <CreditCard className="size-5 shrink-0" />
                 Hoàn cọc bằng{' '}
-                <strong>{REFUND_METHOD_LABEL[refundMethod]}</strong> —{' '}
+                <strong>{REFUND_METHOD_LABEL[refundMethod]}</strong> -{' '}
                 {fmt(refundAmount)} và hoàn tất.
               </span>
             )}

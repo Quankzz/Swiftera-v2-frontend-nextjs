@@ -2,11 +2,11 @@
  * Legacy shared domain types.
  *
  * For new code, prefer:
- *   - api.types.ts       — backend wire format (source of truth)
- *   - dashboard.ts       — admin portal CRUD types (User/Role/Permission/ContactTicket)
- *   - dashboard.types.ts — staff portal UI types (DashboardOrder, OrderStatus, etc.)
- *   - catalog.ts         — catalog/product UI types
- *   - map.types.ts       — map UI types
+ *   - api.types.ts       - backend wire format (source of truth)
+ *   - dashboard.ts       - admin portal CRUD types (User/Role/Permission/ContactTicket)
+ *   - dashboard.types.ts - staff portal UI types (DashboardOrder, OrderStatus, etc.)
+ *   - catalog.ts         - catalog/product UI types
+ *   - map.types.ts       - map UI types
  */
 
 // ─── Base entity ──────────────────────────────────────────────────────────────

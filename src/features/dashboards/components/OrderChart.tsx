@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * OrderChart — Hàng thứ hai (trái 66%):
+ * OrderChart - Hàng thứ hai (trái 66%):
  *   - Area Chart: xu hướng 7 ngày (dailyCompletedLast7Days)
  *
  * Hàng thứ ba (trái 50%):

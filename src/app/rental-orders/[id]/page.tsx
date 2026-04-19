@@ -2,7 +2,7 @@
 
 import { useState, Fragment, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   ArrowLeft,
@@ -54,6 +54,8 @@ import {
   RENTAL_ORDER_STATUS_LABELS,
   RENTAL_ORDER_STATUS_COLORS,
 } from '@/api/rentalOrderApi';
+import { useAuth } from '@/hooks/useAuth';
+import { buildLoginHref } from '@/lib/auth-redirect';
 import type {
   RentalOrderStatus,
   RentalOrderStaffSummary,
@@ -149,7 +151,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
     return (
       <div className='flex items-center gap-2.5 rounded-xl border border-red-200/80 bg-red-50/60 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300'>
         <Ban className='size-4 shrink-0' />
-        Đơn đã hủy — không còn xử lý tiếp.
+        Đơn đã hủy - không còn xử lý tiếp.
       </div>
     );
   }
@@ -451,6 +453,9 @@ function ExtendDialog({
 
 export default function RentalOrderDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
   const id = typeof params?.id === 'string' ? params.id : '';
   const [extendOpen, setExtendOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
@@ -496,7 +501,21 @@ export default function RentalOrderDetailPage() {
   const { mutateAsync: addToCartApi } = useAddToCart();
   const addFlyingItem = useCartAnimationStore((s) => s.addFlyingItem);
 
+  function ensureAuthenticated(actionLabel: string): boolean {
+    if (isAuthenticated) return true;
+
+    if (authLoading) {
+      toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+      return false;
+    }
+
+    toast.error(`Vui lòng đăng nhập để ${actionLabel}.`);
+    router.push(buildLoginHref(`/rental-orders/${id}`));
+    return false;
+  }
+
   async function handleReorder() {
+    if (!ensureAuthenticated('thuê lại sản phẩm')) return;
     if (!order || reorderState !== 'idle') return;
 
     const btn = document.getElementById('reorder-btn');
@@ -555,6 +574,7 @@ export default function RentalOrderDetailPage() {
   });
 
   function handleCancel() {
+    if (!ensureAuthenticated('hủy đơn thuê')) return;
     if (!order) return;
     if (!CANCELABLE_STATUSES.includes(order.status as RentalOrderStatus)) {
       toast.error('Chỉ có thể hủy đơn trước khi bắt đầu giao hàng.');
@@ -564,6 +584,7 @@ export default function RentalOrderDetailPage() {
   }
 
   function confirmCancel() {
+    if (!ensureAuthenticated('hủy đơn thuê')) return;
     if (!order) return;
     if (!CANCELABLE_STATUSES.includes(order.status as RentalOrderStatus)) {
       setCancelConfirmOpen(false);
@@ -576,17 +597,20 @@ export default function RentalOrderDetailPage() {
   }
 
   function handlePayment() {
+    if (!ensureAuthenticated('thanh toán đơn thuê')) return;
     if (!order) return;
     setPaymentPolicyOpen(true);
   }
 
   function handlePaymentAfterConsent() {
+    if (!ensureAuthenticated('thanh toán đơn thuê')) return;
     if (!order) return;
     setPaymentPolicyOpen(false);
     initiatePayment.mutate(order.rentalOrderId);
   }
 
   function handleDeliveredToInUse() {
+    if (!ensureAuthenticated('xác nhận bắt đầu sử dụng')) return;
     if (!order) return;
     updateOrderStatus.mutate({
       rentalOrderId: order.rentalOrderId,
@@ -595,11 +619,13 @@ export default function RentalOrderDetailPage() {
   }
 
   function handleInUseToPendingPickup() {
+    if (!ensureAuthenticated('yêu cầu thu hồi')) return;
     if (!order) return;
     setPickupConfirmOpen(true);
   }
 
   function confirmInUseToPendingPickup() {
+    if (!ensureAuthenticated('yêu cầu thu hồi')) return;
     if (!order) return;
     updateOrderStatus.mutate(
       {
@@ -1307,7 +1333,7 @@ export default function RentalOrderDetailPage() {
                             )}
                           >
                             {overdueSuggestion.overdue
-                              ? `Đơn đang quá hạn trả — ${overdueSuggestion.overdueDays} ngày`
+                              ? `Đơn đang quá hạn trả - ${overdueSuggestion.overdueDays} ngày`
                               : 'Chưa ghi nhận quá hạn theo dữ liệu hiện tại.'}
                           </div>
                           <dl className='grid grid-cols-1 gap-2 text-xs sm:grid-cols-2'>

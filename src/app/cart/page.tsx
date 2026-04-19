@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
   Trash2,
@@ -59,6 +60,7 @@ import {
 } from '@/components/user-address/address-form-dialog';
 import type { UserAddressResponse } from '@/api/userAddressApi';
 import { getApiErrorMessage } from '@/app/profile/utils';
+import { buildLoginHref } from '@/lib/auth-redirect';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -696,6 +698,7 @@ function DeliveryInfoDialog({
 /* ─── Cart page ────────────────────────────────────────────────────────────── */
 
 export default function CartPage() {
+  const router = useRouter();
   const { data: cart, isLoading, isError } = useCartQuery();
   const removeMutation = useRemoveCartLine();
   const updateQtyMutation = useUpdateCartLineQuantity();
@@ -709,7 +712,7 @@ export default function CartPage() {
   // Voucher toàn đơn
   const [voucherCode, setVoucherCode] = useState('');
 
-  // Thông tin giao hàng — lưu vào sessionStorage
+  // Thông tin giao hàng - lưu vào sessionStorage
   const {
     recipientName,
     setRecipientName,
@@ -731,7 +734,7 @@ export default function CartPage() {
   >(null);
   const addressesInitRef = useRef(false);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: savedAddresses, isLoading: savedAddressesLoading } =
     useUserAddressesQuery({ enabled: !!isAuthenticated });
 
@@ -967,9 +970,13 @@ export default function CartPage() {
       return;
     }
     if (!isAuthenticated) {
-      toast.error(
-        'Vui lòng đăng nhập để đặt thuê — đơn cần địa chỉ trong sổ (API-074).',
-      );
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
+      toast.error('Vui lòng đăng nhập để đặt thuê.');
+      router.push(buildLoginHref('/cart'));
       return;
     }
     if (!recipientName.trim()) {
@@ -986,7 +993,13 @@ export default function CartPage() {
   /** Bước 2: Gọi sau khi user đã đồng ý điều khoản → tạo đơn + thanh toán */
   async function handleCreateOrder() {
     if (!isAuthenticated) {
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
       toast.error('Vui lòng đăng nhập để đặt thuê.');
+      router.push(buildLoginHref('/cart'));
       return;
     }
 
@@ -1100,7 +1113,7 @@ export default function CartPage() {
               </div>
               <p className='mt-2 max-w-xl text-sm text-muted-foreground sm:text-base'>
                 <ShinyText className='font-medium'>Kiểm tra đơn thuê</ShinyText>
-                {' — '}
+                {' - '}
                 trước khi tiến hành thanh toán. Giao nhanh toàn quốc.
                 <Truck className='ml-1 inline size-4 align-text-bottom text-rose-600 dark:text-rose-400' />
               </p>
@@ -1122,7 +1135,7 @@ export default function CartPage() {
               Vui lòng đăng nhập hoặc thử lại sau.
             </p>
             <Link
-              href='/login?redirect=/cart'
+              href={buildLoginHref('/cart')}
               className='mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-rose-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 active:scale-[0.98]'
             >
               Đăng nhập
@@ -1145,18 +1158,31 @@ export default function CartPage() {
                 <ShoppingBag className='size-10 text-rose-600 dark:text-rose-400' />
               </div>
               <p className='mt-6 text-xl font-bold text-foreground'>
-                Giỏ hàng trống
+                {!isAuthenticated && !authLoading
+                  ? 'Vui lòng đăng nhập để xem giỏ hàng'
+                  : 'Giỏ hàng trống'}
               </p>
               <p className='mx-auto mt-2 max-w-sm text-sm text-muted-foreground'>
-                Thêm thiết bị từ trang chi tiết sản phẩm để bắt đầu thuê.
+                {!isAuthenticated && !authLoading
+                  ? 'Bạn cần đăng nhập trước khi thêm sản phẩm và tiến hành thuê.'
+                  : 'Thêm thiết bị từ trang chi tiết sản phẩm để bắt đầu thuê.'}
               </p>
               <Magnetic intensity={0.35} range={120}>
-                <Link
-                  href='/'
-                  className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-rose-700 active:scale-[0.98] dark:bg-rose-500 dark:hover:bg-rose-600'
-                >
-                  Khám phá sản phẩm
-                </Link>
+                {!isAuthenticated && !authLoading ? (
+                  <Link
+                    href={buildLoginHref('/cart')}
+                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-rose-700 active:scale-[0.98] dark:bg-rose-500 dark:hover:bg-rose-600'
+                  >
+                    Đăng nhập để tiếp tục
+                  </Link>
+                ) : (
+                  <Link
+                    href='/'
+                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-rose-700 active:scale-[0.98] dark:bg-rose-500 dark:hover:bg-rose-600'
+                  >
+                    Khám phá sản phẩm
+                  </Link>
+                )}
               </Magnetic>
             </motion.div>
           </SpotlightCard>
@@ -1421,7 +1447,7 @@ export default function CartPage() {
                             {savedAddresses?.length === 0 &&
                               !(recipientName || phone) && (
                                 <p className='text-xs text-amber-700 dark:text-amber-400'>
-                                  Chưa có địa chỉ trong sổ — thêm mới hoặc nhập
+                                  Chưa có địa chỉ trong sổ - thêm mới hoặc nhập
                                   nhanh để tiếp tục.
                                 </p>
                               )}
@@ -1579,7 +1605,7 @@ export default function CartPage() {
                           >
                             Đăng nhập
                           </Link>{' '}
-                          để đặt thuê — đơn gắn với địa chỉ đã lưu.
+                          để đặt thuê - đơn gắn với địa chỉ đã lưu.
                         </p>
                       )}
 
@@ -1674,7 +1700,7 @@ export default function CartPage() {
         onAllConsented={() => void handleCreateOrder()}
       />
 
-      {/* Voucher picker dialog — per-line */}
+      {/* Voucher picker dialog - per-line */}
       {voucherDialogLine &&
         (() => {
           // Tập hợp các code đang được dùng ở các dòng KHÁC (không phải dòng đang mở dialog)

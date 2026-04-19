@@ -1,5 +1,5 @@
 /**
- * Rental Orders API — Module 12: RENTAL ORDERS (API-074 → API-086A)
+ * Rental Orders API - Module 12: RENTAL ORDERS (API-074 → API-086A)
  *
  * Base URL: /api/v1
  * Tất cả endpoints đều yêu cầu xác thực [AUTH]
@@ -132,7 +132,7 @@ export interface RentalOrderResponse {
   penaltyChargeAmount: number | null;
   depositRefundAmount: number | null;
   totalPaidAmount: number;
-  /** URL ảnh QR (PNG) — backend tự sinh khi đơn vừa PAID và chưa có QR */
+  /** URL ảnh QR (PNG) - backend tự sinh khi đơn vừa PAID và chưa có QR */
   qrCode?: string | null;
   /** Phạt hỏng / mất thiết bị (đã chốt hoặc đang lưu) */
   damagePenaltyAmount?: number | null;
@@ -199,7 +199,7 @@ export interface CreateOrderLineInput {
   voucherCode?: string;
 }
 
-/** API-074 POST — địa chỉ lấy từ sổ user (`userAddressId`) */
+/** API-074 POST - địa chỉ lấy từ sổ user (`userAddressId`) */
 export interface CreateRentalOrderInput {
   userAddressId: string;
   expectedDeliveryDate: string; // YYYY-MM-DD

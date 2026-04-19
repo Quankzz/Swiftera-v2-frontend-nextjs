@@ -468,7 +468,7 @@ export function ProductFormPage({
                 }),
               ),
               ...existingItems.flatMap((item) => {
-                // Diff against _original — only send changed fields
+                // Diff against _original - only send changed fields
                 const orig = item._original;
                 const patch: {
                   hubId?: string;
@@ -489,7 +489,7 @@ export function ProductFormPage({
                 if (!orig || item.status !== orig.status)
                   patch.status = item.status;
 
-                // Nothing changed — skip API call
+                // Nothing changed - skip API call
                 if (Object.keys(patch).length === 0) return [];
 
                 return [
@@ -547,7 +547,7 @@ export function ProductFormPage({
               <CategoryTreeSelect
                 value={form.categoryId}
                 onChange={(id) => setField('categoryId', id)}
-                placeholder='— Chọn danh mục —'
+                placeholder='- Chọn danh mục -'
               />
             </Field>
 
@@ -583,7 +583,7 @@ export function ProductFormPage({
               </Field>
               <Field
                 label='Màu sắc sản phẩm'
-                hint='Chọn hoặc thêm màu — mỗi inventory item sẽ được gắn với một màu'
+                hint='Chọn hoặc thêm màu - mỗi inventory item sẽ được gắn với một màu'
               >
                 <ColorPickerList
                   colors={form.colors}
@@ -609,7 +609,7 @@ export function ProductFormPage({
               />
             </Field>
 
-            {/* Giá thuê — dùng VoucherPriceCalculator thay cho 2 input thủ công */}
+            {/* Giá thuê - dùng VoucherPriceCalculator thay cho 2 input thủ công */}
             <Field
               label='Giá thuê & Voucher giảm giá'
               required
@@ -711,7 +711,7 @@ export function ProductFormPage({
               </Field>
             </div>
 
-            {/* Trạng thái hoạt động — chỉ hiển thị trong edit mode */}
+            {/* Trạng thái hoạt động - chỉ hiển thị trong edit mode */}
             {mode === 'edit' && (
               <Field
                 label='Trạng thái'

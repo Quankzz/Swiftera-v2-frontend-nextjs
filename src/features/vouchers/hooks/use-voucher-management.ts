@@ -1,5 +1,5 @@
 /**
- * Voucher management hooks — TanStack Query
+ * Voucher management hooks - TanStack Query
  * Module 11: VOUCHERS (API-066 → API-072)
  *
  * Gom toàn bộ hooks CRUD voucher vào 1 file.
@@ -31,9 +31,9 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * useVouchersQuery — phân trang danh sách voucher (API-070)
- * staleTime 30s — danh sách voucher thay đổi khi admin CRUD
- * placeholderData: keepPreviousData — giữ dữ liệu trang cũ khi chuyển trang (fix bug trang 1/2 giống nhau)
+ * useVouchersQuery - phân trang danh sách voucher (API-070)
+ * staleTime 30s - danh sách voucher thay đổi khi admin CRUD
+ * placeholderData: keepPreviousData - giữ dữ liệu trang cũ khi chuyển trang (fix bug trang 1/2 giống nhau)
  */
 export function useVouchersQuery(params?: VoucherListParams) {
   return useQuery({
@@ -45,7 +45,7 @@ export function useVouchersQuery(params?: VoucherListParams) {
 }
 
 /**
- * useVoucherQuery — chi tiết 1 voucher (API-067)
+ * useVoucherQuery - chi tiết 1 voucher (API-067)
  * Chỉ enabled khi có voucherId
  */
 export function useVoucherQuery(voucherId?: string) {
@@ -62,7 +62,7 @@ export function useVoucherQuery(voucherId?: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * useCreateVoucherMutation — tạo voucher mới (API-066)
+ * useCreateVoucherMutation - tạo voucher mới (API-066)
  * Invalidate toàn bộ list sau khi tạo.
  */
 export function useCreateVoucherMutation() {
@@ -76,7 +76,7 @@ export function useCreateVoucherMutation() {
 }
 
 /**
- * useUpdateVoucherMutation — cập nhật voucher (API-071)
+ * useUpdateVoucherMutation - cập nhật voucher (API-071)
  * Invalidate list + detail của voucher đó.
  */
 export function useUpdateVoucherMutation() {
@@ -99,7 +99,7 @@ export function useUpdateVoucherMutation() {
 }
 
 /**
- * useDeleteVoucherMutation — xóa voucher (API-072)
+ * useDeleteVoucherMutation - xóa voucher (API-072)
  * Invalidate list sau khi xóa, remove detail khỏi cache.
  */
 export function useDeleteVoucherMutation() {

@@ -19,7 +19,7 @@ export default function FeedbackPage() {
                 Gửi yêu cầu hỗ trợ
               </h1>
               <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-                Điền form bên dưới — chúng tôi sẽ phản hồi trong vòng 24 giờ.
+                Điền form bên dưới - chúng tôi sẽ phản hồi trong vòng 24 giờ.
               </p>
             </div>
           </div>

@@ -33,8 +33,8 @@ interface FormState {
 function toDateTimeLocalValue(dateStr: string | null): string {
   if (!dateStr) return '';
   try {
-    // BE trả về format "2026-11-12 00:09:00 AM" — đây là LOCAL time (Vietnam UTC+7)
-    // KHÔNG thêm Z (UTC), KHÔNG cộng/trừ offset — chỉ parse thẳng thành datetime-local
+    // BE trả về format "2026-11-12 00:09:00 AM" - đây là LOCAL time (Vietnam UTC+7)
+    // KHÔNG thêm Z (UTC), KHÔNG cộng/trừ offset - chỉ parse thẳng thành datetime-local
     const ampmMatch = dateStr.match(
       /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i,
     );
@@ -44,10 +44,10 @@ function toDateTimeLocalValue(dateStr: string | null): string {
       // Chuẩn 12h AM/PM → 24h
       if (hour < 12 && ampm.toUpperCase() === 'PM') hour += 12;
       if (hour === 12 && ampm.toUpperCase() === 'AM') hour = 0;
-      // Trả về "YYYY-MM-DDTHH:mm" cho datetime-local input — không cần timezone
+      // Trả về "YYYY-MM-DDTHH:mm" cho datetime-local input - không cần timezone
       return `${datePart}T${String(hour).padStart(2, '0')}:${min}`;
     }
-    // Fallback: "YYYY-MM-DD HH:mm:ss" không có AM/PM — parse trực tiếp
+    // Fallback: "YYYY-MM-DD HH:mm:ss" không có AM/PM - parse trực tiếp
     const isoLike = dateStr.replace(' ', 'T').slice(0, 16); // "YYYY-MM-DDTHH:mm"
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(isoLike)) return isoLike;
     return '';
@@ -102,7 +102,7 @@ interface VoucherFormDialogProps {
 export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
   const isEdit = target !== null;
 
-  // Fetch fresh data by ID khi ở edit mode — tránh dùng stale data từ list
+  // Fetch fresh data by ID khi ở edit mode - tránh dùng stale data từ list
   const { data: freshVoucher, isLoading: isFetchingVoucher } = useVoucherQuery(
     isEdit ? target.voucherId : undefined,
   );
@@ -237,7 +237,7 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
             </div>
           )}
 
-          {/* Mã voucher — chỉ editable khi create */}
+          {/* Mã voucher - chỉ editable khi create */}
           <div className='space-y-1.5'>
             <label className='block text-sm font-medium text-text-main'>
               Mã voucher <span className='text-red-500'>*</span>
@@ -333,7 +333,7 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
               />
             </div>
 
-            {/* Giảm tối đa — chỉ PERCENTAGE */}
+            {/* Giảm tối đa - chỉ PERCENTAGE */}
             {form.discountType === 'PERCENTAGE' && (
               <div className='space-y-1.5'>
                 <label className='block text-sm font-medium text-text-main'>
@@ -384,7 +384,7 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
             </p>
           </div>
 
-          {/* isActive toggle — chỉ edit mode */}
+          {/* isActive toggle - chỉ edit mode */}
           {isEdit && (
             <div className='flex items-center justify-between rounded-lg border border-gray-200 dark:border-white/8 px-4 py-3'>
               <div>

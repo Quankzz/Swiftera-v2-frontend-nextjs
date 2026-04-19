@@ -1,5 +1,5 @@
 /**
- * Vouchers API — /api/v1/vouchers
+ * Vouchers API - /api/v1/vouchers
  *
  * Module 11 trong tài liệu API: VOUCHERS (7 endpoints)
  * Base URL: /api/v1

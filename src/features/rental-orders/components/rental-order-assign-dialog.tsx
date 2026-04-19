@@ -57,7 +57,7 @@ interface RentalOrderAssignDialogProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatCurrency(v: number | null | undefined) {
-  if (v == null) return '—';
+  if (v == null) return '-';
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
@@ -66,7 +66,7 @@ function formatCurrency(v: number | null | undefined) {
 }
 
 /**
- * Parse ngày giờ linh hoạt — hỗ trợ:
+ * Parse ngày giờ linh hoạt - hỗ trợ:
  *  - ISO 8601: "2026-03-24T10:30:00Z"
  *  - BE custom: "2026-03-24 10:30:00 AM"
  *  - Date-only: "2026-03-24"
@@ -103,7 +103,7 @@ function parseDate(raw: string | null | undefined): Date | null {
 
 function formatDate(raw: string | null | undefined) {
   const d = parseDate(raw);
-  if (!d) return '—';
+  if (!d) return '-';
   return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -113,7 +113,7 @@ function formatDate(raw: string | null | undefined) {
 
 function formatDateTime(raw: string | null | undefined) {
   const d = parseDate(raw);
-  if (!d) return '—';
+  if (!d) return '-';
   return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -147,7 +147,7 @@ function InfoRow({
       <Icon className='w-3.5 h-3.5 text-text-sub mt-0.5 shrink-0' />
       <span className='text-xs text-text-sub w-28 shrink-0'>{label}</span>
       <span className='text-xs font-medium text-text-main flex-1'>
-        {value || '—'}
+        {value || '-'}
       </span>
     </div>
   );
@@ -216,7 +216,7 @@ function StaffSlot({
             </p>
           ) : (
             <p className='text-sm text-text-sub italic'>
-              Chưa chọn — bấm để chọn
+              Chưa chọn - bấm để chọn
             </p>
           )}
         </div>
@@ -330,8 +330,8 @@ export function RentalOrderAssignDialog({
                   Gán đơn thuê
                 </h2>
                 <p className='text-xs text-text-sub'>
-                  #{order.rentalOrderId.slice(0, 8).toUpperCase()} —{' '}
-                  {order.userAddress?.recipientName ?? '—'}
+                  #{order.rentalOrderId.slice(0, 8).toUpperCase()} -{' '}
+                  {order.userAddress?.recipientName ?? '-'}
                 </p>
               </div>
             </div>
@@ -389,7 +389,7 @@ export function RentalOrderAssignDialog({
                         order.hubCity,
                       ]
                         .filter(Boolean)
-                        .join(', ') || '—'
+                        .join(', ') || '-'
                     }
                   />
                 )}
@@ -403,7 +403,7 @@ export function RentalOrderAssignDialog({
                 <InfoRow
                   icon={Phone}
                   label='Người nhận'
-                  value={`${order.userAddress?.recipientName ?? '—'} · ${order.userAddress?.phoneNumber ?? '—'}`}
+                  value={`${order.userAddress?.recipientName ?? '-'} · ${order.userAddress?.phoneNumber ?? '-'}`}
                 />
                 <InfoRow
                   icon={MapPin}
@@ -416,7 +416,7 @@ export function RentalOrderAssignDialog({
                       order.userAddress?.city,
                     ]
                       .filter(Boolean)
-                      .join(', ') || '—'
+                      .join(', ') || '-'
                   }
                 />
                 <InfoRow
@@ -599,7 +599,7 @@ export function RentalOrderAssignDialog({
                       label: 'Giảm giá',
                       value: order.voucherDiscountAmount
                         ? `- ${formatCurrency(order.voucherDiscountAmount)}`
-                        : '—',
+                        : '-',
                       accent: false,
                     },
                     {
@@ -617,7 +617,7 @@ export function RentalOrderAssignDialog({
                       value: formatCurrency(order.totalPayableAmount),
                       accent: true,
                     },
-                    // Penalty fields — chỉ hiện khi có giá trị
+                    // Penalty fields - chỉ hiện khi có giá trị
                     order.damagePenaltyAmount != null && {
                       label: 'Phí hư hại',
                       value: formatCurrency(order.damagePenaltyAmount),
@@ -768,7 +768,7 @@ export function RentalOrderAssignDialog({
                     <span className='font-semibold'>
                       {STATUS_LABELS[order.status]}
                     </span>{' '}
-                    — không thể phân công nhân viên.
+                    - không thể phân công nhân viên.
                   </p>
                 </div>
               ) : (
@@ -777,7 +777,7 @@ export function RentalOrderAssignDialog({
                   {canAssignDelivery && (
                     <>
                       <p className='text-xs text-text-sub'>
-                        Đơn đã thanh toán — chọn nhân viên{' '}
+                        Đơn đã thanh toán - chọn nhân viên{' '}
                         <span className='font-medium text-indigo-600 dark:text-indigo-400'>
                           giao hàng
                         </span>{' '}

@@ -153,7 +153,7 @@ function buildStaffOrderItems(_o: RentalOrderResponse): StaffOrderItem[] {
 
 /**
  * Adapt a backend RentalOrderResponse to StaffOrder (staff dashboard UI shape).
- * Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — API-074 / API-075 / API-076
+ * Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - API-074 / API-075 / API-076
  *
  * Fields not available from BE (always empty / undefined):
  *   - cccd_number, cccd_front_url, cccd_back_url (BE does not expose CCCD in order API)
@@ -285,7 +285,7 @@ export async function updateOrderStatus(
   return res ? adaptStaffOrder(res) : null;
 }
 
-/** PATCH /rental-orders/{id}/record-delivery — transitions DELIVERING → DELIVERED */
+/** PATCH /rental-orders/{id}/record-delivery - transitions DELIVERING → DELIVERED */
 export async function recordDelivery(
   orderId: string,
   data: RecordDeliveryRequest = {},
@@ -297,7 +297,7 @@ export async function recordDelivery(
   return res ? adaptStaffOrder(res) : null;
 }
 
-/** PATCH /rental-orders/{id}/record-pickup — transitions PICKING_UP → PICKED_UP */
+/** PATCH /rental-orders/{id}/record-pickup - transitions PICKING_UP → PICKED_UP */
 export async function recordPickup(
   orderId: string,
   data: RecordPickupRequest = {},

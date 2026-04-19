@@ -61,7 +61,7 @@ export function ActiveWorkflow({
           icon={isOverdue ? AlertTriangle : RotateCcw}
           title={
             isOverdue
-              ? 'Đơn hàng quá hạn — Thu hồi khẩn cấp'
+              ? 'Đơn hàng quá hạn - Thu hồi khẩn cấp'
               : isPendingPickup
                 ? 'Yêu cầu thu hồi đang chờ xử lý'
                 : 'Đơn hàng đang được thuê'
@@ -157,7 +157,7 @@ export function ActiveWorkflow({
                       Địa chỉ thu hồi
                     </p>
                     <p className="text-[15px] font-medium text-foreground leading-relaxed whitespace-normal">
-                      {order.delivery_address || order.renter.address || '—'}
+                      {order.delivery_address || order.renter.address || '-'}
                     </p>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 /**
- * Dashboard service — API calls for the dashboards module.
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * Dashboard service - API calls for the dashboards module.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *   API-113: GET /api/v1/dashboards/admin

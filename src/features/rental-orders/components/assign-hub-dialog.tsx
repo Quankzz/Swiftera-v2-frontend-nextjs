@@ -45,7 +45,7 @@ export function AssignHubDialog({
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [selectedHub, setSelectedHub] = useState<HubOption | null>(null);
 
-  // Fetch active hubs — BE spec API-042 GET /hubs?filter=isActive:true
+  // Fetch active hubs - BE spec API-042 GET /hubs?filter=isActive:true
   const { data, isLoading } = useHubsForAssignQuery({
     size: 100,
     sort: `${sortField},${sortDir}`,
@@ -104,8 +104,8 @@ export function AssignHubDialog({
                 Chọn Hub xử lý
               </h2>
               <p className='text-xs text-blue-100'>
-                Đơn: {order.rentalOrderId.slice(0, 8).toUpperCase()} —{' '}
-                {order.userAddress?.recipientName ?? '—'}
+                Đơn: {order.rentalOrderId.slice(0, 8).toUpperCase()} -{' '}
+                {order.userAddress?.recipientName ?? '-'}
               </p>
             </div>
           </div>
@@ -259,7 +259,7 @@ export function AssignHubDialog({
             {filteredHubs.length} hub
             {selectedHub ? (
               <span className='ml-2 font-medium text-indigo-600 dark:text-indigo-400'>
-                — Đã chọn: {selectedHub.name}
+                - Đã chọn: {selectedHub.name}
               </span>
             ) : null}
           </p>

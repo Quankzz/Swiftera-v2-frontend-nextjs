@@ -43,7 +43,7 @@ const SORT_MAP: Record<SortOption, string | undefined> = {
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface CatalogViewProps {
-  /** Initial values from server-side searchParams — used to seed state */
+  /** Initial values from server-side searchParams - used to seed state */
   initialCategoryId?: string;
   initialSubcategoryId?: string;
   initialSort?: SortOption;
@@ -88,7 +88,7 @@ export function CatalogView({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Local filter state (brands + price — NOT in URL for now) ─────────────
+  // ── Local filter state (brands + price - NOT in URL for now) ─────────────
   const [filterState, setFilterState] = useState<FilterState>(EMPTY_FILTER);
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -155,7 +155,7 @@ export function CatalogView({
     ];
     if (subcategoryId) {
       const sub = flatCategories.find((n) => n.categoryId === subcategoryId);
-      if (sub) items.push({ label: sub.name }); // last crumb — no href
+      if (sub) items.push({ label: sub.name }); // last crumb - no href
     }
     return items;
   }, [activeRootNode, subcategoryId, flatCategories]);
@@ -218,7 +218,7 @@ export function CatalogView({
         onToggleFilter={() => setFilterOpen((v) => !v)}
       />
 
-      {/* Subcategory bar — only when root category has children */}
+      {/* Subcategory bar - only when root category has children */}
       {subcategories.length > 0 && (
         <div className='mt-5'>
           <SubcategoryBar
@@ -327,7 +327,7 @@ export function CatalogView({
                 <span className='font-semibold text-text-main'>
                   {totalPages}
                 </span>{' '}
-                — {total.toLocaleString('vi-VN')} sản phẩm
+                - {total.toLocaleString('vi-VN')} sản phẩm
               </p>
 
               {/* Pagination buttons */}

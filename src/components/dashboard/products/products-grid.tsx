@@ -202,7 +202,7 @@ export function ProductsGrid({
         </>
       )}
 
-      {/* Pagination — bottom of grid */}
+      {/* Pagination - bottom of grid */}
       {totalPages > 1 && (
         <div className='flex items-center justify-center gap-1'>
           <button

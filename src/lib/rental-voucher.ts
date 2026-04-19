@@ -34,7 +34,7 @@ export const defaultRentalVouchers: RentalVoucher[] = [
     id: 'v3',
     code: 'WEEKEND',
     title: 'Giảm 100.000₫ cuối tuần',
-    description: 'Ưu đãi cuối tuần — đơn từ 500.000₫',
+    description: 'Ưu đãi cuối tuần - đơn từ 500.000₫',
     kind: 'fixed',
     value: 100000,
     minRental: 500000,

@@ -1,5 +1,5 @@
 /**
- * Rental Order API service — dùng cho TanStack Query hooks
+ * Rental Order API service - dùng cho TanStack Query hooks
  * Module 12: RENTAL ORDERS (API-074 → API-085)
  */
 

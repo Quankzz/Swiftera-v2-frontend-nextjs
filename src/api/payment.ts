@@ -1,5 +1,5 @@
 /**
- * Payments API — Module 13: PAYMENTS (API-086 → API-091)
+ * Payments API - Module 13: PAYMENTS (API-086 → API-091)
  *
  * Base URL: /api/v1
  * Tất cả endpoints đều yêu cầu xác thực [AUTH] (trừ IPN /return)
@@ -42,7 +42,7 @@ export type VnpTransactionType = '01' | '02' | '03' | '04';
  *  04: Hoàn tiền tự động
  */
 
-/** PaymentTransactionResponse — API-086, 087, 088 */
+/** PaymentTransactionResponse - API-086, 087, 088 */
 export interface PaymentTransactionResponse {
   paymentTransactionId: string;
   rentalOrderId: string;

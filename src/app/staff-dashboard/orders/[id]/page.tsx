@@ -95,7 +95,7 @@ export default function OrderDetailPage({
       cancelled = true;
     };
   }, [id, user?.userId]);
-  // Geocoded destination coords — used when API returns null lat/lng
+  // Geocoded destination coords - used when API returns null lat/lng
   const [geocodedDestLat, setGeocodedDestLat] = useState<number | undefined>();
   const [geocodedDestLng, setGeocodedDestLng] = useState<number | undefined>();
   useEffect(() => {
@@ -123,7 +123,7 @@ export default function OrderDetailPage({
     };
   }, [order]);
 
-  // GPS state — local to this page; initialized from order delivery coordinates
+  // GPS state - local to this page; initialized from order delivery coordinates
   const [localLat, setLocalLat] = useState<number | undefined>(
     order?.delivery_latitude,
   );
@@ -375,7 +375,7 @@ export default function OrderDetailPage({
             </div>
           </div>
 
-          {/* Workflow stepper — only show the flow matching current status */}
+          {/* Workflow stepper - only show the flow matching current status */}
           <WorkflowStepper status={order.status} />
 
           {/* Main content grid */}
@@ -583,7 +583,7 @@ export default function OrderDetailPage({
                 </div>
               )}
 
-              {/* Collapsible full details — hidden for COMPLETED (merged into CompletedWorkflow) */}
+              {/* Collapsible full details - hidden for COMPLETED (merged into CompletedWorkflow) */}
               {order.status !== 'COMPLETED' && (
                 <Section
                   title="Chi tiết đơn hàng đầy đủ"

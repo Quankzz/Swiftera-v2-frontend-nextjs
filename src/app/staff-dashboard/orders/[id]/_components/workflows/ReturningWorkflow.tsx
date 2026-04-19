@@ -96,7 +96,7 @@ function ItemReturnCard({
             {item.product_name}
           </p>
           <p className="text-sm text-muted-foreground font-mono mt-0.5">
-            {item.serial_number || '—'}
+            {item.serial_number || '-'}
           </p>
           <p className="text-sm font-semibold text-theme-primary-start mt-1">
             Cọc {fmt(item.deposit_amount)}
@@ -282,7 +282,7 @@ export function ReturningWorkflow({
         if (data.overdue) {
           setOverduePenaltyInput(String(data.provisionalOverduePenaltyAmount));
         } else {
-          // No overdue detected — auto-confirm at 0
+          // No overdue detected - auto-confirm at 0
           setOverdueLocked(true);
         }
       })
@@ -412,7 +412,7 @@ export function ReturningWorkflow({
                 Địa chỉ thu hồi
               </p>
               <p className="text-[14px] font-medium text-foreground leading-relaxed">
-                {order.delivery_address || order.renter.address || '—'}
+                {order.delivery_address || order.renter.address || '-'}
               </p>
             </div>
           </div>
@@ -749,8 +749,8 @@ export function ReturningWorkflow({
               <span className="flex items-center gap-2 text-success font-semibold">
                 <CheckCircle2 className="size-5" />
                 {hasPenalty
-                  ? `Hoàn tất kiểm tra — Phí phạt: ${fmt(totalPenalty)}`
-                  : 'Hoàn tất kiểm tra — Không có hư hỏng.'}
+                  ? `Hoàn tất kiểm tra - Phí phạt: ${fmt(totalPenalty)}`
+                  : 'Hoàn tất kiểm tra - Không có hư hỏng.'}
               </span>
             ) : (
               <span className="flex items-center gap-2">

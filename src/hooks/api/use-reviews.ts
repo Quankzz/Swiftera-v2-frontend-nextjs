@@ -1,5 +1,5 @@
 /**
- * Reviews hooks — TanStack Query
+ * Reviews hooks - TanStack Query
  * Module 15: REVIEWS (API-095 → API-100)
  */
 

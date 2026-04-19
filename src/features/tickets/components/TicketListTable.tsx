@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * TicketListTable — Admin table for contact tickets
+ * TicketListTable - Admin table for contact tickets
  *
  * Props:
- *   onView(ticket) — open detail modal
+ *   onView(ticket) - open detail modal
  */
 
 import { useState, useEffect } from 'react';
@@ -79,7 +79,7 @@ export function TicketListTable({ onView }: TicketListTableProps) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Build filter — combine status + search
+  // Build filter - combine status + search
   const filter = (() => {
     const parts: string[] = [];
     if (activeStatus !== 'ALL') parts.push(`status:'${activeStatus}'`);
@@ -278,7 +278,7 @@ function TicketRow({
       {/* Customer */}
       <td className='px-4 py-3 whitespace-nowrap'>
         <p className='text-sm text-gray-700 dark:text-gray-300'>
-          {ticket.fullName ?? '—'}
+          {ticket.fullName ?? '-'}
         </p>
         <p className='text-xs text-gray-400 truncate max-w-40'>
           {ticket.email ?? ''}

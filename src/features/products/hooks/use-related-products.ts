@@ -1,6 +1,6 @@
 /**
  * useRelatedProductsQuery
- * API-054: GET /api/v1/products — không gửi filter theo id; lấy danh sách rồi bỏ sản phẩm đang xem ở client.
+ * API-054: GET /api/v1/products - không gửi filter theo id; lấy danh sách rồi bỏ sản phẩm đang xem ở client.
  */
 
 import { useQuery } from '@tanstack/react-query';

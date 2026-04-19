@@ -1,8 +1,8 @@
 /**
- * Policy API service — Module 17: POLICIES
+ * Policy API service - Module 17: POLICIES
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  */
 
 import { httpService } from '@/api/http';
@@ -84,7 +84,7 @@ export async function deactivatePolicy(
 /**
  * API-109A: PATCH /policies/{policyId}
  * Cập nhật tài liệu chính sách (title, pdfUrl, effectiveFrom).
- * code và policyVersion là immutable — không hỗ trợ update qua endpoint này.
+ * code và policyVersion là immutable - không hỗ trợ update qua endpoint này.
  */
 export async function updatePolicy(
   policyDocumentId: string,

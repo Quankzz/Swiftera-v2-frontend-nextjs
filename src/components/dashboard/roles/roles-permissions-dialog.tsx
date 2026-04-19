@@ -3,7 +3,7 @@
 /**
  * RolePermissionsDialog
  * ─────────────────────────────────────────────────────────────────────────────
- * Dialog phân quyền cho vai trò — hiển thị toàn bộ permission nhóm theo module.
+ * Dialog phân quyền cho vai trò - hiển thị toàn bộ permission nhóm theo module.
  *
  * UI: Switch toggle cho từng module (bật/tắt tất cả permission) và từng
  * permission riêng lẻ. Collapsible sections.
@@ -225,7 +225,7 @@ function ModuleSection({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inner — contains the permission selection state
+// Inner - contains the permission selection state
 // ─────────────────────────────────────────────────────────────────────────────
 
 function PermissionsInner({
@@ -489,7 +489,7 @@ function PermissionsInner({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Outer wrapper — fetches data before rendering inner
+// Outer wrapper - fetches data before rendering inner
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RolePermissionsDialogProps {
