@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -16,6 +16,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useExtendOrder } from '@/hooks/api/use-rental-orders';
+import {
+  clearExtensionPaymentIntent,
+  readExtensionPaymentIntent,
+} from '@/lib/extension-payment-intent';
 
 /* ─── Confetti particle (CSS-only, no external lib) ─────────────────────── */
 
@@ -39,20 +44,18 @@ type ConfettiParticle = {
 };
 
 function Confetti() {
-  const [particles, setParticles] = useState<ConfettiParticle[]>([]);
-
-  useEffect(() => {
-    setParticles(
+  const particles = useMemo<ConfettiParticle[]>(
+    () =>
       Array.from({ length: 32 }, (_, i) => ({
         color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        left: `${Math.random() * 100}%`,
-        delay: `${(Math.random() * 1.2).toFixed(2)}s`,
-        duration: `${(1.8 + Math.random() * 1.4).toFixed(2)}s`,
-        size: Math.random() > 0.5 ? 'size-2' : 'size-1.5',
-        rotate: Math.random() > 0.5 ? 'rotate-45' : 'rotate-12',
+        left: `${(i * 17) % 100}%`,
+        delay: `${((i % 6) * 0.2).toFixed(2)}s`,
+        duration: `${(1.8 + (i % 5) * 0.25).toFixed(2)}s`,
+        size: i % 2 === 0 ? 'size-2' : 'size-1.5',
+        rotate: i % 3 === 0 ? 'rotate-45' : 'rotate-12',
       })),
-    );
-  }, []);
+    [],
+  );
 
   if (particles.length === 0) return null;
 
@@ -133,11 +136,52 @@ function PaymentResultContent() {
   const searchParams = useSearchParams();
   const success = searchParams.get('success') === 'true';
   const txnRef = searchParams.get('txnRef') ?? '';
+  const rentalOrderId = searchParams.get('rentalOrderId') ?? '';
   const responseCode = searchParams.get('vnp_ResponseCode') ?? '';
   const cancelRef = useRef(false);
+  const extensionFinalizedRef = useRef(false);
 
-  const countdown = useCountdown(6, success);
+  const extendOrder = useExtendOrder();
+
+  const shouldPauseRedirect = extendOrder.isPending;
+
+  const countdown = useCountdown(6, success && !shouldPauseRedirect);
   const [showConfetti, setShowConfetti] = useState(success);
+
+  useEffect(() => {
+    if (!success || extensionFinalizedRef.current) return;
+
+    const intent = readExtensionPaymentIntent();
+    if (!intent) return;
+
+    const maxIntentAgeMs = 60 * 60 * 1000;
+    const isExpired = Date.now() - intent.createdAt > maxIntentAgeMs;
+    if (isExpired) {
+      clearExtensionPaymentIntent();
+      return;
+    }
+
+    const matchesOrder = !!rentalOrderId && intent.rentalOrderId === rentalOrderId;
+    const matchesTxn = !intent.txnRef || !txnRef || intent.txnRef === txnRef;
+    if (!matchesOrder || !matchesTxn) return;
+
+    extensionFinalizedRef.current = true;
+
+    extendOrder.mutate(
+      {
+        rentalOrderId: intent.rentalOrderId,
+        input: { additionalRentalDays: intent.additionalRentalDays },
+      },
+      {
+        onSuccess: () => {
+          clearExtensionPaymentIntent();
+        },
+        onError: () => {
+          clearExtensionPaymentIntent();
+        },
+      },
+    );
+  }, [extendOrder, rentalOrderId, success, txnRef]);
 
   useEffect(() => {
     if (!success) return;
@@ -153,11 +197,11 @@ function PaymentResultContent() {
 
   // Auto-redirect sau 6 giây nếu thành công
   useEffect(() => {
-    if (!success || countdown > 0) return;
-    window.location.href = '/rental-orders';
-  }, [success, countdown]);
-
-  const fmt = new Intl.NumberFormat('vi-VN');
+    if (!success || countdown > 0 || shouldPauseRedirect) return;
+    window.location.href = rentalOrderId
+      ? `/rental-orders/${rentalOrderId}`
+      : '/rental-orders';
+  }, [countdown, rentalOrderId, shouldPauseRedirect, success]);
 
   return (
     <>
@@ -244,7 +288,7 @@ function PaymentResultContent() {
               )}
 
               {/* Success: countdown redirect */}
-              {success && (
+              {success && !shouldPauseRedirect && (
                 <div className='mb-5 flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300'>
                   <Clock className='size-4 shrink-0' />
                   <span>
@@ -254,13 +298,42 @@ function PaymentResultContent() {
                 </div>
               )}
 
+              {success && extendOrder.isPending && (
+                <div className='mb-5 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-2.5 text-sm text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-300'>
+                  Thanh toán đã thành công. Hệ thống đang hoàn tất gia hạn đơn
+                  thuê của bạn...
+                </div>
+              )}
+
+              {success && extendOrder.isSuccess && (
+                <div className='mb-5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300'>
+                  Gia hạn đơn thuê đã được cập nhật thành công.
+                </div>
+              )}
+
+              {success && extendOrder.isError && (
+                <div className='mb-5 rounded-xl border border-amber-300 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300'>
+                  {extendOrder.error instanceof Error
+                    ? extendOrder.error.message
+                    : 'Thanh toán đã thành công nhưng chưa thể gia hạn tự động. Vui lòng liên hệ hỗ trợ để được xử lý ngay.'}
+                </div>
+              )}
+
               {/* Actions */}
               <div className='space-y-3'>
                 {success ? (
                   <>
                     <Button
                       className='h-12 w-full gap-2 rounded-xl bg-rose-600 text-base font-bold text-white shadow-lg shadow-rose-600/20 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
-                      render={<Link href='/rental-orders' />}
+                      render={
+                        <Link
+                          href={
+                            rentalOrderId
+                              ? `/rental-orders/${rentalOrderId}`
+                              : '/rental-orders'
+                          }
+                        />
+                      }
                     >
                       Xem đơn hàng của tôi
                       <ArrowRight className='size-4' />

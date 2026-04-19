@@ -3,13 +3,14 @@
  * Module 13: PAYMENTS (API-086 → API-091)
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { paymentKeys } from './payment.keys';
 import {
   getPaymentTransactionById,
   getPaymentsList,
   getPaymentsByRentalOrder,
   initiatePayment,
+  type InitiatePaymentInput,
 } from './payment.service';
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -83,8 +84,8 @@ export function useInitiatePayment(options?: {
   onError?: (error: Error) => void;
 }) {
   return useMutation({
-    mutationFn: async (rentalOrderId: string) => {
-      return initiatePayment(rentalOrderId);
+    mutationFn: async (input: string | InitiatePaymentInput) => {
+      return initiatePayment(input);
     },
 
     onSuccess: (paymentUrl) => {

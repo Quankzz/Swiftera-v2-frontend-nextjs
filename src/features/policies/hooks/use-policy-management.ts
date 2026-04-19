@@ -15,6 +15,7 @@ import {
   getPolicyById,
   createPolicy,
   deactivatePolicy,
+  activatePolicy,
   updatePolicy,
 } from '../api/policy.service';
 import type {
@@ -76,6 +77,23 @@ export function useDeactivatePolicyMutation() {
   return useMutation({
     mutationFn: (policyDocumentId: string) =>
       deactivatePolicy(policyDocumentId),
+    onSuccess: (_data, policyDocumentId) => {
+      queryClient.invalidateQueries({ queryKey: policyKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: policyKeys.detail(policyDocumentId),
+      });
+    },
+  });
+}
+
+/**
+ * useActivatePolicyMutation - kích hoạt lại chính sách (API-111)
+ */
+export function useActivatePolicyMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (policyDocumentId: string) =>
+      activatePolicy(policyDocumentId),
     onSuccess: (_data, policyDocumentId) => {
       queryClient.invalidateQueries({ queryKey: policyKeys.lists() });
       queryClient.invalidateQueries({

@@ -25,6 +25,11 @@ export interface NormalizedPaginatedTransactions {
   totalPages: number;
 }
 
+export interface InitiatePaymentInput {
+  rentalOrderId: string;
+  additionalRentalDays?: number;
+}
+
 // ─── API functions ─────────────────────────────────────────────────────────────
 
 /**
@@ -93,17 +98,30 @@ export async function getPaymentsByRentalOrder(
  * Tạo link thanh toán VNPay, trả về URL redirect
  *
  * Logic backend:
- *   amount = totalPayableAmount - totalPaidAmount
+ *   amount = (totalPayableAmount - totalPaidAmount) + provisional extension amount (nếu có additionalRentalDays)
  *   Tạo transaction RENTAL_FEE status=PENDING
  *   Ký và trả URL thanh toán VNPay
  *
- * Nếu đơn không ở PENDING_PAYMENT hoặc đã thanh toán đủ → trả lỗi 4xx
+ * Nếu đơn ở trạng thái không cho phép thanh toán (ví dụ CANCELLED/COMPLETED)
+ * hoặc đã thanh toán đủ → trả lỗi 4xx
  */
-export async function initiatePayment(rentalOrderId: string): Promise<string> {
+export async function initiatePayment(
+  input: string | InitiatePaymentInput,
+): Promise<string> {
+  const rentalOrderId = typeof input === 'string' ? input : input.rentalOrderId;
+  const additionalRentalDays =
+    typeof input === 'string' ? undefined : input.additionalRentalDays;
+
   const res = await httpService.post<PaymentInitiateResponse>(
     `/payments/${rentalOrderId}/initiate`,
     undefined,
-    authOpts,
+    {
+      ...authOpts,
+      params:
+        typeof additionalRentalDays === 'number'
+          ? { additionalRentalDays }
+          : undefined,
+    },
   );
   return res.data.data;
 }

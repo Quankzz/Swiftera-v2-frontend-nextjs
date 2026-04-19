@@ -534,7 +534,7 @@ export function useAssignOrderMutation(options?: {
  * Gia hạn đơn thuê [AUTH]
  */
 export function useExtendOrder(options?: {
-  onSuccess?: () => void;
+  onSuccess?: (data: RentalOrderResponse) => void;
   onError?: (error: Error) => void;
 }) {
   const qc = useQueryClient();
@@ -605,7 +605,7 @@ export function useExtendOrder(options?: {
       qc.setQueryData(rentalOrderKeys.detail(variables.rentalOrderId), data);
       mergeOrderIntoMyOrdersCaches(qc, data);
 
-      options?.onSuccess?.();
+      options?.onSuccess?.(data);
     },
 
     onError: (error: Error, variables, context) => {

@@ -212,7 +212,7 @@ export function useCartQuery(options?: { deliveryDate?: string }) {
   const effectiveDeliveryDate = options?.deliveryDate ?? getDefaultDeliveryDate();
 
   const query = useQuery({
-    queryKey: cartKeys.cart(effectiveDeliveryDate),
+    queryKey: cartKeys.cart(),
     queryFn: async () => {
       const cart = await getCart(effectiveDeliveryDate);
       persistCart(cart);
@@ -220,6 +220,9 @@ export function useCartQuery(options?: { deliveryDate?: string }) {
     },
     enabled: isAuthenticated,
     staleTime: 60_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
     gcTime: 30 * 60_000,
     initialData: isAuthenticated ? readPersistedCart : undefined,
     placeholderData: (previousData) => previousData,

@@ -97,3 +97,18 @@ export async function updatePolicy(
   );
   return res.data.data!;
 }
+
+/**
+ * API-111: PATCH /policies/{policyId}/activate
+ * Kích hoạt lại chính sách (isActive → true)
+ */
+export async function activatePolicy(
+  policyDocumentId: string,
+): Promise<PolicyDocumentResponse> {
+  const res = await httpService.patch<ApiResponse<PolicyDocumentResponse>>(
+    `/policies/${policyDocumentId}/activate`,
+    {},
+    authOpts,
+  );
+  return res.data.data!;
+}

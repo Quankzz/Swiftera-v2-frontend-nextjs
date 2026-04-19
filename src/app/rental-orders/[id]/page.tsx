@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, Fragment, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   ArrowLeft,
   Truck,
-  User,
   AlertCircle,
   Package,
   Loader2,
@@ -39,7 +38,6 @@ import {
 import {
   useRentalOrderQuery,
   useCancelOrder,
-  useExtendOrder,
   useUpdateOrderStatus,
   useOverduePenaltySuggestionQuery,
 } from '@/hooks/api/use-rental-orders';
@@ -56,10 +54,11 @@ import {
 } from '@/api/rentalOrderApi';
 import { useAuth } from '@/hooks/useAuth';
 import { buildLoginHref } from '@/lib/auth-redirect';
-import type {
-  RentalOrderStatus,
-  RentalOrderStaffSummary,
-} from '@/api/rentalOrderApi';
+import {
+  extractTxnRefFromPaymentUrl,
+  saveExtensionPaymentIntent,
+} from '@/lib/extension-payment-intent';
+import type { RentalOrderStatus } from '@/api/rentalOrderApi';
 
 const PolicyConsentDialog = dynamic(
   () =>
@@ -160,28 +159,44 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
 
   return (
     <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-      <div className='flex w-full items-start py-1'>
+      <div className='flex min-w-160 items-start py-1'>
         {STEP_LABELS.map((label, i) => {
           const done = i < active || status === 'COMPLETED';
           const current = i === active && status !== 'COMPLETED';
-          const segmentDone =
+          const leftSegmentDone =
             i > 0 && (i - 1 < active || status === 'COMPLETED');
+          const rightSegmentDone =
+            i < STEP_LABELS.length - 1 &&
+            (i < active || status === 'COMPLETED');
 
           return (
-            <Fragment key={label}>
+            <div
+              key={label}
+              className='relative flex min-w-24 flex-1 flex-col items-center px-1'
+            >
               {i > 0 && (
-                <div
+                <span
                   className={cn(
-                    'mt-[15px] h-px flex-1',
-                    segmentDone ? 'bg-rose-500' : 'bg-border',
+                    'pointer-events-none absolute left-0 top-3.75 h-px w-1/2',
+                    leftSegmentDone ? 'bg-rose-500' : 'bg-border',
                   )}
                   aria-hidden
                 />
               )}
-              <div className='flex shrink-0 flex-col items-center'>
+              {i < STEP_LABELS.length - 1 && (
+                <span
+                  className={cn(
+                    'pointer-events-none absolute right-0 top-3.75 h-px w-1/2',
+                    rightSegmentDone ? 'bg-rose-500' : 'bg-border',
+                  )}
+                  aria-hidden
+                />
+              )}
+
+              <div className='relative z-1 flex shrink-0 flex-col items-center'>
                 <div
                   className={cn(
-                    'flex size-[30px] items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
+                    'flex size-7.5 items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
                     done
                       ? 'border-rose-500 bg-rose-500 text-white'
                       : current
@@ -206,7 +221,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
                   {label}
                 </span>
               </div>
-            </Fragment>
+            </div>
           );
         })}
       </div>
@@ -253,39 +268,6 @@ function SectionHeader({
         {icon}
       </div>
       <span className='font-semibold text-foreground'>{title}</span>
-    </div>
-  );
-}
-
-function StaffAvatar({
-  staff,
-  role,
-}: {
-  staff: RentalOrderStaffSummary;
-  role: string;
-}) {
-  return (
-    <div className='flex items-center gap-3'>
-      {staff.avatarUrl ? (
-        <img
-          src={staff.avatarUrl}
-          alt={`${staff.firstName} ${staff.lastName}`}
-          className='size-9 shrink-0 rounded-full object-cover ring-2 ring-border'
-        />
-      ) : (
-        <div className='flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground'>
-          <User className='size-4' />
-        </div>
-      )}
-      <div>
-        <p className='text-sm font-semibold text-foreground'>
-          {staff.firstName} {staff.lastName}
-        </p>
-        <p className='text-xs text-muted-foreground'>{role}</p>
-        {staff.nickname && (
-          <p className='text-xs text-rose-500'>@{staff.nickname}</p>
-        )}
-      </div>
     </div>
   );
 }
@@ -341,22 +323,35 @@ function ExtendDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const [days, setDays] = useState(1);
+  const initiatePayment = useInitiatePayment();
+  const isSubmitting = initiatePayment.isPending;
 
-  const extendOrder = useExtendOrder({
-    onSuccess: () => {
-      toast.success(`Đã gia hạn thêm ${days} ngày thành công.`);
+  async function handleExtend() {
+    try {
+      const paymentUrl = await initiatePayment.mutateAsync({
+        rentalOrderId: orderId,
+        additionalRentalDays: days,
+      });
+
+      saveExtensionPaymentIntent({
+        rentalOrderId: orderId,
+        additionalRentalDays: days,
+        txnRef: extractTxnRefFromPaymentUrl(paymentUrl),
+        createdAt: Date.now(),
+      });
+
+      toast.success(
+        `Đang chuyển sang VNPay để thanh toán gia hạn ${days} ngày trước khi cập nhật đơn thuê.`,
+      );
       onOpenChange(false);
-    },
-    onError: (err) => {
-      toast.error(err.message || 'Gia hạn thất bại. Vui lòng thử lại.');
-    },
-  });
-
-  function handleExtend() {
-    extendOrder.mutate({
-      rentalOrderId: orderId,
-      input: { additionalRentalDays: days },
-    });
+      window.location.href = paymentUrl;
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Gia hạn thất bại. Vui lòng thử lại.',
+      );
+    }
   }
 
   const endDate = new Date(expectedRentalEndDate);
@@ -371,7 +366,8 @@ function ExtendDialog({
             Gia hạn đơn thuê
           </DialogTitle>
           <DialogDescription>
-            Thêm ngày thuê cho đơn này. Thời hạn mới sẽ được tự động cập nhật.
+            Bạn cần hoàn tất thanh toán VNPay trước. Hệ thống chỉ gọi gia hạn
+            khi nhận được kết quả thanh toán thành công.
           </DialogDescription>
         </DialogHeader>
 
@@ -429,21 +425,23 @@ function ExtendDialog({
           <Button
             variant='outline'
             onClick={() => onOpenChange(false)}
-            disabled={extendOrder.isPending}
+            disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
             className='bg-rose-600 text-white hover:bg-rose-700'
             onClick={handleExtend}
-            disabled={extendOrder.isPending}
+            disabled={isSubmitting}
           >
-            {extendOrder.isPending ? (
+            {isSubmitting ? (
               <Loader2 className='size-4 animate-spin' />
             ) : (
               <CalendarPlus className='size-4' />
             )}
-            Gia hạn {days} ngày
+            {isSubmitting
+              ? 'Đang chuyển thanh toán...'
+              : `Thanh toán để gia hạn ${days} ngày`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -672,7 +670,7 @@ export default function RentalOrderDetailPage() {
         <Button
           variant='ghost'
           size='sm'
-          className='mb-5 gap-1.5 text-muted-foreground hover:text-foreground'
+          className='mb-5 gap-1.5 text-muted-foreground hover:text-foreground [&>a]:hover:bg-muted'
           render={<Link href='/rental-orders' />}
         >
           <ArrowLeft className='size-4' />
@@ -787,7 +785,14 @@ export default function RentalOrderDetailPage() {
                     order.status as RentalOrderStatus,
                   );
                   const hasStartUse = order.status === 'DELIVERED';
-                  const hasRequestPickup = order.status === 'IN_USE';
+                  const canRequestPickup = order.status === 'IN_USE';
+                  const showRequestPickupAction = [
+                    'PAID',
+                    'PREPARING',
+                    'DELIVERING',
+                    'DELIVERED',
+                    'IN_USE',
+                  ].includes(order.status as RentalOrderStatus);
                   const canRentalStatusTransition = Boolean(
                     order.actualDeliveryAt && order.actualRentalStartAt,
                   );
@@ -802,7 +807,7 @@ export default function RentalOrderDetailPage() {
                     hasPay ||
                     isExtendable ||
                     hasStartUse ||
-                    hasRequestPickup ||
+                    showRequestPickupAction ||
                     hasReview ||
                     hasReorder ||
                     hasCancel ||
@@ -874,7 +879,7 @@ export default function RentalOrderDetailPage() {
                             )}
                             {contractLoading
                               ? 'Đang tải hợp đồng…'
-                              : 'Xem hợp đồng'}
+                              : 'Xem hợp đồng hiện hành'}
                           </Button>
                         )}
 
@@ -903,28 +908,41 @@ export default function RentalOrderDetailPage() {
                           </Button>
                         )}
 
-                          {hasRequestPickup && (
-                            <Button
-                              size='default'
-                              variant='default'
-                              className='gap-2 rounded-xl border-orange-400 bg-orange-600 px-5 font-semibold text-white shadow-sm hover:bg-orange-700 active:scale-[0.98]'
-                              onClick={handleInUseToPendingPickup}
-                              disabled={updateOrderStatus.isPending}
-                            >
-                              {updateOrderStatus.isPending ? (
-                                <Loader2 className='size-4 animate-spin' />
-                              ) : (
-                                <PackageMinus className='size-4' />
-                              )}
-                              Tôi muốn trả hàng
-                            </Button>
-                          )}
+                        {showRequestPickupAction && (
+                          <Button
+                            size='default'
+                            variant='default'
+                            title={
+                              !canRequestPickup
+                                ? 'Nút khả dụng khi đơn ở trạng thái Đang dùng.'
+                                : undefined
+                            }
+                            className={cn(
+                              'gap-2 rounded-xl px-5 font-semibold',
+                              canRequestPickup
+                                ? 'border-orange-400 bg-orange-600 text-white shadow-sm hover:bg-orange-700 active:scale-[0.98]'
+                                : 'border border-orange-300 bg-orange-100/70 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300',
+                            )}
+                            onClick={handleInUseToPendingPickup}
+                            disabled={
+                              updateOrderStatus.isPending || !canRequestPickup
+                            }
+                          >
+                            {updateOrderStatus.isPending ? (
+                              <Loader2 className='size-4 animate-spin' />
+                            ) : (
+                              <PackageMinus className='size-4' />
+                            )}
+                            Tôi muốn trả hàng
+                          </Button>
+                        )}
 
                         {hasReview && (
                           <Button
                             size='default'
                             variant='outline'
                             className='gap-2 rounded-xl border-amber-300 px-5 font-semibold text-amber-800 hover:bg-amber-50 hover:border-amber-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/50'
+                            nativeButton={false}
                             render={
                               <Link
                                 href={`/product/${order.rentalOrderLines[0].productId}#reviews`}
@@ -1111,15 +1129,13 @@ export default function RentalOrderDetailPage() {
                       <span className='flex size-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800'>
                         <FileText className='size-5 text-slate-700 dark:text-slate-200' />
                       </span>
-                      Hợp đồng thuê
+                      Hợp đồng thuê hiện hành
                     </DialogTitle>
-                    {/* <DialogDescription className='text-left'>
-                      {rentalContract.contractNumber} · Phiên bản{' '}
-                      {rentalContract.contractVersion}
-                      {rentalContract.acceptedAt && (
-                        <> · Xác nhận: {rentalContract.acceptedAt}</>
-                      )}
-                    </DialogDescription> */}
+                    <DialogDescription className='text-left'>
+                      Hệ thống lưu 1 hợp đồng hiện hành cho mỗi đơn thuê. Mỗi
+                      lần gia hạn và thanh toán bổ sung thành công sẽ cập nhật
+                      lại bản này, không tách thành nhiều hợp đồng rời.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className='min-h-0 flex-1 overflow-auto bg-muted/30 px-2 py-3 sm:px-4 sm:py-4'>
                     <PolicyPdfPreview
@@ -1129,7 +1145,9 @@ export default function RentalOrderDetailPage() {
                   </div>
                   <DialogFooter className='shrink-0 border-t border-border/60 px-5 py-3 sm:justify-between'>
                     <p className='text-xs text-muted-foreground'>
-                      Nếu không xem được trong khung, mở file PDF ở tab mới.
+                      {rentalContract.contractNumber} · Phiên bản{' '}
+                      {rentalContract.contractVersion} · Cập nhật{' '}
+                      {formatDate(rentalContract.updatedAt)}
                     </p>
                     <a
                       href={rentalContract.contractPdfUrl}
@@ -1270,50 +1288,6 @@ export default function RentalOrderDetailPage() {
                   </div>
                 </SectionCard>
 
-                {/* Staff */}
-                {(order.deliveryStaff ||
-                  order.pickupStaff ||
-                  order.hubName) && (
-                  <SectionCard>
-                    <SectionHeader
-                      icon={<User className='size-4' />}
-                      iconBg='bg-violet-500'
-                      title='Nhân viên phụ trách'
-                    />
-                    <div className='space-y-4 p-5'>
-                      {order.hubName && (
-                        <p className='text-xs text-muted-foreground'>
-                          Hub:{' '}
-                          <span className='font-medium text-foreground'>
-                            {order.hubName}
-                          </span>
-                        </p>
-                      )}
-                      {order.deliveryStaff && (
-                        <div>
-                          <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                            Giao hàng
-                          </p>
-                          <StaffAvatar
-                            staff={order.deliveryStaff}
-                            role='Nhân viên giao hàng'
-                          />
-                        </div>
-                      )}
-                      {order.pickupStaff && (
-                        <div>
-                          <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                            Thu hồi
-                          </p>
-                          <StaffAvatar
-                            staff={order.pickupStaff}
-                            role='Nhân viên thu hồi'
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </SectionCard>
-                )}
               </div>
 
               {/* Right column */}
@@ -1530,7 +1504,7 @@ export default function RentalOrderDetailPage() {
                   />
                   <div className='relative p-5'>
                     <div
-                      className='absolute bottom-5 left-[29px] top-5 w-px bg-border/80'
+                      className='absolute bottom-5 left-7.25 top-5 w-px bg-border/80'
                       aria-hidden
                     />
                     <ul className='relative space-y-4 text-sm'>
