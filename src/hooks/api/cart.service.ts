@@ -17,9 +17,22 @@ const authOpts = { requireToken: true as const };
 /**
  * API-061: Lấy giỏ hàng hiện tại [AUTH]
  * Backend tự tạo cart nếu user chưa có.
+ *
+ * @param deliveryDate - optional YYYY-MM-DD. Khi được cung cấp, backend sẽ đếm
+ * available stock chính xác hơn bằng cách loại trừ các inventory item có
+ * booking conflict trùng ngày, khớp với logic của RentalOrderService.
  */
-export async function getCart(): Promise<CartResponse> {
-  const res = await httpService.get<CartSingleResponse>('/cart', authOpts);
+export async function getCart(
+  deliveryDate?: string,
+): Promise<CartResponse> {
+  const params: Record<string, string> = {};
+  if (deliveryDate) {
+    params['deliveryDate'] = deliveryDate;
+  }
+  const res = await httpService.get<CartSingleResponse>(
+    '/cart',
+    { ...authOpts, params },
+  );
   return res.data.data;
 }
 

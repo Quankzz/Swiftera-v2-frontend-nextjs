@@ -190,15 +190,31 @@ function applyOptimisticAdd(
 }
 
 /**
- * Lấy giỏ hàng hiện tại [AUTH]
+ * Lấy ngày giao hàng mặc định: ngày mai, format YYYY-MM-DD.
+ * Dùng làm deliveryDate mặc định cho cart query để stock count chính xác.
  */
-export function useCartQuery() {
+function getDefaultDeliveryDate(): string {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().slice(0, 10);
+}
+
+/**
+ * Lấy giỏ hàng hiện tại [AUTH]
+ *
+ * @param deliveryDate - optional YYYY-MM-DD. Khi được cung cấp, backend trả về
+ * available stock chính xác hơn (loại trừ booking conflict theo ngày).
+ * Mặc định là ngày mai (cùng logic với handleCreateOrder) để FE luôn hiển thị
+ * stock chính xác nhất, tránh tình trạng "FE báo còn hàng nhưng BE tạo đơn thất bại".
+ */
+export function useCartQuery(options?: { deliveryDate?: string }) {
   const { isAuthenticated } = useAuth();
+  const effectiveDeliveryDate = options?.deliveryDate ?? getDefaultDeliveryDate();
 
   const query = useQuery({
-    queryKey: cartKeys.cart(),
+    queryKey: cartKeys.cart(effectiveDeliveryDate),
     queryFn: async () => {
-      const cart = await getCart();
+      const cart = await getCart(effectiveDeliveryDate);
       persistCart(cart);
       return cart;
     },
