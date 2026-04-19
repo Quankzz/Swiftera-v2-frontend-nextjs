@@ -104,6 +104,80 @@ function calcLineVoucherDiscount(
   return Math.min(v.discountValue, lineSubtotal);
 }
 
+/* ─── Inline duration editor for cart lines ─────────────────────────────────── */
+
+const PRESET_DURATIONS = [1, 3, 7, 14, 30];
+
+function DurationEditor({
+  days,
+  cartLineId,
+  onUpdateDuration,
+  disabled,
+}: {
+  days: number;
+  cartLineId: string;
+  onUpdateDuration: (cartLineId: string, rentalDurationDays: number) => void;
+  disabled: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(days);
+
+  const handleCommit = () => {
+    const parsed = parseInt(String(draft), 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed !== days) {
+      onUpdateDuration(cartLineId, parsed);
+    }
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type='button'
+        disabled={disabled}
+        onClick={() => {
+          setDraft(days);
+          setEditing(true);
+        }}
+        className='inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-50/60 px-2 py-1 text-xs font-medium text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900/30'
+        title='Nhấn để thay đổi số ngày thuê'
+      >
+        {days} ngày
+        <Pencil className='size-2.5 shrink-0 opacity-60' />
+      </button>
+    );
+  }
+
+  return (
+    <div className='inline-flex items-center gap-1 rounded-lg border border-rose-500/50 bg-rose-50/80 px-2 py-1 dark:bg-rose-950/40'>
+      <input
+        type='number'
+        min={1}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleCommit();
+          if (e.key === 'Escape') setEditing(false);
+        }}
+        onBlur={handleCommit}
+        autoFocus
+        className='w-12 rounded border border-input bg-background px-1.5 py-0.5 text-xs font-medium text-rose-700 focus:border-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-100 dark:text-rose-300 dark:bg-input dark:focus:border-rose-400 dark:focus:ring-rose-900/30'
+      />
+      <span className='text-xs text-rose-700 dark:text-rose-300'>ngày</span>
+      {draft !== days && (
+        <button
+          type='button'
+          onClick={handleCommit}
+          className='ml-0.5 rounded text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
+          title='Xác nhận'
+        >
+          ✓
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ─── Cart line row ───────────────────────────────────────────────────────── */
 
 function CartLineRow({
@@ -113,6 +187,7 @@ function CartLineRow({
   onToggle,
   onRemove,
   onUpdateQty,
+  onUpdateDuration,
   isRemoving,
   isUpdating,
   appliedVoucherCode,
@@ -125,6 +200,7 @@ function CartLineRow({
   onToggle: (cartLineId: string) => void;
   onRemove: (cartLineId: string) => void;
   onUpdateQty: (cartLineId: string, quantity: number) => void;
+  onUpdateDuration: (cartLineId: string, rentalDurationDays: number) => void;
   isRemoving: boolean;
   isUpdating: boolean;
   appliedVoucherCode: string | null;
@@ -227,12 +303,12 @@ function CartLineRow({
                 </Link>
 
                 <div className='mt-2 flex flex-wrap items-center gap-2'>
-                  <Badge
-                    variant='outline'
-                    className='rounded-lg border-rose-500/30 text-xs font-normal text-rose-700 dark:text-rose-300'
-                  >
-                    {days} ngày
-                  </Badge>
+                  <DurationEditor
+                    days={days}
+                    cartLineId={line.cartLineId}
+                    onUpdateDuration={onUpdateDuration}
+                    disabled={isMutating}
+                  />
                   <Badge
                     variant='secondary'
                     className='rounded-lg text-xs font-normal'
@@ -841,6 +917,11 @@ export default function CartPage() {
     updateQtyMutation.mutate({ cartLineId, quantity: clampedQty });
   };
 
+  const handleUpdateDuration = (cartLineId: string, rentalDurationDays: number) => {
+    if (rentalDurationDays < 1) return;
+    updateQtyMutation.mutate({ cartLineId, rentalDurationDays });
+  };
+
   const handleClear = () => {
     if (confirm('Xóa toàn bộ giỏ hàng?')) {
       clearMutation.mutate();
@@ -1040,12 +1121,12 @@ export default function CartPage() {
             <p className='mx-auto mt-2 max-w-sm text-sm text-muted-foreground'>
               Vui lòng đăng nhập hoặc thử lại sau.
             </p>
-            <Button
-              className='mt-6 rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700'
-              render={<Link href='/login?redirect=/cart' />}
+            <Link
+              href='/login?redirect=/cart'
+              className='mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-rose-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 active:scale-[0.98]'
             >
               Đăng nhập
-            </Button>
+            </Link>
           </SpotlightCard>
         )}
 
@@ -1070,12 +1151,12 @@ export default function CartPage() {
                 Thêm thiết bị từ trang chi tiết sản phẩm để bắt đầu thuê.
               </p>
               <Magnetic intensity={0.35} range={120}>
-                <Button
-                  className='mt-8 rounded-xl bg-rose-600 px-8 font-semibold text-white shadow-lg hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
-                  render={<Link href='/' />}
+                <Link
+                  href='/'
+                  className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-rose-700 active:scale-[0.98] dark:bg-rose-500 dark:hover:bg-rose-600'
                 >
                   Khám phá sản phẩm
-                </Button>
+                </Link>
               </Magnetic>
             </motion.div>
           </SpotlightCard>
@@ -1188,6 +1269,7 @@ export default function CartPage() {
                             appliedVoucherCode={appliedCode}
                             voucherDiscount={voucherDiscount}
                             onOpenVoucher={handleOpenLineVoucher}
+                            onUpdateDuration={handleUpdateDuration}
                           />
                         );
                       })}
@@ -1535,14 +1617,12 @@ export default function CartPage() {
                         </Button>
                       </Magnetic>
 
-                      <Button
-                        variant='outline'
-                        className='w-full rounded-xl border-rose-500/30'
-                        disabled={isMutating}
-                        render={<Link href='/' />}
+                      <Link
+                        href='/'
+                        className='inline-flex h-9 w-full items-center justify-center rounded-xl border border-input bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50'
                       >
                         Tiếp tục xem sản phẩm
-                      </Button>
+                      </Link>
                     </div>
                   )}
                 </SpotlightCard>

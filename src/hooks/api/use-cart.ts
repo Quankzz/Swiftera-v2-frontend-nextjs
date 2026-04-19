@@ -174,7 +174,7 @@ export function useClearCart(options?: {
 }
 
 /**
- * Cập nhật số lượng của một dòng giỏ [AUTH]
+ * Cập nhật số lượng và/hoặc thời gian thuê của một dòng giỏ [AUTH]
  * Dùng cho cart page — gọi mutation trực tiếp với cartLineId động.
  */
 export function useUpdateCartLineQuantity(options?: {
@@ -187,10 +187,12 @@ export function useUpdateCartLineQuantity(options?: {
     mutationFn: async ({
       cartLineId,
       quantity,
+      rentalDurationDays,
     }: {
       cartLineId: string;
-      quantity: number;
-    }) => updateCartLine(cartLineId, { quantity }),
+      quantity?: number;
+      rentalDurationDays?: number;
+    }) => updateCartLine(cartLineId, { quantity, rentalDurationDays }),
 
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
