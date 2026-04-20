@@ -230,26 +230,26 @@ function TicketCard({
   return (
     <button
       onClick={onClick}
-      className='w-full text-left p-4 rounded-xl border border-border/60 bg-card hover:border-rose-300 hover:bg-rose-50/30 dark:hover:bg-white/3 transition-all cursor-pointer'
+      className='w-full text-left p-5 rounded-xl border border-border/60 bg-card hover:border-rose-300/80 hover:bg-rose-50/20 dark:hover:bg-white/3 transition-all cursor-pointer'
     >
-      <div className='flex items-start justify-between gap-3 mb-2'>
-        <h3 className='text-sm font-semibold text-foreground line-clamp-1 flex-1'>
+      <div className='flex items-start justify-between gap-4 mb-3'>
+        <h3 className='text-base font-semibold text-foreground line-clamp-1 flex-1'>
           {ticket.subject}
         </h3>
         <StatusBadge status={ticket.status} />
       </div>
 
-      <p className='text-xs text-muted-foreground line-clamp-2 mb-3'>
+      <p className='text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed'>
         {ticket.message.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}
       </p>
 
       <div className='flex items-center justify-between'>
-        <span className='text-xs text-muted-foreground'>
+        <span className='text-sm text-muted-foreground'>
           {fmtBackendDate(ticket.createdAt)}
         </span>
         {ticket.sellerReply && (
-          <span className='inline-flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 font-medium'>
-            <CheckCircle2 size={12} />
+          <span className='inline-flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 font-medium'>
+            <CheckCircle2 size={13} />
             Đã phản hồi
           </span>
         )}
@@ -273,7 +273,7 @@ export default function MyTicketsPage() {
   return (
     <Layout>
       <section className='min-h-screen bg-muted/30 dark:bg-background py-10'>
-        <div className='mx-auto max-w-2xl px-4 space-y-6'>
+        <div className='mx-auto max-w-5xl px-4 space-y-6'>
           {/* Header */}
           <div className='flex items-center gap-4'>
             <Button
@@ -287,13 +287,13 @@ export default function MyTicketsPage() {
             </Button>
           </div>
 
-          <div className='rounded-2xl border border-border/60 bg-card p-6'>
-            <div className='flex items-center gap-3 mb-6'>
-              <div className='w-11 h-11 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0'>
-                <MessageSquare size={20} className='text-rose-600 dark:text-rose-400' />
+          <div className='rounded-2xl border border-border/60 bg-card p-6 sm:p-8'>
+            <div className='flex items-center gap-4 mb-8'>
+              <div className='w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0'>
+                <MessageSquare size={22} className='text-rose-600 dark:text-rose-400' />
               </div>
               <div>
-                <h1 className='text-xl font-extrabold text-foreground'>
+                <h1 className='text-2xl font-extrabold text-foreground'>
                   Yêu cầu hỗ trợ của tôi
                 </h1>
                 <p className='text-sm text-muted-foreground'>
@@ -305,7 +305,7 @@ export default function MyTicketsPage() {
             </div>
 
             {/* Filter tabs */}
-            <div className='flex flex-wrap gap-2 mb-5'>
+            <div className='flex flex-wrap gap-2 mb-6'>
               {STATUS_TABS.map((tab) => (
                 <button
                   key={tab.value}
@@ -314,9 +314,9 @@ export default function MyTicketsPage() {
                     setPage(0);
                   }}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-all',
                     statusFilter === tab.value
-                      ? 'bg-rose-600 text-white'
+                      ? 'bg-rose-600 text-white shadow-sm'
                       : 'bg-muted text-muted-foreground hover:bg-muted/80',
                   )}
                 >

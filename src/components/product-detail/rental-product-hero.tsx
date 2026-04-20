@@ -15,6 +15,7 @@ import {
   Expand,
   X as XIcon,
   ZoomIn,
+  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -59,6 +60,7 @@ export interface ProductColorOption {
 
 interface RentalProductGalleryProps {
   images: string[];
+  videoUrl?: string | null;
   currentImage: number;
   setCurrentImage: (index: number) => void;
 }
@@ -66,10 +68,12 @@ interface RentalProductGalleryProps {
 /** Lightbox fullscreen overlay */
 function GalleryLightbox({
   images,
+  videoUrl,
   initial,
   onClose,
 }: {
   images: string[];
+  videoUrl?: string | null;
   initial: number;
   onClose: () => void;
 }) {
@@ -188,6 +192,7 @@ function GalleryLightbox({
 
 export function RentalProductGallery({
   images,
+  videoUrl,
   currentImage,
   setCurrentImage,
 }: RentalProductGalleryProps) {
@@ -199,7 +204,7 @@ export function RentalProductGallery({
 
   const prev = () => setCurrentImage(Math.max(0, currentImage - 1));
   const next = () =>
-    setCurrentImage(Math.min(images.length - 1, currentImage + 1));
+    setCurrentImage(Math.min(maxIndex, currentImage + 1));
 
   // Keyboard nav khi hover vào gallery
   useEffect(() => {
@@ -226,6 +231,8 @@ export function RentalProductGallery({
   }, [currentImage]);
 
   const hasManyImages = images.length > 1;
+  const totalSlides = images.length + (videoUrl ? 1 : 0);
+  const maxIndex = totalSlides - 1;
 
   if (!images.length) return null;
 
@@ -271,6 +278,27 @@ export function RentalProductGallery({
               }`}
             />
           ))}
+          {/* Video slide */}
+          {videoUrl && (
+            <div
+              className={`absolute inset-0 transition-all duration-500 ease-out ${
+                currentImage === images.length
+                  ? 'z-10 opacity-100 scale-100'
+                  : 'z-0 opacity-0 scale-[1.02]'
+              }`}
+            >
+              <video
+                key={videoUrl}
+                src={videoUrl}
+                controls
+                autoPlay={currentImage === images.length}
+                muted={currentImage !== images.length}
+                loop
+                playsInline
+                className='size-full object-cover rounded-none'
+              />
+            </div>
+          )}
 
           {/* Left arrow */}
           {hasManyImages && currentImage > 0 && (
@@ -285,7 +313,7 @@ export function RentalProductGallery({
           )}
 
           {/* Right arrow */}
-          {hasManyImages && currentImage < images.length - 1 && (
+          {hasManyImages && currentImage < maxIndex && (
             <button
               type='button'
               aria-label='Ảnh sau'
@@ -303,12 +331,12 @@ export function RentalProductGallery({
                 {currentImage + 1}
               </span>
               <span className='text-white/40 text-xs'>/</span>
-              <span className='text-xs text-white/60'>{images.length}</span>
+              <span className='text-xs text-white/60'>{totalSlides}</span>
             </div>
           )}
 
           {/* Dot indicators */}
-          {hasManyImages && images.length <= 8 && (
+          {hasManyImages && totalSlides <= 8 && (
             <div className='absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5'>
               {images.map((_, i) => (
                 <button
@@ -323,6 +351,19 @@ export function RentalProductGallery({
                   }`}
                 />
               ))}
+              {videoUrl && (
+                <button
+                  key='video'
+                  type='button'
+                  aria-label='Video sản phẩm'
+                  onClick={() => setCurrentImage(images.length)}
+                  className={`rounded-full transition-all duration-300 ${
+                    currentImage === images.length
+                      ? 'size-2 bg-rose-400 shadow'
+                      : 'size-1.5 bg-rose-400/50 hover:bg-rose-400/80'
+                  }`}
+                />
+              )}
             </div>
           )}
 
@@ -338,7 +379,7 @@ export function RentalProductGallery({
         </div>
 
         {/* ── Filmstrip thumbnails ── */}
-        {hasManyImages && (
+        {(hasManyImages || videoUrl) && (
           <div
             ref={filmstripRef}
             className='flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide'
@@ -371,6 +412,34 @@ export function RentalProductGallery({
                 </button>
               );
             })}
+            {videoUrl && (
+              <button
+                key='video-thumb'
+                type='button'
+                aria-label='Xem video sản phẩm'
+                onClick={() => setCurrentImage(images.length)}
+                className={`relative aspect-square w-[72px] shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 sm:w-20 ${
+                  currentImage === images.length
+                    ? 'border-rose-500 shadow-sm shadow-rose-500/20 dark:border-rose-400'
+                    : 'border-transparent opacity-55 hover:border-border hover:opacity-90'
+                }`}
+              >
+                <img
+                  src={images[0] || 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'}
+                  alt='Video thumbnail'
+                  draggable={false}
+                  className='size-full object-cover'
+                />
+                <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
+                  <div className='flex size-8 items-center justify-center rounded-full bg-white/90'>
+                    <Play className='size-4 text-rose-600 fill-rose-600' />
+                  </div>
+                </div>
+                <span className='absolute bottom-1 right-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-semibold text-white'>
+                  VIDEO
+                </span>
+              </button>
+            )}
           </div>
         )}
 

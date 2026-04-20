@@ -28,6 +28,7 @@ export interface ProductImageResponse {
   imageUrl: string;
   sortOrder: number;
   isPrimary: boolean;
+  videoUrl?: string | null;
 }
 
 // ── Product color types ─────────────────────────────────────────────────────
@@ -153,6 +154,8 @@ export interface CreateProductInput {
   colors?: ProductColorInput[];
   /** array of image URL strings (upload first, then pass URLs) */
   imageUrls?: string[];
+  /** URL of product demo video (YouTube embed or direct .mp4) */
+  videoUrl?: string;
 }
 
 // ── Update product input (API-055 PATCH /api/v1/products/{productId}) ───────

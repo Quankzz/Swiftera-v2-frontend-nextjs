@@ -24,16 +24,16 @@ export const TICKET_STATUS_STYLES: Record<
 > = {
   IN_PROGRESS: {
     badge:
-      'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-    dot: 'bg-amber-500',
+      'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-800',
+    dot: 'bg-blue-500',
   },
   RESOLVED: {
     badge:
-      'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+      'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/40 dark:text-green-200 dark:border-green-800',
     dot: 'bg-green-500',
   },
   CLOSED: {
-    badge: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+    badge: 'bg-gray-100 text-gray-500 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
     dot: 'bg-gray-400',
   },
 };

@@ -101,6 +101,8 @@ export interface ProductFormData {
   voucherId: string;
   /** Chỉ có trong edit mode */
   isActive: boolean;
+  /** Video URL cho sản phẩm */
+  videoUrl: string;
 }
 
 const EMPTY_FORM: ProductFormData = {
@@ -117,10 +119,14 @@ const EMPTY_FORM: ProductFormData = {
   minRentalDays: '1',
   voucherId: '',
   isActive: true,
+  videoUrl: '',
 };
 
 /** Chuyển ProductResponse (từ BE) về ProductFormData để fill vào form edit */
 function productToForm(p: ProductResponse): ProductFormData {
+  const videoUrl = p.images?.length
+    ? (p.images.find((img) => img.videoUrl)?.videoUrl ?? '')
+    : '';
   return {
     productId: p.productId,
     categoryId: p.categoryId,
@@ -139,6 +145,7 @@ function productToForm(p: ProductResponse): ProductFormData {
     minRentalDays: String(p.minRentalDays),
     voucherId: p.voucherId ?? '',
     isActive: p.isActive,
+    videoUrl,
   };
 }
 

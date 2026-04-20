@@ -11,6 +11,7 @@ import {
   Star,
   Upload,
   Link as LinkIcon,
+  Video,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -381,6 +382,7 @@ export function ProductFormPage({
           oldDailyPrice,
           minRentalDays: parseInt(form.minRentalDays) || 1,
           imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+          videoUrl: form.videoUrl || undefined,
         },
         {
           onSuccess: (newProduct) => {
@@ -443,6 +445,7 @@ export function ProductFormPage({
             minRentalDays: parseInt(form.minRentalDays) || 1,
             imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
             isActive: form.isActive,
+            videoUrl: form.videoUrl || undefined,
           },
         },
         {
@@ -749,8 +752,8 @@ export function ProductFormPage({
           </div>
         </FormSection>
 
-        {/* ── SECTION 2: Hình ảnh ── */}
-        <FormSection title='Hình ảnh sản phẩm'>
+        {/* ── SECTION 2: Hình ảnh & Video ── */}
+        <FormSection title='Hình ảnh & Video sản phẩm'>
           <div className='flex flex-col gap-3'>
             {images.length === 0 && (
               <p className='text-center text-sm text-text-sub py-4'>
@@ -777,6 +780,26 @@ export function ProductFormPage({
               <Plus size={16} />
               Thêm ảnh
             </button>
+
+            {/* Video URL field */}
+            <div className='mt-2 flex flex-col gap-1.5 rounded-md border border-gray-100 dark:border-white/8 bg-gray-50/50 dark:bg-white/3 p-3'>
+              <div className='flex items-center gap-2'>
+                <Video size={14} className='text-theme-primary-start shrink-0' />
+                <label className='text-sm font-medium text-text-main'>
+                  Video sản phẩm (URL)
+                </label>
+              </div>
+              <input
+                type='url'
+                value={form.videoUrl}
+                onChange={(e) => setField('videoUrl', e.target.value)}
+                placeholder='https://www.youtube.com/embed/... hoặc URL .mp4'
+                className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+              />
+              <p className='text-xs text-text-sub'>
+                Nhập URL video YouTube/Vimeo embed hoặc URL trực tiếp (.mp4). Video sẽ hiển thị trong gallery sản phẩm.
+              </p>
+            </div>
           </div>
         </FormSection>
 

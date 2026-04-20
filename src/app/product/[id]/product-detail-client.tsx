@@ -119,6 +119,10 @@ export default function ProductDetailClient({
         .map((img) => img.imageUrl)
     : [];
 
+  const videoUrl = product?.images?.length
+    ? [...product.images].sort((a, b) => b.sortOrder - a.sortOrder).find((img) => img.videoUrl)?.videoUrl ?? null
+    : null;
+
   const effectiveDurationId =
     durations.find((d) => d.id === selectedDuration) != null
       ? selectedDuration
@@ -278,6 +282,7 @@ export default function ProductDetailClient({
             <div className='rounded-xl border border-border/60 bg-card p-3 ambient-glow sm:p-4 lg:sticky lg:top-24'>
               <RentalProductGallery
                 images={imageUrls}
+                videoUrl={videoUrl}
                 currentImage={currentImage}
                 setCurrentImage={setCurrentImage}
               />

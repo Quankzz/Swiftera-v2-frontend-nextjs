@@ -180,13 +180,13 @@ function StatusTabBar({
 }) {
   return (
     <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-      <div className='flex min-w-max border-b border-border/60'>
+      <div className='flex min-w-max border-b border-border/60 px-2'>
         {STATUS_FILTERS.map((f) => (
           <button
             key={f.value || 'all'}
             onClick={() => onFilterChange(f.value)}
             className={cn(
-              '-mb-px border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+              '-mb-px border-b-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors',
               activeFilter === f.value
                 ? 'border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400'
                 : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
@@ -385,13 +385,13 @@ export default function RentalOrdersPage() {
 
   return (
     <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-4 md:px-6 md:pt-8 dark:bg-background'>
-      <div className='mx-auto max-w-3xl'>
+      <div className='mx-auto max-w-5xl'>
         {/* Page header */}
-        <div className='mb-6'>
-          <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>
+        <div className='mb-8'>
+          <h1 className='text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl'>
             Đơn thuê của tôi
           </h1>
-          <p className='mt-1 text-sm text-muted-foreground'>
+          <p className='mt-2 text-base text-muted-foreground'>
             Theo dõi tất cả đơn thuê thiết bị của bạn.
           </p>
         </div>
@@ -405,7 +405,7 @@ export default function RentalOrdersPage() {
           />
 
           {/* Controls row */}
-          <div className='flex items-center gap-3 border-b border-border/60 px-4 py-3 sm:px-5'>
+          <div className='flex items-center gap-3 border-b border-border/60 px-5 py-3.5 sm:px-6'>
             <div className='relative flex-1'>
               <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
               <input
@@ -567,14 +567,14 @@ export default function RentalOrdersPage() {
                       <span className='absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-amber-400 dark:bg-amber-500' />
                     )}
 
-                    <div className='group flex items-center gap-3 px-5 py-4 sm:gap-4'>
+                    <div className='group flex items-center gap-4 px-5 py-4 sm:gap-5 sm:px-6 sm:py-5'>
                       {/* Icon */}
                       <Link
                         href={`/rental-orders/${order.rentalOrderId}`}
-                        className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-opacity hover:opacity-80 dark:bg-rose-950/50 dark:text-rose-400'
+                        className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-opacity hover:opacity-80 dark:bg-rose-950/50 dark:text-rose-400'
                         tabIndex={-1}
                       >
-                        <FileText className='size-4.5' />
+                        <FileText className='size-5' />
                       </Link>
 
                       {/* Info - chiếm phần lớn width, click → detail */}
@@ -582,13 +582,13 @@ export default function RentalOrdersPage() {
                         href={`/rental-orders/${order.rentalOrderId}`}
                         className='min-w-0 flex-1'
                       >
-                        <div className='flex flex-wrap items-center gap-1.5'>
+                        <div className='flex flex-wrap items-center gap-2'>
                           <span className='font-mono text-sm font-bold text-foreground'>
                             #{order.rentalOrderId.slice(0, 8).toUpperCase()}
                           </span>
                           <Badge
                             className={cn(
-                              'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                              'rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
                               RENTAL_ORDER_STATUS_COLORS[status],
                             )}
                           >

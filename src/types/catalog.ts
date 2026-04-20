@@ -18,6 +18,7 @@ export interface ProductImage {
   imageUrl: string;
   sortOrder: number;
   isPrimary: boolean;
+  videoUrl?: string | null;
 }
 
 export interface ProductColor {
