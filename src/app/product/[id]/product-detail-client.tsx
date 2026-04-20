@@ -383,7 +383,10 @@ export default function ProductDetailClient({
 
         {/* Related Products */}
         <div className='mt-4 sm:mt-6'>
-          <RentalRelatedProducts currentProductId={product.productId} />
+          <RentalRelatedProducts
+            currentProductId={product.productId}
+            currentCategoryId={product.categoryId}
+          />
         </div>
       </div>
     </div>

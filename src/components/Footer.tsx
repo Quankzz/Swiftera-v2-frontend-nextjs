@@ -130,22 +130,22 @@ export function Footer() {
           </p>
           <div className='flex gap-8 text-xs font-bold text-text-sub'>
             <Link
-              href='/terms'
+              href='/policies?code=RENTAL_TERMS'
               className='transition-colors hover:text-text-main'
             >
               Điều khoản sử dụng
             </Link>
             <Link
-              href='/privacy'
+              href='/policies?code=PRIVACY_POLICY'
               className='transition-colors hover:text-text-main'
             >
               Chính sách bảo mật
             </Link>
             <Link
-              href='/cookies'
+              href='/policies?code=RETURN_POLICY'
               className='transition-colors hover:text-text-main'
             >
-              Cài đặt cookie
+              Chính sách hoàn trả
             </Link>
           </div>
         </div>

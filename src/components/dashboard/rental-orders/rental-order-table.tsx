@@ -491,7 +491,10 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         header: '',
         cell: ({ row }) => {
           const status = row.original.status;
-          const canAssign = status === 'PAID' || status === 'PREPARING';
+          const canAssign =
+            status === 'PAID' ||
+            status === 'PREPARING' ||
+            status === 'PENDING_PICKUP';
           const canComplete = status === 'PICKED_UP';
           const canReportIssue = status === 'DELIVERED' || status === 'IN_USE';
 

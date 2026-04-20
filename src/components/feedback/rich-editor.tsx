@@ -85,8 +85,27 @@ function ToolBtn({
 function extractYouTubeId(url: string): string | null {
   try {
     const u = new URL(url);
-    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
-    if (u.hostname === 'youtu.be') return u.pathname.slice(1) || null;
+
+    if (u.hostname.includes('youtu.be')) {
+      return u.pathname.split('/').filter(Boolean)[0] ?? null;
+    }
+
+    if (u.hostname.includes('youtube.com') || u.hostname.includes('youtube-nocookie.com')) {
+      if (u.pathname.startsWith('/watch')) {
+        return u.searchParams.get('v');
+      }
+      if (u.pathname.startsWith('/embed/')) {
+        return u.pathname.replace('/embed/', '').split('/')[0] ?? null;
+      }
+      if (u.pathname.startsWith('/shorts/')) {
+        return u.pathname.replace('/shorts/', '').split('/')[0] ?? null;
+      }
+      if (u.pathname.startsWith('/live/')) {
+        return u.pathname.replace('/live/', '').split('/')[0] ?? null;
+      }
+      return u.searchParams.get('v');
+    }
+
     return null;
   } catch {
     return null;

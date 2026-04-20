@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -22,6 +23,7 @@ import {
   useDeleteReview,
   useMarkHelpfulReview,
 } from '@/hooks/api/use-reviews';
+import { useRelatedProductsQuery } from '@/features/products/hooks/use-related-products';
 import type { ProductReviewResponse } from '@/api/reviewsApi';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -873,14 +875,29 @@ function RelatedProductSkeleton() {
   );
 }
 
+const relatedPriceFormatter = new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND',
+  maximumFractionDigits: 0,
+});
+
 export function RentalRelatedProducts({
   currentProductId,
+  currentCategoryId,
 }: {
   currentProductId: string;
+  currentCategoryId?: string | null;
 }) {
-  const [products] = useState<never[]>([]);
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+  } = useRelatedProductsQuery(currentProductId, currentCategoryId);
 
-  if (products.length === 0) return null;
+  if (isError) return null;
+
+  const shouldRender = isLoading || products.length > 0;
+  if (!shouldRender) return null;
 
   return (
     <div>
@@ -888,22 +905,57 @@ export function RentalRelatedProducts({
         Sản phẩm liên quan
       </h2>
       <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
-        {products.map((product) => (
-          <Link
-            key={(product as { productId: string }).productId}
-            href={`/product/${(product as { productId: string }).productId}`}
-            className='group overflow-hidden rounded-xl border border-border/60 bg-card transition-shadow hover:shadow-md dark:bg-card/80'
-          >
-            <div className='relative aspect-square bg-muted'>
-              {/* <Image src={...} fill className='object-cover' /> */}
-            </div>
-            <div className='p-3'>
-              <p className='line-clamp-2 text-sm font-medium text-foreground group-hover:text-rose-600 dark:group-hover:text-rose-400'>
-                {String((product as { name: string }).name ?? '')}
-              </p>
-            </div>
-          </Link>
-        ))}
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, index) => (
+              <RelatedProductSkeleton key={`related-skeleton-${index}`} />
+            ))
+          : products.map((product) => (
+              <Link
+                key={product.productId}
+                href={`/product/${product.productId}`}
+                className='group overflow-hidden rounded-xl border border-border/60 bg-card transition-shadow hover:shadow-md dark:bg-card/80'
+              >
+                <div className='relative aspect-square bg-muted'>
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className='object-cover transition-transform duration-300 group-hover:scale-105'
+                      sizes='(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw'
+                    />
+                  ) : (
+                    <div className='flex h-full items-center justify-center text-xs text-muted-foreground'>
+                      Chưa có ảnh
+                    </div>
+                  )}
+                  {typeof product.discountPercent === 'number' && product.discountPercent > 0 && (
+                    <span className='absolute left-2 top-2 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white'>
+                      -{product.discountPercent}%
+                    </span>
+                  )}
+                </div>
+                <div className='space-y-1.5 p-3'>
+                  <p className='line-clamp-2 text-sm font-medium text-foreground group-hover:text-rose-600 dark:group-hover:text-rose-400'>
+                    {product.name}
+                  </p>
+                  <div className='flex items-center gap-1 text-xs text-amber-500'>
+                    <Star className='size-3 fill-current' />
+                    <span>{product.rating.toFixed(1)}</span>
+                  </div>
+                  <div className='flex flex-wrap items-center gap-1.5'>
+                    <span className='text-sm font-semibold text-foreground'>
+                      {relatedPriceFormatter.format(product.dailyPrice)}
+                    </span>
+                    {product.oldDailyPrice != null && product.oldDailyPrice > product.dailyPrice && (
+                      <span className='text-xs text-muted-foreground line-through'>
+                        {relatedPriceFormatter.format(product.oldDailyPrice)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
       </div>
     </div>
   );
