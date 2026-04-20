@@ -8,9 +8,11 @@ import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from '@/features/categories/hooks/use-category-management';
+import { parseErrorForForm } from '@/api/apiService';
 import { useUploadFileMutation } from '@/features/files/hooks/use-files';
 import type { CategoryResponse } from '@/features/categories/types';
 import { CategoryTreeSelect } from './category-tree-select';
+import { toast } from 'sonner';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -148,9 +150,22 @@ export function CategoryFormDialog({
       }
       onClose();
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại';
-      setServerError(msg);
+      const { fieldErrors, formMessage } = parseErrorForForm(
+        err,
+        'Có lỗi xảy ra, vui lòng thử lại',
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        name: fieldErrors.name,
+        sortOrder: fieldErrors.sortOrder,
+        imageUrl: fieldErrors.imageUrl,
+      }));
+
+      if (formMessage) {
+        setServerError(formMessage);
+        toast.error(formMessage);
+      }
     }
   }
 

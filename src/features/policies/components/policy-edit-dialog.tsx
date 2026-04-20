@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { storageApi } from '@/api/storageApi';
+import { parseErrorForForm } from '@/api/apiService';
 import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 import { useUpdatePolicyMutation } from '../hooks/use-policy-management';
 import { PolicyPdfPreview } from './policy-pdf-preview';
@@ -160,9 +161,8 @@ export function PolicyEditDialog({
       setCurrentPdfUrl(url);
       toast.success('Upload PDF mới thành công!');
     } catch (err) {
-      setUploadError(
-        err instanceof Error ? err.message : 'Upload thất bại. Thử lại.',
-      );
+      const { formMessage } = parseErrorForForm(err, 'Upload thất bại. Thử lại.');
+      setUploadError(formMessage ?? 'Upload thất bại. Thử lại.');
       setSelectedFile(null);
     } finally {
       setIsUploading(false);
@@ -212,7 +212,20 @@ export function PolicyEditDialog({
       toast.success('Cập nhật chính sách thành công!');
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Cập nhật thất bại.');
+      const { fieldErrors, formMessage } = parseErrorForForm(
+        err,
+        'Cập nhật thất bại.',
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        title: fieldErrors.title,
+        effectiveFrom: fieldErrors.effectiveFrom,
+      }));
+
+      if (formMessage) {
+        toast.error(formMessage);
+      }
     }
   };
 

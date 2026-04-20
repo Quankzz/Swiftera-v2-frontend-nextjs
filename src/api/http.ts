@@ -7,6 +7,7 @@ import axios from 'axios';
 
 import { authApi } from './authApi';
 import { storageService } from '../services/storage';
+import { toAppError } from '@/lib/error-handler';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
@@ -23,11 +24,6 @@ export const TOKEN_REFRESHED_EVENT = 'swiftera:auth:token-refreshed';
 type RefreshTokenResponse = AxiosResponse<{
   data: { accessToken: string };
 }>;
-
-type BackendErrorEnvelope = {
-  message?: unknown;
-  errors?: Array<{ message?: unknown }>;
-};
 
 export const http = axios.create({
   baseURL: API_URL,
@@ -56,61 +52,6 @@ const dispatchTokenRefreshedEvent = (accessToken: string): void => {
   });
 
   window.dispatchEvent(event);
-};
-
-const extractErrorMessage = (error: unknown): string | null => {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  if (typeof error === 'string' && error.trim()) {
-    return error;
-  }
-
-  if (!error || typeof error !== 'object') {
-    return null;
-  }
-
-  const payload = error as BackendErrorEnvelope;
-  if (typeof payload.message === 'string' && payload.message.trim()) {
-    return payload.message;
-  }
-
-  if (Array.isArray(payload.errors)) {
-    for (const item of payload.errors) {
-      if (item && typeof item.message === 'string' && item.message.trim()) {
-        return item.message;
-      }
-    }
-  }
-
-  return null;
-};
-
-const normalizeRejectedError = (
-  error: unknown,
-  fallbackMessage: string,
-): Error => {
-  if (error instanceof Error) {
-    return error;
-  }
-
-  const normalizedError = new Error(
-    extractErrorMessage(error) ?? fallbackMessage,
-  ) as Error & Record<string, unknown>;
-
-  if (error && typeof error === 'object') {
-    for (const [key, value] of Object.entries(error as Record<string, unknown>)) {
-      if (key === 'message' || key === 'name' || key === 'stack') {
-        continue;
-      }
-      normalizedError[key] = value;
-    }
-
-    normalizedError.originalError = error;
-  }
-
-  return normalizedError;
 };
 
 class Http {
@@ -182,7 +123,7 @@ class Http {
                   );
                 })
                 .catch((refreshError: unknown) => {
-                  const normalizedRefreshError = normalizeRejectedError(
+                  const normalizedRefreshError = toAppError(
                     refreshError,
                     'Token refresh failed',
                   );
@@ -207,10 +148,7 @@ class Http {
             const tokenRefresh = refreshTokenPromise;
             if (!tokenRefresh) {
               return Promise.reject(
-                normalizeRejectedError(
-                  error.response?.data ?? error,
-                  'Request failed',
-                ),
+                toAppError(error.response?.data ?? error, 'Request failed'),
               );
             }
 
@@ -224,7 +162,7 @@ class Http {
         }
 
         return Promise.reject(
-          normalizeRejectedError(error.response?.data ?? error, 'Request failed'),
+          toAppError(error.response?.data ?? error, 'Request failed'),
         );
       },
     );

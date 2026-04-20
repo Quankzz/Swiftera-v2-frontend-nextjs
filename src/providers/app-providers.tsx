@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/context/theme-context';
 import { AppProvider } from '@/context/AppContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { restoreSession } from '@/stores/auth-store';
+import { AppToaster } from '@/components/ui/app-toaster';
 
 /**
  * On app mount, attempt a silent session restore from the HttpOnly
@@ -30,6 +31,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           <ThemeProvider>
             <AuthStoreBootstrap />
             {children}
+            <AppToaster />
           </ThemeProvider>
         </AuthProvider>
       </AppProvider>
