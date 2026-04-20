@@ -131,7 +131,7 @@ export async function getHubProducts(
 ): Promise<PaginationResponse<ProductResponse>> {
   const res = await httpService.get<ApiResponse<PaginationResponse<ProductResponse>>>(
     `/hubs/${hubId}/products`,
-    { params },
+    { ...authOpts, params },
   );
   return res.data.data!;
 }
@@ -147,7 +147,7 @@ export async function getHubInventoryItems(
 ): Promise<PaginationResponse<InventoryItemResponse>> {
   const res = await httpService.get<ApiResponse<PaginationResponse<InventoryItemResponse>>>(
     `/hubs/${hubId}/inventory-items`,
-    { params },
+    { ...authOpts, params },
   );
   return res.data.data!;
 }
