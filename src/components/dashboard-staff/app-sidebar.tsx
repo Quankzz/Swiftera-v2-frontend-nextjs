@@ -252,7 +252,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         ? 'bg-destructive text-white'
                         : 'bg-sidebar-accent text-sidebar-foreground/70',
                     )}
-                  ></span>
+                  >
+                    {urgentTotal > 0 ? urgentTotal : totalOrders}
+                  </span>
                 )}
               </SidebarMenuButton>
               <SidebarMenuAction

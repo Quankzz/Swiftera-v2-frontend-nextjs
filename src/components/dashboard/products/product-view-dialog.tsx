@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
   X,
@@ -31,6 +31,7 @@ import type {
 } from '@/features/products/types';
 import { useInventoryItemsQuery } from '@/features/products/hooks/use-inventory-items';
 import { useProductQuery } from '@/features/products/hooks/use-product-management';
+import { sanitizeRichHtml } from '@/lib/sanitize-rich-html';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -260,15 +261,21 @@ function OverviewTab({ product }: { product: ProductResponse }) {
 
 // ─── Tab: Mô tả HTML ──────────────────────────────────────────────
 function DescriptionTab({ description }: { description: string | null }) {
-  if (!description) {
+  const safeDescription = useMemo(
+    () => (description ? sanitizeRichHtml(description) : ''),
+    [description],
+  );
+
+  if (!safeDescription) {
     return (
       <p className='text-sm text-text-sub italic'>Chưa có mô tả chi tiết.</p>
     );
   }
+
   return (
     <div
       className='rich-content max-w-none text-sm text-text-main leading-relaxed'
-      dangerouslySetInnerHTML={{ __html: description }}
+      dangerouslySetInnerHTML={{ __html: safeDescription }}
     />
   );
 }

@@ -170,7 +170,8 @@ export default function OrderDetailPage({
     async (
       newStatus: StaffTransitionTargetStatus,
       options?: {
-        penaltyTotal?: number;
+        damagePenaltyAmount?: number;
+        overduePenaltyAmount?: number;
         note?: string;
       },
     ): Promise<StaffOrder | null> => {
@@ -180,14 +181,27 @@ export default function OrderDetailPage({
       try {
         let updated: StaffOrder | null = null;
 
-        // Call penalty endpoint first if needed
-        if (
-          (options?.penaltyTotal !== undefined && options.penaltyTotal > 0) ||
-          (options?.note?.trim().length ?? 0) > 0
-        ) {
+        // Always persist split penalties before pickup/completion transitions.
+        const shouldSetPenalty =
+          options?.damagePenaltyAmount !== undefined ||
+          options?.overduePenaltyAmount !== undefined ||
+          (options?.note?.trim().length ?? 0) > 0;
+
+        if (shouldSetPenalty) {
+          const damagePenaltyAmount =
+            options?.damagePenaltyAmount !== undefined
+              ? Math.max(0, options.damagePenaltyAmount)
+              : undefined;
+          const overduePenaltyAmount =
+            options?.overduePenaltyAmount !== undefined
+              ? Math.max(0, options.overduePenaltyAmount)
+              : undefined;
+          const note = options?.note?.trim();
+
           updated = await setPenalty(order.rental_order_id, {
-            penaltyTotal: options?.penaltyTotal ?? 0,
-            note: options?.note,
+            damagePenaltyAmount,
+            overduePenaltyAmount,
+            note: note || undefined,
           });
         }
 
@@ -235,8 +249,14 @@ export default function OrderDetailPage({
   const handleSettlementUpdate = useCallback(
     async (refundNote?: string) => {
       if (!order) return;
+      const overduePenaltyAmount = Math.max(0, order.overdue_penalty_amount ?? 0);
+      const damagePenaltyAmount = Math.max(
+        0,
+        order.total_penalty_amount - overduePenaltyAmount,
+      );
       await handleStatusChange('COMPLETED', {
-        penaltyTotal: order.total_penalty_amount,
+        damagePenaltyAmount,
+        overduePenaltyAmount,
         note: refundNote,
       });
     },
@@ -328,6 +348,11 @@ export default function OrderDetailPage({
     'DELIVERED',
   ];
   const isDeliveryStatus = DELIVERY_STATUSES.includes(order.status);
+  const refundableDepositAmount = Math.max(
+    (order.total_deposit ?? 0) - (order.total_penalty_amount ?? 0),
+    0,
+  );
+  const canFinalizeByStaff = refundableDepositAmount <= 0;
 
   return (
     <>
@@ -529,25 +554,10 @@ export default function OrderDetailPage({
                     damagePenalty?: number,
                     overduePenalty?: number,
                   ) => {
-                    const penaltyTotal =
-                      (damagePenalty ?? 0) + (overduePenalty ?? 0);
-                    try {
-                      const updated = await handleStatusChange('PICKED_UP', {
-                        penaltyTotal,
-                      });
-                      if (updated) {
-                        setOrder({
-                          ...updated,
-                          staff_checkout_id: user?.userId,
-                        });
-                      }
-                    } catch (err) {
-                      setActionError(
-                        err instanceof Error
-                          ? err.message
-                          : 'Lỗi khi lưu dữ liệu hoàn trả',
-                      );
-                    }
+                    await handleStatusChange('PICKED_UP', {
+                      damagePenaltyAmount: Math.max(0, damagePenalty ?? 0),
+                      overduePenaltyAmount: Math.max(0, overduePenalty ?? 0),
+                    });
                   }}
                   loading={statusLoading}
                   staffLat={localLat}
@@ -559,22 +569,12 @@ export default function OrderDetailPage({
               {order.status === 'PICKED_UP' && (
                 <PickedUpWorkflow
                   order={order}
-                  onCompleteReturn={async (damagePenalty, overduePenalty) => {
-                    if ((damagePenalty ?? 0) > 0 || (overduePenalty ?? 0) > 0) {
-                      const updated = await setPenalty(order.rental_order_id, {
-                        damagePenaltyAmount: damagePenalty,
-                        overduePenaltyAmount: overduePenalty,
-                      });
-                      setOrder(updated);
-                    }
-                    const final = await updateOrderStatus(
-                      order.rental_order_id,
-                      'COMPLETED',
-                    );
-                    updateCount(order.status, 'COMPLETED');
-                    setOrder(final);
+                  onCompleteReturn={async () => {
+                    await handleStatusChange('COMPLETED');
                   }}
                   loading={statusLoading}
+                  canFinalizeByStaff={canFinalizeByStaff}
+                  refundableDepositAmount={refundableDepositAmount}
                 />
               )}
 

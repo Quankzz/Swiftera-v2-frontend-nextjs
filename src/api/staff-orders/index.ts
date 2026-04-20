@@ -84,6 +84,8 @@ function derivePaymentStatus(o: RentalOrderResponse): PaymentStatus {
 }
 
 function deriveDepositRefundStatus(o: RentalOrderResponse): DepositRefundStatus {
+  if (o.status !== 'COMPLETED') return 'NOT_REFUNDED';
+
   const refund = o.depositRefundAmount ?? 0;
   if (refund <= 0) return 'NOT_REFUNDED';
   if (refund >= o.depositHoldAmount) return 'REFUNDED';

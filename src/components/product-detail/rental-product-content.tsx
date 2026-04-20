@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { sanitizeRichHtml } from '@/lib/sanitize-rich-html';
 import { cn } from '@/lib/utils';
 
 /* ---------- Mô tả (mở rộng) ---------- */
@@ -18,23 +19,23 @@ export function RentalProductDescription({
   className,
 }: RentalProductDescriptionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const safeHtml = useMemo(() => sanitizeRichHtml(text), [text]);
 
   return (
     <div className={cn('relative font-sans', className)}>
       <div
         className={cn(
-          'prose prose-sm prose-neutral max-w-none text-foreground transition-all duration-300 whitespace-pre-wrap sm:prose-base dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground',
+          'rich-content prose prose-sm prose-neutral max-w-none text-foreground transition-all duration-300 sm:prose-base dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground',
           !isExpanded && 'overflow-hidden',
         )}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
         style={{
           maxHeight: !isExpanded ? `${maxHeight}px` : undefined,
           WebkitMaskImage: !isExpanded
             ? 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0) 100%)'
             : 'none',
         }}
-      >
-        {text}
-      </div>
+      />
       <div className='flex justify-center mt-4'>
         <Button
           variant='ghost'

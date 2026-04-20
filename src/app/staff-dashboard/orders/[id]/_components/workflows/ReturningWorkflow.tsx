@@ -295,7 +295,7 @@ export function ReturningWorkflow({
     };
   }, [order.rental_order_id]);
 
-  const overduePenalty = Number(overduePenaltyInput) || 0; // allow positive or negative adjustment
+  const overduePenalty = Number(overduePenaltyInput) || 0;
 
   const itemsDone = order.items.filter(
     (i) => (itemPhotos[i.rental_order_item_id]?.length ?? 0) > 0,
@@ -647,9 +647,7 @@ export function ReturningWorkflow({
                     Đã xác nhận phí quá hạn
                   </span>
                   <span className="text-sm font-black text-amber-700 dark:text-amber-300 tabular-nums">
-                    {overduePenalty < 0
-                      ? `−${fmt(Math.abs(overduePenalty))}`
-                      : fmt(overduePenalty)}
+                    {fmt(overduePenalty)}
                   </span>
                 </div>
                 <button
@@ -667,17 +665,19 @@ export function ReturningWorkflow({
                   <div className="relative flex-1">
                     <Input
                       type="number"
+                      min={0}
                       step={10000}
                       value={overduePenaltyInput}
-                      onChange={(e) => setOverduePenaltyInput(e.target.value)}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        setOverduePenaltyInput(raw);
+                      }}
                       placeholder="0"
                       className={cn(
                         'pr-14 rounded-xl text-sm font-semibold',
-                        overduePenalty < 0
-                          ? 'border-success focus-visible:ring-success'
-                          : overduePenalty > 0
-                            ? 'border-amber-400 focus-visible:ring-amber-400'
-                            : '',
+                        overduePenalty > 0
+                          ? 'border-amber-400 focus-visible:ring-amber-400'
+                          : '',
                       )}
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-medium pointer-events-none">
@@ -700,22 +700,14 @@ export function ReturningWorkflow({
                   </button>
                 </div>
                 <span
-                  className={cn(
-                    'pl-3 text-sm font-bold shrink-0 tabular-nums w-24 text-right',
-                    overduePenalty < 0
-                      ? 'text-success'
-                      : 'text-amber-600 dark:text-amber-400',
-                  )}
+                  className="pl-3 text-sm font-bold shrink-0 tabular-nums w-24 text-right text-amber-600 dark:text-amber-400"
                 >
-                  {overduePenalty < 0
-                    ? `−${fmt(Math.abs(overduePenalty))}`
-                    : fmt(overduePenalty)}
+                  {fmt(overduePenalty)}
                 </span>
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <Info className="size-3 shrink-0" />
-                    Nhập số dương để cộng thêm phí, số âm để giảm bớt so với đề
-                    xuất hệ thống.
+                    Nhập số không âm để điều chỉnh phí quá hạn.
                   </p>
                   {overdueSuggestion?.overdue &&
                     overduePenalty !==

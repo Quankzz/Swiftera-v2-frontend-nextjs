@@ -2,6 +2,7 @@ import {
   ProductJsonLd,
   ProductBreadcrumbJsonLd,
 } from '@/components/product-detail/product-json-ld';
+import { stripHtml } from '@/lib/rich-text';
 import { getProductByIdServer, getReviewsByProductServer } from '@/lib/server-api';
 import ProductDetailClient from './product-detail-client';
 
@@ -21,9 +22,13 @@ export async function generateMetadata({ params }: Props) {
     const dailyPrice = p?.dailyPrice as number | undefined;
     const brand = p?.brand as string | undefined;
     const images = Array.isArray(p?.images) ? p.images as Array<{ imageUrl?: string }> : [];
+    const shortDescription =
+      typeof p?.shortDescription === 'string'
+        ? stripHtml(p.shortDescription)
+        : '';
     const title = `${name} - Thuê ${categoryName} tại Swiftera`;
     const description =
-      (p?.shortDescription as string) ??
+      shortDescription ||
       `${name} với giá thuê chỉ từ ${dailyPrice ? `${dailyPrice.toLocaleString('vi-VN')}₫/ngày` : ''}. ${brand ? `Thương hiệu ${brand}.` : ''} Đặt thuê ngay tại Swiftera!`;
     const url = `https://swiftera.vn/product/${id}`;
 
@@ -108,9 +113,9 @@ export default async function ProductPage({ params }: Props) {
             name={String(p.name ?? 'Sản phẩm')}
             description={
               typeof p.description === 'string'
-                ? p.description
+                ? stripHtml(p.description)
                 : typeof p.shortDescription === 'string'
-                  ? p.shortDescription
+                  ? stripHtml(p.shortDescription)
                   : undefined
             }
             imageUrl={imageUrl}

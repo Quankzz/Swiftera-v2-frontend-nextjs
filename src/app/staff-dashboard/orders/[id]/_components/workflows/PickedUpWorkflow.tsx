@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import {
   CheckCircle2,
@@ -27,8 +27,10 @@ import { WorkflowFooter } from '../WorkflowFooter';
 
 interface PickedUpWorkflowProps {
   order: StaffOrder;
-  onCompleteReturn: (damagePenalty?: number, overduePenalty?: number) => void;
+  onCompleteReturn: () => void;
   loading?: boolean;
+  canFinalizeByStaff?: boolean;
+  refundableDepositAmount?: number;
 }
 
 type RefundScenario = 'no_damage' | 'partial_refund' | 'excess_charge';
@@ -59,6 +61,8 @@ export function PickedUpWorkflow({
   order,
   onCompleteReturn,
   loading,
+  canFinalizeByStaff = true,
+  refundableDepositAmount = 0,
 }: PickedUpWorkflowProps) {
   const isCompleted = order.status === 'COMPLETED';
   const penalty = order.total_penalty_amount ?? 0;
@@ -86,7 +90,9 @@ export function PickedUpWorkflow({
         desc={
           isCompleted
             ? 'Đơn hàng đã hoàn tất. Tiền cọc đã được hoàn cho khách hàng.'
-            : 'Thiết bị đã được thu hồi. Xác nhận hoàn tất để tiến hành hoàn tiền cọc cho khách hàng.'
+            : canFinalizeByStaff
+              ? 'Thiết bị đã được thu hồi. Xác nhận hoàn tất để kết thúc đơn hàng.'
+              : 'Thiết bị đã được thu hồi. Đơn có hoàn cọc nên cần ADMIN xác nhận quyết toán trước khi hoàn tất.'
         }
         variant={isCompleted ? 'success' : 'primary'}
       />
@@ -406,24 +412,47 @@ export function PickedUpWorkflow({
         <WorkflowFooter>
           <div className='p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3'>
             <div className='flex items-center gap-2.5 text-[14px] text-muted-foreground flex-1 min-w-0'>
-              <CheckCircle2 className='size-5 shrink-0 text-success' />
-              <span>
-                Nhấn xác nhận để hoàn tất đơn thuê. Tiền cọc sẽ được tự động hoàn cho khách qua chuyển khoản ngân hàng.
-              </span>
+              {canFinalizeByStaff ? (
+                <>
+                  <CheckCircle2 className='size-5 shrink-0 text-success' />
+                  <span>
+                    Nhấn xác nhận để hoàn tất đơn thuê.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Clock className='size-5 shrink-0 text-amber-500' />
+                  <span>
+                    Đơn cần ADMIN xác nhận hoàn cọc{' '}
+                    <strong>{fmt(refundableDepositAmount)}</strong> qua chuyển khoản trước khi chuyển trạng thái hoàn thành.
+                  </span>
+                </>
+              )}
             </div>
             <Button
               onClick={() => onCompleteReturn()}
-              disabled={loading}
-              className='h-14 gap-2 rounded-xl px-6 text-lg font-bold shrink-0 sm:min-w-48 bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20'
+              disabled={loading || !canFinalizeByStaff}
+              className={cn(
+                'h-14 gap-2 rounded-xl px-6 text-lg font-bold shrink-0 sm:min-w-48',
+                canFinalizeByStaff
+                  ? 'bg-success hover:bg-success/90 text-white shadow-lg shadow-success/20'
+                  : 'bg-muted text-muted-foreground',
+              )}
             >
               {loading ? (
                 <>
                   <Loader2 className='size-5 animate-spin' /> Đang xử lý…
                 </>
               ) : (
-                <>
-                  <CheckCircle2 className='size-5' /> Xác nhận hoàn tất
-                </>
+                canFinalizeByStaff ? (
+                  <>
+                    <CheckCircle2 className='size-5' /> Xác nhận hoàn tất
+                  </>
+                ) : (
+                  <>
+                    <Clock className='size-5' /> Chờ ADMIN quyết toán
+                  </>
+                )
               )}
             </Button>
           </div>
