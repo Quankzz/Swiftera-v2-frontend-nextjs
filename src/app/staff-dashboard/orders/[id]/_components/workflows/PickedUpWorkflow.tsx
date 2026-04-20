@@ -386,7 +386,7 @@ export function PickedUpWorkflow({
                 Ngày kết thúc thực tế
               </p>
               <p className='text-[15px] font-bold text-foreground'>
-                {order.actual_end_date ? fmtDate(order.actual_end_date) : '—'}
+                {order.actual_return_date ? fmtDate(order.actual_return_date) : '—'}
               </p>
             </div>
           </div>

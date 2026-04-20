@@ -164,7 +164,7 @@ export function useCatalogProductsQuery(params: CatalogQueryParams = {}) {
   const includeDescendants =
     params.includeDescendants ?? (!!params.categoryId && !params.subcategoryId);
 
-  const beParams: Record<string, unknown> = {
+  const beParams: Record<string, string | number | boolean> = {
     page, // backend one-indexed: page=1 is first page
     size,
     filter: buildFilter(params),
@@ -173,10 +173,10 @@ export function useCatalogProductsQuery(params: CatalogQueryParams = {}) {
       : {}),
   };
   if (sort) {
-    (beParams as any).sort = sort;
+    beParams.sort = sort;
   }
   if (params.onlyWithStock) {
-    (beParams as any).onlyWithStock = true;
+    beParams.onlyWithStock = true;
   }
 
   return useQuery<PaginatedProductsResponse, Error, CatalogResult>({

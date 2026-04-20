@@ -33,7 +33,9 @@ export interface RecordPickupRequest {
 }
 
 export interface SetPenaltyRequest {
-  penaltyTotal: number;
+  penaltyTotal?: number;
+  damagePenaltyAmount?: number;
+  overduePenaltyAmount?: number;
   note?: string;
 }
 
@@ -182,6 +184,7 @@ export function adaptStaffOrder(o: RentalOrderResponse): StaffOrder {
     total_rental_fee: o.rentalFeeAmount,
     total_deposit: o.depositHoldAmount,
     total_penalty_amount: o.penaltyChargeAmount ?? 0,
+    overdue_penalty_amount: o.overduePenaltyAmount ?? 0,
     status: uiStatus,
     created_at: o.placedAt,
     staff_checkin_id: o.deliveryStaffId ?? o.deliveryStaff?.userId,

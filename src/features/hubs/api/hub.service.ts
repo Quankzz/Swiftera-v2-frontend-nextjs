@@ -7,7 +7,7 @@
  */
 
 import { httpService } from '@/api/http';
-import type { ApiResponse, PaginatedResponse } from '@/types/api.types';
+import type { ApiResponse, PaginationResponse } from '@/types/api.types';
 import type {
   HubResponse,
   HubStaffResponse,
@@ -128,8 +128,8 @@ export async function getHubStaff(
 export async function getHubProducts(
   hubId: string,
   params?: { page?: number; size?: number; filter?: string; sort?: string },
-): Promise<PaginatedResponse<ProductResponse>> {
-  const res = await httpService.get<ApiResponse<PaginatedResponse<ProductResponse>>>(
+): Promise<PaginationResponse<ProductResponse>> {
+  const res = await httpService.get<ApiResponse<PaginationResponse<ProductResponse>>>(
     `/hubs/${hubId}/products`,
     { params },
   );
@@ -144,8 +144,8 @@ export async function getHubProducts(
 export async function getHubInventoryItems(
   hubId: string,
   params?: { page?: number; size?: number; filter?: string; sort?: string },
-): Promise<PaginatedResponse<InventoryItemResponse>> {
-  const res = await httpService.get<ApiResponse<PaginatedResponse<InventoryItemResponse>>>(
+): Promise<PaginationResponse<InventoryItemResponse>> {
+  const res = await httpService.get<ApiResponse<PaginationResponse<InventoryItemResponse>>>(
     `/hubs/${hubId}/inventory-items`,
     { params },
   );

@@ -195,7 +195,7 @@ export default function ProductDetailClient({
           : 'Chưa có đánh giá',
       },
     ];
-  }, [product]);
+  }, [product, colors]);
 
   const shortDesc = useMemo(
     () => product?.shortDescription ?? null,

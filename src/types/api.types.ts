@@ -320,6 +320,8 @@ export interface StaffOrder {
   total_rental_fee: number;
   total_deposit: number;
   total_penalty_amount: number;
+  /** Final overdue penalty amount returned by backend (if any) */
+  overdue_penalty_amount?: number;
   status: OrderStatus;
   created_at: string;
   /** Staff who handled handover to customer (deliveryStaff.userId) */

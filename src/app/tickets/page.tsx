@@ -266,9 +266,9 @@ export default function MyTicketsPage() {
   const params = { page, size: 10, ...(statusFilter !== 'ALL' ? { status: statusFilter } : {}) };
   const { data, isLoading } = useMyTickets(params);
 
-  const tickets = data?.data?.content ?? [];
-  const totalPages = data?.data?.meta?.totalPages ?? 0;
-  const totalElements = data?.data?.meta?.totalElements ?? 0;
+  const tickets = data?.content ?? [];
+  const totalPages = data?.meta?.totalPages ?? 0;
+  const totalElements = data?.meta?.totalElements ?? 0;
 
   return (
     <Layout>

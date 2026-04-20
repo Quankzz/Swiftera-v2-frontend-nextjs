@@ -68,15 +68,16 @@ const MagnetLines: React.FC<MagnetLinesProps> = ({
     <span
       key={i}
       className="block origin-center"
-      style={{
-        backgroundColor: lineColor,
-        width: lineWidth,
-        height: lineHeight,
-        //@ts-ignore
-        '--rotate': `${baseAngle}deg`,
-        transform: 'rotate(var(--rotate))',
-        willChange: 'transform'
-      }}
+      style={
+        {
+          backgroundColor: lineColor,
+          width: lineWidth,
+          height: lineHeight,
+          '--rotate': `${baseAngle}deg`,
+          transform: 'rotate(var(--rotate))',
+          willChange: 'transform'
+        } as CSSProperties & Record<'--rotate', string>
+      }
     />
   ));
 
