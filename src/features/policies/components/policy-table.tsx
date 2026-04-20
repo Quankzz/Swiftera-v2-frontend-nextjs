@@ -15,6 +15,7 @@ import { DataTable } from '@/components/dashboard/ui/data-table';
 import {
   Search,
   Loader2,
+  CheckCircle2,
   Eye,
   BookOpen,
   X,

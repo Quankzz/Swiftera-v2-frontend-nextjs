@@ -20,6 +20,8 @@ import {
   updateHub,
   deleteHub,
   getHubStaff,
+  getHubProducts,
+  getHubInventoryItems,
 } from '../api/hub.service';
 import type { HubListParams, CreateHubInput, UpdateHubInput } from '../types';
 
@@ -125,5 +127,47 @@ export function useHubStaffQuery(hubId?: string) {
     queryFn: () => getHubStaff(hubId!, false),
     enabled: !!hubId,
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Products & Inventory Items by Hub
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * useHubProductsQuery - danh sách sản phẩm theo hub (API-043 products)
+ * GET /hubs/{hubId}/products?page=1&size=20&filter=...
+ *
+ * Chỉ enabled khi có hubId.
+ */
+export function useHubProductsQuery(
+  hubId?: string,
+  params?: { page?: number; size?: number; filter?: string; sort?: string },
+) {
+  return useQuery({
+    queryKey: hubKeys.products(hubId ?? ''),
+    queryFn: () => getHubProducts(hubId!, params),
+    enabled: !!hubId,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * useHubInventoryItemsQuery - danh sách inventory items theo hub (API-043 inventory)
+ * GET /hubs/{hubId}/inventory-items?page=1&size=20&filter=...
+ *
+ * Chỉ enabled khi có hubId.
+ */
+export function useHubInventoryItemsQuery(
+  hubId?: string,
+  params?: { page?: number; size?: number; filter?: string; sort?: string },
+) {
+  return useQuery({
+    queryKey: hubKeys.inventory(hubId ?? ''),
+    queryFn: () => getHubInventoryItems(hubId!, params),
+    enabled: !!hubId,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 }

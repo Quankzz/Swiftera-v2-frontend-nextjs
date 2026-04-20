@@ -87,8 +87,8 @@ export function PolicyPdfPreview({
       // Dynamic import để tránh SSR issues
       const pdfjsLib = await import('pdfjs-dist');
 
-      // pdfjs-dist v5: worker src dùng .min.js (không phải .mjs)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+      // pdfjs-dist v5: worker src dùng CDN ổn định (unpkg có thể bị block CORS)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
       const loadingTask = pdfjsLib.getDocument(
         typeof src === 'string'

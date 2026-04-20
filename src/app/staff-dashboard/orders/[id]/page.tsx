@@ -45,6 +45,7 @@ import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
 import { ActiveWorkflow } from './_components/workflows/ActiveWorkflow';
 import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
 import { CompletedWorkflow } from './_components/workflows/CompletedWorkflow';
+import { PickedUpWorkflow } from './_components/workflows/PickedUpWorkflow';
 
 export default function OrderDetailPage({
   params,
@@ -556,9 +557,23 @@ export default function OrderDetailPage({
               )}
 
               {order.status === 'PICKED_UP' && (
-                <CompletedWorkflow
+                <PickedUpWorkflow
                   order={order}
-                  onDepositRefund={handleSettlementUpdate}
+                  onCompleteReturn={async (damagePenalty, overduePenalty) => {
+                    if ((damagePenalty ?? 0) > 0 || (overduePenalty ?? 0) > 0) {
+                      const updated = await setPenalty(order.rental_order_id, {
+                        damagePenaltyAmount: damagePenalty,
+                        overduePenaltyAmount: overduePenalty,
+                      });
+                      setOrder(updated);
+                    }
+                    const final = await updateOrderStatus(
+                      order.rental_order_id,
+                      'COMPLETED',
+                    );
+                    updateCount(order.status, 'COMPLETED');
+                    setOrder(final);
+                  }}
                   loading={statusLoading}
                 />
               )}

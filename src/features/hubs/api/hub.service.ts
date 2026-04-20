@@ -7,7 +7,7 @@
  */
 
 import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import type { ApiResponse, PaginatedResponse } from '@/types/api.types';
 import type {
   HubResponse,
   HubStaffResponse,
@@ -16,6 +16,8 @@ import type {
   UpdateHubInput,
   HubListParams,
 } from '../types';
+import type { ProductResponse } from '@/features/products/types';
+import type { InventoryItemResponse } from '@/features/products/types';
 
 const authOpts = { requireToken: true as const };
 
@@ -114,6 +116,38 @@ export async function getHubStaff(
   const res = await httpService.get<ApiResponse<HubStaffResponse[]>>(
     `/hubs/${hubId}/staff`,
     { ...authOpts, params: { activeOnly } },
+  );
+  return res.data.data!;
+}
+
+/**
+ * API-043 (products): GET /hubs/{hubId}/products?page=1&size=20&filter=...
+ * Lấy danh sách sản phẩm thuộc hub (qua inventory items).
+ * filter dùng SpringFilter DSL.
+ */
+export async function getHubProducts(
+  hubId: string,
+  params?: { page?: number; size?: number; filter?: string; sort?: string },
+): Promise<PaginatedResponse<ProductResponse>> {
+  const res = await httpService.get<ApiResponse<PaginatedResponse<ProductResponse>>>(
+    `/hubs/${hubId}/products`,
+    { params },
+  );
+  return res.data.data!;
+}
+
+/**
+ * API-043 (inventory): GET /hubs/{hubId}/inventory-items?page=1&size=20&filter=...
+ * Lấy danh sách inventory items thuộc hub.
+ * filter dùng SpringFilter DSL: "status:'AVAILABLE'", "product.name~~'*laptop*'"
+ */
+export async function getHubInventoryItems(
+  hubId: string,
+  params?: { page?: number; size?: number; filter?: string; sort?: string },
+): Promise<PaginatedResponse<InventoryItemResponse>> {
+  const res = await httpService.get<ApiResponse<PaginatedResponse<InventoryItemResponse>>>(
+    `/hubs/${hubId}/inventory-items`,
+    { params },
   );
   return res.data.data!;
 }

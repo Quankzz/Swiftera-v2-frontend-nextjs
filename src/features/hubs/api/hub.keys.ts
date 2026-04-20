@@ -19,4 +19,10 @@ export const hubKeys = {
   /** Key cho danh sách nhân viên theo hub (API-043 staff) */
   staffLists: () => [...hubKeys.all, 'staff'] as const,
   staff: (hubId: string) => [...hubKeys.staffLists(), hubId] as const,
+
+  /** Key cho products theo hub */
+  products: (hubId: string) => [...hubKeys.all, 'products', hubId] as const,
+
+  /** Key cho inventory items theo hub */
+  inventory: (hubId: string) => [...hubKeys.all, 'inventory', hubId] as const,
 } as const;

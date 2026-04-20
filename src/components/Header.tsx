@@ -29,6 +29,7 @@ import {
   UserRound,
   FileText,
   User,
+  MessageSquare,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -556,6 +557,14 @@ export function Header({
                           >
                             <FileText size={15} className="text-text-sub shrink-0" />
                             Đơn thuê của tôi
+                          </Link>
+                          <Link
+                            href="/tickets"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
+                          >
+                            <MessageSquare size={15} className="text-text-sub shrink-0" />
+                            Phản hồi yêu cầu
                           </Link>
                           {isAdminUser && (
                             <Link
