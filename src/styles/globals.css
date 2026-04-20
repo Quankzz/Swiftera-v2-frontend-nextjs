@@ -605,7 +605,8 @@ iframe.rich-media {
 }
 /* ===== Scrollbar (Chrome, Edge, Safari) ===== */
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -613,16 +614,16 @@ iframe.rich-media {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #2c2c2f, #444647);
+    background: linear-gradient(180deg, var(--theme-primary-start, #fe1451), var(--theme-primary-end, #ba264d));
     border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #2c2c2f, #444647);
+    background: linear-gradient(180deg, var(--theme-primary-start, #fe1451), var(--theme-primary-end, #ba264d));
 }
 
 /* ===== Firefox ===== */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #3c3c45 transparent;
+    scrollbar-color: var(--theme-primary-start, #fe1451) transparent;
 }

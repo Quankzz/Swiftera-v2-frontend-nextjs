@@ -104,9 +104,9 @@ export function HeroBanner() {
   if (!isLoading && slides.length === 0) return null;
 
   return (
-    <section className='relative overflow-hidden bg-[#0a0a0a]'>
+    <section className='relative overflow-hidden bg-background'>
       {/* Particle atmosphere */}
-      <div className='absolute inset-0 z-0 opacity-40'>
+      <div className='absolute inset-0 z-0 opacity-40 dark:opacity-40'>
         <ParticlesBg particleCount={80} speed={0.02} particleBaseSize={60} />
       </div>
 
@@ -115,16 +115,16 @@ export function HeroBanner() {
       <div className='pointer-events-none absolute -right-24 top-1/3 -translate-y-1/2 z-0 h-[400px] w-[400px] rounded-full bg-rose-600/[0.05] blur-[100px]' />
 
       {/* ── TOP: Trust bar ──────────────────────────────────────── */}
-      <div className='relative z-10 border-b border-white/[0.06]'>
+      <div className='relative z-10 border-b border-foreground/10'>
         <div className='mx-auto flex max-w-7xl items-center justify-center gap-6 overflow-x-auto px-4 py-3 scrollbar-none sm:justify-between sm:gap-0'>
           {TRUST_STATS.map(({ icon: Icon, label, value }) => (
             <div
               key={label}
-              className='flex shrink-0 items-center gap-2 text-white/70'
+              className='flex shrink-0 items-center gap-2 text-foreground/70'
             >
-              <Icon className='size-4 text-rose-400' strokeWidth={2} />
+              <Icon className='size-4 text-rose-500 dark:text-rose-400' strokeWidth={2} />
               <span className='text-xs font-medium'>
-                <span className='text-white/90'>{value}</span>{' '}
+                <span className='text-foreground/90'>{value}</span>{' '}
                 <span className='hidden sm:inline'>{label}</span>
               </span>
             </div>
@@ -160,7 +160,7 @@ export function HeroBanner() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
               >
-                <h1 className='text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-[3.25rem]'>
+                <h1 className='text-4xl font-black leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]'>
                   {current?.title}
                   <br />
                   <span className='bg-gradient-to-r from-rose-400 via-rose-500 to-pink-400 bg-clip-text text-transparent'>
@@ -168,7 +168,7 @@ export function HeroBanner() {
                   </span>
                 </h1>
 
-                <p className='mt-5 max-w-lg text-base leading-relaxed text-white/55 sm:text-lg'>
+                <p className='mt-5 max-w-lg text-base leading-relaxed text-foreground/60 sm:text-lg'>
                   {current?.description}
                 </p>
               </motion.div>
@@ -193,7 +193,7 @@ export function HeroBanner() {
               </Link>
               <Link
                 href='/catalog'
-                className='inline-flex items-center gap-2 rounded-full border border-white/15 px-7 py-3.5 text-sm font-medium text-white/80 transition-all hover:border-white/30 hover:bg-white/5 active:scale-[0.97]'
+                className='inline-flex items-center gap-2 rounded-full border border-foreground/15 px-7 py-3.5 text-sm font-medium text-foreground/80 transition-all hover:border-foreground/30 hover:bg-foreground/5 active:scale-[0.97]'
               >
                 Xem bảng giá
               </Link>
@@ -209,14 +209,14 @@ export function HeroBanner() {
               {VALUE_PROPS.map(({ icon: Icon, label, detail }) => (
                 <div
                   key={label}
-                  className='flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3'
+                  className='flex items-start gap-3 rounded-xl border border-foreground/10 bg-foreground/[0.03] p-3'
                 >
                   <div className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/15'>
-                    <Icon className='size-4 text-rose-400' strokeWidth={2} />
+                    <Icon className='size-4 text-rose-500 dark:text-rose-400' strokeWidth={2} />
                   </div>
                   <div>
-                    <p className='text-sm font-semibold text-white/80'>{label}</p>
-                    <p className='text-xs text-white/40'>{detail}</p>
+                    <p className='text-sm font-semibold text-foreground/80'>{label}</p>
+                    <p className='text-xs text-foreground/40'>{detail}</p>
                   </div>
                 </div>
               ))}
@@ -230,7 +230,7 @@ export function HeroBanner() {
               <div className='absolute inset-0 rounded-3xl bg-gradient-to-br from-rose-600/10 via-transparent to-pink-600/10 blur-3xl' />
 
               {/* Main image card */}
-              <div className='relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.04] shadow-2xl shadow-black/50'>
+              <div className='relative aspect-[4/3] overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.04] shadow-2xl dark:shadow-black/50'>
                 <AnimatePresence mode='wait'>
                   <motion.div
                     key={current?.image || 'default'}
@@ -251,7 +251,7 @@ export function HeroBanner() {
                     ) : (
                       <div className='flex size-full items-center justify-center'>
                         <Package
-                          className='size-16 text-white/10'
+                          className='size-16 text-foreground/10 dark:text-white/10'
                           strokeWidth={1}
                         />
                       </div>
@@ -260,7 +260,7 @@ export function HeroBanner() {
                 </AnimatePresence>
 
                 {/* Gradient overlay at bottom */}
-                <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[#0a0a0a] to-transparent' />
+                <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent' />
 
                 {/* Slide indicators */}
                 {slides.length > 1 && (
@@ -271,8 +271,8 @@ export function HeroBanner() {
                         onClick={() => setIndex(i)}
                         className={`h-1 rounded-full transition-all duration-300 ${
                           i === index
-                            ? 'w-6 bg-rose-400'
-                            : 'w-1 bg-white/30 hover:bg-white/50'
+                            ? 'w-6 bg-rose-500 dark:bg-rose-400'
+                            : 'w-1 bg-foreground/30 hover:bg-foreground/50 dark:bg-white/30 dark:hover:bg-white/50'
                         }`}
                         aria-label={`Go to slide ${i + 1}`}
                       />
@@ -282,17 +282,17 @@ export function HeroBanner() {
               </div>
 
               {/* Floating accent badge */}
-              <div className='absolute -bottom-4 -left-4 rounded-xl border border-white/[0.08] bg-[#111]/90 px-4 py-3 shadow-xl backdrop-blur-sm'>
-                <p className='text-xs text-white/40'>Giá thuê từ</p>
-                <p className='text-xl font-bold text-white'>120K</p>
-                <p className='text-xs text-white/40'>/ngày</p>
+              <div className='absolute -bottom-4 -left-4 rounded-xl border border-foreground/10 bg-background/90 px-4 py-3 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-[#111]/90'>
+                <p className='text-xs text-foreground/40 dark:text-white/40'>Giá thuê từ</p>
+                <p className='text-xl font-bold text-foreground dark:text-white'>120K</p>
+                <p className='text-xs text-foreground/40 dark:text-white/40'>/ngày</p>
               </div>
 
               {/* Floating trust badge */}
-              <div className='absolute -top-3 -right-3 rounded-xl border border-white/[0.08] bg-[#111]/90 px-3 py-2 shadow-xl backdrop-blur-sm'>
+              <div className='absolute -top-3 -right-3 rounded-xl border border-foreground/10 bg-background/90 px-3 py-2 shadow-xl backdrop-blur-sm dark:border-white/10 dark:bg-[#111]/90'>
                 <div className='flex items-center gap-1.5'>
-                  <ShieldCheck className='size-3.5 text-emerald-400' />
-                  <span className='text-xs font-medium text-white/70'>
+                  <ShieldCheck className='size-3.5 text-emerald-500 dark:text-emerald-400' />
+                  <span className='text-xs font-medium text-foreground/70 dark:text-white/70'>
                     Cọc hoàn 100%
                   </span>
                 </div>

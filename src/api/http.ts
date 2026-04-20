@@ -127,10 +127,18 @@ class Http {
                     refreshError,
                     'Token refresh failed',
                   );
-                  console.error(
-                    '❌ Token refresh failed:',
-                    normalizedRefreshError.message,
-                  );
+                  const isExpectedAuthFailure =
+                    normalizedRefreshError.errorCode === 'UNAUTHORIZED' ||
+                    normalizedRefreshError.errorCode === 'FORBIDDEN' ||
+                    normalizedRefreshError.errorCode === 'NOT_FOUND' ||
+                    normalizedRefreshError.message.includes('Không tìm thấy');
+
+                  if (!isExpectedAuthFailure) {
+                    console.error(
+                      '❌ Token refresh failed:',
+                      normalizedRefreshError.message,
+                    );
+                  }
                   storageService.removeAccessToken();
                   if (logoutCallback) {
                     logoutCallback();
