@@ -4,7 +4,12 @@
  */
 
 import { useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { cartKeys } from './cart.keys';
 import {
@@ -58,7 +63,7 @@ function patchLineTotals(
   };
 }
 
-const CART_CACHE_KEY = 'swiftera:cart:cache:v1';
+export const CART_CACHE_KEY = 'swiftera:cart:cache:v1';
 const CART_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type PersistedCartPayload = {
@@ -66,7 +71,7 @@ type PersistedCartPayload = {
   cart: CartResponse;
 };
 
-function readPersistedCart(): CartResponse | undefined {
+function readPersistedCartPayload(): PersistedCartPayload | undefined {
   if (typeof window === 'undefined') return undefined;
 
   try {
@@ -84,10 +89,18 @@ function readPersistedCart(): CartResponse | undefined {
       return undefined;
     }
 
-    return parsed.cart;
+    return parsed;
   } catch {
     return undefined;
   }
+}
+
+function readPersistedCart(): CartResponse | undefined {
+  return readPersistedCartPayload()?.cart;
+}
+
+function readPersistedCartUpdatedAt(): number | undefined {
+  return readPersistedCartPayload()?.cachedAt;
 }
 
 function persistCart(cart: CartResponse | undefined): void {
@@ -108,6 +121,23 @@ function persistCart(cart: CartResponse | undefined): void {
 function clearPersistedCart(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(CART_CACHE_KEY);
+}
+
+function getCachedCartFromQueryClient(queryClient: QueryClient): CartResponse | undefined {
+  const cachedEntries = queryClient.getQueriesData<CartResponse>({
+    queryKey: cartKeys.all,
+  });
+  for (const [, data] of cachedEntries) {
+    if (data) return data;
+  }
+  return undefined;
+}
+
+function setCachedCartForAllKeys(
+  queryClient: QueryClient,
+  nextCart: CartResponse | undefined,
+): void {
+  queryClient.setQueriesData<CartResponse>({ queryKey: cartKeys.all }, nextCart);
 }
 
 function normalizeColorId(value: string | null | undefined): string | null {
@@ -212,19 +242,20 @@ export function useCartQuery(options?: { deliveryDate?: string }) {
   const effectiveDeliveryDate = options?.deliveryDate ?? getDefaultDeliveryDate();
 
   const query = useQuery({
-    queryKey: cartKeys.cart(),
+    queryKey: cartKeys.cart(effectiveDeliveryDate),
     queryFn: async () => {
       const cart = await getCart(effectiveDeliveryDate);
       persistCart(cart);
       return cart;
     },
     enabled: isAuthenticated,
-    staleTime: 60_000,
-    refetchInterval: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 10_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     gcTime: 30 * 60_000,
     initialData: isAuthenticated ? readPersistedCart : undefined,
+    initialDataUpdatedAt: isAuthenticated ? readPersistedCartUpdatedAt : undefined,
     placeholderData: (previousData) => previousData,
     retry: false,
   });
@@ -284,7 +315,7 @@ export function useAddToCart(options?: {
       }
 
       // Fallback lấy cart authoritative từ backend khi response add-line chưa phản ánh merge line.
-      return getCart();
+      return getCart(getDefaultDeliveryDate());
     },
 
     onMutate: async (input) => {
@@ -292,36 +323,36 @@ export function useAddToCart(options?: {
         return;
       }
 
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
       const previousCart =
-        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+        getCachedCartFromQueryClient(queryClient) ?? readPersistedCart();
 
       const optimisticCart = applyOptimisticAdd(previousCart, input);
-      queryClient.setQueryData<CartResponse>(cartKeys.cart(), optimisticCart);
+      setCachedCartForAllKeys(queryClient, optimisticCart);
       persistCart(optimisticCart);
 
       return { previousCart };
     },
 
     onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data);
+      setCachedCartForAllKeys(queryClient, data);
       persistCart(data);
       options?.onSuccess?.();
     },
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
-        queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        setCachedCartForAllKeys(queryClient, context.previousCart);
         persistCart(context.previousCart);
       } else {
-        queryClient.removeQueries({ queryKey: cartKeys.cart(), exact: true });
+        queryClient.removeQueries({ queryKey: cartKeys.all });
         clearPersistedCart();
       }
       options?.onError?.(error);
     },
 
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      void queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
   });
 }
@@ -358,28 +389,28 @@ export function useUpdateCartLine(
         return;
       }
 
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
       const previousCart =
-        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+        getCachedCartFromQueryClient(queryClient) ?? readPersistedCart();
 
-      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
-        if (!old) return old;
+      const optimisticCart = previousCart
+        ? {
+            ...previousCart,
+            cartLines: previousCart.cartLines.map((line) => {
+              if (line.cartLineId !== cartLineId) return line;
 
-        return {
-          ...old,
-          cartLines: old.cartLines.map((line) => {
-            if (line.cartLineId !== cartLineId) return line;
+              const nextQuantity = Math.max(1, input.quantity ?? line.quantity);
+              const nextDuration = Math.max(
+                1,
+                input.rentalDurationDays ?? line.rentalDurationDays,
+              );
+              return patchLineTotals(line, nextQuantity, nextDuration);
+            }),
+            updatedAt: new Date().toISOString(),
+          }
+        : previousCart;
 
-            const nextQuantity = Math.max(1, input.quantity ?? line.quantity);
-            const nextDuration = Math.max(
-              1,
-              input.rentalDurationDays ?? line.rentalDurationDays,
-            );
-            return patchLineTotals(line, nextQuantity, nextDuration);
-          }),
-          updatedAt: new Date().toISOString(),
-        };
-      });
+      setCachedCartForAllKeys(queryClient, optimisticCart);
 
       persistCart(optimisticCart);
 
@@ -387,21 +418,21 @@ export function useUpdateCartLine(
     },
 
     onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data);
+      setCachedCartForAllKeys(queryClient, data);
       persistCart(data);
       options?.onSuccess?.();
     },
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
-        queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        setCachedCartForAllKeys(queryClient, context.previousCart);
         persistCart(context.previousCart);
       }
       options?.onError?.(error);
     },
 
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      void queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
   });
 }
@@ -435,21 +466,21 @@ export function useRemoveCartLine(options?: {
         return;
       }
 
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
       const previousCart =
-        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+        getCachedCartFromQueryClient(queryClient) ?? readPersistedCart();
 
-      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
-        if (!old) return old;
+      const optimisticCart = previousCart
+        ? {
+            ...previousCart,
+            cartLines: previousCart.cartLines.filter(
+              (line) => line.cartLineId !== cartLineId,
+            ),
+            updatedAt: new Date().toISOString(),
+          }
+        : previousCart;
 
-        return {
-          ...old,
-          cartLines: old.cartLines.filter(
-            (line) => line.cartLineId !== cartLineId,
-          ),
-          updatedAt: new Date().toISOString(),
-        };
-      });
+      setCachedCartForAllKeys(queryClient, optimisticCart);
 
       persistCart(optimisticCart);
 
@@ -462,14 +493,14 @@ export function useRemoveCartLine(options?: {
 
     onError: (error: Error, _cartLineId, context) => {
       if (context?.previousCart !== undefined) {
-        queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        setCachedCartForAllKeys(queryClient, context.previousCart);
         persistCart(context.previousCart);
       }
       options?.onError?.(error);
     },
 
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      void queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
   });
 }
@@ -503,18 +534,19 @@ export function useClearCart(options?: {
         return;
       }
 
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
       const previousCart =
-        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+        getCachedCartFromQueryClient(queryClient) ?? readPersistedCart();
 
-      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          cartLines: [],
-          updatedAt: new Date().toISOString(),
-        };
-      });
+      const optimisticCart = previousCart
+        ? {
+            ...previousCart,
+            cartLines: [],
+            updatedAt: new Date().toISOString(),
+          }
+        : previousCart;
+
+      setCachedCartForAllKeys(queryClient, optimisticCart);
 
       persistCart(optimisticCart);
 
@@ -528,14 +560,14 @@ export function useClearCart(options?: {
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
-        queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        setCachedCartForAllKeys(queryClient, context.previousCart);
         persistCart(context.previousCart);
       }
       options?.onError?.(error);
     },
 
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      void queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
   });
 }
@@ -578,28 +610,28 @@ export function useUpdateCartLineQuantity(options?: {
         return;
       }
 
-      await queryClient.cancelQueries({ queryKey: cartKeys.cart() });
+      await queryClient.cancelQueries({ queryKey: cartKeys.all });
       const previousCart =
-        queryClient.getQueryData<CartResponse>(cartKeys.cart()) ?? readPersistedCart();
+        getCachedCartFromQueryClient(queryClient) ?? readPersistedCart();
 
-      const optimisticCart = queryClient.setQueryData<CartResponse>(cartKeys.cart(), (old) => {
-        if (!old) return old;
+      const optimisticCart = previousCart
+        ? {
+            ...previousCart,
+            cartLines: previousCart.cartLines.map((line) => {
+              if (line.cartLineId !== cartLineId) return line;
 
-        return {
-          ...old,
-          cartLines: old.cartLines.map((line) => {
-            if (line.cartLineId !== cartLineId) return line;
+              const nextQuantity = Math.max(1, quantity ?? line.quantity);
+              const nextDuration = Math.max(
+                1,
+                rentalDurationDays ?? line.rentalDurationDays,
+              );
+              return patchLineTotals(line, nextQuantity, nextDuration);
+            }),
+            updatedAt: new Date().toISOString(),
+          }
+        : previousCart;
 
-            const nextQuantity = Math.max(1, quantity ?? line.quantity);
-            const nextDuration = Math.max(
-              1,
-              rentalDurationDays ?? line.rentalDurationDays,
-            );
-            return patchLineTotals(line, nextQuantity, nextDuration);
-          }),
-          updatedAt: new Date().toISOString(),
-        };
-      });
+      setCachedCartForAllKeys(queryClient, optimisticCart);
 
       persistCart(optimisticCart);
 
@@ -607,21 +639,21 @@ export function useUpdateCartLineQuantity(options?: {
     },
 
     onSuccess: (data) => {
-      queryClient.setQueryData(cartKeys.cart(), data);
+      setCachedCartForAllKeys(queryClient, data);
       persistCart(data);
       options?.onSuccess?.();
     },
 
     onError: (error: Error, _input, context) => {
       if (context?.previousCart !== undefined) {
-        queryClient.setQueryData(cartKeys.cart(), context.previousCart);
+        setCachedCartForAllKeys(queryClient, context.previousCart);
         persistCart(context.previousCart);
       }
       options?.onError?.(error);
     },
 
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+      void queryClient.invalidateQueries({ queryKey: cartKeys.all });
     },
   });
 }

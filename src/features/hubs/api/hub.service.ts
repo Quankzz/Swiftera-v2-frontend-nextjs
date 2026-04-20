@@ -12,6 +12,7 @@ import type {
   HubResponse,
   HubStaffResponse,
   PaginatedHubsResponse,
+  AssignProductsToHubInput,
   CreateHubInput,
   UpdateHubInput,
   HubListParams,
@@ -150,4 +151,26 @@ export async function getHubInventoryItems(
     { ...authOpts, params },
   );
   return res.data.data!;
+}
+
+export async function assignProductsToHub(
+  hubId: string,
+  payload: AssignProductsToHubInput,
+): Promise<void> {
+  await httpService.patch<ApiResponse<null>>(
+    `/hubs/${hubId}/assign-products`,
+    payload,
+    authOpts,
+  );
+}
+
+export async function unassignProductsFromHub(
+  hubId: string,
+  payload: AssignProductsToHubInput,
+): Promise<void> {
+  await httpService.patch<ApiResponse<null>>(
+    `/hubs/${hubId}/unassign-products`,
+    payload,
+    authOpts,
+  );
 }

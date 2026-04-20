@@ -721,7 +721,12 @@ function DeliveryInfoDialog({
 
 export default function CartPage() {
   const router = useRouter();
-  const { data: cart, isLoading, isError } = useCartQuery();
+  const {
+    data: cart,
+    isLoading,
+    isError,
+    refetch: refetchCart,
+  } = useCartQuery();
   const removeMutation = useRemoveCartLine();
   const updateQtyMutation = useUpdateCartLineQuantity();
   const clearMutation = useClearCart();
@@ -1058,12 +1063,34 @@ export default function CartPage() {
   }
 
   /** Bước 1: Validate input rồi mở dialog điều khoản */
-  function handleProceedToRent() {
-    if (selectedLines.length === 0) {
+  async function handleProceedToRent() {
+    const selectedLineIds = Array.from(selectedIds);
+    if (selectedLineIds.length === 0) {
       toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
       return;
     }
-    if (hasOutOfStockSelected) {
+
+    const latestCartResult = await refetchCart();
+    const latestLines = latestCartResult.data?.cartLines ?? [];
+    const latestLineById = new Map(latestLines.map((line) => [line.cartLineId, line]));
+    const latestSelectedLines = selectedLineIds
+      .map((lineId) => latestLineById.get(lineId))
+      .filter((line): line is CartLineResponse => !!line);
+
+    if (latestSelectedLines.length !== selectedLineIds.length) {
+      toast.error(
+        'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại sản phẩm đã chọn trước khi thanh toán.',
+      );
+      setSelectedIds(new Set(latestSelectedLines.map((line) => line.cartLineId)));
+      return;
+    }
+
+    const hasInvalidStock = latestSelectedLines.some((line) => {
+      if (typeof line.availableStock !== 'number') return false;
+      return line.availableStock < 1 || line.quantity > line.availableStock;
+    });
+
+    if (hasInvalidStock) {
       toast.error(
         'Có sản phẩm đã hết hoặc thiếu tồn kho trong danh sách đã chọn. Vui lòng cập nhật giỏ hàng.',
       );
@@ -1103,6 +1130,39 @@ export default function CartPage() {
       return;
     }
 
+    const selectedLineIds = Array.from(selectedIds);
+    if (selectedLineIds.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
+      return;
+    }
+
+    const latestCartResult = await refetchCart();
+    const latestLines = latestCartResult.data?.cartLines ?? [];
+    const latestLineById = new Map(latestLines.map((line) => [line.cartLineId, line]));
+    const latestSelectedLines = selectedLineIds
+      .map((lineId) => latestLineById.get(lineId))
+      .filter((line): line is CartLineResponse => !!line);
+
+    if (latestSelectedLines.length !== selectedLineIds.length) {
+      toast.error(
+        'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại sản phẩm đã chọn trước khi thanh toán.',
+      );
+      setSelectedIds(new Set(latestSelectedLines.map((line) => line.cartLineId)));
+      return;
+    }
+
+    const hasInvalidStock = latestSelectedLines.some((line) => {
+      if (typeof line.availableStock !== 'number') return false;
+      return line.availableStock < 1 || line.quantity > line.availableStock;
+    });
+
+    if (hasInvalidStock) {
+      toast.error(
+        'Có sản phẩm đã hết hoặc thiếu tồn kho trong danh sách đã chọn. Vui lòng cập nhật giỏ hàng.',
+      );
+      return;
+    }
+
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const expectedDeliveryDate = tomorrow.toISOString().slice(0, 10);
@@ -1132,7 +1192,7 @@ export default function CartPage() {
         userAddressId,
         expectedDeliveryDate,
         voucherCode: voucherCode || undefined,
-        orderLines: selectedLines.map((l) => ({
+        orderLines: latestSelectedLines.map((l) => ({
           productId: l.productId,
           quantity: l.quantity,
           rentalDurationDays: l.rentalDurationDays,
@@ -1148,9 +1208,9 @@ export default function CartPage() {
         result.rentalOrderId,
       );
 
-      // Xóa các dòng đã chọn khỏi cart (gọi từng dòng)
-      await Promise.all(
-        selectedLines.map((l) => removeMutation.mutateAsync(l.cartLineId)),
+      // Xóa các dòng đã chọn khỏi cart (best-effort, không chặn redirect thanh toán)
+      await Promise.allSettled(
+        latestSelectedLines.map((l) => removeMutation.mutateAsync(l.cartLineId)),
       );
 
       // Redirect Vnpay

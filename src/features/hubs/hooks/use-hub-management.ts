@@ -22,8 +22,15 @@ import {
   getHubStaff,
   getHubProducts,
   getHubInventoryItems,
+  assignProductsToHub,
+  unassignProductsFromHub,
 } from '../api/hub.service';
-import type { HubListParams, CreateHubInput, UpdateHubInput } from '../types';
+import type {
+  HubListParams,
+  CreateHubInput,
+  UpdateHubInput,
+  AssignProductsToHubInput,
+} from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -145,7 +152,7 @@ export function useHubProductsQuery(
   params?: { page?: number; size?: number; filter?: string; sort?: string },
 ) {
   return useQuery({
-    queryKey: hubKeys.products(hubId ?? ''),
+    queryKey: hubKeys.products(hubId ?? '', params as Record<string, unknown> | undefined),
     queryFn: () => getHubProducts(hubId!, params),
     enabled: !!hubId,
     staleTime: 30_000,
@@ -164,10 +171,44 @@ export function useHubInventoryItemsQuery(
   params?: { page?: number; size?: number; filter?: string; sort?: string },
 ) {
   return useQuery({
-    queryKey: hubKeys.inventory(hubId ?? ''),
+    queryKey: hubKeys.inventory(hubId ?? '', params as Record<string, unknown> | undefined),
     queryFn: () => getHubInventoryItems(hubId!, params),
     enabled: !!hubId,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useAssignProductsToHubMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      hubId,
+      payload,
+    }: {
+      hubId: string;
+      payload: AssignProductsToHubInput;
+    }) => assignProductsToHub(hubId, payload),
+    onSuccess: (_data, { hubId }) => {
+      queryClient.invalidateQueries({ queryKey: hubKeys.products(hubId) });
+      queryClient.invalidateQueries({ queryKey: hubKeys.inventory(hubId) });
+    },
+  });
+}
+
+export function useUnassignProductsFromHubMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      hubId,
+      payload,
+    }: {
+      hubId: string;
+      payload: AssignProductsToHubInput;
+    }) => unassignProductsFromHub(hubId, payload),
+    onSuccess: (_data, { hubId }) => {
+      queryClient.invalidateQueries({ queryKey: hubKeys.products(hubId) });
+      queryClient.invalidateQueries({ queryKey: hubKeys.inventory(hubId) });
+    },
   });
 }

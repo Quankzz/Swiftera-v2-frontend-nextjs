@@ -108,6 +108,10 @@ export interface HubStaffResponse {
   hubName: string;
 }
 
+export interface AssignProductsToHubInput {
+  productIds: string[];
+}
+
 /**
  * UpdateHubInput - payload cho API-043 PATCH /hubs/{hubId}
  * Tất cả field đều optional (partial update).

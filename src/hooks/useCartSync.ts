@@ -57,7 +57,7 @@ export function useCartSync() {
 
       if (synced > 0) {
         useRentalCartStore.getState().clearCart();
-        await queryClient.invalidateQueries({ queryKey: cartKeys.cart() });
+        await queryClient.invalidateQueries({ queryKey: cartKeys.all });
       }
 
       isSyncingRef.current = false;

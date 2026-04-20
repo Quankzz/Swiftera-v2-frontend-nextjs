@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
   CheckCircle2,
@@ -17,6 +18,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useExtendOrder } from '@/hooks/api/use-rental-orders';
+import { cartKeys } from '@/hooks/api/cart.keys';
+import { CART_CACHE_KEY } from '@/hooks/api/use-cart';
 import {
   clearExtensionPaymentIntent,
   readExtensionPaymentIntent,
@@ -134,6 +137,7 @@ function CopyButton({ value }: { value: string }) {
 
 function PaymentResultContent() {
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const success = searchParams.get('success') === 'true';
   const txnRef = searchParams.get('txnRef') ?? '';
   const rentalOrderId = searchParams.get('rentalOrderId') ?? '';
@@ -147,6 +151,17 @@ function PaymentResultContent() {
 
   const countdown = useCountdown(6, success && !shouldPauseRedirect);
   const [showConfetti, setShowConfetti] = useState(success);
+
+  useEffect(() => {
+    if (!success) return;
+
+    void queryClient.invalidateQueries({ queryKey: cartKeys.all });
+    queryClient.removeQueries({ queryKey: cartKeys.all });
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(CART_CACHE_KEY);
+    }
+  }, [queryClient, success]);
 
   useEffect(() => {
     if (!success || extensionFinalizedRef.current) return;

@@ -21,8 +21,10 @@ export const hubKeys = {
   staff: (hubId: string) => [...hubKeys.staffLists(), hubId] as const,
 
   /** Key cho products theo hub */
-  products: (hubId: string) => [...hubKeys.all, 'products', hubId] as const,
+  products: (hubId: string, params?: Record<string, unknown>) =>
+    [...hubKeys.all, 'products', hubId, params ?? {}] as const,
 
   /** Key cho inventory items theo hub */
-  inventory: (hubId: string) => [...hubKeys.all, 'inventory', hubId] as const,
+  inventory: (hubId: string, params?: Record<string, unknown>) =>
+    [...hubKeys.all, 'inventory', hubId, params ?? {}] as const,
 } as const;
