@@ -41,7 +41,12 @@ function isEmbeddableVideoUrl(url: string): boolean {
   try {
     const u = new URL(url);
     const host = u.hostname.toLowerCase();
-    if (host.includes('youtube.com') || host.includes('youtube-nocookie.com') || host.includes('youtu.be')) return true;
+    if (
+      host.includes('youtube.com') ||
+      host.includes('youtube-nocookie.com') ||
+      host.includes('youtu.be')
+    )
+      return true;
     if (host.includes('vimeo.com')) return true;
     return false;
   } catch {
@@ -296,7 +301,10 @@ function GalleryLightbox({
               }`}
             >
               <img
-                src={images[0] || 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'}
+                src={
+                  images[0] ||
+                  'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'
+                }
                 alt='Video'
                 className='size-full object-cover'
               />
@@ -328,8 +336,7 @@ export function RentalProductGallery({
   const touchStartY = useRef<number | null>(null);
 
   const prev = () => setCurrentImage(Math.max(0, currentImage - 1));
-  const next = () =>
-    setCurrentImage(Math.min(maxIndex, currentImage + 1));
+  const next = () => setCurrentImage(Math.min(maxIndex, currentImage + 1));
 
   // Keyboard nav khi hover vào gallery
   useEffect(() => {
@@ -570,7 +577,10 @@ export function RentalProductGallery({
                 }`}
               >
                 <img
-                  src={images[0] || 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'}
+                  src={
+                    images[0] ||
+                    'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'
+                  }
                   alt='Video thumbnail'
                   draggable={false}
                   className='size-full object-cover'
@@ -725,7 +735,6 @@ interface RentalProductSummaryProps {
 
 export function RentalProductSummary({
   productData,
-  minRentalDays = 1,
   selectedColorId,
   onColorChange,
   selectedVariant,
@@ -946,42 +955,6 @@ export function RentalProductSummary({
             </button>
           ))}
         </div>
-        {/* Custom duration input + slider */}
-        <div className='mt-3'>
-          <label className='mb-2 block text-sm font-medium text-foreground'>Tuỳ chọn khác</label>
-          <div className='flex items-center gap-3'>
-            <input
-              type='number'
-              min={minRentalDays}
-              value={
-                isNaN(Number(selectedDuration))
-                  ? minRentalDays
-                  : Number(selectedDuration)
-              }
-              onChange={(e) => {
-                let v = parseInt(e.target.value, 10) || minRentalDays;
-                if (v < minRentalDays) v = minRentalDays;
-                onDurationChange(String(v));
-              }}
-              className='h-10 w-24 rounded-lg border px-3 text-sm'
-            />
-            <input
-              type='range'
-              min={minRentalDays}
-              max={365}
-              value={isNaN(Number(selectedDuration)) ? minRentalDays : Number(selectedDuration)}
-              onChange={(e) => {
-                let v = parseInt(e.target.value, 10) || minRentalDays;
-                if (v < minRentalDays) v = minRentalDays;
-                onDurationChange(String(v));
-              }}
-              className='flex-1'
-            />
-            <div className='ml-2 text-sm text-muted-foreground'>
-              tối đa 365 ngày
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -1184,7 +1157,9 @@ export function RentalCheckoutCard({
             type='button'
             variant='ghost'
             className='size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11'
-            onClick={() => setQuantity(Math.max(1, Math.min(maxQuantity, quantity - 1)))}
+            onClick={() =>
+              setQuantity(Math.max(1, Math.min(maxQuantity, quantity - 1)))
+            }
             aria-label='Giảm số lượng'
           >
             <Minus className='size-6' />
@@ -1194,7 +1169,12 @@ export function RentalCheckoutCard({
             min={1}
             value={quantity}
             onChange={(e) =>
-              setQuantity(Math.max(1, Math.min(maxQuantity, parseInt(e.target.value, 10) || 1)))
+              setQuantity(
+                Math.max(
+                  1,
+                  Math.min(maxQuantity, parseInt(e.target.value, 10) || 1),
+                ),
+              )
             }
             className='h-full w-12 border-0 bg-transparent text-center text-lg font-bold tabular-nums text-foreground outline-none sm:w-14 sm:text-xl'
           />

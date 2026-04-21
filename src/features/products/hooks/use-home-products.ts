@@ -33,7 +33,7 @@ import type { Product } from '@/types/catalog';
  * `productImages` ← `images`  (field rename)
  * `colors`        ← []        (BE has only a single color name, no hex - skipped)
  */
-function toLocalProduct(p: ProductResponse): Product {
+export function toLocalProduct(p: ProductResponse): Product {
   return {
     productId: p.productId,
     categoryId: p.categoryId,
@@ -52,8 +52,12 @@ function toLocalProduct(p: ProductResponse): Product {
       sortOrder: img.sortOrder,
       isPrimary: img.isPrimary,
     })),
-    // BE sends a single color string (no hex) → we can't render swatches
-    colors: [],
+    // BE gửi colors[] với productColorId, name, code (hex) → map sang ProductColor local
+    colors: (p.colors ?? []).map((c) => ({
+      colorId: c.productColorId,
+      name: c.name,
+      value: c.code ?? '',
+    })),
   };
 }
 

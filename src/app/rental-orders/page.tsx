@@ -90,10 +90,11 @@ function OrderContractAction({
   rentalOrderId: string;
   enabled: boolean;
 }) {
-  const { data: contract, isLoading, isError } = useRentalContractByOrderQuery(
-    rentalOrderId,
-    { enabled },
-  );
+  const {
+    data: contract,
+    isLoading,
+    isError,
+  } = useRentalContractByOrderQuery(rentalOrderId, { enabled });
 
   if (!enabled) {
     return (
@@ -632,14 +633,14 @@ export default function RentalOrdersPage() {
                       {/* Right side */}
                       {isPending ? (
                         /* ── Nút thanh toán cho PENDING_PAYMENT ── */
-                        <div className='grid shrink-0 grid-cols-[2.25rem_auto] items-center gap-1.5'>
-                          <div className='flex justify-center'>
+                        <div className='flex shrink-0 items-center gap-1.5'>
+                          <div className='flex w-9 justify-center'>
                             <OrderContractAction
                               rentalOrderId={order.rentalOrderId}
                               enabled={false}
                             />
                           </div>
-                          <div className='flex justify-end'>
+                          <div className='flex w-28 justify-end'>
                             <button
                               type='button'
                               disabled={!!payingId}
@@ -647,7 +648,7 @@ export default function RentalOrdersPage() {
                                 void handlePay(e, order.rentalOrderId)
                               }
                               className={cn(
-                                'flex min-w-28 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
+                                'flex w-full shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
                                 isPaying
                                   ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
                                   : payingId
@@ -675,8 +676,8 @@ export default function RentalOrdersPage() {
                         </div>
                       ) : (
                         /* ── Amount + chevron cho status khác ── */
-                        <div className='grid shrink-0 grid-cols-[2.25rem_auto] items-center gap-1.5'>
-                          <div className='flex justify-center'>
+                        <div className='flex shrink-0 items-center gap-1.5'>
+                          <div className='flex w-9 justify-center'>
                             <OrderContractAction
                               rentalOrderId={order.rentalOrderId}
                               enabled
@@ -684,7 +685,7 @@ export default function RentalOrdersPage() {
                           </div>
                           <Link
                             href={`/rental-orders/${order.rentalOrderId}`}
-                            className='flex min-w-0 items-center justify-end gap-2'
+                            className='flex w-28 items-center justify-end gap-2'
                           >
                             <span className='text-right text-sm font-semibold tabular-nums text-foreground'>
                               {fmt.format(order.totalPayableAmount)}

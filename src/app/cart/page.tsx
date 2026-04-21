@@ -39,13 +39,17 @@ import { Magnetic } from '@/components/ui/magnetic';
 import { SpotlightCard } from '@/components/common/spotlight-card';
 import { ShinyText } from '@/components/common/shiny-text';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCartQuery,
+import {
+  useCartQuery,
   useRemoveCartLine,
   useUpdateCartLineQuantity,
   useClearCart,
 } from '@/hooks/api/use-cart';
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
-import { useInitiatePayment } from '@/hooks/api/use-payments';
+import {
+  useInitiatePayment,
+  useInitiateBatchPayment,
+} from '@/hooks/api/use-payments';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
 import { toast } from 'sonner';
 import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
@@ -368,7 +372,7 @@ function CartLineRow({
               </Button>
             </div>
 
-              {/* Quantity + Price + Voucher */}
+            {/* Quantity + Price + Voucher */}
             <div className='flex flex-col gap-3 border-t border-border/60 pt-3'>
               {isOutOfStock ? (
                 <div className='flex items-center gap-1.5 rounded-lg border border-red-300/70 bg-red-50/70 px-3 py-2 text-xs text-red-800 dark:border-red-700/50 dark:bg-red-950/30 dark:text-red-200'>
@@ -379,7 +383,8 @@ function CartLineRow({
               ) : isOverStock ? (
                 <div className='flex items-center gap-1.5 rounded-lg border border-amber-300/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200'>
                   <AlertCircle className='size-3.5 shrink-0' />
-                  Số lượng vượt quá tồn kho ({maxQty} sản phẩm). Đang điều chỉnh…
+                  Số lượng vượt quá tồn kho ({maxQty} sản phẩm). Đang điều
+                  chỉnh…
                 </div>
               ) : null}
 
@@ -391,7 +396,9 @@ function CartLineRow({
                     size='sm'
                     className='size-9 rounded-lg p-0'
                     disabled={qty <= 1 || isMutating || isOutOfStock}
-                    onClick={() => onUpdateQty(line.cartLineId, Math.max(1, qty - 1))}
+                    onClick={() =>
+                      onUpdateQty(line.cartLineId, Math.max(1, qty - 1))
+                    }
                   >
                     <Minus className='size-4' />
                   </Button>
@@ -406,7 +413,9 @@ function CartLineRow({
                     size='sm'
                     className='size-9 rounded-lg p-0'
                     disabled={isOutOfStock || qty >= maxQty || isMutating}
-                    onClick={() => onUpdateQty(line.cartLineId, Math.min(maxQty, qty + 1))}
+                    onClick={() =>
+                      onUpdateQty(line.cartLineId, Math.min(maxQty, qty + 1))
+                    }
                   >
                     <Plus className='size-4' />
                   </Button>
@@ -732,6 +741,7 @@ export default function CartPage() {
   const clearMutation = useClearCart();
   const createOrder = useCreateRentalOrder();
   const initiatePayment = useInitiatePayment();
+  const initiatePaymentBatch = useInitiateBatchPayment();
 
   // Chọn sản phẩm
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -866,13 +876,18 @@ export default function CartPage() {
   // Policy consent dialog
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
 
-  const lines = useMemo<CartLineResponse[]>(() => cart?.cartLines ?? [], [cart]);
+  const lines = useMemo<CartLineResponse[]>(
+    () => cart?.cartLines ?? [],
+    [cart],
+  );
   const selectableLineIds = useMemo(
     () =>
       lines
         .filter((line) => {
           if (typeof line.availableStock !== 'number') return true;
-          return line.availableStock > 0 && line.quantity <= line.availableStock;
+          return (
+            line.availableStock > 0 && line.quantity <= line.availableStock
+          );
         })
         .map((line) => line.cartLineId),
     [lines],
@@ -1027,7 +1042,10 @@ export default function CartPage() {
     updateQtyMutation.mutate({ cartLineId, quantity: clampedQty });
   };
 
-  const handleUpdateDuration = (cartLineId: string, rentalDurationDays: number) => {
+  const handleUpdateDuration = (
+    cartLineId: string,
+    rentalDurationDays: number,
+  ) => {
     if (rentalDurationDays < 1) return;
     updateQtyMutation.mutate({ cartLineId, rentalDurationDays });
   };
@@ -1072,7 +1090,9 @@ export default function CartPage() {
 
     const latestCartResult = await refetchCart();
     const latestLines = latestCartResult.data?.cartLines ?? [];
-    const latestLineById = new Map(latestLines.map((line) => [line.cartLineId, line]));
+    const latestLineById = new Map(
+      latestLines.map((line) => [line.cartLineId, line]),
+    );
     const latestSelectedLines = selectedLineIds
       .map((lineId) => latestLineById.get(lineId))
       .filter((line): line is CartLineResponse => !!line);
@@ -1081,7 +1101,9 @@ export default function CartPage() {
       toast.error(
         'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại sản phẩm đã chọn trước khi thanh toán.',
       );
-      setSelectedIds(new Set(latestSelectedLines.map((line) => line.cartLineId)));
+      setSelectedIds(
+        new Set(latestSelectedLines.map((line) => line.cartLineId)),
+      );
       return;
     }
 
@@ -1138,7 +1160,9 @@ export default function CartPage() {
 
     const latestCartResult = await refetchCart();
     const latestLines = latestCartResult.data?.cartLines ?? [];
-    const latestLineById = new Map(latestLines.map((line) => [line.cartLineId, line]));
+    const latestLineById = new Map(
+      latestLines.map((line) => [line.cartLineId, line]),
+    );
     const latestSelectedLines = selectedLineIds
       .map((lineId) => latestLineById.get(lineId))
       .filter((line): line is CartLineResponse => !!line);
@@ -1147,7 +1171,9 @@ export default function CartPage() {
       toast.error(
         'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại sản phẩm đã chọn trước khi thanh toán.',
       );
-      setSelectedIds(new Set(latestSelectedLines.map((line) => line.cartLineId)));
+      setSelectedIds(
+        new Set(latestSelectedLines.map((line) => line.cartLineId)),
+      );
       return;
     }
 
@@ -1188,29 +1214,46 @@ export default function CartPage() {
         setSelectedUserAddressId(addr.userAddressId);
       }
 
-      const result = await createOrder.mutateAsync({
-        userAddressId,
-        expectedDeliveryDate,
-        voucherCode: voucherCode || undefined,
-        orderLines: latestSelectedLines.map((l) => ({
-          productId: l.productId,
-          quantity: l.quantity,
-          rentalDurationDays: l.rentalDurationDays,
-          ...(l.productColorId ? { productColorId: l.productColorId } : {}),
-          ...(lineVouchers.get(l.cartLineId)
-            ? { voucherCode: lineVouchers.get(l.cartLineId) }
-            : {}),
-        })),
-      });
+      // BE yêu cầu tất cả sản phẩm trong 1 đơn phải cùng 1 kho (hub).
+      // Để tránh lỗi INVENTORY_INSUFFICIENT_STOCK khi các sản phẩm thuộc kho khác nhau,
+      // ta gửi từng cart line thành 1 đơn riêng, sau đó thanh toán đơn đầu tiên.
+      const createdOrders: { rentalOrderId: string }[] = [];
 
-      // Lấy payment URL
-      const paymentUrl = await initiatePayment.mutateAsync(
-        result.rentalOrderId,
-      );
+      for (const l of latestSelectedLines) {
+        const order = await createOrder.mutateAsync({
+          userAddressId,
+          expectedDeliveryDate,
+          orderLines: [
+            {
+              productId: l.productId,
+              quantity: l.quantity,
+              rentalDurationDays: l.rentalDurationDays,
+              ...(l.productColorId ? { productColorId: l.productColorId } : {}),
+              ...(lineVouchers.get(l.cartLineId)
+                ? { voucherCode: lineVouchers.get(l.cartLineId) }
+                : voucherCode
+                  ? { voucherCode }
+                  : {}),
+            },
+          ],
+        });
+        createdOrders.push({ rentalOrderId: order.rentalOrderId });
+      }
+
+      if (createdOrders.length === 0) {
+        toast.error('Không tạo được đơn thuê.');
+        return;
+      }
+
+      // Tạo 1 URL thanh toán VNPay cho tất cả đơn cùng lúc
+      const allOrderIds = createdOrders.map((o) => o.rentalOrderId);
+      const paymentUrl = await initiatePaymentBatch.mutateAsync(allOrderIds);
 
       // Xóa các dòng đã chọn khỏi cart (best-effort, không chặn redirect thanh toán)
       await Promise.allSettled(
-        latestSelectedLines.map((l) => removeMutation.mutateAsync(l.cartLineId)),
+        latestSelectedLines.map((l) =>
+          removeMutation.mutateAsync(l.cartLineId),
+        ),
       );
 
       // Redirect Vnpay
@@ -1386,18 +1429,18 @@ export default function CartPage() {
                           )}
                         >
                           {allSelectableSelected && (
-                              <svg
-                                viewBox='0 0 24 24'
-                                className='size-2.5 text-white'
-                                fill='none'
-                                stroke='currentColor'
-                                strokeWidth='3.5'
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                              >
-                                <polyline points='20 6 9 17 4 12' />
-                              </svg>
-                            )}
+                            <svg
+                              viewBox='0 0 24 24'
+                              className='size-2.5 text-white'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='3.5'
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                            >
+                              <polyline points='20 6 9 17 4 12' />
+                            </svg>
+                          )}
                         </span>
                         {allSelectableSelected
                           ? 'Bỏ chọn tất cả'
@@ -1788,6 +1831,7 @@ export default function CartPage() {
                             hasOutOfStockSelected ||
                             createOrder.isPending ||
                             initiatePayment.isPending ||
+                            initiatePaymentBatch.isPending ||
                             createAddressMutation.isPending ||
                             (isAuthenticated && savedAddressesLoading)
                           }
@@ -1799,7 +1843,8 @@ export default function CartPage() {
                               Đang lưu địa chỉ…
                             </span>
                           ) : createOrder.isPending ||
-                            initiatePayment.isPending ? (
+                            initiatePayment.isPending ||
+                            initiatePaymentBatch.isPending ? (
                             <span className='flex items-center gap-2'>
                               <span className='size-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
                               Đang xử lý…

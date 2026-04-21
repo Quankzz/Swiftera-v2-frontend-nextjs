@@ -10,6 +10,7 @@ import {
   getPaymentsList,
   getPaymentsByRentalOrder,
   initiatePayment,
+  initiatePaymentBatch,
   type InitiatePaymentInput,
 } from './payment.service';
 
@@ -92,6 +93,27 @@ export function useInitiatePayment(options?: {
       options?.onSuccess?.(paymentUrl);
     },
 
+    onError: (error: Error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Tạo link thanh toán VNPay cho nhiều đơn cùng lúc [AUTH]
+ * Trả về 1 URL duy nhất, thanh toán xong → BE mark tất cả đơn là PAID
+ */
+export function useInitiateBatchPayment(options?: {
+  onSuccess?: (paymentUrl: string) => void;
+  onError?: (error: Error) => void;
+}) {
+  return useMutation({
+    mutationFn: async (orderIds: string[]) => {
+      return initiatePaymentBatch(orderIds);
+    },
+    onSuccess: (paymentUrl) => {
+      options?.onSuccess?.(paymentUrl);
+    },
     onError: (error: Error) => {
       options?.onError?.(error);
     },

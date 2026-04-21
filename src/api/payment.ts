@@ -209,7 +209,7 @@ export const paymentApi = {
   /**
    * API-089: Tạo link thanh toán VNPay [AUTH]
    *
-  * @param rentalOrderId - UUID của đơn thuê (phải ở trạng thái cho phép thanh toán)
+   * @param rentalOrderId - UUID của đơn thuê (phải ở trạng thái cho phép thanh toán)
    * @param additionalRentalDays - số ngày gia hạn tạm tính để thanh toán trước gia hạn
    *
    * Logic backend: amount = totalPayableAmount - totalPaidAmount
@@ -230,6 +230,23 @@ export const paymentApi = {
             ? { additionalRentalDays }
             : undefined,
       },
+    );
+  },
+
+  /**
+   * API: POST /payments/initiate-batch
+   * Tạo một link VNPay duy nhất cho nhiều đơn thuê cùng lúc.
+   * Khi thanh toán thành công, tất cả các đơn đều được chuyển sang PAID.
+   *
+   * @param orderIds - danh sách rentalOrderId cần thanh toán gộp
+   */
+  initiateBatch(
+    orderIds: string[],
+  ): Promise<AxiosResponse<PaymentInitiateResponse>> {
+    return httpService.post<PaymentInitiateResponse>(
+      '/payments/initiate-batch',
+      { orderIds },
+      authOpts,
     );
   },
 
