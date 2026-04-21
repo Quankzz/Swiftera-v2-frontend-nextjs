@@ -156,7 +156,7 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
     if (statusFilter === 'verified') parts.push(`isVerified:true`);
     if (statusFilter === 'unverified') parts.push(`isVerified:false`);
 
-    // Role filter — Spring DSL on roles.name (nested)
+    // Role filter - Spring DSL on roles.name (nested)
     if (roleFilter) {
       parts.push(`roles.name:'${roleFilter}'`);
     }
@@ -239,7 +239,7 @@ export function UsersTable({ onEdit, onDelete }: UsersTableProps) {
               </span>
             );
 
-          // Priority order — highest first
+          // Priority order - highest first
           const PRIORITY: Record<string, number> = {
             admin: 0,
             'quản trị': 0,

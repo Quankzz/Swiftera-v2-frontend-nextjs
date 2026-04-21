@@ -1,5 +1,5 @@
 /**
- * Reviews API — Module 15: REVIEWS (API-095 → API-099)
+ * Reviews API - Module 15: REVIEWS (API-095 → API-099)
  *
  * Base URL: /api/v1
  * Tất cả endpoints yêu cầu xác thực [AUTH]
@@ -121,18 +121,18 @@ export function getReviews(params?: {
 }
 
 /**
- * API-098: Lấy đánh giá theo sản phẩm [AUTH]
+ * API-098: Lấy đánh giá theo sản phẩm [PUBLIC]
  *
  * @param productId - UUID của sản phẩm
  * @param params - page, size
  */
 export function getReviewsByProduct(
   productId: string,
-  params?: { page?: number; size?: number },
+  params?: { page?: number; size?: number; rating?: number },
 ): Promise<AxiosResponse<PaginatedReviewsResponse>> {
   return httpService.get<PaginatedReviewsResponse>(
     `/reviews/product/${productId}`,
-    { ...authOpts, params },
+    { params },
   );
 }
 

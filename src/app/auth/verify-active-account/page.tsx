@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { AuthActionCard } from '@/components/auth/AuthActionCard';
@@ -68,21 +67,13 @@ function VerifyActiveAccountContent() {
         )}
 
         {status === 'success' && (
-          <div className='space-y-4 py-2'>
-            <div className='flex justify-center'>
-              <div className='rounded-full bg-emerald-100 p-3 dark:bg-emerald-500/20'>
-                <CheckCircle2 className='size-10 text-emerald-600 dark:text-emerald-400' />
-              </div>
+          <div className='flex flex-col items-center gap-3 py-4'>
+            <div className='rounded-full bg-emerald-100 p-3 dark:bg-emerald-500/20'>
+              <CheckCircle2 className='size-10 text-emerald-600 dark:text-emerald-400' />
             </div>
             <p className='text-sm text-zinc-700 dark:text-zinc-300'>
               {message}
             </p>
-            <Link
-              href='/auth/login'
-              className='inline-flex h-auto w-full items-center justify-center rounded-lg bg-[#fe1451] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#ba264d]'
-            >
-              Đăng nhập ngay
-            </Link>
           </div>
         )}
 
@@ -94,16 +85,6 @@ function VerifyActiveAccountContent() {
               </div>
             </div>
             <p className='text-sm text-red-600 dark:text-red-400'>{message}</p>
-            <p className='text-xs text-zinc-500 dark:text-zinc-400'>
-              Liên kết có thể đã hết hạn. Bạn có thể yêu cầu gửi lại email xác
-              thực.
-            </p>
-            <Link
-              href='/auth/resend-verification'
-              className='inline-flex w-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800'
-            >
-              Gửi lại email xác thực
-            </Link>
           </div>
         )}
       </div>

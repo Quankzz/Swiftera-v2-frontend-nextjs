@@ -1,7 +1,7 @@
 /**
  * Hooks cho inventory items module (dashboard):
- *  - useInventoryItemsQuery       — paginated list filtered by productId
- *  - useInventoryItemQuery        — single item by ID
+ *  - useInventoryItemsQuery       - paginated list filtered by productId
+ *  - useInventoryItemQuery        - single item by ID
  *  - useCreateInventoryItemMutation
  *  - useUpdateInventoryItemMutation
  *  - useDeleteInventoryItemMutation

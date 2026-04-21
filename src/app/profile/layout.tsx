@@ -19,7 +19,7 @@ export default function ProfileLayout({
         <div className='absolute -bottom-8 left-20 w-72 h-72 bg-pink-300/20 dark:bg-theme-primary-start/6 rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-xl animate-pulse [animation-delay:4s]' />
       </div>
 
-      {/* Content — pt-24 clears fixed header */}
+      {/* Content - pt-24 clears fixed header */}
       <div className='relative z-10 flex-1 pt-24 pb-12 px-4 md:px-6 lg:px-8'>
         <div className='max-w-4xl mx-auto'>{children}</div>
       </div>

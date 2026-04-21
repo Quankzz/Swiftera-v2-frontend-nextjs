@@ -18,6 +18,7 @@ export interface ProductImage {
   imageUrl: string;
   sortOrder: number;
   isPrimary: boolean;
+  videoUrl?: string | null;
 }
 
 export interface ProductColor {
@@ -27,7 +28,7 @@ export interface ProductColor {
 }
 
 // ─── Inventory Item (bảng inventory_items) ────────────────────────
-// Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 9: INVENTORY ITEMS
+// Source: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 9: INVENTORY ITEMS
 export type InventoryItemStatus =
   | 'AVAILABLE'
   | 'RESERVED'

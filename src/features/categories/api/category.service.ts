@@ -1,6 +1,6 @@
 /**
- * Category service — all API calls for the categories module.
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * Category service - all API calls for the categories module.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *   Module 7: CATEGORIES (API-045 → API-050)

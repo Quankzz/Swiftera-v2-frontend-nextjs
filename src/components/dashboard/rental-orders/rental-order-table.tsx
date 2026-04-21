@@ -69,7 +69,7 @@ function formatCurrency(v: number) {
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -291,7 +291,7 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
     null,
   );
 
-  // Debounce 400ms — chờ user ngừng gõ mới gọi API
+  // Debounce 400ms - chờ user ngừng gõ mới gọi API
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -300,7 +300,7 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Build SpringFilter DSL — dùng ~~ cho LIKE/contains
+  // Build SpringFilter DSL - dùng ~~ cho LIKE/contains
   const filter = useMemo(() => {
     const parts: string[] = [];
     if (statusFilter) parts.push(`status:'${statusFilter}'`);
@@ -371,10 +371,10 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">
-                  {name || '—'}
+                  {name || '-'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {userAddress?.phoneNumber ?? '—'}
+                  {userAddress?.phoneNumber ?? '-'}
                 </p>
               </div>
             </div>
@@ -392,12 +392,12 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
               <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
               <div className="min-w-0">
                 <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-1">
-                  {addr?.addressLine || '—'}
+                  {addr?.addressLine || '-'}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                   {[addr?.district, addr?.city]
                     .filter(Boolean)
-                    .join(', ') || '—'}
+                    .join(', ') || '-'}
                 </p>
               </div>
             </div>

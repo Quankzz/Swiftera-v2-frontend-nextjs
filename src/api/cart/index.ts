@@ -1,5 +1,5 @@
 /**
- * Cart API — /api/v1/cart
+ * Cart API - /api/v1/cart
  *
  * Module 10 trong tài liệu API: CART (5 endpoints)
  * Base URL: /api/v1
@@ -51,6 +51,8 @@ export interface CartLineResponse {
   /** dailyPrice × quantity × rentalDurationDays */
   lineTotal: number;
   availableVouchers: CartLineVoucherItem[];
+  /** Số lượng tồn kho AVAILABLE hiện tại (FE dùng để giới hạn quantity) */
+  availableStock?: number;
 }
 
 export interface CartResponse {

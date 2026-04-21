@@ -82,7 +82,7 @@ export function ProductsToolbar({
           )}
         </div>
 
-        {/* Category filter — tree dialog */}
+        {/* Category filter - tree dialog */}
         <CategoryTreeSelect
           value={categoryFilter}
           onChange={onCategoryFilterChange}

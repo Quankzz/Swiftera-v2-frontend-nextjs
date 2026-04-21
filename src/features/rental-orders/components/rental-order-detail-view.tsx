@@ -3,7 +3,7 @@
 /**
  * RentalOrderDetailView
  * ─────────────────────────────────────────────────────────────────────────────
- * Trang chi tiết đơn thuê — hiển thị mọi thông tin đơn hàng trên một trang
+ * Trang chi tiết đơn thuê - hiển thị mọi thông tin đơn hàng trên một trang
  * riêng biệt, trực quan, dễ đọc hơn so với dialog.
  *
  * Route: /dashboard/rental-orders/[rentalOrderId]
@@ -55,7 +55,7 @@ import type { HubStaffResponse } from '@/features/hubs/types';
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatCurrency(v: number | null | undefined) {
-  if (v == null) return '—';
+  if (v == null) return '-';
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
@@ -64,7 +64,7 @@ function formatCurrency(v: number | null | undefined) {
 }
 
 /**
- * Parse ngày giờ linh hoạt — hỗ trợ:
+ * Parse ngày giờ linh hoạt - hỗ trợ:
  *  - ISO 8601: "2026-03-24T10:30:00Z"
  *  - BE custom: "2026-03-24 10:30:00 AM"
  *  - Date-only: "2026-03-24"
@@ -105,7 +105,7 @@ function parseDate(raw: string | null | undefined): Date | null {
 
 function formatDate(raw: string | null | undefined): string {
   const d = parseDate(raw);
-  if (!d) return '—';
+  if (!d) return '-';
   return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -115,7 +115,7 @@ function formatDate(raw: string | null | undefined): string {
 
 function formatDateTime(raw: string | null | undefined): string {
   const d = parseDate(raw);
-  if (!d) return '—';
+  if (!d) return '-';
   return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -172,7 +172,7 @@ function InfoRow({
           mono && 'font-mono',
         )}
       >
-        {value || '—'}
+        {value || '-'}
       </span>
     </div>
   );
@@ -221,7 +221,7 @@ function StatusBadge({ status }: { status: RentalOrderStatus }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Staff Assignment Section (interactive — inline on detail page)
+// Staff Assignment Section (interactive - inline on detail page)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PICKUP_ONLY_STATUSES = new Set([
@@ -290,7 +290,7 @@ function StaffSlotButton({
             </p>
           ) : (
             <p className='text-sm text-text-sub italic'>
-              Chưa chọn — bấm để chọn
+              Chưa chọn - bấm để chọn
             </p>
           )}
         </div>
@@ -358,7 +358,7 @@ function StaffAssignmentSection({ order }: { order: RentalOrderResponse }) {
               <span className='font-semibold'>
                 {STATUS_LABELS[order.status]}
               </span>{' '}
-              — không thể phân công nhân viên.
+              - không thể phân công nhân viên.
             </p>
           </div>
         ) : (
@@ -504,7 +504,7 @@ export function RentalOrderDetailView({
               <span className='font-mono font-semibold text-theme-primary-start'>
                 #{order.rentalOrderId.slice(0, 8).toUpperCase()}
               </span>
-              {' — '}
+              {' - '}
               {addr?.recipientName ?? 'N/A'} · Đặt ngày{' '}
               {formatDate(order.placedAt)}
             </p>
@@ -519,14 +519,14 @@ export function RentalOrderDetailView({
           {/* Order info */}
           <SectionCard title='Thông tin đơn hàng' icon={Package}>
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0'>
-              <InfoRow label='Người nhận' value={addr?.recipientName ?? '—'} />
-              <InfoRow label='SĐT' value={addr?.phoneNumber ?? '—'} />
+              <InfoRow label='Người nhận' value={addr?.recipientName ?? '-'} />
+              <InfoRow label='SĐT' value={addr?.phoneNumber ?? '-'} />
               <InfoRow
                 label='Địa chỉ giao'
                 value={
                   [addr?.addressLine, addr?.ward, addr?.district, addr?.city]
                     .filter(Boolean)
-                    .join(', ') || '—'
+                    .join(', ') || '-'
                 }
               />
               <InfoRow
@@ -644,63 +644,63 @@ export function RentalOrderDetailView({
             <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
               <StatCard
                 label='Tiền thuê'
-                value={formatCurrency(order.rentalSubtotalAmount) ?? '—'}
+                value={formatCurrency(order.rentalSubtotalAmount) ?? '-'}
               />
               <StatCard
                 label='Phí dịch vụ'
-                value={formatCurrency(order.rentalFeeAmount) ?? '—'}
+                value={formatCurrency(order.rentalFeeAmount) ?? '-'}
               />
               <StatCard
                 label='Giảm giá'
                 value={
                   order.voucherDiscountAmount
                     ? `- ${formatCurrency(order.voucherDiscountAmount)}`
-                    : '—'
+                    : '-'
                 }
               />
               <StatCard
                 label='Tiền đặt cọc'
-                value={formatCurrency(order.depositHoldAmount) ?? '—'}
+                value={formatCurrency(order.depositHoldAmount) ?? '-'}
               />
               <StatCard
                 label='Đã thanh toán'
-                value={formatCurrency(order.totalPaidAmount) ?? '—'}
+                value={formatCurrency(order.totalPaidAmount) ?? '-'}
               />
               <StatCard
                 label='Tổng thanh toán'
-                value={formatCurrency(order.totalPayableAmount) ?? '—'}
+                value={formatCurrency(order.totalPayableAmount) ?? '-'}
                 accent
               />
               {order.damagePenaltyAmount != null && (
                 <StatCard
                   label='Phí hư hại'
-                  value={formatCurrency(order.damagePenaltyAmount) ?? '—'}
+                  value={formatCurrency(order.damagePenaltyAmount) ?? '-'}
                 />
               )}
               {order.overduePenaltyAmount != null && (
                 <StatCard
                   label='Phí trễ hạn'
-                  value={formatCurrency(order.overduePenaltyAmount) ?? '—'}
+                  value={formatCurrency(order.overduePenaltyAmount) ?? '-'}
                 />
               )}
               {order.provisionalOverduePenaltyAmount != null && (
                 <StatCard
                   label='Phí trễ hạn (tạm)'
                   value={
-                    formatCurrency(order.provisionalOverduePenaltyAmount) ?? '—'
+                    formatCurrency(order.provisionalOverduePenaltyAmount) ?? '-'
                   }
                 />
               )}
               {order.penaltyChargeAmount != null && (
                 <StatCard
                   label='Tổng phí phạt'
-                  value={formatCurrency(order.penaltyChargeAmount) ?? '—'}
+                  value={formatCurrency(order.penaltyChargeAmount) ?? '-'}
                 />
               )}
               {order.depositRefundAmount != null && (
                 <StatCard
                   label='Hoàn cọc'
-                  value={formatCurrency(order.depositRefundAmount) ?? '—'}
+                  value={formatCurrency(order.depositRefundAmount) ?? '-'}
                 />
               )}
             </div>
@@ -733,7 +733,7 @@ export function RentalOrderDetailView({
                         order.hubCity,
                       ]
                         .filter(Boolean)
-                        .join(', ') || '—'
+                        .join(', ') || '-'
                     }
                   />
                 )}
@@ -786,7 +786,7 @@ export function RentalOrderDetailView({
                     className='w-48 h-48 rounded-xl border border-gray-100 dark:border-white/10 bg-white p-2'
                   />
                 ) : (
-                  // Short text — probably just a code string
+                  // Short text - probably just a code string
                   <div className='px-4 py-3 rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 w-full'>
                     <p className='text-xs font-mono text-text-sub break-all text-center'>
                       {order.qrCode}

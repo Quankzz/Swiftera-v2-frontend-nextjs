@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * FeedbackForm — Gửi yêu cầu hỗ trợ (contact ticket)
+ * FeedbackForm - Gửi yêu cầu hỗ trợ (contact ticket)
  *
  * Features:
  * - Tự động điền họ tên / email từ useAuth() nếu đã đăng nhập
@@ -70,17 +70,17 @@ const vndFmt = new Intl.NumberFormat('vi-VN', {
 });
 
 function formatShortDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   try {
     const d = new Date(dateStr.replace(' ', 'T'));
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return '-';
     return d.toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
     });
   } catch {
-    return '—';
+    return '-';
   }
 }
 

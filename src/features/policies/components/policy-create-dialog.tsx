@@ -6,9 +6,9 @@
  * Dialog tạo tài liệu chính sách mới.
  *
  * Flow:
- *  Bước 1 — Điền thông tin (code, version, title, ngày hiệu lực).
- *  Bước 2 — Upload PDF → preview bằng react-pageflip.
- *  Bước 3 — Xác nhận submit → gọi API-106 POST /policies.
+ *  Bước 1 - Điền thông tin (code, version, title, ngày hiệu lực).
+ *  Bước 2 - Upload PDF → preview bằng react-pageflip.
+ *  Bước 3 - Xác nhận submit → gọi API-106 POST /policies.
  *
  * Upload PDF:
  *  1. Người dùng chọn file PDF.
@@ -34,6 +34,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { storageApi } from '@/api/storageApi';
+import { parseErrorForForm } from '@/api/apiService';
 import { useCreatePolicyMutation } from '../hooks/use-policy-management';
 import { PolicyPdfPreview } from './policy-pdf-preview';
 
@@ -200,9 +201,8 @@ export function PolicyCreateDialog({
       setUploadedUrl(url);
       toast.success('Upload PDF thành công!');
     } catch (err) {
-      setUploadError(
-        err instanceof Error ? err.message : 'Upload thất bại. Thử lại.',
-      );
+      const { formMessage } = parseErrorForForm(err, 'Upload thất bại. Thử lại.');
+      setUploadError(formMessage ?? 'Upload thất bại. Thử lại.');
       setSelectedFile(null);
     } finally {
       setIsUploading(false);
@@ -229,9 +229,22 @@ export function PolicyCreateDialog({
       toast.success('Tạo chính sách thành công!');
       handleClose();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Tạo chính sách thất bại.',
+      const { fieldErrors, formMessage } = parseErrorForForm(
+        err,
+        'Tạo chính sách thất bại.',
       );
+
+      setErrors((prev) => ({
+        ...prev,
+        code: fieldErrors.code,
+        policyVersion: fieldErrors.policyVersion,
+        title: fieldErrors.title,
+        effectiveFrom: fieldErrors.effectiveFrom,
+      }));
+
+      if (formMessage) {
+        toast.error(formMessage);
+      }
     }
   };
 
@@ -480,7 +493,7 @@ export function PolicyCreateDialog({
                           month: '2-digit',
                           year: 'numeric',
                         })
-                      : '—',
+                      : '-',
                   },
                   {
                     label: 'File PDF',

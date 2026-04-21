@@ -11,29 +11,32 @@ interface CategoryCardProps {
 export function CategoryCard({ category, className }: CategoryCardProps) {
   return (
     <Link
-      href={`/catalog?category=${category.categoryId}`}
+      href={`/catalog?categoryId=${category.categoryId}`}
       className={cn(
-        'group relative flex h-full flex-col overflow-hidden rounded-md border border-border/40 dark:border-white/6 bg-gray-50 dark:bg-white/4 p-4 transition-all duration-300 hover:border-theme-primary-start/30 hover:shadow-md dark:hover:bg-white/8',
+        'group flex flex-col items-center gap-2 p-2 transition-all duration-300 hover:scale-105',
         className,
       )}
     >
-      <div className='relative h-36 w-full overflow-hidden'>
+      <div className='relative size-20 shrink-0 overflow-hidden rounded-full border-2 border-transparent bg-gray-50 dark:bg-white/4 shadow-sm transition-all duration-300 group-hover:border-theme-primary-start/50 group-hover:shadow-md'>
         {category.imageUrl ? (
           <Image
             src={category.imageUrl}
             alt={category.name}
             fill
-            sizes='(min-width: 1024px) 200px, 50vw'
-            className='object-contain transition-transform duration-400 group-hover:scale-105'
+            sizes='80px'
+            className='object-cover'
           />
         ) : (
-          <p className='font-semibold text-text-main'>{category.name}</p>
+          <div className='flex size-full items-center justify-center'>
+            <span className='text-xl font-bold text-theme-primary-start'>
+              {category.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
         )}
       </div>
-
-      <div className='flex items-center justify-center px-2 py-2'>
-        <p className='font-semibold text-text-main'>{category.name}</p>
-      </div>
+      <p className='max-w-[80px] text-center text-xs font-semibold leading-tight text-text-main transition-colors group-hover:text-theme-primary-start'>
+        {category.name}
+      </p>
     </Link>
   );
 }

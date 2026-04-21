@@ -1,5 +1,5 @@
 /**
- * Hub query key factory — TanStack Query
+ * Hub query key factory - TanStack Query
  * Module 6: HUBS (API-040 → API-044)
  */
 
@@ -19,4 +19,12 @@ export const hubKeys = {
   /** Key cho danh sách nhân viên theo hub (API-043 staff) */
   staffLists: () => [...hubKeys.all, 'staff'] as const,
   staff: (hubId: string) => [...hubKeys.staffLists(), hubId] as const,
+
+  /** Key cho products theo hub */
+  products: (hubId: string, params?: Record<string, unknown>) =>
+    [...hubKeys.all, 'products', hubId, params ?? {}] as const,
+
+  /** Key cho inventory items theo hub */
+  inventory: (hubId: string, params?: Record<string, unknown>) =>
+    [...hubKeys.all, 'inventory', hubId, params ?? {}] as const,
 } as const;

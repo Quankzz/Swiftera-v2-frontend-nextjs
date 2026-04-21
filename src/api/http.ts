@@ -7,6 +7,7 @@ import axios from 'axios';
 
 import { authApi } from './authApi';
 import { storageService } from '../services/storage';
+import { toAppError } from '@/lib/error-handler';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
@@ -111,7 +112,6 @@ class Http {
                   if (newAccessToken) {
                     console.log('✅ Token refresh successful');
                     storageService.setAccessToken(newAccessToken);
-                    // Sync to localStorage so fetch-based apiService also picks it up
                     if (typeof window !== 'undefined') {
                       localStorage.setItem('accessToken', newAccessToken);
                     }
@@ -123,21 +123,41 @@ class Http {
                   );
                 })
                 .catch((refreshError: unknown) => {
-                  console.error('❌ Token refresh failed:', refreshError);
+                  const normalizedRefreshError = toAppError(
+                    refreshError,
+                    'Token refresh failed',
+                  );
+                  const isExpectedAuthFailure =
+                    normalizedRefreshError.errorCode === 'UNAUTHORIZED' ||
+                    normalizedRefreshError.errorCode === 'FORBIDDEN' ||
+                    normalizedRefreshError.errorCode === 'NOT_FOUND' ||
+                    normalizedRefreshError.message.includes('Không tìm thấy');
+
+                  if (!isExpectedAuthFailure) {
+                    console.error(
+                      '❌ Token refresh failed:',
+                      normalizedRefreshError.message,
+                    );
+                  }
                   storageService.removeAccessToken();
                   if (logoutCallback) {
                     logoutCallback();
                   }
-                  return Promise.reject(refreshError);
-                })
-                .finally(() => {
-                  refreshTokenPromise = null;
+                  return Promise.reject(normalizedRefreshError);
                 });
+
+              // After the promise settles, clear the shared slot so subsequent
+              // 401 responses can start a fresh refresh cycle.
+              refreshTokenPromise.finally(() => {
+                refreshTokenPromise = null;
+              });
             }
 
             const tokenRefresh = refreshTokenPromise;
             if (!tokenRefresh) {
-              return Promise.reject(error.response?.data ?? error);
+              return Promise.reject(
+                toAppError(error.response?.data ?? error, 'Request failed'),
+              );
             }
 
             return tokenRefresh.then((accessToken) => {
@@ -149,7 +169,9 @@ class Http {
           }
         }
 
-        return Promise.reject(error.response?.data ?? error);
+        return Promise.reject(
+          toAppError(error.response?.data ?? error, 'Request failed'),
+        );
       },
     );
   }

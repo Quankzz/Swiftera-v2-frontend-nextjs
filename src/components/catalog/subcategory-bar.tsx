@@ -14,12 +14,12 @@ interface SubcategoryBarProps {
 
 /**
  * Horizontal chip bar showing the direct children of the active root category.
- * Styled as pill chips — compact, fast, scannable.
+ * Styled as pill chips - compact, fast, scannable.
  *
  * Supports:
  *  - Click to filter (toggles subcategoryId in URL)
  *  - Mouse drag to scroll horizontally (desktop)
- *  - Touch scroll (mobile — native overflow-x: auto)
+ *  - Touch scroll (mobile - native overflow-x: auto)
  */
 export function SubcategoryBar({
   subcategories,
@@ -82,7 +82,7 @@ export function SubcategoryBar({
           '[&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-white/10',
         )}
       >
-        {/* "Tất cả" chip — deselects subcategory */}
+        {/* "Tất cả" chip - deselects subcategory */}
         <button
           type='button'
           onClick={() => {

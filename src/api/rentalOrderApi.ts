@@ -1,5 +1,5 @@
 /**
- * Rental Orders API — Module 12: RENTAL ORDERS (API-074 → API-086A)
+ * Rental Orders API - Module 12: RENTAL ORDERS (API-074 → API-086A)
  *
  * Base URL: /api/v1
  * Tất cả endpoints đều yêu cầu xác thực [AUTH]
@@ -41,24 +41,24 @@ export const RENTAL_ORDER_STATUS_LABELS: Record<RentalOrderStatus, string> = {
 
 export const RENTAL_ORDER_STATUS_COLORS: Record<RentalOrderStatus, string> = {
   PENDING_PAYMENT:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  PAID: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+    'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-200 dark:border-amber-800',
+  PAID: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border border-blue-200 dark:border-blue-800',
   PREPARING:
-    'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
+    'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 border border-purple-200 dark:border-purple-800',
   DELIVERING:
-    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
-  DELIVERED: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
+    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800',
+  DELIVERED: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200 border border-teal-200 dark:border-teal-800',
   IN_USE:
-    'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
+    'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 border border-green-200 dark:border-green-800',
   PENDING_PICKUP:
-    'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
+    'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 border border-orange-200 dark:border-orange-800',
   PICKING_UP:
-    'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+    'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-200 border border-rose-200 dark:border-rose-800',
   PICKED_UP:
-    'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300',
+    'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200 border border-violet-200 dark:border-violet-800',
   COMPLETED:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  CANCELLED: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800',
+  CANCELLED: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
 };
 
 // ─── Response Types ─────────────────────────────────────────────────────────
@@ -110,6 +110,17 @@ export interface RentalOrderResponse {
   deliveryCity: string;
   deliveryLatitude: number | null;
   deliveryLongitude: number | null;
+  /** Nested address object from backend (available when backend is deployed with new mapping) */
+  userAddress?: {
+    recipientName: string | null;
+    phoneNumber: string | null;
+    addressLine: string | null;
+    ward: string | null;
+    district: string | null;
+    city: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  } | null;
   expectedDeliveryDate: string;
   expectedRentalEndDate: string;
   plannedDeliveryAt: string | null;
@@ -132,7 +143,7 @@ export interface RentalOrderResponse {
   penaltyChargeAmount: number | null;
   depositRefundAmount: number | null;
   totalPaidAmount: number;
-  /** URL ảnh QR (PNG) — backend tự sinh khi đơn vừa PAID và chưa có QR */
+  /** URL ảnh QR (PNG) - backend tự sinh khi đơn vừa PAID và chưa có QR */
   qrCode?: string | null;
   /** Phạt hỏng / mất thiết bị (đã chốt hoặc đang lưu) */
   damagePenaltyAmount?: number | null;
@@ -199,7 +210,7 @@ export interface CreateOrderLineInput {
   voucherCode?: string;
 }
 
-/** API-074 POST — địa chỉ lấy từ sổ user (`userAddressId`) */
+/** API-074 POST - địa chỉ lấy từ sổ user (`userAddressId`) */
 export interface CreateRentalOrderInput {
   userAddressId: string;
   expectedDeliveryDate: string; // YYYY-MM-DD

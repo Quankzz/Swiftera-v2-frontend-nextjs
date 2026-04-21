@@ -1,13 +1,13 @@
 'use client';
 
 /**
- * HubPickerDialog — modal chọn hub với search / filter / sort.
+ * HubPickerDialog - modal chọn hub với search / filter / sort.
  *
  * Props:
- *   selectedHubId  — hub đang chọn (để highlight)
- *   onSelect       — callback({ hubId, hubName }) khi người dùng chọn
- *   onClose        — đóng dialog
- *   open           — hiển thị/ẩn
+ *   selectedHubId  - hub đang chọn (để highlight)
+ *   onSelect       - callback({ hubId, hubName }) khi người dùng chọn
+ *   onClose        - đóng dialog
+ *   open           - hiển thị/ẩn
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -137,7 +137,7 @@ export function HubPickerDialog({
   const [sort, setSort] = useState<SortOption>('name_asc');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Reset state when dialog opens — use a key on the outer component instead.
+  // Reset state when dialog opens - use a key on the outer component instead.
   // Since parent passes key={open ? 1 : 0} or mounts/unmounts, state resets.
   // Here: reset via separate inner component rendered only when open=true.
 
@@ -150,7 +150,7 @@ export function HubPickerDialog({
     return () => document.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  // Fetch all hubs (large page — danh sách hub không quá nhiều)
+  // Fetch all hubs (large page - danh sách hub không quá nhiều)
   const { data, isLoading, isError } = useHubsQuery({ page: 1, size: 200 });
   const allHubs = useMemo(() => data?.content ?? [], [data]);
 

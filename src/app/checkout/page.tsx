@@ -34,6 +34,7 @@ import {
 } from '@/lib/rental-voucher';
 import type { VoucherResponse } from '@/features/vouchers/types';
 import { useAuth } from '@/context/AuthContext';
+import { buildLoginHref } from '@/lib/auth-redirect';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -50,15 +51,14 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // User đã đăng nhập → giỏ hàng thật là /cart (dùng API), không dùng checkout Zustand
-    if (isAuthenticated) {
-      router.replace('/cart');
+    if (!isAuthenticated) {
+      router.replace(buildLoginHref('/cart'));
       return;
     }
-    if (lines.length === 0) {
-      router.replace('/cart');
-    }
-  }, [isAuthenticated, lines.length, router]);
+
+    // User đã đăng nhập → giỏ hàng thật là /cart (dùng API), không dùng checkout Zustand
+    router.replace('/cart');
+  }, [isAuthenticated, router]);
 
   const totals = useMemo(() => computeCartTotals(lines), [lines]);
 
@@ -74,6 +74,14 @@ export default function CheckoutPage() {
     clearCart();
     router.push(`/rental-orders/${id}`);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className='flex min-h-screen items-center justify-center font-sans text-muted-foreground'>
+        Đang chuyển đến trang đăng nhập...
+      </div>
+    );
+  }
 
   if (lines.length === 0) {
     return (
@@ -105,7 +113,7 @@ export default function CheckoutPage() {
           Thanh toán đơn thuê
         </h1>
         <p className='mt-1 text-sm text-muted-foreground'>
-          Áp voucher từng dòng nếu cần — xác nhận thông tin và phương thức thanh
+          Áp voucher từng dòng nếu cần - xác nhận thông tin và phương thức thanh
           toán.
         </p>
 
@@ -249,7 +257,7 @@ export default function CheckoutPage() {
                       Chuyển khoản ngân hàng
                     </div>
                     <p className='mt-1 text-xs text-muted-foreground'>
-                      QR / số tài khoản Swiftera (demo — không thu tiền thật).
+                      QR / số tài khoản Swiftera (demo - không thu tiền thật).
                     </p>
                   </div>
                 </label>

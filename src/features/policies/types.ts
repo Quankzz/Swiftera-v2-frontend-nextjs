@@ -1,6 +1,6 @@
 /**
  * Policies module types
- * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 17: POLICIES
+ * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 17: POLICIES
  */
 
 import type { PaginationResponse } from '@/types/api.types';
@@ -54,7 +54,7 @@ export interface CreatePolicyInput {
   effectiveFrom: string; // ISO 8601 e.g. "2026-04-01T00:00:00Z"
 }
 
-/** API-109A: PATCH /policies/{policyId} — tất cả field tùy chọn */
+/** API-109A: PATCH /policies/{policyId} - tất cả field tùy chọn */
 export interface UpdatePolicyInput {
   title?: string;
   pdfUrl?: string | null;

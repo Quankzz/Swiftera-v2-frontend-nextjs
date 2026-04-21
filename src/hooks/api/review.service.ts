@@ -1,5 +1,5 @@
 /**
- * Review API service — dùng cho TanStack Query hooks
+ * Review API service - dùng cho TanStack Query hooks
  * Module 15: REVIEWS (API-095 → API-099)
  */
 
@@ -38,11 +38,20 @@ function normalize(
 
 export async function getReviewsByProduct(
   productId: string,
-  params?: { page?: number; size?: number },
+  params?: { page?: number; size?: number; rating?: number },
 ): Promise<NormalizedPaginatedReviews> {
+  // API /reviews/product/{productId} chỉ hỗ trợ page/size.
+  // Rating filter cần xử lý ở phía FE để tránh sai lệch dữ liệu.
+  const queryParams: Record<string, string | number> = {};
+  if (typeof params?.page === 'number') {
+    queryParams.page = params.page;
+  }
+  if (typeof params?.size === 'number') {
+    queryParams.size = params.size;
+  }
   const res = await httpService.get<ReviewListResponse>(
     `/reviews/product/${productId}`,
-    { ...authOpts, params },
+    { params: queryParams },
   );
   return normalize(res);
 }
@@ -101,4 +110,15 @@ export async function deleteReview(reviewId: string): Promise<void> {
     `/reviews/${reviewId}`,
     authOpts,
   );
+}
+
+export async function markHelpful(
+  reviewId: string,
+): Promise<ProductReviewResponse> {
+  const res = await httpService.post<ReviewSingleResponse>(
+    `/reviews/${reviewId}/helpful`,
+    {},
+    authOpts,
+  );
+  return res.data.data;
 }

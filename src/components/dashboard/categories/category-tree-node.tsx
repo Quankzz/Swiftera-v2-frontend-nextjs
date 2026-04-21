@@ -116,7 +116,7 @@ export function CategoryTreeNode({
         )}
         style={{ paddingLeft: depth === 0 ? '10px' : '8px' }}
       >
-        {/* Drag handle — suppressHydrationWarning because dnd-kit injects
+        {/* Drag handle - suppressHydrationWarning because dnd-kit injects
             aria-describedby="DndDescribedBy-{n}" with a counter that differs
             between SSR (0) and the first client render (incremented). */}
         <button
@@ -197,7 +197,7 @@ export function CategoryTreeNode({
         </div>
       </div>
 
-      {/* Children — each level has its OWN SortableContext so DnD stays within siblings */}
+      {/* Children - each level has its OWN SortableContext so DnD stays within siblings */}
       {showChildren && hasChildren && (
         <div className='ml-5 mt-1 flex flex-col gap-1 border-l-2 border-dashed border-gray-200 dark:border-white/10 pl-3'>
           <SortableContext

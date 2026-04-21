@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import type { OrderStatus } from '@/types/dashboard.types';
+import type { OrderStatus } from '@/types/api.types';
+
+export type { OrderStatus };
 
 interface StaffOrderCountsState {
-  /** Count of orders per status — empty until the orders page loads data. */
+  /** Count of orders per status - empty until the first API call. */
   counts: Partial<Record<OrderStatus, number>>;
-  /** Whether a load has ever completed (used to distinguish "loading" from "empty"). */
+  /** Whether a load has ever completed. */
   isLoaded: boolean;
 
   /** Replace the entire counts map after a fresh data load. */
@@ -51,7 +53,7 @@ export function selectCount(
   return counts[status] ?? 0;
 }
 
-/** Sum of PAID + PENDING_PICKUP — actions that require immediate staff attention. */
+/** Sum of PAID + PENDING_PICKUP - actions that require immediate staff attention. */
 export function selectUrgentTotal(
   counts: Partial<Record<OrderStatus, number>>,
 ): number {

@@ -164,7 +164,7 @@ async function main() {
 
   // Footer bar
   page.drawRectangle({ x: 0, y: 0, width: W, height: 30, color: TEAL });
-  page.drawText('Tài liệu được tạo tự động bởi hệ thống Swiftera — swiftera.vn', {
+  page.drawText('Tài liệu được tạo tự động bởi hệ thống Swiftera - swiftera.vn', {
     x: M, y: 10, size: 7, font: regular, color: rgb(0.8, 0.96, 0.96),
   });
 

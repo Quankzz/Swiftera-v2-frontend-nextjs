@@ -1,9 +1,9 @@
 /**
- * Voucher module types — source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
+ * Voucher module types - source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  * Module 11: VOUCHERS (API-067 → API-073)
  *
  * Tất cả field dùng camelCase theo JSON từ BE spec.
- * Không đoán field — chỉ dùng field có trong spec.
+ * Không đoán field - chỉ dùng field có trong spec.
  */
 
 import type { PaginationResponse } from '@/types/api.types';
@@ -12,10 +12,10 @@ import type { PaginationResponse } from '@/types/api.types';
 // Enums / Union Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Loại voucher — ITEM_VOUCHER (giảm trên order/item) | PRODUCT_DISCOUNT (gắn với product cụ thể) */
+/** Loại voucher - ITEM_VOUCHER (giảm trên order/item) | PRODUCT_DISCOUNT (gắn với product cụ thể) */
 export type VoucherType = 'ITEM_VOUCHER' | 'PRODUCT_DISCOUNT';
 
-/** Loại giảm giá — BE spec: PERCENTAGE | FIXED */
+/** Loại giảm giá - BE spec: PERCENTAGE | FIXED */
 export type DiscountType = 'PERCENTAGE' | 'FIXED';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ export type DiscountType = 'PERCENTAGE' | 'FIXED';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * VoucherResponse — trả về cho mọi endpoint voucher.
+ * VoucherResponse - trả về cho mọi endpoint voucher.
  * Field map đúng từ BE spec (API-067 response example).
  *
  * NOTE:
@@ -64,7 +64,7 @@ export type PaginatedVouchersResponse = PaginationResponse<VoucherResponse>;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * CreateVoucherInput — payload cho API-067 POST /vouchers
+ * CreateVoucherInput - payload cho API-067 POST /vouchers
  *
  * Required: code, type, discountType, discountValue
  * Optional: maxDiscountAmount, minRentalDays, expiresAt, usageLimit
@@ -81,7 +81,7 @@ export interface CreateVoucherInput {
 }
 
 /**
- * UpdateVoucherInput — payload cho API-072 PATCH /vouchers/{voucherId}
+ * UpdateVoucherInput - payload cho API-072 PATCH /vouchers/{voucherId}
  * Tất cả field đều optional (partial update).
  *
  * NOTE:
@@ -104,7 +104,7 @@ export interface UpdateVoucherInput {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * VoucherListParams — query params cho GET /vouchers (API-071)
+ * VoucherListParams - query params cho GET /vouchers (API-071)
  * BE hỗ trợ pagination + SpringFilter DSL
  */
 export interface VoucherListParams {

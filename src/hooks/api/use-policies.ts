@@ -1,5 +1,5 @@
 /**
- * Policies hooks — TanStack Query
+ * Policies hooks - TanStack Query
  * Module 17: POLICIES (API-105 → API-111)
  */
 
@@ -119,7 +119,7 @@ export function useMyConsentsQuery(enabled = true) {
 /**
  * API-110: Ghi nhận đồng ý chính sách [AUTH]
  *
- * Idempotent — gọi nhiều lần với cùng params không tạo bản ghi mới.
+ * Idempotent - gọi nhiều lần với cùng params không tạo bản ghi mới.
  * Sau khi gọi thành công sẽ invalidate my-consents query.
  */
 export function useRecordConsentMutation() {

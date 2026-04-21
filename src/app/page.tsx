@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <Layout>
       <div className='bg-white dark:bg-surface-base pb-20'>
-        {/* Hero — full viewport, self-fetches categories */}
+        {/* Hero - full viewport, self-fetches categories */}
         <HeroBanner />
 
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
@@ -34,7 +34,7 @@ export default function Home() {
           <HomeFeaturedProducts />
         </div>
 
-        {/* Quy trình 3 bước — full-bleed */}
+        {/* Quy trình 3 bước - full-bleed */}
         <HomeStepsProcess />
 
         <div className='mx-auto max-w-full px-4 lg:px-18'>

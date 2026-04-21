@@ -19,7 +19,7 @@ interface CatalogHeaderProps {
   /** Tên danh mục hoặc từ khoá tìm kiếm */
   title: string;
   /**
-   * Breadcrumb items — each has a label and optional href.
+   * Breadcrumb items - each has a label and optional href.
    * Items without href are rendered as plain text (current page).
    */
   breadcrumbs?: { label: string; href?: string }[];

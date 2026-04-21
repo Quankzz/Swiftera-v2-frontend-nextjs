@@ -1,5 +1,5 @@
 /**
- * Hubs API — GET /api/v1/hubs
+ * Hubs API - GET /api/v1/hubs
  *
  * Public endpoint: no auth required for reading the hub list.
  * Falls back to mock data when USE_MOCK=true.

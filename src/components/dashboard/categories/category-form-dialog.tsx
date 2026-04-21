@@ -8,9 +8,11 @@ import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from '@/features/categories/hooks/use-category-management';
+import { parseErrorForForm } from '@/api/apiService';
 import { useUploadFileMutation } from '@/features/files/hooks/use-files';
 import type { CategoryResponse } from '@/features/categories/types';
 import { CategoryTreeSelect } from './category-tree-select';
+import { toast } from 'sonner';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -148,9 +150,22 @@ export function CategoryFormDialog({
       }
       onClose();
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại';
-      setServerError(msg);
+      const { fieldErrors, formMessage } = parseErrorForForm(
+        err,
+        'Có lỗi xảy ra, vui lòng thử lại',
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        name: fieldErrors.name,
+        sortOrder: fieldErrors.sortOrder,
+        imageUrl: fieldErrors.imageUrl,
+      }));
+
+      if (formMessage) {
+        setServerError(formMessage);
+        toast.error(formMessage);
+      }
     }
   }
 
@@ -310,7 +325,7 @@ export function CategoryFormDialog({
                 onChange={(id) => setForm((f) => ({ ...f, parentId: id }))}
                 excludeId={target?.categoryId}
                 allowRoot
-                rootLabel='— Danh mục gốc —'
+                rootLabel='- Danh mục gốc -'
                 disabled={isPending}
               />
             </div>
@@ -337,7 +352,7 @@ export function CategoryFormDialog({
             </div>
           </div>
 
-          {/* isActive — edit mode only */}
+          {/* isActive - edit mode only */}
           {isEdit && (
             <div className='flex items-center justify-between rounded-lg border border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3 px-4 py-3'>
               <div>

@@ -158,7 +158,7 @@ export function CategoriesPage() {
     const newIdx = siblings.findIndex((n) => n.categoryId === overId);
     if (oldIdx === -1 || newIdx === -1 || oldIdx === newIdx) return;
 
-    // BE tự tính lại sortOrder các item còn lại — chỉ gửi sortOrder mới của item được kéo
+    // BE tự tính lại sortOrder các item còn lại - chỉ gửi sortOrder mới của item được kéo
     const newSortOrder = newIdx + 1;
     updateMutation.mutate({
       categoryId: draggedId,
@@ -300,7 +300,7 @@ export function CategoriesPage() {
         của node đó.
       </p>
 
-      {/* Dialogs — use key prop so form state fully resets on each open */}
+      {/* Dialogs - use key prop so form state fully resets on each open */}
       {dialog.type === 'create' && (
         <CategoryFormDialog
           key={`create-${dialog.defaultParentId ?? 'root'}`}

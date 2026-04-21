@@ -164,7 +164,7 @@ export function LocationPickerModal({
           .addTo(map);
         markerRef.current = marker;
 
-        // Drag end — DOM event vì GoongMarker type không có .on()
+        // Drag end - DOM event vì GoongMarker type không có .on()
         const onDragEnd = () => {
           const lngLat = marker.getLngLat();
           void updatePickedLocation(lngLat.lat, lngLat.lng);
@@ -287,7 +287,7 @@ export function LocationPickerModal({
       />
 
       {/*
-        Panel — fixed px height (không dùng min() vì GoongMap cần clientHeight
+        Panel - fixed px height (không dùng min() vì GoongMap cần clientHeight
         xác định ngay khi mount, min() làm browser tính lazy)
       */}
       <div

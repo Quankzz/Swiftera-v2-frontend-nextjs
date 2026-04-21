@@ -1,5 +1,5 @@
 /**
- * Rental Order API service — dùng cho TanStack Query hooks
+ * Rental Order API service - dùng cho TanStack Query hooks
  * Module 12: RENTAL ORDERS (API-074 → API-085)
  */
 
@@ -83,11 +83,32 @@ export async function updateRentalOrderStatus(
 }
 
 export async function cancelRentalOrder(rentalOrderId: string): Promise<void> {
-  await httpService.post<RentalOrderVoidResponse>(
-    `/rental-orders/${rentalOrderId}/cancel`,
-    undefined,
-    authOpts,
-  );
+  try {
+    await httpService.post<RentalOrderVoidResponse>(
+      `/rental-orders/${rentalOrderId}/cancel`,
+      undefined,
+      authOpts,
+    );
+  } catch (err: unknown) {
+    // Backend trả lỗi chi tiết theo trạng thái trong errors[].message
+    const axiosErr = err as {
+      response?: {
+        data?: {
+          success?: boolean;
+          errors?: Array<{ code?: number; message?: string }>;
+          message?: string;
+        };
+      };
+    };
+    const errorData = axiosErr?.response?.data;
+    if (errorData?.errors?.[0]?.message) {
+      throw new Error(errorData.errors[0].message);
+    }
+    if (errorData?.message) {
+      throw new Error(errorData.message);
+    }
+    throw err;
+  }
 }
 
 export async function extendRentalOrder(

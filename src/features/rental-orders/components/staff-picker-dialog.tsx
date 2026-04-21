@@ -3,14 +3,14 @@
 /**
  * StaffPickerDialog
  * ─────────────────────────────────────────────────────────────────────────────
- * Dialog chọn nhân viên — dùng trong RentalOrderAssignDialog.
- * Không tự gọi mutation — chỉ trả về StaffOption đã chọn qua onSelected.
+ * Dialog chọn nhân viên - dùng trong RentalOrderAssignDialog.
+ * Không tự gọi mutation - chỉ trả về StaffOption đã chọn qua onSelected.
  *
  * Props:
- *  role      — 'delivery' | 'pickup'  (ảnh hưởng màu sắc + tiêu đề)
- *  isOpen    — hiển thị/ẩn
- *  onClose   — đóng picker mà không chọn
- *  onSelected(staff) — gọi khi user bấm "Chọn"
+ *  role      - 'delivery' | 'pickup'  (ảnh hưởng màu sắc + tiêu đề)
+ *  isOpen    - hiển thị/ẩn
+ *  onClose   - đóng picker mà không chọn
+ *  onSelected(staff) - gọi khi user bấm "Chọn"
  */
 
 import { useState, useMemo } from 'react';
@@ -102,7 +102,7 @@ export function StaffPickerDialog({
 
   const dialog = (
     <div className='fixed inset-0 z-9999 flex items-center justify-center'>
-      {/* Backdrop — portal ensures full viewport coverage */}
+      {/* Backdrop - portal ensures full viewport coverage */}
       <div
         className='absolute inset-0 bg-black/40 backdrop-blur-sm'
         onClick={onClose}

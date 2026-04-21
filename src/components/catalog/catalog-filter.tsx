@@ -248,7 +248,7 @@ export function CatalogFilter({
 
       {/* Filter body */}
       <div className='rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-4'>
-        {/* Danh mục — all root categories, active one is pre-checked */}
+        {/* Danh mục - all root categories, active one is pre-checked */}
         {categoryOptions.length > 0 && (
           <FilterSection title='Danh mục'>
             <div className='flex flex-col gap-3'>
@@ -288,7 +288,7 @@ export function CatalogFilter({
           </FilterSection>
         )}
 
-        {/* Brand filter — only shown when brands are available from API */}
+        {/* Brand filter - only shown when brands are available from API */}
         {brandOptions.length > 0 && (
           <FilterSection title='Thương hiệu'>
             <CheckList
@@ -315,7 +315,7 @@ export function CatalogFilter({
                   ₫
                 </span>
               </div>
-              <span className='shrink-0 text-sm text-text-sub'>—</span>
+              <span className='shrink-0 text-sm text-text-sub'>-</span>
               <div className='relative flex-1'>
                 <input
                   type='text'

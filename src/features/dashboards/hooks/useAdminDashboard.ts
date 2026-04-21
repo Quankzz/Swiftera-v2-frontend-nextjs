@@ -1,5 +1,5 @@
 /**
- * useAdminDashboard — TanStack Query hook cho API-113.
+ * useAdminDashboard - TanStack Query hook cho API-113.
  *
  * Cách dùng:
  *   const { data, isLoading, isError } = useAdminDashboard();           // toàn hệ thống

@@ -1,5 +1,5 @@
 /**
- * Policy query key factory — TanStack Query
+ * Policy query key factory - TanStack Query
  * Module 17: POLICIES
  */
 

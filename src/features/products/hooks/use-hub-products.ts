@@ -4,10 +4,10 @@
  * Lấy danh sách sản phẩm khả dụng (AVAILABLE) tại một hub cụ thể.
  *
  * Hai bước do giới hạn backend RSQL:
- *  Bước 1 — GET /inventory-items?filter=status:'AVAILABLE'&size=200
+ *  Bước 1 - GET /inventory-items?filter=status:'AVAILABLE'&size=200
  *            Backend KHÔNG hỗ trợ filter hubId qua RSQL (trả 500),
  *            nên fetch toàn hệ thống rồi filter client-side theo hubId.
- *  Bước 2 — GET /products?filter=productId:'id1' or productId:'id2'
+ *  Bước 2 - GET /products?filter=productId:'id1' or productId:'id2'
  *            Lấy đầy đủ chi tiết sản phẩm (ảnh, giá) cho các productId unique.
  *
  * Fallback: nếu /products lỗi, vẫn hiển thị tên từ inventory response.
@@ -75,7 +75,7 @@ export function useHubAvailableProducts(
   enabled = true,
 ) {
   return useQuery<HubAvailableProductsResult>({
-    queryKey: hubId ? hubProductKeys.byHub(hubId) : hubProductKeys.all,
+    queryKey: hubProductKeys.byHub(hubId ?? '__none__'),
     queryFn: () => fetchHubAvailableProducts(hubId!),
     enabled: !!hubId && enabled,
     staleTime: 60 * 1000,

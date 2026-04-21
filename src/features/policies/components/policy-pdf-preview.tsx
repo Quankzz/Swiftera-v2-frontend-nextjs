@@ -87,8 +87,8 @@ export function PolicyPdfPreview({
       // Dynamic import để tránh SSR issues
       const pdfjsLib = await import('pdfjs-dist');
 
-      // pdfjs-dist v5: worker src dùng .min.js (không phải .mjs)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+      // pdfjs-dist v5: worker src dùng CDN ổn định (unpkg có thể bị block CORS)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
       const loadingTask = pdfjsLib.getDocument(
         typeof src === 'string'
@@ -124,7 +124,7 @@ export function PolicyPdfPreview({
         msg.includes('ERR_NAME_NOT_RESOLVED');
       setError(
         isNetwork
-          ? 'Không thể tải file PDF — URL không hợp lệ hoặc không truy cập được.'
+          ? 'Không thể tải file PDF - URL không hợp lệ hoặc không truy cập được.'
           : `Không thể đọc file PDF: ${msg}`,
       );
     } finally {
@@ -259,7 +259,7 @@ export function PolicyPdfPreview({
           Trước
         </button>
 
-        {/* Page dots — tối đa 7 chấm */}
+        {/* Page dots - tối đa 7 chấm */}
         <div className='flex items-center gap-1'>
           {Array.from({ length: Math.min(totalPages, 7) }).map((_, i) => {
             const pageIdx =

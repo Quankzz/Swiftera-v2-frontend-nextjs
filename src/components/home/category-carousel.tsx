@@ -24,7 +24,6 @@ export function CategoryCarousel({ items }: CategoryCarouselProps) {
         className='w-full'
       >
         <div className='relative'>
-          {/* Prev / Next buttons — positioned top-right relative to heading row via -top-14 */}
           <div className='absolute -right-2 -top-14 hidden gap-2 lg:flex'>
             <CarouselPrevious className='static translate-y-0 size-12 rounded-full bg-white dark:bg-surface-card shadow border-border/20' />
             <CarouselNext className='static translate-y-0 size-12 rounded-full bg-white dark:bg-surface-card shadow border-border/20' />
@@ -34,7 +33,7 @@ export function CategoryCarousel({ items }: CategoryCarouselProps) {
             {parentCategories.map((category) => (
               <CarouselItem
                 key={category.categoryId}
-                className='pl-3 basis-48 md:basis-56 lg:basis-60'
+                className='pl-3 basis-auto'
               >
                 <CategoryCard category={category} />
               </CarouselItem>

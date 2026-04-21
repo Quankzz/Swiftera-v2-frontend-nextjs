@@ -57,7 +57,7 @@ export interface CreateUserAddressInput {
   isDefault?: boolean;
 }
 
-/** API-118 PATCH — tất cả field tùy chọn */
+/** API-118 PATCH - tất cả field tùy chọn */
 export type UpdateUserAddressInput = Partial<CreateUserAddressInput>;
 
 export function createUserAddress(

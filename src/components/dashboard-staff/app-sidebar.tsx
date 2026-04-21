@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { usePathname, useSearchParams } from 'next/navigation'; // Thêm useSearchParams
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -15,6 +15,7 @@ import {
   Truck,
   Package,
   RotateCcw,
+  XCircle,
   CheckCircle2,
 } from 'lucide-react';
 import {
@@ -47,7 +48,9 @@ import {
   selectCount,
   selectUrgentTotal,
   selectTotalOrders,
+  type OrderStatus,
 } from '@/stores/staff-order-counts-store';
+import { getStaffOrders } from '@/api/staff-orders';
 
 // ── Giao hàng: PAID → PREPARING → DELIVERING → DELIVERED ─────────────────────
 const DELIVERY_WORKFLOW_TABS = [
@@ -104,29 +107,32 @@ const PICKUP_WORKFLOW_TABS = [
     icon: RotateCcw,
   },
   {
-    title: 'Đã lấy hàng',
+    title: 'Đã thu hồi',
     url: '/staff-dashboard/orders?status=PICKED_UP',
     status: 'PICKED_UP',
     dotClass: 'bg-indigo-500',
     urgency: false,
     icon: Package,
   },
-  {
-    title: 'Hoàn thành',
-    url: '/staff-dashboard/orders?status=COMPLETED',
-    status: 'COMPLETED',
-    dotClass: 'bg-success',
-    urgency: false,
-    icon: CheckCircle2,
-  },
 ] as const;
+
+const CANCELLED_WORKFLOW_TABS = [
+  {
+    title: 'Đã hủy',
+    url: '/staff-dashboard/orders?status=CANCELLED',
+    status: 'CANCELLED',
+    dotClass: 'bg-muted-foreground/40',
+    urgency: false,
+    icon: XCircle,
+  },
+];
 
 const SECONDARY_ITEMS = [
   { title: 'Hỗ trợ', url: '#', icon: LifeBuoy },
   { title: 'Cài đặt', url: '#', icon: Settings },
 ];
 
-const DEFAULT_ORDERS_URL = '/staff-dashboard/orders?status=PAID,PENDING_PICKUP';
+const DEFAULT_ORDERS_URL = '/staff-dashboard/orders';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
@@ -134,7 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const searchParams = useSearchParams();
   const currentStatus = searchParams.get('status');
   const { user } = useAuthStore();
-  const { counts } = useStaffOrderCounts();
+  const { counts, setCounts } = useStaffOrderCounts();
   const staffName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ')
     : '';
@@ -142,27 +148,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const staffAvatar =
     user?.avatarUrl ??
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
-  const hubDisplayName = user?.hubId ?? ''; // will be enriched once hub API populates store
+  const hubDisplayName = user?.hubId ?? '';
+
+  // ── Always fetch counts on mount ──────────────────────────────────────────
+  React.useEffect(() => {
+    if (!user?.userId) return;
+
+    let cancelled = false;
+
+    void getStaffOrders(user.userId)
+      .then((orders) => {
+        if (cancelled) return;
+        const computed: Partial<Record<OrderStatus, number>> = {};
+        for (const o of orders) {
+          computed[o.status] = (computed[o.status] ?? 0) + 1;
+        }
+        setCounts(computed);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.userId]);
 
   // ── Active state ──────────────────────────────────────────────────────────
   const isDashboardActive = pathname === '/staff-dashboard';
   const isOrdersActive =
     pathname === '/staff-dashboard/orders' ||
     pathname.startsWith('/staff-dashboard/orders/');
-  // "Overview" = no filter or the default PAID,PENDING_PICKUP combo
-  const isOrdersOverviewActive =
-    isOrdersActive &&
-    (!currentStatus ||
-      currentStatus === 'PAID,PENDING_PICKUP' ||
-      currentStatus === 'PENDING_PICKUP,PAID');
 
-  // Controlled open state — avoids the Base UI "uncontrolled → defaultOpen changed" warning
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
   React.useEffect(() => {
     if (isOrdersActive) setOrdersOpen(true);
   }, [isOrdersActive]);
 
-  // ── Order counts from shared store ────────────────────────────────────────
+  // ── Order counts ────────────────────────────────────────────────────────
   const urgentTotal = selectUrgentTotal(counts);
   const totalOrders = selectTotalOrders(counts);
 
@@ -170,7 +192,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     try {
       await logoutApi();
     } catch {
-      // Clear local auth state even if backend logout fails.
     } finally {
       useAuthStore.getState().clearAuth();
       router.replace('/auth/login');
@@ -191,10 +212,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
               <div className="grid flex-1 text-left leading-tight">
                 <span className="truncate text-sm font-bold text-sidebar-foreground tracking-tight">
-                  {staffName}
+                  {staffName || 'Nhân viên'}
                 </span>
                 <span className="truncate text-[11px] text-sidebar-foreground/55 font-medium">
-                  {hubDisplayName}
+                  {hubDisplayName || 'Hub chưa cập nhật'}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -202,181 +223,237 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-lg font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4">
-            Nhân viên
-          </SidebarGroupLabel>
-          <SidebarMenu>
-            {/* Tổng quan */}
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                render={<Link href="/staff-dashboard" />}
-                isActive={isDashboardActive}
-                tooltip="Tổng quan"
-                className={cn(
-                  'gap-3 transition-colors',
-                  isDashboardActive &&
-                    'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
-                )}
-              >
-                <LayoutDashboard className="size-4" />
-                <span className="text-[16px] font-bold">Tổng quan</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+      {/* SidebarContent thiết lập flex-col và overflow-hidden để xử lý phần cuộn bên trong */}
+      <SidebarContent className="flex flex-col h-full overflow-hidden">
+        {/* PHẦN CUỘN: Danh sách menu - ẩn thanh scroll */}
+        <div className="flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sm font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4 pb-2">
+              Quản lý
+            </SidebarGroupLabel>
+            <SidebarMenu>
+              {/* Tổng quan */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link href="/staff-dashboard" />}
+                  isActive={isDashboardActive}
+                  tooltip="Tổng quan"
+                  className={cn(
+                    'gap-3 transition-colors',
+                    isDashboardActive &&
+                      'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                  )}
+                >
+                  <LayoutDashboard className="size-4" />
+                  <span className="text-[15px] font-bold">Tổng quan</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-            {/* Đơn hàng — collapsible */}
-            <Collapsible
-              open={ordersOpen}
-              onOpenChange={setOrdersOpen}
-              render={<SidebarMenuItem />}
-            >
-              <SidebarMenuButton
-                render={<Link href={DEFAULT_ORDERS_URL} />}
-                isActive={isOrdersOverviewActive}
-                tooltip="Đơn hàng"
-                className={cn(
-                  'gap-3 transition-colors',
-                  isOrdersOverviewActive &&
-                    'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
-                )}
+              {/* Đơn hàng - collapsible */}
+              <Collapsible
+                open={ordersOpen}
+                onOpenChange={setOrdersOpen}
+                render={<SidebarMenuItem />}
               >
-                <ShoppingBag className="size-4" />
-                <span className="text-[16px] font-bold">Đơn hàng</span>
-                {totalOrders > 0 && (
-                  <span
-                    className={cn(
-                      'flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums',
-                      urgentTotal > 0
-                        ? 'bg-destructive text-white'
-                        : 'bg-sidebar-accent text-sidebar-foreground/70',
-                    )}
-                  >
-                    {totalOrders}
-                  </span>
-                )}
-              </SidebarMenuButton>
-              <SidebarMenuAction
-                render={<CollapsibleTrigger />}
-                className={cn(
-                  'aria-expanded:rotate-90 transition-transform duration-200',
-                  urgentTotal > 0 ? 'right-4' : '',
-                )}
-              >
-                <ChevronRight className="size-6" />
-                <span className="sr-only">Mở rộng</span>
-              </SidebarMenuAction>
-              <CollapsibleContent>
-                <SidebarMenuSub className="ml-4 mt-0.5 w-full">
-                  {/* ── Giao hàng ── */}
-                  <div className="px-2 pt-2 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
-                    <Truck className="size-3" />
-                    Giao hàng
-                  </div>
-                  {DELIVERY_WORKFLOW_TABS.map((tab) => {
-                    const count = selectCount(
-                      counts,
-                      tab.status as import('@/types/dashboard.types').OrderStatus,
-                    );
-                    const isTabActive =
-                      isOrdersActive && currentStatus === tab.status;
-                    return (
-                      <SidebarMenuSubItem key={tab.title}>
-                        <SidebarMenuSubButton
-                          render={<Link href={tab.url} />}
-                          isActive={isTabActive}
-                          className={cn(
-                            'py-4 transition-colors',
-                            isTabActive &&
-                              'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
-                          )}
-                        >
-                          <span
+                {/* Thêm pr-9 để tránh số đếm (badge) đè lên nút mũi tên */}
+                <SidebarMenuButton
+                  render={<Link href={DEFAULT_ORDERS_URL} />}
+                  isActive={isOrdersActive}
+                  tooltip="Đơn hàng"
+                  className={cn(
+                    'gap-3 transition-colors pr-9',
+                    isOrdersActive &&
+                      'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                  )}
+                >
+                  <ShoppingBag className="size-4" />
+                  <span className="text-[15px] font-bold">Đơn hàng</span>
+                  {totalOrders > 0 && (
+                    <span
+                      className={cn(
+                        'ml-auto flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums',
+                        urgentTotal > 0
+                          ? 'bg-destructive text-white'
+                          : 'bg-sidebar-accent text-sidebar-foreground/70',
+                      )}
+                    >
+                      {urgentTotal > 0 ? urgentTotal : totalOrders}
+                    </span>
+                  )}
+                </SidebarMenuButton>
+
+                {/* Cố định mũi tên ở góc phải, không bị ảnh hưởng bởi nội dung bên trong nút */}
+                <SidebarMenuAction
+                  render={<CollapsibleTrigger />}
+                  className="right-2 aria-expanded:rotate-90 transition-transform duration-200"
+                >
+                  <ChevronRight className="size-4" />
+                  <span className="sr-only">Mở rộng</span>
+                </SidebarMenuAction>
+
+                <CollapsibleContent>
+                  <SidebarMenuSub className="pl-4 mt-1 border-l border-sidebar-border/50 ml-3.5">
+                    {/* ── Giao hàng ── */}
+                    <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40 flex items-center gap-1.5">
+                      <Truck className="size-3.5" />
+                      Giao hàng
+                    </div>
+                    {DELIVERY_WORKFLOW_TABS.map((tab) => {
+                      const count = selectCount(
+                        counts,
+                        tab.status as OrderStatus,
+                      );
+                      const isTabActive =
+                        isOrdersActive && currentStatus === tab.status;
+                      return (
+                        <SidebarMenuSubItem key={tab.title}>
+                          <SidebarMenuSubButton
+                            render={<Link href={tab.url} />}
+                            isActive={isTabActive}
                             className={cn(
-                              'size-1.5 shrink-0 rounded-full',
-                              tab.dotClass,
+                              'py-2.5 transition-colors pr-2',
+                              isTabActive &&
+                                'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
                             )}
-                          />
-                          <span className="flex-1 truncate text-sm">
-                            {tab.title}
-                          </span>
-                          {count > 0 && (
+                          >
                             <span
                               className={cn(
-                                'mr-4 min-w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
-                                tab.urgency
-                                  ? 'bg-destructive text-white'
-                                  : isTabActive
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'bg-sidebar-accent text-sidebar-foreground/60',
+                                'size-1.5 shrink-0 rounded-full',
+                                tab.dotClass,
                               )}
-                            >
-                              {count}
+                            />
+                            <span className="flex-1 truncate text-[14px]">
+                              {tab.title}
                             </span>
-                          )}
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    );
-                  })}
-
-                  {/* ── Thu hồi ── */}
-                  <div className="px-2 pt-3 pb-0.5 text-[9px] font-black uppercase tracking-widest text-sidebar-foreground/35 flex items-center gap-1">
-                    <RotateCcw className="size-3" />
-                    Thu hồi
-                  </div>
-                  {PICKUP_WORKFLOW_TABS.map((tab) => {
-                    const count = selectCount(
-                      counts,
-                      tab.status as import('@/types/dashboard.types').OrderStatus,
-                    );
-                    const isTabActive =
-                      isOrdersActive && currentStatus === tab.status;
-                    return (
-                      <SidebarMenuSubItem key={tab.title}>
-                        <SidebarMenuSubButton
-                          render={<Link href={tab.url} />}
-                          isActive={isTabActive}
-                          className={cn(
-                            'py-4 transition-colors',
-                            isTabActive &&
-                              'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'size-1.5 shrink-0 rounded-full',
-                              tab.dotClass,
+                            {/* Thêm ml-auto để số luôn bám mép phải */}
+                            {count > 0 && (
+                              <span
+                                className={cn(
+                                  'ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                  tab.urgency
+                                    ? 'bg-destructive text-white'
+                                    : isTabActive
+                                      ? 'bg-background text-foreground shadow-sm'
+                                      : 'bg-sidebar-accent text-sidebar-foreground/70',
+                                )}
+                              >
+                                {count}
+                              </span>
                             )}
-                          />
-                          <span className="flex-1 truncate text-sm">
-                            {tab.title}
-                          </span>
-                          {count > 0 && (
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+
+                    {/* ── Thu hồi ── */}
+                    <div className="px-2 pt-1 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40 flex items-center gap-1.5">
+                      <RotateCcw className="size-3.5" />
+                      Thu hồi
+                    </div>
+                    {PICKUP_WORKFLOW_TABS.map((tab) => {
+                      const count = selectCount(
+                        counts,
+                        tab.status as OrderStatus,
+                      );
+                      const isTabActive =
+                        isOrdersActive && currentStatus === tab.status;
+                      return (
+                        <SidebarMenuSubItem key={tab.title}>
+                          <SidebarMenuSubButton
+                            render={<Link href={tab.url} />}
+                            isActive={isTabActive}
+                            className={cn(
+                              'py-2.5 transition-colors pr-2',
+                              isTabActive &&
+                                'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                            )}
+                          >
                             <span
                               className={cn(
-                                'mr-4 min-w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
-                                tab.urgency
-                                  ? 'bg-destructive text-white'
-                                  : isTabActive
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'bg-sidebar-accent text-sidebar-foreground/60',
+                                'size-1.5 shrink-0 rounded-full',
+                                tab.dotClass,
                               )}
-                            >
-                              {count}
+                            />
+                            <span className="flex-1 truncate text-[14px]">
+                              {tab.title}
                             </span>
-                          )}
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    );
-                  })}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </Collapsible>
-          </SidebarMenu>
-        </SidebarGroup>
+                            {count > 0 && (
+                              <span
+                                className={cn(
+                                  'ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                  tab.urgency
+                                    ? 'bg-destructive text-white'
+                                    : isTabActive
+                                      ? 'bg-background text-foreground shadow-sm'
+                                      : 'bg-sidebar-accent text-sidebar-foreground/70',
+                                )}
+                              >
+                                {count}
+                              </span>
+                            )}
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
 
-        {/* ── Support ──────────────────────────────────────────────── */}
-        <SidebarGroup className="mt-auto">
+                    {/* ── Đã hủy ── */}
+                    <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40 flex items-center gap-1.5">
+                      <XCircle className="size-3.5" />
+                      Đã hủy
+                    </div>
+                    {CANCELLED_WORKFLOW_TABS.map((tab) => {
+                      const count = selectCount(
+                        counts,
+                        tab.status as OrderStatus,
+                      );
+                      const isTabActive =
+                        isOrdersActive && currentStatus === tab.status;
+                      return (
+                        <SidebarMenuSubItem key={tab.title}>
+                          <SidebarMenuSubButton
+                            render={<Link href={tab.url} />}
+                            isActive={isTabActive}
+                            className={cn(
+                              'py-2.5 transition-colors pr-2',
+                              isTabActive &&
+                                'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'size-1.5 shrink-0 rounded-full',
+                                tab.dotClass,
+                              )}
+                            />
+                            <span className="flex-1 truncate text-[14px]">
+                              {tab.title}
+                            </span>
+                            {count > 0 && (
+                              <span
+                                className={cn(
+                                  'ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                  isTabActive
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'bg-sidebar-accent text-sidebar-foreground/70',
+                                )}
+                              >
+                                {count}
+                              </span>
+                            )}
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroup>
+        </div>
+      </SidebarContent>
+      {/* PHẦN CỐ ĐỊNH CHUẨN RESPONSIVE: Hỗ trợ & Cài đặt */}
+      <div className="shrink-0 mt-auto">
+        <SidebarGroup className="pt-2">
           <SidebarSeparator className="mb-2" />
           <SidebarMenu>
             {SECONDARY_ITEMS.map((item) => (
@@ -384,21 +461,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton
                   render={<Link href={item.url} />}
                   tooltip={item.title}
-                  className="gap-3 text-sidebar-foreground/55 hover:text-sidebar-foreground"
+                  className="gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors"
                 >
                   <item.icon className="size-4" />
-                  <span>{item.title}</span>
+                  <span className="text-[14px]">{item.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarGroup>
-      </SidebarContent>
+      </div>
 
-      <SidebarFooter>
+      <SidebarFooter className="pt-0 pb-3 shrink-0">
         <NavUser
           user={{
-            name: staffName,
+            name: staffName || 'Nhân viên',
             email: staffEmail,
             avatar: staffAvatar,
             role: 'STAFF',

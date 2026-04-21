@@ -1,5 +1,5 @@
 /**
- * Files module types — source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 5: FILES)
+ * Files module types - source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 5: FILES)
  *
  * Azure Blob Storage APIs:
  *  - API-034: Upload single

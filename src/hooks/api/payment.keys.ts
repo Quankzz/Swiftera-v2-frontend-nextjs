@@ -1,5 +1,5 @@
 /**
- * Payment query keys — TanStack Query key factory
+ * Payment query keys - TanStack Query key factory
  */
 
 export const paymentKeys = {

@@ -1,5 +1,5 @@
 /**
- * Hub management hooks — TanStack Query
+ * Hub management hooks - TanStack Query
  * Module 6: HUBS (API-040 → API-044)
  *
  * Gom toàn bộ hooks CRUD hub vào 1 file.
@@ -20,17 +20,26 @@ import {
   updateHub,
   deleteHub,
   getHubStaff,
+  getHubProducts,
+  getHubInventoryItems,
+  assignProductsToHub,
+  unassignProductsFromHub,
 } from '../api/hub.service';
-import type { HubListParams, CreateHubInput, UpdateHubInput } from '../types';
+import type {
+  HubListParams,
+  CreateHubInput,
+  UpdateHubInput,
+  AssignProductsToHubInput,
+} from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * useHubsQuery — phân trang danh sách hub (API-042)
- * staleTime 30s — danh sách hub thay đổi khi admin CRUD
- * placeholderData: keepPreviousData — giữ dữ liệu trang cũ khi chuyển trang
+ * useHubsQuery - phân trang danh sách hub (API-042)
+ * staleTime 30s - danh sách hub thay đổi khi admin CRUD
+ * placeholderData: keepPreviousData - giữ dữ liệu trang cũ khi chuyển trang
  * (tránh bug trang 1/2 trông giống nhau khi đang fetch)
  */
 export function useHubsQuery(params?: HubListParams) {
@@ -43,7 +52,7 @@ export function useHubsQuery(params?: HubListParams) {
 }
 
 /**
- * useHubQuery — chi tiết 1 hub (API-041)
+ * useHubQuery - chi tiết 1 hub (API-041)
  * Chỉ enabled khi có hubId
  */
 export function useHubQuery(hubId?: string) {
@@ -60,7 +69,7 @@ export function useHubQuery(hubId?: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * useCreateHubMutation — tạo hub mới (API-040)
+ * useCreateHubMutation - tạo hub mới (API-040)
  * Invalidate toàn bộ list sau khi tạo.
  */
 export function useCreateHubMutation() {
@@ -74,7 +83,7 @@ export function useCreateHubMutation() {
 }
 
 /**
- * useUpdateHubMutation — cập nhật hub (API-043)
+ * useUpdateHubMutation - cập nhật hub (API-043)
  * Invalidate list + detail của hub đó.
  */
 export function useUpdateHubMutation() {
@@ -95,7 +104,7 @@ export function useUpdateHubMutation() {
 }
 
 /**
- * useDeleteHubMutation — xóa hub (API-044)
+ * useDeleteHubMutation - xóa hub (API-044)
  * Invalidate toàn bộ list sau khi xóa.
  */
 export function useDeleteHubMutation() {
@@ -113,7 +122,7 @@ export function useDeleteHubMutation() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * useHubStaffQuery — danh sách nhân viên theo hub (API-043 staff)
+ * useHubStaffQuery - danh sách nhân viên theo hub (API-043 staff)
  * GET /hubs/{hubId}/staff?activeOnly=false
  *
  * Trả về plain array (không paginated).
@@ -125,5 +134,81 @@ export function useHubStaffQuery(hubId?: string) {
     queryFn: () => getHubStaff(hubId!, false),
     enabled: !!hubId,
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Products & Inventory Items by Hub
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * useHubProductsQuery - danh sách sản phẩm theo hub (API-043 products)
+ * GET /hubs/{hubId}/products?page=1&size=20&filter=...
+ *
+ * Chỉ enabled khi có hubId.
+ */
+export function useHubProductsQuery(
+  hubId?: string,
+  params?: { page?: number; size?: number; filter?: string; sort?: string },
+) {
+  return useQuery({
+    queryKey: hubKeys.products(hubId ?? '', params as Record<string, unknown> | undefined),
+    queryFn: () => getHubProducts(hubId!, params),
+    enabled: !!hubId,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * useHubInventoryItemsQuery - danh sách inventory items theo hub (API-043 inventory)
+ * GET /hubs/{hubId}/inventory-items?page=1&size=20&filter=...
+ *
+ * Chỉ enabled khi có hubId.
+ */
+export function useHubInventoryItemsQuery(
+  hubId?: string,
+  params?: { page?: number; size?: number; filter?: string; sort?: string },
+) {
+  return useQuery({
+    queryKey: hubKeys.inventory(hubId ?? '', params as Record<string, unknown> | undefined),
+    queryFn: () => getHubInventoryItems(hubId!, params),
+    enabled: !!hubId,
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAssignProductsToHubMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      hubId,
+      payload,
+    }: {
+      hubId: string;
+      payload: AssignProductsToHubInput;
+    }) => assignProductsToHub(hubId, payload),
+    onSuccess: (_data, { hubId }) => {
+      queryClient.invalidateQueries({ queryKey: hubKeys.products(hubId) });
+      queryClient.invalidateQueries({ queryKey: hubKeys.inventory(hubId) });
+    },
+  });
+}
+
+export function useUnassignProductsFromHubMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      hubId,
+      payload,
+    }: {
+      hubId: string;
+      payload: AssignProductsToHubInput;
+    }) => unassignProductsFromHub(hubId, payload),
+    onSuccess: (_data, { hubId }) => {
+      queryClient.invalidateQueries({ queryKey: hubKeys.products(hubId) });
+      queryClient.invalidateQueries({ queryKey: hubKeys.inventory(hubId) });
+    },
   });
 }

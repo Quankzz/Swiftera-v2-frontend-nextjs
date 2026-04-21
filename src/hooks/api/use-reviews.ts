@@ -1,9 +1,14 @@
 /**
- * Reviews hooks — TanStack Query
- * Module 15: REVIEWS (API-095 → API-099)
+ * Reviews hooks - TanStack Query
+ * Module 15: REVIEWS (API-095 → API-100)
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { reviewKeys } from './review.keys';
 import {
   getReviewsByProduct,
@@ -12,6 +17,7 @@ import {
   getReviewById,
   createReview,
   deleteReview,
+  markHelpful,
 } from './review.service';
 import type { CreateReviewInput } from '@/api/reviews';
 
@@ -23,13 +29,15 @@ import type { CreateReviewInput } from '@/api/reviews';
  */
 export function useProductReviewsQuery(
   productId: string,
-  params?: { page?: number; size?: number },
+  params?: { page?: number; size?: number; rating?: number },
 ) {
   return useQuery({
     queryKey: reviewKeys.byProduct(productId, params),
     queryFn: () => getReviewsByProduct(productId, params),
     enabled: !!productId,
-    staleTime: 30_000,
+    staleTime: 3 * 60_000,
+    gcTime: 30 * 60_000,
+    placeholderData: keepPreviousData,
     retry: false,
   });
 }
@@ -46,7 +54,9 @@ export function useReviewsQuery(params?: {
   return useQuery({
     queryKey: reviewKeys.list(params),
     queryFn: () => getReviews(params),
-    staleTime: 30_000,
+    staleTime: 3 * 60_000,
+    gcTime: 30 * 60_000,
+    placeholderData: keepPreviousData,
     retry: false,
   });
 }
@@ -59,7 +69,8 @@ export function useReviewQuery(reviewId: string) {
     queryKey: reviewKeys.detail(reviewId),
     queryFn: () => getReviewById(reviewId),
     enabled: !!reviewId,
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
     retry: false,
   });
 }
@@ -81,7 +92,8 @@ export function useMyReviewForProductQuery(
     queryKey: ['reviews', 'my', productId, userId] as const,
     queryFn: () => getMyReviewForProduct(productId, userId!),
     enabled: !!productId && !!userId,
-    staleTime: 30_000,
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
     retry: false,
   });
 }
@@ -133,6 +145,31 @@ export function useDeleteReview(options?: {
   return useMutation({
     mutationFn: async (reviewId: string) => {
       await deleteReview(reviewId);
+    },
+
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: reviewKeys.all });
+      options?.onSuccess?.();
+    },
+
+    onError: (error: Error) => {
+      options?.onError?.(error);
+    },
+  });
+}
+
+/**
+ * Đánh dấu đánh giá là hữu ích [AUTH]
+ */
+export function useMarkHelpfulReview(options?: {
+  onSuccess?: () => void;
+  onError?: (error: Error) => void;
+}) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (reviewId: string) => {
+      return markHelpful(reviewId);
     },
 
     onSuccess: () => {

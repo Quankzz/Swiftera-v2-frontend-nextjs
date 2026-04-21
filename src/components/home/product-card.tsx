@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/types/catalog';
 
@@ -51,11 +51,8 @@ export function ProductCard({
       )}
     >
       {!isPreview && (
-        <div
-          className='absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-white/10 p-2 shadow-sm'
-          onClick={(e) => e.preventDefault()}
-        >
-          <Heart className='size-4 text-muted-foreground' />
+        <div className='absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-white/10 p-2 shadow-sm'>
+          <Eye className='size-4 text-muted-foreground' />
         </div>
       )}
 
@@ -132,7 +129,7 @@ export function ProductCard({
               {product.dailyPrice ? (
                 formatter.format(product.dailyPrice)
               ) : (
-                <span className='text-text-sub italic text-base'>—</span>
+                <span className='text-text-sub italic text-base'>-</span>
               )}
             </span>
             {product.oldDailyPrice && (

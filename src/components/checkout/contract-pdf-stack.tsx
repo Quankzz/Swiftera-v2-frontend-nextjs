@@ -24,7 +24,7 @@ export function ContractPdfStack({
 }: ContractPdfStackProps) {
   const downloadMock = () => {
     const body = [
-      'SWIFTERA — HỢP ĐỒNG CHO THUÊ (BẢN DEMO)',
+      'SWIFTERA - HỢP ĐỒNG CHO THUÊ (BẢN DEMO)',
       `Mã đơn: ${orderCode}`,
       `Khách hàng: ${customerName}`,
       `Điện thoại: ${customerPhone}`,
@@ -57,7 +57,7 @@ export function ContractPdfStack({
           style={{ transform: 'rotate(-2deg)' }}
         />
 
-        {/* Trang chính — nội dung hợp đồng */}
+        {/* Trang chính - nội dung hợp đồng */}
         <div className='relative z-10 mx-auto w-[92%] animate-contract-pdf-float'>
           <div className='relative overflow-hidden rounded-xl border border-border bg-white shadow-2xl dark:bg-zinc-900 dark:shadow-black/40'>
             <div className='absolute inset-x-0 top-0 z-20 h-10 bg-linear-to-b from-rose-600/90 to-rose-700/80 dark:from-rose-700/90 dark:to-rose-900/90'>
@@ -81,7 +81,7 @@ export function ContractPdfStack({
                 đăng tải trên website.
               </p>
               <p>
-                <span className='font-semibold'>Bên B (Khách):</span> {customerName} — {customerPhone}
+                <span className='font-semibold'>Bên B (Khách):</span> {customerName} - {customerPhone}
               </p>
               <p>
                 <span className='font-semibold'>Tổng thanh toán (thuê + cọc):</span>{' '}

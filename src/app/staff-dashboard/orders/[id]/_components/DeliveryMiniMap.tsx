@@ -111,7 +111,7 @@ export function DeliveryMiniMap({
     });
   }, [staffLat, staffLng]);
 
-  // ── Initialize map once — dynamic import avoids SSR "self is not defined" ──
+  // ── Initialize map once - dynamic import avoids SSR "self is not defined" ──
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
     let cancelled = false;
@@ -143,7 +143,7 @@ export function DeliveryMiniMap({
         }
         setMapLoading(false);
 
-        // Destination pin (static — doesn't change)
+        // Destination pin (static - doesn't change)
         if (destLat != null && destLng != null) {
           const pinHex = destPinColor === 'green' ? '#22c55e' : '#ef4444';
           const labelText =
@@ -299,7 +299,7 @@ export function DeliveryMiniMap({
             { padding: 70, maxZoom: 16, animate: false },
           );
         } catch {
-          // Route fetch failed — markers still visible
+          // Route fetch failed - markers still visible
         }
       })();
     }

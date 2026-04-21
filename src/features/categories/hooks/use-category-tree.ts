@@ -1,5 +1,5 @@
 /**
- * useCategoryTreeQuery — API-048 GET /api/v1/categories/tree
+ * useCategoryTreeQuery - API-048 GET /api/v1/categories/tree
  *
  * Returns the full nested category tree.
  * Used by:
@@ -30,7 +30,7 @@ export function flattenTree(nodes: CategoryTreeNode[]): CategoryTreeNode[] {
 
 /**
  * API-048: GET /api/v1/categories/tree
- * Long staleTime (5 min) — tree changes are infrequent and we invalidate
+ * Long staleTime (5 min) - tree changes are infrequent and we invalidate
  * on every create/update/delete via categoryKeys.tree().
  */
 export function useCategoryTreeQuery() {

@@ -1,11 +1,18 @@
 /**
- * Rental Orders hooks — TanStack Query
+ * Rental Orders hooks - TanStack Query
  * Module 12: RENTAL ORDERS (API-074 → API-086A)
  *
  * Lưu ý: initiatePayment đã chuyển sang Module 13 (useInitiatePayment trong use-payments.ts)
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+  type QueryKey,
+} from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { rentalOrderKeys } from './rental-order.keys';
 import {
   getMyRentalOrders,
@@ -17,6 +24,7 @@ import {
   assignRentalOrder,
   getRentalOrders,
   getOverduePenaltySuggestion,
+  type NormalizedPaginatedOrders,
 } from './rental-order.service';
 import type {
   CreateRentalOrderInput,
@@ -32,6 +40,8 @@ import type {
   RentalOrderResponse,
   RentalOrderStatus as ApiRentalOrderStatus,
 } from '@/api/rentalOrderApi';
+import { useAuth } from '@/hooks/useAuth';
+import { buildLoginHref, getCurrentPathWithSearch } from '@/lib/auth-redirect';
 
 // ─── Status mapping helpers ───────────────────────────────────────────────
 
@@ -102,6 +112,97 @@ function mapApiOrderToDashboard(o: RentalOrderResponse): RentalOrder {
   };
 }
 
+function requireAuthForMutation(params: {
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  router: { push: (href: string) => void };
+  errorMessage: string;
+  fallbackPath: string;
+}): void {
+  if (params.isAuthenticated) return;
+
+  if (!params.isAuthLoading) {
+    params.router.push(
+      buildLoginHref(getCurrentPathWithSearch(params.fallbackPath)),
+    );
+  }
+
+  throw new Error(
+    params.isAuthLoading
+      ? 'Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.'
+      : params.errorMessage,
+  );
+}
+
+function patchMyOrdersCaches(
+  qc: QueryClient,
+  rentalOrderId: string,
+  updater: (order: RentalOrderResponse) => RentalOrderResponse,
+): Array<[QueryKey, NormalizedPaginatedOrders | undefined]> {
+  const snapshots = qc.getQueriesData<NormalizedPaginatedOrders>({
+    queryKey: [...rentalOrderKeys.all, 'my'],
+  });
+
+  snapshots.forEach(([key, data]) => {
+    if (!data) return;
+
+    let changed = false;
+    const items = data.items.map((order) => {
+      if (order.rentalOrderId !== rentalOrderId) return order;
+      changed = true;
+      return updater(order);
+    });
+
+    if (changed) {
+      qc.setQueryData<NormalizedPaginatedOrders>(key, {
+        ...data,
+        items,
+      });
+    }
+  });
+
+  return snapshots;
+}
+
+function restoreMyOrdersCaches(
+  qc: QueryClient,
+  snapshots: Array<[QueryKey, NormalizedPaginatedOrders | undefined]>,
+) {
+  snapshots.forEach(([key, data]) => {
+    qc.setQueryData(key, data);
+  });
+}
+
+function mergeOrderIntoMyOrdersCaches(
+  qc: QueryClient,
+  nextOrder: RentalOrderResponse,
+) {
+  qc.setQueriesData<NormalizedPaginatedOrders>(
+    { queryKey: [...rentalOrderKeys.all, 'my'] },
+    (data) => {
+      if (!data) return data;
+
+      let changed = false;
+      const items = data.items.map((order) => {
+        if (order.rentalOrderId !== nextOrder.rentalOrderId) return order;
+        changed = true;
+        return nextOrder;
+      });
+
+      if (!changed) return data;
+      return { ...data, items };
+    },
+  );
+}
+
+function addDaysToIsoDate(isoDate: string, days: number): string {
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) return isoDate;
+
+  parsed.setDate(parsed.getDate() + days);
+  return parsed.toISOString();
+}
+
 // ─── Query ──────────────────────────────────────────────────────────────────
 
 /**
@@ -145,10 +246,11 @@ export function useMyOrdersQuery(params?: {
   size?: number;
   filter?: string;
   sort?: string;
-}) {
+}, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: rentalOrderKeys.myList(params),
     queryFn: () => getMyRentalOrders(params),
+    enabled: options?.enabled ?? true,
     staleTime: 15_000,
     retry: false,
   });
@@ -197,14 +299,25 @@ export function useCreateRentalOrder(options?: {
   onError?: (error: Error) => void;
 }) {
   const qc = useQueryClient();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   return useMutation({
     mutationFn: async (input: CreateRentalOrderInput) => {
+      requireAuthForMutation({
+        isAuthenticated,
+        isAuthLoading,
+        router,
+        fallbackPath: '/cart',
+        errorMessage: 'Vui lòng đăng nhập để tạo đơn thuê.',
+      });
+
       return createRentalOrder(input);
     },
 
     onSuccess: (data) => {
-      void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
+      qc.setQueryData(rentalOrderKeys.detail(data.rentalOrderId), data);
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
       options?.onSuccess?.({ rentalOrderId: data.rentalOrderId });
     },
 
@@ -222,6 +335,8 @@ export function useUpdateOrderStatus(options?: {
   onError?: (error: Error) => void;
 }) {
   const qc = useQueryClient();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -231,22 +346,75 @@ export function useUpdateOrderStatus(options?: {
       rentalOrderId: string;
       input: UpdateOrderStatusInput;
     }) => {
+      requireAuthForMutation({
+        isAuthenticated,
+        isAuthLoading,
+        router,
+        fallbackPath: '/rental-orders',
+        errorMessage: 'Vui lòng đăng nhập để cập nhật trạng thái đơn thuê.',
+      });
+
       return updateRentalOrderStatus(rentalOrderId, input);
     },
 
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      await qc.cancelQueries({
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
+      });
+
+      const previousDetail = qc.getQueryData<RentalOrderResponse>(
+        rentalOrderKeys.detail(variables.rentalOrderId),
+      );
+      const previousMyLists = patchMyOrdersCaches(
+        qc,
+        variables.rentalOrderId,
+        (order) => ({ ...order, status: variables.input.status }),
+      );
+
+      qc.setQueryData<RentalOrderResponse>(
+        rentalOrderKeys.detail(variables.rentalOrderId),
+        (old) => {
+          if (!old) return old;
+          return { ...old, status: variables.input.status };
+        },
+      );
+
+      return {
+        previousDetail,
+        previousMyLists,
+      };
+    },
+
+    onSuccess: (data, variables) => {
+      qc.setQueryData(rentalOrderKeys.detail(variables.rentalOrderId), data);
+      mergeOrderIntoMyOrdersCaches(qc, data);
+
+      options?.onSuccess?.();
+    },
+
+    onError: (error: Error, variables, context) => {
+      if (context?.previousDetail !== undefined) {
+        qc.setQueryData(
+          rentalOrderKeys.detail(variables.rentalOrderId),
+          context.previousDetail,
+        );
+      }
+
+      if (context?.previousMyLists) {
+        restoreMyOrdersCaches(qc, context.previousMyLists);
+      }
+
+      options?.onError?.(error);
+    },
+
+    onSettled: (_data, _error, variables) => {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.overdueSuggestion(variables.rentalOrderId),
       });
-      void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
-      options?.onSuccess?.();
-    },
-
-    onError: (error: Error) => {
-      options?.onError?.(error);
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
     },
   });
 }
@@ -259,28 +427,77 @@ export function useCancelOrder(options?: {
   onError?: (error: Error) => void;
 }) {
   const qc = useQueryClient();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   return useMutation({
     mutationFn: async (rentalOrderId: string) => {
+      requireAuthForMutation({
+        isAuthenticated,
+        isAuthLoading,
+        router,
+        fallbackPath: '/rental-orders',
+        errorMessage: 'Vui lòng đăng nhập để hủy đơn thuê.',
+      });
+
       await cancelRentalOrder(rentalOrderId);
     },
 
-    onSuccess: (_, rentalOrderId) => {
-      void qc.invalidateQueries({
-        queryKey: rentalOrderKeys.detail(rentalOrderId),
-      });
-      void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
+    onMutate: async (rentalOrderId) => {
+      await qc.cancelQueries({ queryKey: rentalOrderKeys.detail(rentalOrderId) });
+
+      const previousDetail = qc.getQueryData<RentalOrderResponse>(
+        rentalOrderKeys.detail(rentalOrderId),
+      );
+      const previousMyLists = patchMyOrdersCaches(qc, rentalOrderId, (order) => ({
+        ...order,
+        status: 'CANCELLED',
+      }));
+
+      qc.setQueryData<RentalOrderResponse>(
+        rentalOrderKeys.detail(rentalOrderId),
+        (old) => {
+          if (!old) return old;
+          return { ...old, status: 'CANCELLED' };
+        },
+      );
+
+      return {
+        previousDetail,
+        previousMyLists,
+      };
+    },
+
+    onSuccess: () => {
       options?.onSuccess?.();
     },
 
-    onError: (error: Error) => {
+    onError: (error: Error, rentalOrderId, context) => {
+      if (context?.previousDetail !== undefined) {
+        qc.setQueryData(
+          rentalOrderKeys.detail(rentalOrderId),
+          context.previousDetail,
+        );
+      }
+
+      if (context?.previousMyLists) {
+        restoreMyOrdersCaches(qc, context.previousMyLists);
+      }
+
       options?.onError?.(error);
+    },
+
+    onSettled: (_data, _error, rentalOrderId) => {
+      void qc.invalidateQueries({
+        queryKey: rentalOrderKeys.detail(rentalOrderId),
+      });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
     },
   });
 }
 
 /**
- * Gán nhân viên + hub cho đơn thuê [AUTH] — dùng cho dashboard staff
+ * Gán nhân viên + hub cho đơn thuê [AUTH] - dùng cho dashboard staff
  */
 export function useAssignOrderMutation(options?: {
   onSuccess?: () => void;
@@ -303,7 +520,7 @@ export function useAssignOrderMutation(options?: {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.id),
       });
-      void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
       options?.onSuccess?.();
     },
 
@@ -317,10 +534,12 @@ export function useAssignOrderMutation(options?: {
  * Gia hạn đơn thuê [AUTH]
  */
 export function useExtendOrder(options?: {
-  onSuccess?: () => void;
+  onSuccess?: (data: RentalOrderResponse) => void;
   onError?: (error: Error) => void;
 }) {
   const qc = useQueryClient();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -330,22 +549,88 @@ export function useExtendOrder(options?: {
       rentalOrderId: string;
       input: ExtendOrderInput;
     }) => {
+      requireAuthForMutation({
+        isAuthenticated,
+        isAuthLoading,
+        router,
+        fallbackPath: '/rental-orders',
+        errorMessage: 'Vui lòng đăng nhập để gia hạn đơn thuê.',
+      });
+
       return extendRentalOrder(rentalOrderId, input);
     },
 
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      await qc.cancelQueries({
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
+      });
+
+      const previousDetail = qc.getQueryData<RentalOrderResponse>(
+        rentalOrderKeys.detail(variables.rentalOrderId),
+      );
+      const previousMyLists = patchMyOrdersCaches(
+        qc,
+        variables.rentalOrderId,
+        (order) => ({
+          ...order,
+          expectedRentalEndDate: addDaysToIsoDate(
+            order.expectedRentalEndDate,
+            variables.input.additionalRentalDays,
+          ),
+        }),
+      );
+
+      qc.setQueryData<RentalOrderResponse>(
+        rentalOrderKeys.detail(variables.rentalOrderId),
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            expectedRentalEndDate: addDaysToIsoDate(
+              old.expectedRentalEndDate,
+              variables.input.additionalRentalDays,
+            ),
+          };
+        },
+      );
+
+      return {
+        previousDetail,
+        previousMyLists,
+      };
+    },
+
+    onSuccess: (data, variables) => {
+      qc.setQueryData(rentalOrderKeys.detail(variables.rentalOrderId), data);
+      mergeOrderIntoMyOrdersCaches(qc, data);
+
+      options?.onSuccess?.(data);
+    },
+
+    onError: (error: Error, variables, context) => {
+      if (context?.previousDetail !== undefined) {
+        qc.setQueryData(
+          rentalOrderKeys.detail(variables.rentalOrderId),
+          context.previousDetail,
+        );
+      }
+
+      if (context?.previousMyLists) {
+        restoreMyOrdersCaches(qc, context.previousMyLists);
+      }
+
+      options?.onError?.(error);
+    },
+
+    onSettled: (_data, _error, variables) => {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.overdueSuggestion(variables.rentalOrderId),
       });
-      void qc.invalidateQueries({ queryKey: rentalOrderKeys.myList() });
-      options?.onSuccess?.();
-    },
-
-    onError: (error: Error) => {
-      options?.onError?.(error);
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
     },
   });
 }

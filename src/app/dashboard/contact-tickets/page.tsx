@@ -33,7 +33,7 @@ function SummaryCard({
   iconBgCls,
 }: SummaryCardProps) {
   const { data } = useTickets({ status, size: 1 });
-  const count = data?.meta?.totalElements ?? '—';
+  const count = data?.meta?.totalElements ?? '-';
 
   return (
     <div

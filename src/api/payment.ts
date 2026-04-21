@@ -1,5 +1,5 @@
 /**
- * Payments API — Module 13: PAYMENTS (API-086 → API-091)
+ * Payments API - Module 13: PAYMENTS (API-086 → API-091)
  *
  * Base URL: /api/v1
  * Tất cả endpoints đều yêu cầu xác thực [AUTH] (trừ IPN /return)
@@ -42,7 +42,7 @@ export type VnpTransactionType = '01' | '02' | '03' | '04';
  *  04: Hoàn tiền tự động
  */
 
-/** PaymentTransactionResponse — API-086, 087, 088 */
+/** PaymentTransactionResponse - API-086, 087, 088 */
 export interface PaymentTransactionResponse {
   paymentTransactionId: string;
   rentalOrderId: string;
@@ -197,7 +197,8 @@ export const paymentApi = {
   /**
    * API-089: Tạo link thanh toán VNPay [AUTH]
    *
-   * @param rentalOrderId - UUID của đơn thuê (phải ở trạng thái PENDING_PAYMENT)
+  * @param rentalOrderId - UUID của đơn thuê (phải ở trạng thái cho phép thanh toán)
+   * @param additionalRentalDays - số ngày gia hạn tạm tính để thanh toán trước gia hạn
    *
    * Logic backend: amount = totalPayableAmount - totalPaidAmount
    * Tạo transaction RENTAL_FEE status=PENDING, ký URL VNPay.
@@ -205,11 +206,18 @@ export const paymentApi = {
    */
   initiate(
     rentalOrderId: string,
+    additionalRentalDays?: number,
   ): Promise<AxiosResponse<PaymentInitiateResponse>> {
     return httpService.post<PaymentInitiateResponse>(
       `/payments/${rentalOrderId}/initiate`,
       undefined,
-      authOpts,
+      {
+        ...authOpts,
+        params:
+          typeof additionalRentalDays === 'number'
+            ? { additionalRentalDays }
+            : undefined,
+      },
     );
   },
 };

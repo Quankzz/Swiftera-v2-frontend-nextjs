@@ -342,7 +342,7 @@ function PolicyItem({
         </div>
       </div>
 
-      {/* PDF viewer dialog — nested outside the main dialog via portal */}
+      {/* PDF viewer dialog - nested outside the main dialog via portal */}
       {policy.pdfUrl && (
         <PdfViewerDialog
           open={pdfViewerOpen}

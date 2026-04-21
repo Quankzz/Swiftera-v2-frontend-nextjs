@@ -240,7 +240,7 @@ export default function DashboardPage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     <MapPin className="size-3 shrink-0" />
-                    {hub?.hubCode ?? '—'}
+                    {hub?.hubCode ?? '-'}
                   </span>
                   <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     <CalendarDays className="size-3 shrink-0" />

@@ -1,9 +1,9 @@
 /**
  * Rental Orders module types
- * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 12: RENTAL ORDERS
+ * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 12: RENTAL ORDERS
  *
  * Tất cả field dùng camelCase đúng theo JSON trả về từ BE.
- * Không tự suy đoán field — chỉ model field có trong spec.
+ * Không tự suy đoán field - chỉ model field có trong spec.
  */
 
 import type { PaginationResponse } from '@/types/api.types';
@@ -167,7 +167,7 @@ export interface RentalOrderLine {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Rental Order Response (full — API-073 / API-074 / API-075)
+// Rental Order Response (full - API-073 / API-074 / API-075)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface RentalOrderResponse {
@@ -186,11 +186,11 @@ export interface RentalOrderResponse {
   hubLongitude: number | null;
   hubPhone: string | null;
 
-  // Staff assignment (nested objects — trả về từ API sau khi gán)
+  // Staff assignment (nested objects - trả về từ API sau khi gán)
   deliveryStaff: HubStaffResponse | null;
   pickupStaff: HubStaffResponse | null;
 
-  // User address (nested from BE — thay thế delivery* fields cũ)
+  // User address (nested from BE - thay thế delivery* fields cũ)
   userAddressId: string | null;
   userAddress: UserAddress | null;
 
@@ -271,7 +271,7 @@ export interface UpdateOrderStatusInput {
   status: RentalOrderStatus;
 }
 
-/** API-078: Hủy đơn thuê — POST /rental-orders/{id}/cancel (no body) */
+/** API-078: Hủy đơn thuê - POST /rental-orders/{id}/cancel (no body) */
 
 /** API-079: Gia hạn đơn thuê */
 export interface ExtendOrderInput {
@@ -323,7 +323,7 @@ export interface AssignStaffToHubInput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Staff types (dùng trong assign-staff-dialog — lấy từ GET /users)
+// Staff types (dùng trong assign-staff-dialog - lấy từ GET /users)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Staff option hiển thị trong dialog chọn nhân viên */

@@ -14,10 +14,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import {
   Search,
-  ShieldOff,
   Loader2,
   CheckCircle2,
-  XCircle,
   Eye,
   BookOpen,
   X,
@@ -26,6 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +36,7 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   usePoliciesQuery,
+  useActivatePolicyMutation,
   useDeactivatePolicyMutation,
 } from '../hooks/use-policy-management';
 import { PolicyPdfPreview } from './policy-pdf-preview';
@@ -48,7 +48,7 @@ import type { PolicyDocumentResponse } from '../types';
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   return isNaN(d.getTime())
     ? iso
@@ -178,10 +178,9 @@ export function PolicyTable() {
     useState<PolicyDocumentResponse | null>(null);
   const [editingPolicy, setEditingPolicy] =
     useState<PolicyDocumentResponse | null>(null);
-  const [deactivatingId, setDeactivatingId] = useState<string | null>(null);
-  const [confirmDeactivatePolicy, setConfirmDeactivatePolicy] =
-    useState<PolicyDocumentResponse | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  const activateMutation = useActivatePolicyMutation();
   const deactivateMutation = useDeactivatePolicyMutation();
 
   // ── Debounce search ────────────────────────────────────────────────────────
@@ -220,24 +219,21 @@ export function PolicyTable() {
   const totalPages = data?.meta.totalPages ?? 0;
   const totalElements = data?.meta.totalElements ?? 0;
 
-  // ── Deactivate ─────────────────────────────────────────────────────────────
-  const handleDeactivate = async (policy: PolicyDocumentResponse) => {
-    setConfirmDeactivatePolicy(policy);
-  };
-
-  const confirmDeactivate = async () => {
-    if (!confirmDeactivatePolicy) return;
-    setDeactivatingId(confirmDeactivatePolicy.policyDocumentId);
+  // ── Toggle active/inactive ─────────────────────────────────────────────────
+  const handleToggle = async (policy: PolicyDocumentResponse) => {
+    setTogglingId(policy.policyDocumentId);
     try {
-      await deactivateMutation.mutateAsync(
-        confirmDeactivatePolicy.policyDocumentId,
-      );
-      toast.success(`Đã vô hiệu hóa "${confirmDeactivatePolicy.title}".`);
-      setConfirmDeactivatePolicy(null);
+      if (policy.isActive) {
+        await deactivateMutation.mutateAsync(policy.policyDocumentId);
+        toast.success(`Đã vô hiệu hóa "${policy.title}".`);
+      } else {
+        await activateMutation.mutateAsync(policy.policyDocumentId);
+        toast.success(`Đã kích hoạt "${policy.title}".`);
+      }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Vô hiệu hóa thất bại.');
+      toast.error(err instanceof Error ? err.message : 'Thay đổi trạng thái thất bại.');
     } finally {
-      setDeactivatingId(null);
+      setTogglingId(null);
     }
   };
 
@@ -292,25 +288,33 @@ export function PolicyTable() {
       {
         accessorKey: 'isActive',
         header: 'Trạng thái',
-        cell: ({ row }) =>
-          row.original.isActive ? (
-            <span className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-900/20 dark:border-emerald-500/30'>
-              <CheckCircle2 className='w-3 h-3' />
-              Hoạt động
-            </span>
-          ) : (
-            <span className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium text-gray-600 bg-gray-100 border-gray-200 dark:text-gray-400 dark:bg-white/5 dark:border-white/10'>
-              <XCircle className='w-3 h-3' />
-              Đã vô hiệu
-            </span>
-          ),
+        cell: ({ row }) => {
+          const policy = row.original;
+          const isToggling = togglingId === policy.policyDocumentId;
+          return (
+            <div className='flex items-center gap-2'>
+              <Switch
+                checked={policy.isActive}
+                disabled={isToggling}
+                onCheckedChange={() => handleToggle(policy)}
+                className={cn(
+                  'data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-gray-200',
+                  isToggling && 'opacity-50 cursor-not-allowed',
+                )}
+              />
+              {isToggling && (
+                <Loader2 className='w-3.5 h-3.5 animate-spin text-gray-400' />
+              )}
+            </div>
+          );
+        },
       },
       {
         id: 'actions',
         header: '',
         cell: ({ row }) => {
           const policy = row.original;
-          const isDeactivating = deactivatingId === policy.policyDocumentId;
+          const isToggling = togglingId === policy.policyDocumentId;
           return (
             <div className='flex items-center gap-1.5 justify-end'>
               {/* Chỉnh sửa */}
@@ -336,31 +340,13 @@ export function PolicyTable() {
                 <Eye className='w-3.5 h-3.5' />
                 Xem
               </button>
-
-              {/* Vô hiệu hóa */}
-              {policy.isActive && (
-                <button
-                  type='button'
-                  onClick={() => handleDeactivate(policy)}
-                  disabled={isDeactivating}
-                  className='flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-                  title='Vô hiệu hóa'
-                >
-                  {isDeactivating ? (
-                    <Loader2 className='w-3.5 h-3.5 animate-spin' />
-                  ) : (
-                    <ShieldOff className='w-3.5 h-3.5' />
-                  )}
-                  Vô hiệu
-                </button>
-              )}
             </div>
           );
         },
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [deactivatingId, editingPolicy],
+    [togglingId, editingPolicy],
   );
 
   return (

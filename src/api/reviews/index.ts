@@ -1,5 +1,5 @@
 /**
- * Reviews API — Module 15: REVIEWS (API-095 → API-099)
+ * Reviews API - Module 15: REVIEWS (API-095 → API-099)
  *
  * Base URL: /api/v1
  * Tất cả endpoints yêu cầu xác thực [AUTH]
@@ -131,6 +131,19 @@ export function deleteReview(
 ): Promise<AxiosResponse<ReviewVoidResponse>> {
   return httpService.delete<ReviewVoidResponse>(
     `/reviews/${reviewId}`,
+    authOpts,
+  );
+}
+
+/**
+ * API-100: Đánh dấu đánh giá là hữu ích [AUTH]
+ */
+export function markHelpful(
+  reviewId: string,
+): Promise<AxiosResponse<ReviewSingleResponse>> {
+  return httpService.post<ReviewSingleResponse>(
+    `/reviews/${reviewId}/helpful`,
+    {},
     authOpts,
   );
 }

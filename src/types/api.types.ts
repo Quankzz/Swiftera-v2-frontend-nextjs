@@ -1,11 +1,4 @@
-/**
- * Backend API response types.
- * Mirror the actual REST contract from https://swiftera.azurewebsites.net/api/v1
- * These types are intentionally separate from UI domain types so that
- * whoever owns the auth domain can freely merge their work without collision.
- */
-
-// ─── Common wrappers ──────────────────────────────────────────────────────────
+// ─── Common ──────────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -46,9 +39,7 @@ export interface RoleSecuredResponse {
   active: boolean;
 }
 
-/**
- * Returned by login, verify-active-account, refresh, and GET /auth/account.
- */
+/** Returned by login, verify-active-account, refresh, and GET /auth/account. */
 export interface UserSecuredResponse {
   userId: string;
   email: string;
@@ -93,10 +84,8 @@ export interface HubResponse {
   updatedAt: string;
 }
 
-// ─── Rental Orders ────────────────────────────────────────────────────────────
-
 /**
- * Staff member info returned by GET /hubs/{hubId}/staff (API-043) and embedded
+ * Staff member returned by GET /hubs/{hubId}/staff (API-043) and embedded
  * in RentalOrderResponse as deliveryStaff / pickupStaff (API-082).
  */
 export interface HubStaffResponse {
@@ -113,10 +102,8 @@ export interface HubStaffResponse {
   hubName: string | null;
 }
 
-/**
- * Actual backend status enum.
- * The UI layer maps these to the simpler OrderStatus used in DashboardOrder.
- */
+// ─── Rental Orders ────────────────────────────────────────────────────────────
+
 export type RentalOrderApiStatus =
   | 'PENDING_PAYMENT'
   | 'PAID'
@@ -130,6 +117,18 @@ export type RentalOrderApiStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
+export type OrderStatus = RentalOrderApiStatus;
+
+export type PaymentStatus = 'PAID' | 'PENDING' | 'PARTIAL' | 'REFUNDED';
+
+export type DepositRefundStatus =
+  | 'NOT_REFUNDED'
+  | 'REFUNDED'
+  | 'PARTIAL_REFUNDED';
+
+// ─── Nested / embedded types ─────────────────────────────────────────────────
+
+/** QR code photo taken at a specific rental phase. */
 export interface RentalOrderLinePhotoResponse {
   rentalOrderLinePhotoId: string;
   photoPhase: 'CHECKOUT' | 'CHECKIN';
@@ -137,62 +136,104 @@ export interface RentalOrderLinePhotoResponse {
   sortOrder: number | null;
 }
 
+/** Embedded hub info on an inventory item line. */
+export interface InventoryItemHubResponse {
+  hubId: string;
+  code: string;
+  name: string;
+  addressLine: string;
+  ward: string;
+  district: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  phone: string;
+  isActive: boolean;
+}
+
+/** Snapshot of the user's delivery address captured at order placement. */
+export interface UserAddressSnapshot {
+  userAddressId: string;
+  userId: string;
+  recipientName: string;
+  phoneNumber: string;
+  addressLine: string;
+  ward: string | null;
+  district: string | null;
+  city: string | null;
+  isDefault: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  createdAt: string;
+  createdBy: string;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+/** One product line within a rental order (maps to one inventory item). */
 export interface RentalOrderLineResponse {
   rentalOrderLineId: string;
   productId: string;
-  /** Backend returns 'productNameSnapshot', not 'productName' */
   productNameSnapshot: string;
   inventoryItemId: string | null;
-  /** Backend returns 'inventorySerialNumber', not 'serialNumber' */
   inventorySerialNumber: string | null;
+  inventoryItemHub?: InventoryItemHubResponse | null;
   dailyPriceSnapshot: number;
   depositAmountSnapshot: number;
   rentalDurationDays: number;
   itemPenaltyAmount: number;
   checkoutConditionNote: string | null;
   checkinConditionNote: string | null;
-  /** Evidence photos — CHECKOUT phase: taken at hub before delivery; CHECKIN: taken when pickup */
   photos: RentalOrderLinePhotoResponse[];
+  productColorId: string | null;
+  colorNameSnapshot: string | null;
+  colorCodeSnapshot: string | null;
+  voucherCodeSnapshot: string | null;
+  voucherDiscountAmount: number;
 }
 
+/**
+ * Full rental order — response shape for API-074, API-075, API-076 and
+ * all write endpoints (API-079/084/085/086).
+ * Fields with `overdue` / penalty semantics align with API-086A merged into this response.
+ */
 export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
-  // Staff assignment — backend returns either flat IDs or nested objects depending on endpoint.
-  // API-076 (list) typically returns flat IDs; API-082 (assign-staff) returns nested objects.
   deliveryStaffId: string | null;
   pickupStaffId: string | null;
   deliveryStaff?: HubStaffResponse | null;
   pickupStaff?: HubStaffResponse | null;
   hubId: string | null;
+  hubCode: string | null;
   hubName: string | null;
-  // Delivery snapshot
-  deliveryRecipientName: string;
-  deliveryPhone: string;
-  deliveryAddressLine: string | null;
-  deliveryWard: string | null;
-  deliveryDistrict: string | null;
-  deliveryCity: string | null;
-  deliveryNote: string | null;
-  // Coordinates
-  deliveryLatitude: number | null;
-  deliveryLongitude: number | null;
-  deliveredLatitude: number | null;
-  deliveredLongitude: number | null;
-  pickedUpLatitude: number | null;
-  pickedUpLongitude: number | null;
-  // Dates
+  hubAddressLine: string | null;
+  hubWard: string | null;
+  hubDistrict: string | null;
+  hubCity: string | null;
+  hubLatitude: number | null;
+  hubLongitude: number | null;
+  hubPhone: string | null;
+  userAddressId: string | null;
+  userAddress: UserAddressSnapshot | null;
+  // Delivery plan
   expectedDeliveryDate: string | null;
   expectedRentalEndDate: string | null;
   plannedDeliveryAt: string | null;
   actualDeliveryAt: string | null;
   actualRentalStartAt: string | null;
-  actualRentalEndAt: string | null;
+  // Pickup plan
   plannedPickupAt: string | null;
+  actualRentalEndAt: string | null;
   pickedUpAt: string | null;
-  placedAt: string;
-  // Status & financials
+  // GPS
+  deliveredLatitude: number | null;
+  deliveredLongitude: number | null;
+  pickedUpLatitude: number | null;
+  pickedUpLongitude: number | null;
+  // Status
   status: RentalOrderApiStatus;
+  // Financials
   rentalSubtotalAmount: number;
   voucherCodeSnapshot: string | null;
   voucherDiscountAmount: number;
@@ -200,12 +241,67 @@ export interface RentalOrderResponse {
   depositHoldAmount: number;
   totalPayableAmount: number;
   totalPaidAmount: number;
-  /** Backend returns 'penaltyChargeAmount' (nullable), not 'penaltyTotal' */
   penaltyChargeAmount: number | null;
+  damagePenaltyAmount: number | null;
+  overduePenaltyAmount: number | null;
+  provisionalOverduePenaltyAmount: number | null;
   depositRefundAmount: number | null;
-  // Lines — backend key is 'rentalOrderLines', not 'orderLines'
+  // Overdue flags (API-086A merged into this response)
+  overdue: boolean;
+  overdueDays: number | null;
+  dailyOverdueRateAmount: number | null;
+  finalOverduePenaltyAmount: number | null;
+  suggestedTotalPenaltyAmount: number | null;
+  suggestedDepositRefundAmount: number | null;
+  // Order lines
   rentalOrderLines: RentalOrderLineResponse[];
-  // Enriched by backend (if included)
-  userEmail?: string | null;
-  userFullName?: string | null;
+  // Issue / early return
+  issueReportNote: string | null;
+  issueReportedAt: string | null;
+  // Metadata
+  qrCode: string | null;
+  placedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string | null;
+}
+
+/** Request body for API-086 (set-penalty). */
+export interface SetPenaltyRequest {
+  damagePenaltyAmount?: number;
+  overduePenaltyAmount?: number;
+  penaltyTotal?: number;
+  note?: string;
+}
+
+/**
+ * API-086A response — overdue penalty suggestion.
+ * API-086 fields (overdue, overdueDays, dailyOverdueRateAmount, provisionalOverduePenaltyAmount,
+ * finalOverduePenaltyAmount, suggestedTotalPenaltyAmount, suggestedDepositRefundAmount) are
+ * also merged directly into RentalOrderResponse, so this type is only needed for the dedicated
+ * GET /overdue-penalty-suggestion endpoint.
+ */
+export interface OverduePenaltySuggestionResponse {
+  rentalOrderId: string;
+  status: RentalOrderApiStatus;
+  overdue: boolean;
+  expectedRentalEndDate: string | null;
+  actualRentalEndAt: string | null;
+  overdueDays: number | null;
+  dailyOverdueRateAmount: number | null;
+  provisionalOverduePenaltyAmount: number | null;
+  finalOverduePenaltyAmount: number | null;
+  damagePenaltyAmount: number | null;
+  suggestedTotalPenaltyAmount: number | null;
+  suggestedDepositRefundAmount: number | null;
+}
+
+/** API-082 response — staff + hub detail embedded in a rental order. */
+export interface RentalOrderStaffDetailResponse {
+  rentalOrderId: string;
+  status: RentalOrderApiStatus;
+  hub: HubResponse;
+  deliveryStaff: HubStaffResponse | null;
+  pickupStaff: HubStaffResponse | null;
 }
