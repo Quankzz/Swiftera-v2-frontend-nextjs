@@ -61,16 +61,30 @@ export interface ProductColorResponse {
  * because they're implicit (you're already in the product context).
  * The full InventoryItemResponse (with productId/productName) is used
  * by the standalone inventory-items API (API-057..061).
+ *
+ * NOTE: The API returns hub data as a nested object `hub`, not flat fields.
  */
+export interface InventoryItemHub {
+  hubId: string;
+  name: string;
+  code: string;
+  addressLine: string;
+  district: string;
+  city: string;
+  ward: string;
+  phone: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface InventoryItemInProduct {
   inventoryItemId: string;
   serialNumber: string;
   status: InventoryItemStatus;
   conditionGrade: InventoryItemConditionGrade | null;
   staffNote: string | null;
-  hubId: string;
-  hubCode: string;
-  hubName: string;
+  /** Nested hub object returned by BE */
+  hub: InventoryItemHub;
   /** Color this serial is associated with (optional if product has 1 color) */
   productColorId: string | null;
   colorName: string | null;

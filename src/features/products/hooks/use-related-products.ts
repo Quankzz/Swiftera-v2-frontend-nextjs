@@ -76,6 +76,7 @@ export function useRelatedProductsQuery(
         size: FETCH_SIZE,
         sort: 'createdAt,desc',
         filter: filters.join(' and '),
+        onlyWithStock: true,
       });
       return toCardModels(data.content ?? [], excludeProductId!);
     },

@@ -4,9 +4,9 @@ import type { OrderStatus } from '@/types/api.types';
 export type { OrderStatus };
 
 interface StaffOrderCountsState {
-  /** Count of orders per status - empty until the orders page loads data. */
+  /** Count of orders per status - empty until the first API call. */
   counts: Partial<Record<OrderStatus, number>>;
-  /** Whether a load has ever completed (used to distinguish "loading" from "empty"). */
+  /** Whether a load has ever completed. */
   isLoaded: boolean;
 
   /** Replace the entire counts map after a fresh data load. */

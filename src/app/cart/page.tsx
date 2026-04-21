@@ -46,9 +46,7 @@ import {
   useClearCart,
 } from '@/hooks/api/use-cart';
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
-import {
-  useInitiateBatchPayment,
-} from '@/hooks/api/use-payments';
+import { useInitiateBatchPayment } from '@/hooks/api/use-payments';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
 import { toast } from 'sonner';
 import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
@@ -258,12 +256,12 @@ function CartLineRow({
           <button
             type='button'
             onClick={() => onToggle(line.cartLineId)}
-            className='mx-auto mt-1 flex shrink-0 items-start sm:mx-0'
+            className='mt-1 flex shrink-0 items-start sm:mx-0'
             aria-label={isSelected ? 'Bỏ chọn' : 'Chọn'}
           >
             <span
               className={cn(
-                'flex size-[22px] items-center justify-center rounded-full border-2 transition-all duration-150',
+                'flex size-[22px] rounded-full border-2 transition-all duration-150',
                 isSelected
                   ? 'border-blue-500 bg-blue-500 shadow-sm shadow-blue-200 dark:shadow-blue-900/40'
                   : 'border-muted-foreground/30 hover:border-blue-400',
@@ -329,7 +327,7 @@ function CartLineRow({
                     variant='secondary'
                     className='rounded-lg text-xs font-normal'
                   >
-                    {formatter.format(line.dailyPrice)}₫ / ngày
+                    {formatter.format(line.dailyPrice)} / ngày
                   </Badge>
 
                   {/* Màu sắc */}
@@ -1306,7 +1304,7 @@ export default function CartPage() {
                   Giỏ hàng{' '}
                   <HighlightText
                     variant='marker'
-                    color='destructive'
+                    color='teal'
                     className='font-extrabold'
                   >
                     cho thuê
@@ -1318,7 +1316,7 @@ export default function CartPage() {
                   </Badge>
                 )}
               </div>
-              <p className='mt-2 max-w-xl text-sm text-muted-foreground sm:text-base'>
+              <p className='mt-2 max-w-4xl text-sm text-muted-foreground sm:text-base'>
                 <ShinyText className='font-medium'>Kiểm tra đơn thuê</ShinyText>
                 {' - '}
                 trước khi tiến hành thanh toán. Giao nhanh toàn quốc.

@@ -172,9 +172,12 @@ const MapView: React.FC = () => {
         setHubs(hubResponses.map(adaptHubForMap));
       })
       .catch(() => {
-        showNotification('error', 'Không thể tải danh sách hub. Vui lòng tải lại trang.');
+        showNotification(
+          'error',
+          'Không thể tải danh sách hub. Vui lòng tải lại trang.',
+        );
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setHubs, showNotification]);
 
   // ── Silent geolocation on mount ────────────────────────────────────────────
@@ -958,10 +961,6 @@ const MapView: React.FC = () => {
         ref={mapContainerRef}
         className="absolute inset-0 w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150 transition-all duration-500 ease-in-out"
       />
-
-      <div className="fixed inset-x-0 top-0 z-50">
-        <Header stickyHeader showSearchAndCategories={false} />
-      </div>
 
       <MapSidebar
         onRouteSearch={handleRouteSearch}

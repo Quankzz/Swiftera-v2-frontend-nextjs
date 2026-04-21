@@ -10,7 +10,9 @@ import {
   ChevronUp,
   MapIcon,
   X,
+  ArrowLeft,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useMapStore } from '@/stores/use-map-store';
 import type { Hub } from '@/types/map.types';
 import SearchTab from './SearchTab';
@@ -260,7 +262,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
     <>
       <div
         className={`
-          fixed top-18 left-0 h-[calc(100%-4.5rem)] z-20 flex
+          fixed top-0 left-0 h-full z-20 flex
           transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
@@ -272,7 +274,9 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
           <div className="flex items-center gap-3 px-5 py-4 shrink-0 bg-linear-to-r from-theme-primary-start to-theme-primary-end shadow-md shadow-theme-primary-start/20 relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
             <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md shadow-inner relative z-10 border border-white/20">
-              <MapIcon size={18} className="text-white drop-shadow-sm" />
+              <Link href="/">
+                <ArrowLeft size={18} className="text-white drop-shadow-sm" />
+              </Link>
             </div>
             <div className="relative z-10">
               <p className="text-white font-extrabold text-[15px] leading-tight tracking-tight drop-shadow-sm">
