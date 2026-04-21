@@ -285,11 +285,13 @@ function AdminSupportSection({ order }: { order: RentalOrderResponse }) {
                     Lúc: {formatDateTimeAdmin(order.cancellationRequestedAt)}
                   </p>
                 )}
-                {order.depositHoldAmount != null && order.depositHoldAmount > 0 && (
-                  <p className='text-xs font-semibold text-cyan-700 dark:text-cyan-400 mt-1'>
-                    Số tiền cọc cần hoàn: {formatCurrency(order.depositHoldAmount)}
-                  </p>
-                )}
+                {order.depositHoldAmount != null &&
+                  order.depositHoldAmount > 0 && (
+                    <p className='text-xs font-semibold text-cyan-700 dark:text-cyan-400 mt-1'>
+                      Số tiền cọc cần hoàn:{' '}
+                      {formatCurrency(order.depositHoldAmount)}
+                    </p>
+                  )}
               </div>
             </div>
 
@@ -306,17 +308,15 @@ function AdminSupportSection({ order }: { order: RentalOrderResponse }) {
                   Tôi xác nhận đã chuyển khoản hoàn tiền cho khách hàng
                 </span>
               </label>
-              {order.depositHoldAmount != null && order.depositHoldAmount > 0 && (
-                <p className='text-xs text-amber-600 dark:text-amber-400 px-1'>
-                  Tiền hoàn: {formatCurrency(order.depositHoldAmount)}
-                </p>
-              )}
+              {order.depositHoldAmount != null &&
+                order.depositHoldAmount > 0 && (
+                  <p className='text-xs text-amber-600 dark:text-amber-400 px-1'>
+                    Tiền hoàn: {formatCurrency(order.depositHoldAmount)}
+                  </p>
+                )}
               <Button
                 size='sm'
-                disabled={
-                  !refundConfirmed ||
-                  confirmMutation.isPending
-                }
+                disabled={!refundConfirmed || confirmMutation.isPending}
                 onClick={() => {
                   confirmMutation.mutate({
                     rentalOrderId: order.rentalOrderId,
@@ -385,11 +385,13 @@ function AdminSupportSection({ order }: { order: RentalOrderResponse }) {
                       onChange={(e) => setCancelReason(e.target.value)}
                       className='text-sm'
                     />
-                    {order.depositHoldAmount != null && order.depositHoldAmount > 0 && (
-                      <p className='text-xs text-red-600/80 dark:text-red-400/70'>
-                        Tiền cọc {formatCurrency(order.depositHoldAmount)} sẽ được hoàn cho khách.
-                      </p>
-                    )}
+                    {order.depositHoldAmount != null &&
+                      order.depositHoldAmount > 0 && (
+                        <p className='text-xs text-red-600/80 dark:text-red-400/70'>
+                          Tiền cọc {formatCurrency(order.depositHoldAmount)} sẽ
+                          được hoàn cho khách.
+                        </p>
+                      )}
                     <div className='flex gap-2'>
                       <Button
                         size='sm'
@@ -404,7 +406,9 @@ function AdminSupportSection({ order }: { order: RentalOrderResponse }) {
                       </Button>
                       <Button
                         size='sm'
-                        disabled={!cancelReason.trim() || adminCancelMutation.isPending}
+                        disabled={
+                          !cancelReason.trim() || adminCancelMutation.isPending
+                        }
                         onClick={() => {
                           adminCancelMutation.mutate({
                             rentalOrderId: order.rentalOrderId,
@@ -489,7 +493,7 @@ export function RentalOrderAssignDialog({
       return;
     }
     try {
-      await assignMutation.mutateAsync({
+      const updatedOrder = await assignMutation.mutateAsync({
         rentalOrderId: order.rentalOrderId,
         payload: {
           // Chỉ gửi field khi slot đó được phép và đã chọn nhân viên
@@ -501,7 +505,24 @@ export function RentalOrderAssignDialog({
             : undefined,
         },
       });
-      toast.success('Gán nhân viên thành công!');
+
+      // Kiểm tra xem BE đã ghép đơn cho nhân viên chưa
+      const deliveryLinked =
+        !canAssignDelivery || !deliveryStaff || !!updatedOrder.deliveryStaff;
+      const pickupLinked =
+        !canAssignPickup || !pickupStaff || !!updatedOrder.pickupStaff;
+
+      if (!deliveryLinked || !pickupLinked) {
+        toast.warning(
+          'Gán nhân viên có thể chưa hoàn tất - vui lòng kiểm tra lại.',
+        );
+      }
+
+      // Cập nhật state local từ phản hồi BE để phản ánh ngay lập tức
+      if (updatedOrder.deliveryStaff)
+        setDeliveryStaff(updatedOrder.deliveryStaff);
+      if (updatedOrder.pickupStaff) setPickupStaff(updatedOrder.pickupStaff);
+
       onClose();
     } catch (err) {
       toast.error(
@@ -964,7 +985,16 @@ export function RentalOrderAssignDialog({
             <div>
               <SectionLabel>Phân công nhân viên</SectionLabel>
 
-              {!canAssignDelivery && !canAssignPickup ? (
+              {!order.hubId ? (
+                /* Hub chưa được gán → không thể chọn nhân viên */
+                <div className='flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3'>
+                  <CircleDot className='w-4 h-4 text-amber-500 shrink-0' />
+                  <p className='text-sm text-amber-700 dark:text-amber-400'>
+                    Đơn chưa được gán hub — vui lòng gán hub trước khi phân công
+                    nhân viên.
+                  </p>
+                </div>
+              ) : !canAssignDelivery && !canAssignPickup ? (
                 /* Trạng thái không hỗ trợ gán */
                 <div className='flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3'>
                   <CircleDot className='w-4 h-4 text-amber-500 shrink-0' />
@@ -1028,9 +1058,7 @@ export function RentalOrderAssignDialog({
             </div>
 
             {/* ── Cancellation request display + Admin support actions ── */}
-            {order.status === 'PAID' && (
-              <AdminSupportSection order={order} />
-            )}
+            {order.status === 'PAID' && <AdminSupportSection order={order} />}
           </div>
 
           {/* ── Footer ── */}

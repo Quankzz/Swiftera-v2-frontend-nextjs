@@ -69,15 +69,18 @@ export function useHubsForAssignQuery(params?: HubListParams) {
 
 /**
  * Lấy danh sách nhân viên thuộc hub được chọn.
- * Dùng GET /hubs/{hubId}/staff?activeOnly=false (API-043 staff endpoint).
+ * Dùng GET /hubs/{hubId}/staff?activeOnly=true (API-043 staff endpoint).
  *
- * Response là plain array (không paginated).
+ * activeOnly=true → chỉ lấy staff đã verify và role active (phù hợp để gán đơn).
  * Chỉ enabled khi có hubId.
  */
-export function useHubStaffForAssignQuery(hubId: string | undefined) {
+export function useHubStaffForAssignQuery(
+  hubId: string | undefined,
+  activeOnly = true,
+) {
   return useQuery<HubStaffResponse[]>({
-    queryKey: hubKeys.staff(hubId ?? ''),
-    queryFn: () => getHubStaff(hubId!, false),
+    queryKey: [...hubKeys.staff(hubId ?? ''), { activeOnly }],
+    queryFn: () => getHubStaff(hubId!, activeOnly),
     enabled: !!hubId,
     staleTime: 2 * 60 * 1000,
   });
@@ -180,11 +183,18 @@ export function useAssignStaffToHubMutation() {
  */
 export function useConfirmCancellationRefund() {
   const qc = useQueryClient();
-  return useMutation<RentalOrderResponse, Error, { rentalOrderId: string; input: CancelOrderInput }>({
-    mutationFn: ({ rentalOrderId, input }) => confirmCancellationRefund(rentalOrderId, input),
+  return useMutation<
+    RentalOrderResponse,
+    Error,
+    { rentalOrderId: string; input: CancelOrderInput }
+  >({
+    mutationFn: ({ rentalOrderId, input }) =>
+      confirmCancellationRefund(rentalOrderId, input),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
-      qc.invalidateQueries({ queryKey: rentalOrderKeys.detail(variables.rentalOrderId) });
+      qc.invalidateQueries({
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
+      });
       toast.success('Đã xác nhận hủy đơn và hoàn tiền thành công');
     },
     onError: (error) => {
@@ -199,11 +209,18 @@ export function useConfirmCancellationRefund() {
  */
 export function useAdminCancelFromPaid() {
   const qc = useQueryClient();
-  return useMutation<RentalOrderResponse, Error, { rentalOrderId: string; input: CancelOrderInput }>({
-    mutationFn: ({ rentalOrderId, input }) => adminCancelFromPaid(rentalOrderId, input),
+  return useMutation<
+    RentalOrderResponse,
+    Error,
+    { rentalOrderId: string; input: CancelOrderInput }
+  >({
+    mutationFn: ({ rentalOrderId, input }) =>
+      adminCancelFromPaid(rentalOrderId, input),
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
-      qc.invalidateQueries({ queryKey: rentalOrderKeys.detail(variables.rentalOrderId) });
+      qc.invalidateQueries({
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
+      });
       toast.success('Đã hủy đơn PAID thành công');
     },
     onError: (error) => {

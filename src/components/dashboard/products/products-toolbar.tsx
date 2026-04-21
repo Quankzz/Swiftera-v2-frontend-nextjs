@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { CategoryTreeSelect } from '@/components/dashboard/categories/category-tree-select';
 
 export type SortOption =
+  | 'newest'
   | 'name-asc'
   | 'name-desc'
   | 'price-asc'
@@ -34,6 +35,7 @@ interface ProductsToolbarProps {
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'newest', label: 'Mới nhất' },
   { value: 'name-asc', label: 'Tên A → Z' },
   { value: 'name-desc', label: 'Tên Z → A' },
   { value: 'price-asc', label: 'Giá tăng dần' },
