@@ -2,50 +2,36 @@
 
 import { useState, useCallback, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  User,
-  Phone,
-  MapPin,
-  Calendar,
-  AlertCircle,
-  Navigation,
-  ClipboardList,
-  Loader2,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, AlertCircle, Navigation, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import '@goongmaps/goong-js/dist/goong-js.css';
 import { cn } from '@/lib/utils';
 import { apiKey } from '@/configs/goongmapKeys';
-import type { StaffOrder, OrderStatus } from '@/types/api.types';
+import type { RentalOrderResponse, OrderStatus } from '@/types/api.types';
 import {
   getStaffOrderById,
   updateOrderStatus,
   recordDelivery,
   recordPickup,
   setPenalty,
+  cancelOrder,
   type StaffTransitionTargetStatus,
 } from '@/api/staff-orders';
-import { getHubById } from '@/api/hubs';
-import type { HubResponse } from '@/api/hubs';
 import { useAuthStore } from '@/stores/auth-store';
 import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
 import { Button } from '@/components/ui/button';
 
-import { STATUS_CFG, fmtDate, fmtDatetime, fmt } from './_components/utils';
-import { Section } from './_components/Section';
+import { STATUS_CFG, fmtDatetime } from './_components/utils';
 import { WorkflowStepper } from './_components/WorkflowStepper';
-import { InfoRow } from './_components/InfoRow';
 import { DeliveryMiniMap } from './_components/DeliveryMiniMap';
-import { PendingWorkflow } from './_components/workflows/PendingWorkflow';
+import { ConfirmDeliveryWorkflow } from './_components/workflows/ConfirmDeliveryWorkflow';
 import { ConfirmedWorkflow } from './_components/workflows/ConfirmedWorkflow';
 import { DeliveringWorkflow } from './_components/workflows/DeliveringWorkflow';
 import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
-import { ActiveWorkflow } from './_components/workflows/ActiveWorkflow';
 import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
-import { CompletedWorkflow } from './_components/workflows/CompletedWorkflow';
 import { PickedUpWorkflow } from './_components/workflows/PickedUpWorkflow';
+import { ConfirmReturnWorkflow } from './_components/workflows/ConfirmReturnWorkflow';
+import { CancelledWorkflow } from './_components/workflows/CancelledWorkflow';
 
 export default function OrderDetailPage({
   params,
@@ -55,8 +41,7 @@ export default function OrderDetailPage({
   const { id } = use(params);
   const { user } = useAuthStore();
   const updateCount = useStaffOrderCounts((s) => s.updateCount);
-  const [order, setOrder] = useState<StaffOrder | null>(null);
-  const [hubInfo, setHubInfo] = useState<HubResponse | null>(null);
+  const [order, setOrder] = useState<RentalOrderResponse | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
@@ -76,14 +61,6 @@ export default function OrderDetailPage({
       .then((o) => {
         if (!cancelled) {
           setOrder(o);
-          // Fetch hub info when order is loaded
-          if (o?.hub_id) {
-            getHubById(o.hub_id)
-              .then((hub) => {
-                if (!cancelled) setHubInfo(hub);
-              })
-              .catch(() => {});
-          }
         }
       })
       .catch((err) => {
@@ -101,14 +78,23 @@ export default function OrderDetailPage({
   const [geocodedDestLng, setGeocodedDestLng] = useState<number | undefined>();
   useEffect(() => {
     if (!order) return;
-    if (order.delivery_latitude != null) return; // already have coords
-    if (!order.delivery_address) return;
+    if (order.deliveredLatitude != null) return; // already have coords
+    const addressToGeocode = order.userAddress
+      ? [
+          order.userAddress.addressLine,
+          order.userAddress.district,
+          order.userAddress.city,
+        ]
+          .filter(Boolean)
+          .join(', ')
+      : (order.hubAddressLine ?? '');
+    if (!addressToGeocode) return;
     const status = order.status;
     if (status !== 'DELIVERING' && status !== 'PICKING_UP') return;
     let cancelled = false;
     axios
       .get(
-        `https://rsapi.goong.io/geocode?address=${encodeURIComponent(order.delivery_address)}&api_key=${apiKey}`,
+        `https://rsapi.goong.io/geocode?address=${encodeURIComponent(addressToGeocode)}&api_key=${apiKey}`,
       )
       .then((res) => {
         if (cancelled) return;
@@ -126,10 +112,10 @@ export default function OrderDetailPage({
 
   // GPS state - local to this page; initialized from order delivery coordinates
   const [localLat, setLocalLat] = useState<number | undefined>(
-    order?.delivery_latitude,
+    order?.deliveredLatitude ?? undefined,
   );
   const [localLng, setLocalLng] = useState<number | undefined>(
-    order?.delivery_longitude,
+    order?.deliveredLongitude ?? undefined,
   );
   const [localLocAt, setLocalLocAt] = useState<string | undefined>(undefined);
   // Auto-watch GPS whenever staff is on the move (DELIVERING or PICKING_UP)
@@ -174,12 +160,12 @@ export default function OrderDetailPage({
         overduePenaltyAmount?: number;
         note?: string;
       },
-    ): Promise<StaffOrder | null> => {
+    ): Promise<RentalOrderResponse | null> => {
       if (!order) return null;
       setStatusLoading(true);
       setActionError(null);
       try {
-        let updated: StaffOrder | null = null;
+        let updated: RentalOrderResponse | null = null;
 
         // Always persist split penalties before pickup/completion transitions.
         const shouldSetPenalty =
@@ -198,7 +184,7 @@ export default function OrderDetailPage({
               : undefined;
           const note = options?.note?.trim();
 
-          updated = await setPenalty(order.rental_order_id, {
+          updated = await setPenalty(order.rentalOrderId, {
             damagePenaltyAmount,
             overduePenaltyAmount,
             note: note || undefined,
@@ -208,27 +194,28 @@ export default function OrderDetailPage({
         // Route to the correct status-update endpoint
         switch (newStatus) {
           case 'DELIVERED':
-            updated = await recordDelivery(order.rental_order_id, {
+            updated = await recordDelivery(order.rentalOrderId, {
               deliveredLatitude: localLat,
               deliveredLongitude: localLng,
             });
             break;
           case 'PICKED_UP':
-            updated = await recordPickup(order.rental_order_id, {
+            updated = await recordPickup(order.rentalOrderId, {
               pickedUpLatitude: localLat,
               pickedUpLongitude: localLng,
             });
             break;
-          case 'COMPLETED':
           case 'PREPARING':
           case 'DELIVERING':
           case 'PICKING_UP':
-            updated = await updateOrderStatus(order.rental_order_id, newStatus);
+            updated = await updateOrderStatus(order.rentalOrderId, newStatus);
             break;
         }
 
         if (!updated) {
-          throw new Error('API không trả về dữ liệu cập nhật trạng thái đơn hàng');
+          throw new Error(
+            'API không trả về dữ liệu cập nhật trạng thái đơn hàng',
+          );
         }
 
         updateCount(order.status, newStatus);
@@ -246,22 +233,24 @@ export default function OrderDetailPage({
     [order, localLat, localLng, updateCount],
   );
 
-  const handleSettlementUpdate = useCallback(
-    async (refundNote?: string) => {
-      if (!order) return;
-      const overduePenaltyAmount = Math.max(0, order.overdue_penalty_amount ?? 0);
-      const damagePenaltyAmount = Math.max(
-        0,
-        order.total_penalty_amount - overduePenaltyAmount,
+  const handleCancelOrder = useCallback(async () => {
+    if (!order) return;
+    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return;
+    setStatusLoading(true);
+    setActionError(null);
+    try {
+      await cancelOrder(order.rentalOrderId);
+      updateCount(order.status, 'CANCELLED');
+      const updated = await getStaffOrderById(order.rentalOrderId);
+      setOrder(updated);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : 'Không thể hủy đơn hàng',
       );
-      await handleStatusChange('COMPLETED', {
-        damagePenaltyAmount,
-        overduePenaltyAmount,
-        note: refundNote,
-      });
-    },
-    [order, handleStatusChange],
-  );
+    } finally {
+      setStatusLoading(false);
+    }
+  }, [order, updateCount]);
 
   if (pageLoading) {
     return (
@@ -303,15 +292,47 @@ export default function OrderDetailPage({
   }
 
   const statusCfg = STATUS_CFG[order.status];
-  const isOverdue = order.status === 'OVERDUE';
+  const orderCode = `SW-${(order.placedAt ?? '').slice(0, 10).replace(/-/g, '')}-${order.rentalOrderId.slice(0, 6).toUpperCase()}`;
   const now = new Date().getTime();
-  const daysOverdue = isOverdue
-    ? Math.floor((now - new Date(order.end_date).getTime()) / 86400000)
-    : 0;
+  const today = new Date(now).setHours(0, 0, 0, 0);
+
+  // ── Delivery overdue: PAID only — expectedDeliveryDate passed today ─────────
+  const deliveryOverdueDays =
+    !order.overdue &&
+    order.status === 'PAID' &&
+    order.expectedDeliveryDate &&
+    new Date(order.expectedDeliveryDate).setHours(0, 0, 0, 0) < today
+      ? Math.floor(
+          (today - new Date(order.expectedDeliveryDate).setHours(0, 0, 0, 0)) /
+            86_400_000,
+        )
+      : 0;
+
+  // ── Pickup overdue: PENDING_PICKUP only — expectedRentalEndDate passed today ──
+  const pickupOverdueDays =
+    !order.overdue &&
+    order.status === 'PENDING_PICKUP' &&
+    order.expectedRentalEndDate &&
+    new Date(order.expectedRentalEndDate).setHours(0, 0, 0, 0) < today
+      ? Math.floor(
+          (today - new Date(order.expectedRentalEndDate).setHours(0, 0, 0, 0)) /
+            86_400_000,
+        )
+      : 0;
 
   // Effective destination coords: prefer API-provided, fall back to geocoded
-  const effectiveDestLat = order.delivery_latitude ?? geocodedDestLat;
-  const effectiveDestLng = order.delivery_longitude ?? geocodedDestLng;
+  const destAddress = order.userAddress
+    ? [
+        order.userAddress.addressLine,
+        order.userAddress.district,
+        order.userAddress.city,
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : (order.hubAddressLine ?? '');
+
+  const effectiveDestLat = order.deliveredLatitude ?? geocodedDestLat;
+  const effectiveDestLng = order.deliveredLongitude ?? geocodedDestLng;
 
   // Map shown only while staff is physically moving: delivering or collecting returns
   const hasMapPanel =
@@ -324,7 +345,7 @@ export default function OrderDetailPage({
         order.status === 'DELIVERING' ? 'Bản đồ giao hàng' : 'Đến lấy hàng trả',
       destLat: effectiveDestLat,
       destLng: effectiveDestLng,
-      destAddress: order.delivery_address ?? '',
+      destAddress: destAddress,
       destPinColor: 'red' as const,
       destLabel: order.status === 'DELIVERING' ? 'Điểm giao' : 'Lấy hàng trả',
     };
@@ -332,10 +353,10 @@ export default function OrderDetailPage({
 
   // Detect which workflow role the current staff has for this order
   const staffRole: 'delivery' | 'pickup' | 'both' = user?.userId
-    ? order.staff_checkin_id === user.userId &&
-      order.staff_checkout_id === user.userId
+    ? order.deliveryStaffId === user.userId &&
+      order.pickupStaffId === user.userId
       ? 'both'
-      : order.staff_checkin_id === user.userId
+      : order.deliveryStaffId === user.userId
         ? 'delivery'
         : 'pickup'
     : 'pickup';
@@ -348,31 +369,26 @@ export default function OrderDetailPage({
     'DELIVERED',
   ];
   const isDeliveryStatus = DELIVERY_STATUSES.includes(order.status);
-  const refundableDepositAmount = Math.max(
-    (order.total_deposit ?? 0) - (order.total_penalty_amount ?? 0),
-    0,
-  );
-  const canFinalizeByStaff = refundableDepositAmount <= 0;
 
   return (
     <>
-      <div className="p-3 sm:p-5 lg:p-6 min-h-screen">
-        <div className={cn('mx-auto', 'max-w-5xl')}>
-          {/* Header */}
-          <div className="flex items-start gap-3 mb-5">
+      <div className="px-3 sm:px-5 lg:px-6 min-h-screen">
+        <div className="mx-auto max-w-7xl">
+          {/* ── Slim header ── */}
+          <div className="flex items-center gap-3 mb-5">
             <Link href="/staff-dashboard/orders">
               <Button variant="ghost" size="icon" className="size-10 shrink-0">
                 <ArrowLeft className="size-5" />
               </Button>
             </Link>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="text-xl font-bold text-foreground">
-                  {order.order_code}
+              <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                <h1 className="text-lg font-bold text-foreground truncate">
+                  Chi tiết đơn hàng
                 </h1>
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-sm font-bold',
+                    'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-sm font-bold shrink-0',
                     statusCfg.color,
                     statusCfg.bg,
                     statusCfg.border,
@@ -386,23 +402,19 @@ export default function OrderDetailPage({
                   />
                   {statusCfg.label}
                 </span>
-                {daysOverdue > 0 && (
-                  <span className="text-xs font-bold bg-destructive text-white px-2.5 py-1 rounded-xl">
-                    Quá hạn {daysOverdue} ngày
-                  </span>
-                )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <User className="size-3.5" />
-                <span>{order.renter.full_name}</span>
-                <span>·</span>
-                <span>{fmtDatetime(order.created_at)}</span>
-              </div>
+              <p className="text-xs text-muted-foreground font-mono">
+                {orderCode}
+              </p>
             </div>
           </div>
 
-          {/* Workflow stepper - only show the flow matching current status */}
-          <WorkflowStepper status={order.status} />
+          {/* Workflow stepper + overdue alert */}
+          <WorkflowStepper
+            status={order.status}
+            isDeliveryOverdue={deliveryOverdueDays > 0}
+            isPickupOverdue={pickupOverdueDays > 0}
+          />
 
           {/* Main content grid */}
           <div
@@ -493,11 +505,9 @@ export default function OrderDetailPage({
                 staffRole === 'both' ||
                 isDeliveryStatus) &&
                 order.status === 'PAID' && (
-                  <PendingWorkflow
+                  <ConfirmDeliveryWorkflow
                     order={order}
-                    onConfirm={() =>
-                      handleStatusChange('PREPARING')
-                    }
+                    onConfirm={() => handleStatusChange('PREPARING')}
                     loading={statusLoading}
                   />
                 )}
@@ -505,7 +515,6 @@ export default function OrderDetailPage({
               {order.status === 'PREPARING' && (
                 <ConfirmedWorkflow
                   order={order}
-                  hubInfo={hubInfo}
                   onStartDelivery={() => handleStatusChange('DELIVERING')}
                   loading={statusLoading}
                   staffLat={localLat}
@@ -518,10 +527,8 @@ export default function OrderDetailPage({
                 <DeliveringWorkflow
                   order={order}
                   onConfirmDelivery={() => handleStatusChange('DELIVERED')}
+                  onCancel={handleCancelOrder}
                   loading={statusLoading}
-                  staffLat={localLat}
-                  staffLng={localLng}
-                  staffLocAt={localLocAt}
                 />
               )}
 
@@ -529,21 +536,11 @@ export default function OrderDetailPage({
                 <DeliveredWorkflow order={order} loading={statusLoading} />
               )}
 
-              {/* ── Pickup staff workflows ─── */}
-              {(order.status === 'IN_USE' || order.status === 'OVERDUE') && (
-                <ActiveWorkflow
-                  order={order}
-                  onStartPickup={() => handleStatusChange('PICKING_UP')}
-                  loading={statusLoading}
-                />
-              )}
-
               {order.status === 'PENDING_PICKUP' && (
-                <ActiveWorkflow
+                <ConfirmReturnWorkflow
                   order={order}
-                  onStartPickup={() => handleStatusChange('PICKING_UP')}
+                  onConfirmPickup={() => handleStatusChange('PICKING_UP')}
                   loading={statusLoading}
-                  isPendingPickup
                 />
               )}
 
@@ -561,162 +558,21 @@ export default function OrderDetailPage({
                   }}
                   loading={statusLoading}
                   staffLat={localLat}
-                  staffLng={localLng}
-                  staffLocAt={localLocAt}
                 />
               )}
 
-              {order.status === 'PICKED_UP' && (
-                <PickedUpWorkflow
-                  order={order}
-                  onCompleteReturn={async () => {
-                    await handleStatusChange('COMPLETED');
-                  }}
-                  loading={statusLoading}
-                  canFinalizeByStaff={canFinalizeByStaff}
-                  refundableDepositAmount={refundableDepositAmount}
-                />
-              )}
-
-              {order.status === 'COMPLETED' && (
-                <CompletedWorkflow
-                  order={order}
-                  onDepositRefund={handleSettlementUpdate}
-                  loading={statusLoading}
-                />
+              {(order.status === 'PICKED_UP' ||
+                order.status === 'COMPLETED') && (
+                <PickedUpWorkflow order={order} />
               )}
 
               {order.status === 'CANCELLED' && (
-                <div className="rounded-2xl border border-border bg-card p-8 flex flex-col items-center gap-3 text-center">
-                  <X className="size-12 text-destructive/40" />
-                  <p className="text-base font-bold text-foreground">
-                    Đơn hàng đã bị hủy
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Đơn hàng này không còn hoạt động.
-                  </p>
-                </div>
-              )}
-
-              {/* Collapsible full details - hidden for COMPLETED (merged into CompletedWorkflow) */}
-              {order.status !== 'COMPLETED' && (
-                <Section
-                  title="Chi tiết đơn hàng đầy đủ"
-                  icon={ClipboardList}
-                  defaultOpen={false}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
-                    <div className="space-y-3.5">
-                      <InfoRow
-                        icon={User}
-                        label="Khách thuê"
-                        value={order.renter.full_name}
-                        strong
-                      />
-                      <InfoRow
-                        icon={Phone}
-                        label="Điện thoại"
-                        value={order.renter.phone_number}
-                      />
-                      <InfoRow
-                        icon={ClipboardList}
-                        label="CCCD"
-                        value={order.renter.cccd_number}
-                        mono
-                      />
-                      <InfoRow
-                        icon={MapPin}
-                        label="Địa chỉ giao"
-                        value={order.delivery_address ?? order.renter.address}
-                      />
-                      <InfoRow
-                        icon={Calendar}
-                        label="Bắt đầu"
-                        value={fmtDate(order.start_date)}
-                      />
-                      <InfoRow
-                        icon={Calendar}
-                        label="Kết thúc"
-                        value={fmtDate(order.end_date)}
-                      />
-                      {order.actual_return_date && (
-                        <InfoRow
-                          icon={Calendar}
-                          label="Ngày trả thực tế"
-                          value={fmtDate(order.actual_return_date)}
-                        />
-                      )}
-                    </div>
-                    <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2.5 self-start">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Phí thuê</span>
-                        <span className="font-bold">
-                          {fmt(order.total_rental_fee)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Tiền cọc giữ
-                        </span>
-                        <span className="font-bold">
-                          {fmt(order.total_deposit)}
-                        </span>
-                      </div>
-                      <div className="border-t border-border pt-2.5 flex justify-between">
-                        <span className="text-sm font-bold">Đã thanh toán</span>
-                        <span className="text-base font-bold text-theme-primary-start">
-                          {fmt(order.total_rental_fee)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs text-muted-foreground">
-                          Thanh toán
-                        </span>
-                        <span
-                          className={cn(
-                            'text-xs font-bold px-2 py-0.5 rounded-lg border',
-                            order.payment_status === 'PAID'
-                              ? 'text-success bg-success-muted border-success-border'
-                              : 'text-muted-foreground bg-muted border-border',
-                          )}
-                        >
-                          {order.payment_status === 'PAID'
-                            ? 'Đã thanh toán'
-                            : 'Chưa thanh toán'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          Hoàn cọc
-                        </span>
-                        <span className="text-xs font-semibold text-foreground">
-                          {order.deposit_refund_status === 'REFUNDED'
-                            ? '✓ Đã hoàn cọc'
-                            : order.deposit_refund_status === 'PARTIAL_REFUNDED'
-                              ? 'Hoàn một phần'
-                              : 'Chưa hoàn cọc'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {order.notes && (
-                    <div className="mt-4 rounded-xl border border-border bg-muted/30 px-4 py-3">
-                      <p className="text-xs font-bold text-muted-foreground mb-1">
-                        Ghi chú
-                      </p>
-                      <p className="text-sm text-foreground">{order.notes}</p>
-                    </div>
-                  )}
-                </Section>
+                <CancelledWorkflow order={order} />
               )}
             </div>
           </div>
         </div>
       </div>
-      <div
-        id="workflow-footer-portal"
-        className="sticky border-t border-border bg-card px-28 bottom-0 z-40 w-full"
-      />
     </>
   );
 }
