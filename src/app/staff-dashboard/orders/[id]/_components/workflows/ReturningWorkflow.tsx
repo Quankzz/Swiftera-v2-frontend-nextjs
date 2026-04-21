@@ -11,7 +11,10 @@ import {
   ShieldAlert,
   Clock,
   Pencil,
+  Navigation2,
 } from 'lucide-react';
+import axios from 'axios';
+import '@goongmaps/goong-js/dist/goong-js.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -19,8 +22,11 @@ import type {
   RentalOrderResponse,
   RentalOrderLineResponse,
 } from '@/types/api.types';
+import { apiKey } from '@/configs/goongmapKeys';
 import { fmt } from '../utils';
 import { WorkflowBanner } from '../WorkflowBanner';
+import { MiniMapPanel } from '../MiniMapPanel';
+import { DeliveryMiniMap } from '../DeliveryMiniMap';
 import { CustomerInfo, OrderMetaCard } from '../OrderInfo';
 import { CameraCapture } from '../CameraCapture';
 import {
@@ -33,6 +39,7 @@ interface ReturningWorkflowProps {
   onCompleteReturn: (damagePenalty?: number, overduePenalty?: number) => void;
   loading?: boolean;
   staffLat?: number;
+  staffLng?: number;
   staffLocAt?: string;
 }
 
@@ -213,6 +220,7 @@ export function ReturningWorkflow({
   onCompleteReturn,
   loading,
   staffLat,
+  staffLng,
   staffLocAt,
 }: ReturningWorkflowProps) {
   const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>(() =>
@@ -306,6 +314,45 @@ export function ReturningWorkflow({
       ? totalDamagePenalty + overduePenalty - deposit
       : 0;
 
+  // Build full customer address
+  const customerAddressFull = order.userAddress
+    ? [order.userAddress.addressLine, order.userAddress.district, order.userAddress.city]
+        .filter(Boolean)
+        .join(', ')
+    : null;
+
+  // Geocode customer address if coordinates not available
+  const [geocodedCustomerLat, setGeocodedCustomerLat] = useState<number | undefined>(
+    order.pickedUpLatitude ?? undefined,
+  );
+  const [geocodedCustomerLng, setGeocodedCustomerLng] = useState<number | undefined>(
+    order.pickedUpLongitude ?? undefined,
+  );
+
+  useEffect(() => {
+    if (order.pickedUpLatitude != null || !customerAddressFull) return;
+    let cancelled = false;
+    axios
+      .get(
+        `https://rsapi.goong.io/geocode?address=${encodeURIComponent(customerAddressFull)}&api_key=${apiKey}`,
+      )
+      .then((res) => {
+        if (cancelled) return;
+        const loc = res.data?.results?.[0]?.geometry?.location;
+        if (loc) {
+          setGeocodedCustomerLat(loc.lat);
+          setGeocodedCustomerLng(loc.lng);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [customerAddressFull, order.pickedUpLatitude]);
+
+  const effectiveCustomerLat = geocodedCustomerLat;
+  const effectiveCustomerLng = geocodedCustomerLng;
+
   return (
     <div className="space-y-4">
       {/* Banner */}
@@ -316,37 +363,40 @@ export function ReturningWorkflow({
         variant="warning"
       />
 
-      {/* GPS status */}
-      <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
-        <div
-          className={cn(
-            'size-2.5 rounded-full shrink-0',
-            staffLat != null
-              ? 'bg-emerald-500 animate-pulse'
-              : 'bg-muted-foreground/40',
-          )}
-        />
-        <p className="text-[12px] font-semibold text-foreground flex-1">
-          {staffLat != null ? 'GPS đang theo dõi vị trí' : 'Đang lấy vị trí…'}
-          {staffLocAt && (
-            <span className="text-muted-foreground font-normal ml-2">
-              · {new Date(staffLocAt).toLocaleTimeString('vi-VN')}
+      {/* Mobile map - shown at top on mobile */}
+      {customerAddressFull && (
+        <div className="lg:hidden rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
+            <Navigation2 className="size-4 text-green-500" />
+            <span className="text-[13px] font-bold text-foreground">
+              Đến lấy hàng trả
             </span>
-          )}
-        </p>
-      </div>
-
-      {/* ── 2-column grid: left=info cards, right=items+penalties ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
-        {/* Left: Info cards */}
-        <div className="flex flex-col gap-4">
-          <OrderMetaCard order={order} />
-
-          <CustomerInfo order={order} mode="pickup" />
+          </div>
+          <div className="p-2">
+            <DeliveryMiniMap
+              destLat={effectiveCustomerLat}
+              destLng={effectiveCustomerLng}
+              destAddress={customerAddressFull}
+              destLabel="Lấy hàng trả"
+              destPinColor="green"
+              staffLat={staffLat}
+              staffLng={staffLng}
+              mapHeightClass="h-48 sm:h-56 rounded-xl"
+            />
+          </div>
         </div>
+      )}
 
-        {/* Right: Items + Penalties */}
-        <div className="flex flex-col gap-4">
+      {/* ── 2-column grid: left=workflow content, right=minimap (desktop only) ── */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_420px] lg:gap-5">
+        {/* Left: Workflow content */}
+        <div className="flex flex-col gap-4 order-2 lg:order-1">
+          {/* Info cards - stacked vertically */}
+          <div className="flex flex-col gap-4">
+            <OrderMetaCard order={order} />
+            <CustomerInfo order={order} mode="pickup" />
+          </div>
+
           {/* Progress */}
           <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
             <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2">
@@ -605,6 +655,21 @@ export function ReturningWorkflow({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Right: MiniMap Panel (desktop only) */}
+        <div className="order-1 lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] hidden lg:flex lg:flex-col">
+          <MiniMapPanel
+            title="Đến lấy hàng trả"
+            destLat={effectiveCustomerLat}
+            destLng={effectiveCustomerLng}
+            destAddress={customerAddressFull ?? undefined}
+            staffLat={staffLat}
+            staffLng={staffLng}
+            staffLocAt={staffLocAt}
+            destPinColor="green"
+            destLabel="Lấy hàng trả"
+          />
         </div>
       </div>
 
