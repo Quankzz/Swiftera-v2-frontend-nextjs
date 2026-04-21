@@ -249,10 +249,7 @@ export function useCartQuery(options?: { deliveryDate?: string }) {
       return cart;
     },
     enabled: isAuthenticated,
-    staleTime: 10_000,
-    refetchInterval: 10_000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
+    staleTime: 30_000,
     gcTime: 30 * 60_000,
     initialData: isAuthenticated ? readPersistedCart : undefined,
     initialDataUpdatedAt: isAuthenticated ? readPersistedCartUpdatedAt : undefined,
