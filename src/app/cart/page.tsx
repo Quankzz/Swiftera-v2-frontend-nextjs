@@ -47,7 +47,6 @@ import {
 } from '@/hooks/api/use-cart';
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
 import {
-  useInitiatePayment,
   useInitiateBatchPayment,
 } from '@/hooks/api/use-payments';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
@@ -740,7 +739,6 @@ export default function CartPage() {
   const updateQtyMutation = useUpdateCartLineQuantity();
   const clearMutation = useClearCart();
   const createOrder = useCreateRentalOrder();
-  const initiatePayment = useInitiatePayment();
   const initiatePaymentBatch = useInitiateBatchPayment();
 
   // Chọn sản phẩm
@@ -1214,9 +1212,9 @@ export default function CartPage() {
         setSelectedUserAddressId(addr.userAddressId);
       }
 
-      // BE yêu cầu tất cả sản phẩm trong 1 đơn phải cùng 1 kho (hub).
-      // Để tránh lỗi INVENTORY_INSUFFICIENT_STOCK khi các sản phẩm thuộc kho khác nhau,
-      // ta gửi từng cart line thành 1 đơn riêng, sau đó thanh toán đơn đầu tiên.
+    // BE yêu cầu tất cả sản phẩm trong 1 đơn phải cùng 1 kho (hub).
+    // Vì vậy FE tạo nhiều rental order (mỗi line 1 đơn), rồi thanh toán gộp
+    // bằng đúng API batch: POST /payments/initiate-batch.
       const createdOrders: { rentalOrderId: string }[] = [];
 
       for (const l of latestSelectedLines) {
@@ -1830,7 +1828,6 @@ export default function CartPage() {
                             !isAuthenticated ||
                             hasOutOfStockSelected ||
                             createOrder.isPending ||
-                            initiatePayment.isPending ||
                             initiatePaymentBatch.isPending ||
                             createAddressMutation.isPending ||
                             (isAuthenticated && savedAddressesLoading)
@@ -1843,7 +1840,6 @@ export default function CartPage() {
                               Đang lưu địa chỉ…
                             </span>
                           ) : createOrder.isPending ||
-                            initiatePayment.isPending ||
                             initiatePaymentBatch.isPending ? (
                             <span className='flex items-center gap-2'>
                               <span className='size-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
