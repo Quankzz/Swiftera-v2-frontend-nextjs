@@ -170,7 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.userId]);
 
   // ── Active state ──────────────────────────────────────────────────────────
@@ -223,14 +223,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* SidebarContent thiết lập flex-col và overflow-hidden để xử lý phần cuộn bên trong */}
-      <SidebarContent className="flex flex-col h-full overflow-hidden">
-        {/* PHẦN CUỘN: Danh sách menu - ẩn thanh scroll */}
-        <div className="flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      {/* SidebarContent - scrollable */}
+      <SidebarContent className="flex flex-col h-full">
+        {/* Scrollable menu */}
+        <div className="flex-1 overflow-y-auto lg:overflow-y-hidden">
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sm font-bold uppercase tracking-widest text-sidebar-foreground/40 px-4 pb-2">
-              Quản lý
-            </SidebarGroupLabel>
             <SidebarMenu>
               {/* Tổng quan */}
               <SidebarMenuItem>
@@ -452,8 +449,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarContent>
       {/* PHẦN CỐ ĐỊNH CHUẨN RESPONSIVE: Hỗ trợ & Cài đặt */}
-      <div className="shrink-0 mt-auto">
-        <SidebarGroup className="pt-2">
+      <div className="shrink-0">
+        <SidebarGroup>
           <SidebarSeparator className="mb-2" />
           <SidebarMenu>
             {SECONDARY_ITEMS.map((item) => (
