@@ -174,17 +174,33 @@ export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
 
-  // Hub assignment (expanded details from BE)
-  hubId: string | null;
-  hubCode: string | null;
+  // Hub assignment — BE returns hub as nested HubResponse object + flat hubName
+  hub: {
+    hubId: string;
+    code: string;
+    name: string;
+    addressLine: string | null;
+    ward: string | null;
+    district: string | null;
+    city: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    phone: string | null;
+    isActive: boolean;
+  } | null;
+  /** Convenience flat field — same as hub.name, sent by BE mapper */
   hubName: string | null;
-  hubAddressLine: string | null;
-  hubWard: string | null;
-  hubDistrict: string | null;
-  hubCity: string | null;
-  hubLatitude: number | null;
-  hubLongitude: number | null;
-  hubPhone: string | null;
+
+  // Kept for backward-compat (all undefined at runtime — read from hub.* instead)
+  hubId?: string | null;
+  hubCode?: string | null;
+  hubAddressLine?: string | null;
+  hubWard?: string | null;
+  hubDistrict?: string | null;
+  hubCity?: string | null;
+  hubLatitude?: number | null;
+  hubLongitude?: number | null;
+  hubPhone?: string | null;
 
   // Staff assignment (nested objects - trả về từ API sau khi gán)
   deliveryStaff: HubStaffResponse | null;

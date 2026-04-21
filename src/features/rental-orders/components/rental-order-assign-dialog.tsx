@@ -593,9 +593,13 @@ export function RentalOrderAssignDialog({
                   icon={Building2}
                   label='Hub xử lý'
                   value={
-                    order.hubName ? (
+                    order.hub ? (
                       <span className='text-indigo-600 dark:text-indigo-400 font-semibold'>
-                        {order.hubCode ? `[${order.hubCode}] ` : ''}
+                        {order.hub.code ? `[${order.hub.code}] ` : ''}
+                        {order.hub.name}
+                      </span>
+                    ) : order.hubName ? (
+                      <span className='text-indigo-600 dark:text-indigo-400 font-semibold'>
                         {order.hubName}
                       </span>
                     ) : (
@@ -603,27 +607,27 @@ export function RentalOrderAssignDialog({
                     )
                   }
                 />
-                {order.hubAddressLine && (
+                {order.hub?.addressLine && (
                   <InfoRow
                     icon={MapPin}
                     label='Địa chỉ hub'
                     value={
                       [
-                        order.hubAddressLine,
-                        order.hubWard,
-                        order.hubDistrict,
-                        order.hubCity,
+                        order.hub.addressLine,
+                        order.hub.ward,
+                        order.hub.district,
+                        order.hub.city,
                       ]
                         .filter(Boolean)
                         .join(', ') || '-'
                     }
                   />
                 )}
-                {order.hubPhone && (
+                {order.hub?.phone && (
                   <InfoRow
                     icon={Phone}
                     label='SĐT hub'
-                    value={order.hubPhone}
+                    value={order.hub.phone}
                   />
                 )}
                 <InfoRow
@@ -985,7 +989,7 @@ export function RentalOrderAssignDialog({
             <div>
               <SectionLabel>Phân công nhân viên</SectionLabel>
 
-              {!order.hubId ? (
+              {!(order.hub?.hubId ?? order.hubId) ? (
                 /* Hub chưa được gán → không thể chọn nhân viên */
                 <div className='flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3'>
                   <CircleDot className='w-4 h-4 text-amber-500 shrink-0' />
@@ -1107,7 +1111,7 @@ export function RentalOrderAssignDialog({
       {pickerOpen && (canAssignDelivery || canAssignPickup) && (
         <StaffPickerDialog
           role={pickerOpen}
-          hubId={order.hubId ?? ''}
+          hubId={order.hub?.hubId ?? order.hubId ?? ''}
           isOpen={!!pickerOpen}
           onClose={() => setPickerOpen(null)}
           onSelected={(staff) => {
