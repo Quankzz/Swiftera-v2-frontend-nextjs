@@ -117,7 +117,7 @@ export function RentalStockSection({
           <button
             type='button'
             onClick={() => setExpanded((v) => !v)}
-            className='flex items-center gap-1 text-xs font-medium text-rose-600 transition-colors hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300'
+            className='flex items-center gap-1 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
           >
             {expanded ? (
               <>

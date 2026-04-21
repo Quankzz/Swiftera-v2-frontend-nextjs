@@ -28,13 +28,13 @@ import {
 /* ─── Confetti particle (CSS-only, no external lib) ─────────────────────── */
 
 const CONFETTI_COLORS = [
-  'bg-rose-400',
+  'bg-blue-400',
   'bg-orange-400',
   'bg-amber-400',
   'bg-emerald-400',
   'bg-sky-400',
   'bg-violet-400',
-  'bg-pink-400',
+  'bg-cyan-400',
 ];
 
 type ConfettiParticle = {
@@ -228,7 +228,7 @@ function PaymentResultContent() {
           className={cn(
             'pointer-events-none absolute inset-0 opacity-30 dark:opacity-10',
             success
-              ? 'bg-[radial-gradient(ellipse_at_top,#fecdd3_0%,transparent_65%)]'
+              ? 'bg-[radial-gradient(ellipse_at_top,#93c5fd_0%,transparent_65%)]'
               : 'bg-[radial-gradient(ellipse_at_top,#fecaca_0%,transparent_65%)]',
           )}
         />
@@ -242,7 +242,7 @@ function PaymentResultContent() {
                 'h-1.5 w-full',
                 success
                   ? 'bg-linear-to-r from-emerald-400 via-green-400 to-emerald-500'
-                  : 'bg-linear-to-r from-red-400 via-rose-400 to-red-500',
+                  : 'bg-linear-to-r from-red-400 via-blue-400 to-red-500',
               )}
             />
 
@@ -339,7 +339,7 @@ function PaymentResultContent() {
                 {success ? (
                   <>
                     <Button
-                      className='h-12 w-full gap-2 rounded-xl bg-rose-600 text-base font-bold text-white shadow-lg shadow-rose-600/20 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
+                      className='h-12 w-full gap-2 rounded-xl bg-blue-600 text-base font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
                       render={
                         <Link
                           href={
@@ -366,7 +366,7 @@ function PaymentResultContent() {
                   <>
                     <Button
                       variant='outline'
-                      className='h-12 w-full gap-2 rounded-xl border-rose-500/30 text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30'
+                      className='h-12 w-full gap-2 rounded-xl border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30'
                       render={<Link href='/rental-orders' />}
                     >
                       <RefreshCw className='size-4' />
@@ -428,7 +428,7 @@ export default function PaymentResultPage() {
     <Suspense
       fallback={
         <div className='flex min-h-screen items-center justify-center'>
-          <div className='size-8 animate-spin rounded-full border-4 border-rose-600/30 border-t-rose-600' />
+          <div className='size-8 animate-spin rounded-full border-4 border-blue-600/30 border-t-blue-600' />
         </div>
       }
     >

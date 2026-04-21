@@ -90,7 +90,7 @@ function CartFlyOverlayInner() {
               }
             `}</style>
             <div
-              className="w-full h-full rounded-xl shadow-2xl shadow-rose-500/50 overflow-hidden"
+              className="w-full h-full rounded-xl shadow-2xl shadow-blue-500/50 overflow-hidden"
               style={{
                 animation: `flyToCart var(--dur) cubic-bezier(0.16, 1, 0.3, 1) forwards`,
               }}
@@ -104,8 +104,8 @@ function CartFlyOverlayInner() {
                   sizes="80px"
                 />
               ) : (
-                <div className="w-full h-full bg-rose-100 flex items-center justify-center rounded-xl">
-                  <ShoppingCart className="size-6 text-rose-500" />
+                <div className="w-full h-full bg-blue-100 flex items-center justify-center rounded-xl">
+                  <ShoppingCart className="size-6 text-blue-500" />
                 </div>
               )}
             </div>
@@ -295,7 +295,7 @@ export function Header({
         style={{
           transform: isFlying ? 'translateY(-100%)' : 'translateY(0)',
           boxShadow: isFlying
-            ? '0 8px 32px -4px rgba(254,20,81,0.18)'
+            ? '0 8px 32px -4px rgba(14,165,233,0.25)'
             : '0 1px 3px rgba(0,0,0,0.1)',
           transition: isFlying
             ? 'transform 380ms cubic-bezier(0.4,0,0.2,1) 80ms, box-shadow 380ms 80ms'
@@ -461,7 +461,7 @@ export function Header({
                   <ShoppingCart
                     className={cn(
                       'size-5 text-text-main transition-colors',
-                      isFlying && 'text-rose-500',
+                      isFlying && 'text-blue-500',
                     )}
                   />
                   {cartCount > 0 && (
@@ -470,7 +470,7 @@ export function Header({
                         'absolute -top-1 -right-1 h-4.5 min-w-4.5 rounded-full text-[10px] font-bold flex items-center justify-center transition-all duration-300',
                         isFlying
                           ? 'bg-green-500 text-white scale-125'
-                          : 'bg-rose-500 text-white',
+                          : 'bg-blue-500 text-white',
                       )}
                     >
                       {cartCount > 99 ? '99+' : cartCount}
@@ -636,7 +636,7 @@ export function Header({
           {/* Nav categories */}
           {showSearchAndCategories && (
             <div className="hidden lg:block" onMouseEnter={cancelHide} onMouseLeave={scheduleHide}>
-              <div className="relative z-30 mt-3 hidden flex-wrap items-center gap-6 text-sm font-semibold text-text-main lg:flex">
+              <div className="relative z-30 mt-2 hidden flex-wrap items-center gap-6 text-sm font-semibold text-text-main lg:flex">
                 {sortedCategories.map((category) => (
                   <div key={category.categoryId}>
                     <Link
@@ -705,7 +705,7 @@ export function Header({
                                           <li key={subChild.categoryId}>
                                             <Link
                                               href={`/catalog?categoryId=${hoveredCategoryData.categoryId}&subcategoryId=${subChild.categoryId}`}
-                                              className="block px-4 py-2.5 rounded-xl hover:bg-rose-50/50 dark:hover:bg-theme-primary-start/10 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors"
+                                              className="block px-4 py-2.5 rounded-xl hover:bg-blue-50/50 dark:hover:bg-theme-primary-start/10 text-text-main hover:text-theme-primary-start text-sm font-medium transition-colors"
                                             >
                                               {subChild.name}
                                             </Link>

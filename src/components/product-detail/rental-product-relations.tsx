@@ -10,19 +10,12 @@ import {
   ThumbsUp,
   ChevronDown,
   ChevronUp,
-  MessageSquare,
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  useProductReviewsQuery,
-  useCreateReview,
-  useDeleteReview,
-  useMarkHelpfulReview,
-} from '@/hooks/api/use-reviews';
+import { useProductReviewsQuery, useDeleteReview, useMarkHelpfulReview } from '@/hooks/api/use-reviews';
 import { useRelatedProductsQuery } from '@/features/products/hooks/use-related-products';
 import type { ProductReviewResponse } from '@/api/reviewsApi';
 import { toast } from 'sonner';
@@ -294,7 +287,7 @@ function ReviewCard({
       {/* Header */}
       <div className='flex items-start justify-between gap-3'>
         <div className='flex items-center gap-3'>
-          <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-rose-400 to-rose-600 text-sm font-bold text-white shadow-sm'>
+          <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br bg-blue-400 to-blue-600 text-sm font-bold text-white shadow-sm'>
             {(review.userNickname ?? 'U').charAt(0).toUpperCase()}
           </div>
           <div>
@@ -363,8 +356,8 @@ function ReviewCard({
           className={cn(
             'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all',
             isHelpfulPending
-              ? 'bg-rose-50 text-rose-400 dark:bg-rose-950/30'
-              : 'text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 dark:hover:text-rose-400',
+              ? 'bg-blue-50 text-blue-400 dark:bg-blue-950/30'
+              : 'text-muted-foreground hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/30 dark:hover:text-blue-400',
           )}
         >
           {isHelpfulPending ? (
@@ -374,7 +367,7 @@ function ReviewCard({
           )}
           <span>Hữu ích</span>
           {helpfulCount > 0 && (
-            <span className={cn(isHelpfulPending ? 'text-rose-300' : 'text-rose-500')}>
+            <span className={cn(isHelpfulPending ? 'text-blue-300' : 'text-blue-500')}>
               ({helpfulCount})
             </span>
           )}
@@ -400,89 +393,6 @@ function ReviewCard({
 /* ═══════════════════════════════════════════════════════════════════════════
    WRITE REVIEW FORM
    ═══════════════════════════════════════════════════════════════════════════ */
-
-function WriteReviewForm({
-  productId,
-  orderId,
-  onSuccess,
-}: {
-  productId: string;
-  orderId: string;
-  onSuccess: () => void;
-}) {
-  const [rating, setRating] = useState(0);
-  const [content, setContent] = useState('');
-  const createReview = useCreateReview({ onSuccess });
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (rating === 0) {
-      toast.error('Vui lòng chọn số sao đánh giá.');
-      return;
-    }
-    createReview.mutate({
-      rentalOrderId: orderId,
-      productId,
-      rating,
-      content: content.trim() || undefined,
-    });
-  }
-
-  return (
-    <form
-      onSubmit={(e) => void handleSubmit(e)}
-      className='space-y-4 rounded-2xl border border-rose-200/50 bg-rose-50/30 p-5 dark:border-rose-800/50 dark:bg-rose-950/20'
-    >
-      <div>
-        <label className='mb-2 block text-sm font-semibold text-foreground'>
-          Đánh giá của bạn
-        </label>
-        <StarRating value={rating} onChange={setRating} size='lg' />
-      </div>
-
-      <div>
-        <label
-          htmlFor='review-content'
-          className='mb-2 block text-sm font-semibold text-foreground'
-        >
-          Nhận xét (tùy chọn)
-        </label>
-        <Textarea
-          id='review-content'
-          placeholder='Chia sẻ trải nghiệm của bạn với sản phẩm này...'
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={4}
-          className='resize-none rounded-xl'
-        />
-      </div>
-
-      <div className='flex items-center justify-end gap-2'>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={onSuccess}
-          className='rounded-xl'
-        >
-          Hủy
-        </Button>
-        <Button
-          type='submit'
-          size='sm'
-          disabled={rating === 0 || createReview.isPending}
-          className='rounded-xl bg-rose-600 hover:bg-rose-700'
-        >
-          {createReview.isPending ? (
-            <Loader2 className='size-4 animate-spin' />
-          ) : (
-            'Gửi đánh giá'
-          )}
-        </Button>
-      </div>
-    </form>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    RENTAL REVIEWS SECTION
@@ -576,7 +486,6 @@ export function RentalReviewsSection({
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const PAGE_SIZE = 5;
   const FILTER_FETCH_SIZE = 1000;
-  const [showWriteForm, setShowWriteForm] = useState(false);
   const [helpfulPendingId, setHelpfulPendingId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const deepLinkedReviewId = searchParams.get('review');
@@ -726,8 +635,8 @@ export function RentalReviewsSection({
                 className={cn(
                   'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
                   ratingFilter === opt.value
-                    ? 'border-rose-400/60 bg-rose-50 text-rose-700 dark:border-rose-600/50 dark:bg-rose-950/30 dark:text-rose-300'
-                    : 'border-border/60 bg-muted/30 text-muted-foreground hover:border-rose-300/40 hover:bg-rose-50/40 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400',
+                    ? 'border-blue-400/60 bg-blue-50 text-blue-700 dark:border-blue-600/50 dark:bg-blue-950/30 dark:text-blue-300'
+                    : 'border-border/60 bg-muted/30 text-muted-foreground hover:border-blue-300/40 hover:bg-blue-50/40 hover:text-blue-600 dark:hover:bg-blue-950/20 dark:hover:text-blue-400',
                 )}
               >
                 {opt.value !== null && (
@@ -739,35 +648,7 @@ export function RentalReviewsSection({
           </div>
         </div>
 
-        {userCompletedOrderId && !showWriteForm && (
-          <Button
-            size='sm'
-            onClick={() => setShowWriteForm(true)}
-            className='rounded-xl bg-rose-600 hover:bg-rose-700'
-          >
-            <MessageSquare className='size-4' />
-            Viết đánh giá
-          </Button>
-        )}
       </div>
-
-      {/* Write form */}
-      <AnimatePresence>
-        {showWriteForm && userCompletedOrderId && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className='overflow-hidden'
-          >
-            <WriteReviewForm
-              productId={productId}
-              orderId={userCompletedOrderId}
-              onSuccess={() => setShowWriteForm(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Review list */}
       <div className='mt-4 space-y-3'>
@@ -930,13 +811,13 @@ export function RentalRelatedProducts({
                     </div>
                   )}
                   {typeof product.discountPercent === 'number' && product.discountPercent > 0 && (
-                    <span className='absolute left-2 top-2 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-semibold text-white'>
+                    <span className='absolute left-2 top-2 rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white'>
                       -{product.discountPercent}%
                     </span>
                   )}
                 </div>
                 <div className='space-y-1.5 p-3'>
-                  <p className='line-clamp-2 text-sm font-medium text-foreground group-hover:text-rose-600 dark:group-hover:text-rose-400'>
+                  <p className='line-clamp-2 text-sm font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400'>
                     {product.name}
                   </p>
                   <div className='flex items-center gap-1 text-xs text-amber-500'>

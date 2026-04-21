@@ -201,7 +201,7 @@ export function PickedUpWorkflow({
                         {item.product_name}
                       </p>
                       <p className='text-xs text-muted-foreground font-mono'>
-                        {item.serial_number || '—'}
+                        {item.serial_number || '-'}
                       </p>
                     </div>
                     <div className='shrink-0'>
@@ -298,7 +298,7 @@ export function PickedUpWorkflow({
                   Địa chỉ thu hồi
                 </p>
                 <p className='text-[15px] font-medium text-foreground leading-relaxed'>
-                  {order.delivery_address || order.renter.address || '—'}
+                  {order.delivery_address || order.renter.address || '-'}
                 </p>
               </div>
             </div>
@@ -392,7 +392,7 @@ export function PickedUpWorkflow({
                 Ngày kết thúc thực tế
               </p>
               <p className='text-[15px] font-bold text-foreground'>
-                {order.actual_return_date ? fmtDate(order.actual_return_date) : '—'}
+                {order.actual_return_date ? fmtDate(order.actual_return_date) : '-'}
               </p>
             </div>
           </div>

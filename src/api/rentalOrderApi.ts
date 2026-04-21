@@ -53,7 +53,7 @@ export const RENTAL_ORDER_STATUS_COLORS: Record<RentalOrderStatus, string> = {
   PENDING_PICKUP:
     'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 border border-orange-200 dark:border-orange-800',
   PICKING_UP:
-    'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-200 border border-rose-200 dark:border-rose-800',
+    'bg-slate-100 text-slate-800 dark:bg-slate-900/50 dark:text-slate-200 border border-slate-200 dark:border-slate-800',
   PICKED_UP:
     'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200 border border-violet-200 dark:border-violet-800',
   COMPLETED:

@@ -61,7 +61,7 @@ function VerifyActiveAccountContent() {
       <div className='space-y-4 text-center'>
         {status === 'loading' && (
           <div className='flex flex-col items-center gap-3 py-6 text-zinc-600 dark:text-zinc-400'>
-            <Loader2 className='size-10 animate-spin text-[#fe1451]' />
+            <Loader2 className='size-10 animate-spin text-[[var(--theme-primary-start,#0ea5e9)]]' />
             <p className='text-sm'>Đang xác thực, vui lòng đợi...</p>
           </div>
         )}
@@ -100,7 +100,7 @@ function VerifyActiveAccountFallback() {
       footerLinks={[{ href: '/auth/login', label: 'Đăng nhập' }]}
     >
       <div className='flex justify-center py-8'>
-        <Loader2 className='size-8 animate-spin text-[#fe1451]' />
+        <Loader2 className='size-8 animate-spin text-[[var(--theme-primary-start,#0ea5e9)]]' />
       </div>
     </AuthActionCard>
   );

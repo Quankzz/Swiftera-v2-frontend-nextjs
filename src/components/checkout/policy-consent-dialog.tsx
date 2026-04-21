@@ -105,7 +105,7 @@ function PdfFlipViewer({ url }: { url: string }) {
             style={{ width: PAGE_W * 2, height: PAGE_H }}
           >
             <div className='flex flex-col items-center gap-3'>
-              <Loader2 className='size-8 animate-spin text-rose-500' />
+              <Loader2 className='size-8 animate-spin text-blue-500' />
               <p className='text-sm text-muted-foreground'>
                 Đang tải tài liệu…
               </p>
@@ -227,7 +227,7 @@ function PdfViewerDialog({
       <DialogContent className='max-w-170 gap-4'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2 text-base'>
-            <BookOpen className='size-4 text-rose-500' />
+            <BookOpen className='size-4 text-blue-500' />
             {title}
           </DialogTitle>
         </DialogHeader>
@@ -260,7 +260,7 @@ function PolicyItem({
         className={cn(
           'rounded-xl border transition-colors duration-150',
           checked || alreadyConsented
-            ? 'border-rose-500/40 bg-rose-50/40 dark:border-rose-500/30 dark:bg-rose-950/20'
+            ? 'border-blue-500/40 bg-blue-50/40 dark:border-blue-500/30 dark:bg-blue-950/20'
             : 'border-border/70 bg-card/60 dark:bg-card/40',
         )}
       >
@@ -279,9 +279,9 @@ function PolicyItem({
                 'flex size-5.5 items-center justify-center rounded-full border-2 transition-all duration-150',
                 checked || alreadyConsented
                   ? alreadyConsented
-                    ? 'border-rose-400 bg-rose-400/60'
-                    : 'border-rose-500 bg-rose-500 shadow-sm shadow-rose-200 dark:shadow-rose-900/40'
-                  : 'border-muted-foreground/30 hover:border-rose-400',
+                    ? 'border-blue-400 bg-blue-400/60'
+                    : 'border-blue-500 bg-blue-500 shadow-sm shadow-blue-200 dark:shadow-blue-900/40'
+                  : 'border-muted-foreground/30 hover:border-blue-400',
               )}
             >
               {(checked || alreadyConsented) && (
@@ -330,7 +330,7 @@ function PolicyItem({
                 <button
                   type='button'
                   onClick={() => setPdfViewerOpen(true)}
-                  className='flex items-center gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50'
+                  className='flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-950/50'
                 >
                   <BookOpen className='size-3' />
                   Xem điều khoản
@@ -476,8 +476,8 @@ export function PolicyConsentDialog({
         {/* Header */}
         <DialogHeader className='shrink-0 border-b border-border px-5 py-4'>
           <div className='flex items-center gap-2.5'>
-            <div className='flex size-9 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/50'>
-              <ScrollText className='size-4 text-rose-600 dark:text-rose-400' />
+            <div className='flex size-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950/50'>
+              <ScrollText className='size-4 text-blue-600 dark:text-blue-400' />
             </div>
             <div>
               <DialogTitle className='text-base font-bold'>
@@ -521,7 +521,7 @@ export function PolicyConsentDialog({
                     className={cn(
                       'flex size-4 items-center justify-center rounded border-2 transition-all',
                       allChecked
-                        ? 'border-rose-500 bg-rose-500'
+                        ? 'border-blue-500 bg-blue-500'
                         : 'border-muted-foreground/40',
                     )}
                   >
@@ -569,7 +569,7 @@ export function PolicyConsentDialog({
           <div className='flex flex-col gap-2.5 sm:flex-row-reverse'>
             <Button
               type='button'
-              className='h-11 flex-1 gap-2 rounded-xl bg-rose-600 font-bold text-white hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600'
+              className='h-11 flex-1 gap-2 rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600'
               disabled={
                 isLoading ||
                 isSubmitting ||

@@ -107,7 +107,7 @@ function TicketDetailView({
                   <div>
                     <p className='text-xs text-gray-400'>Họ tên</p>
                     <p className='text-sm text-gray-800 dark:text-gray-200'>
-                      {t?.fullName ?? '—'}
+                      {t?.fullName ?? '-'}
                     </p>
                   </div>
                 </div>
@@ -116,7 +116,7 @@ function TicketDetailView({
                   <div>
                     <p className='text-xs text-gray-400'>Email</p>
                     <p className='text-sm text-gray-800 dark:text-gray-200 break-all'>
-                      {t?.email ?? '—'}
+                      {t?.email ?? '-'}
                     </p>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ function TicketDetailView({
                   <div>
                     <p className='text-xs text-gray-400'>Điện thoại</p>
                     <p className='text-sm text-gray-800 dark:text-gray-200'>
-                      {t?.phone ?? '—'}
+                      {t?.phone ?? '-'}
                     </p>
                   </div>
                 </div>
@@ -145,7 +145,7 @@ function TicketDetailView({
                   <div>
                     <p className='text-xs text-gray-400'>Ngày gửi</p>
                     <p className='text-sm text-gray-800 dark:text-gray-200'>
-                      {t ? fmtBackendDatetime(t.createdAt) : '—'}
+                      {t ? fmtBackendDatetime(t.createdAt) : '-'}
                     </p>
                   </div>
                 </div>
@@ -174,7 +174,7 @@ function TicketDetailView({
                   href={t.attachmentUrl}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='mt-3 inline-flex items-center gap-1.5 text-xs text-rose-500 hover:underline'
+                  className='mt-3 inline-flex items-center gap-1.5 text-xs text-blue-500 hover:underline'
                 >
                   <Package size={12} />
                   Xem tệp đính kèm
@@ -230,7 +230,7 @@ function TicketCard({
   return (
     <button
       onClick={onClick}
-      className='w-full text-left p-5 rounded-xl border border-border/60 bg-card hover:border-rose-300/80 hover:bg-rose-50/20 dark:hover:bg-white/3 transition-all cursor-pointer'
+      className='w-full text-left p-5 rounded-xl border border-border/60 bg-card hover:border-blue-300/80 hover:bg-blue-50/20 dark:hover:bg-white/3 transition-all cursor-pointer'
     >
       <div className='flex items-start justify-between gap-4 mb-3'>
         <h3 className='text-base font-semibold text-foreground line-clamp-1 flex-1'>
@@ -289,8 +289,8 @@ export default function MyTicketsPage() {
 
           <div className='rounded-2xl border border-border/60 bg-card p-6 sm:p-8'>
             <div className='flex items-center gap-4 mb-8'>
-              <div className='w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center shrink-0'>
-                <MessageSquare size={22} className='text-rose-600 dark:text-rose-400' />
+              <div className='w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0'>
+                <MessageSquare size={22} className='text-blue-600 dark:text-blue-400' />
               </div>
               <div>
                 <h1 className='text-2xl font-extrabold text-foreground'>
@@ -316,7 +316,7 @@ export default function MyTicketsPage() {
                   className={cn(
                     'px-4 py-2 rounded-lg text-sm font-medium transition-all',
                     statusFilter === tab.value
-                      ? 'bg-rose-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm'
                       : 'bg-muted text-muted-foreground hover:bg-muted/80',
                   )}
                 >
@@ -328,7 +328,7 @@ export default function MyTicketsPage() {
             {/* Ticket list */}
             {isLoading ? (
               <div className='flex items-center justify-center py-12'>
-                <Loader2 className='size-6 animate-spin text-rose-500' />
+                <Loader2 className='size-6 animate-spin text-blue-500' />
               </div>
             ) : tickets.length === 0 ? (
               <div className='text-center py-12 space-y-3'>
@@ -345,7 +345,7 @@ export default function MyTicketsPage() {
                 </p>
                 <Button
                   size='sm'
-                  className='mt-2 bg-rose-600 text-white hover:bg-rose-700'
+                  className='mt-2 bg-blue-600 text-white hover:bg-blue-700'
                   render={<Link href='/feedback' />}
                 >
                   Gửi yêu cầu mới

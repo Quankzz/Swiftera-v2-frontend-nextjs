@@ -216,7 +216,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className="size-14 rounded-2xl overflow-hidden ring-2 ring-[#fe1451]/25 ring-offset-2 ring-offset-background">
+                <div className="size-14 rounded-2xl overflow-hidden ring-2 ring-[var(--theme-primary-start,#0ea5e9)]/25 ring-offset-2 ring-offset-background">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={staffAvatarUrl}
@@ -274,10 +274,10 @@ export default function DashboardPage() {
               label="Tổng nhiệm vụ hôm nay"
               value={tasks?.total ?? 0}
               icon={Box}
-              accentFrom="#fe1451"
-              accentTo="#ba264d"
-              iconBg="bg-[#fe1451]/10"
-              iconColor="#fe1451"
+              accentFrom="var(--theme-primary-start,#0ea5e9)"
+              accentTo="var(--theme-primary-end,#0369a1)"
+              iconBg="bg-[var(--theme-primary-start,#0ea5e9)]/10"
+              iconColor="var(--theme-primary-start,#0ea5e9)"
               href="/staff-dashboard/orders"
               urgent={(tasks?.total ?? 0) > 0}
             />
@@ -436,8 +436,8 @@ export default function DashboardPage() {
                     Ticket được giao cho tôi
                   </p>
                 </div>
-                <div className="size-9 rounded-xl bg-[#fe1451]/10 flex items-center justify-center shrink-0">
-                  <TicketCheck className="size-5 text-[#fe1451]" />
+                <div className="size-9 rounded-xl bg-[var(--theme-primary-start,#0ea5e9)]/10 flex items-center justify-center shrink-0">
+                  <TicketCheck className="size-5 text-[var(--theme-primary-start,#0ea5e9)]" />
                 </div>
               </div>
 
@@ -624,7 +624,7 @@ function TaskCard({
         </div>
       </div>
       {urgent && value > 0 && (
-        <span className="absolute top-3 right-3 size-2 rounded-full bg-[#fe1451] animate-pulse" />
+        <span className="absolute top-3 right-3 size-2 rounded-full bg-[var(--theme-primary-start,#0ea5e9)] animate-pulse" />
       )}
       <ChevronRight className="size-4 text-muted-foreground shrink-0 group-hover:translate-x-1 transition-transform duration-150" />
     </Link>

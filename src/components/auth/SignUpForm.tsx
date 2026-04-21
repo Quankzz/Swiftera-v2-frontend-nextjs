@@ -20,7 +20,7 @@ import { PasswordStrength } from './PasswordStrength';
 import { toast } from 'sonner';
 
 const inputClassName =
-  'my-1.5 h-auto border-none bg-zinc-100 px-4 py-2 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
+  'my-1.5 h-auto border-none bg-zinc-100 px-4 py-2 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[var(--auth-focus-ring,#0ea5e9)/30] dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[var(--auth-focus-ring-dark,#38bdf8)/40]';
 
 type SignUpField =
   | 'firstName'
@@ -280,7 +280,7 @@ export function SignUpForm() {
         <Button
           type='submit'
           disabled={isSubmitting || isLoading}
-          className='mt-2 h-auto w-full bg-[#fe1451] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#ba264d]'
+          className='mt-2 h-auto w-full bg-[var(--theme-primary-start,#0ea5e9)] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[var(--theme-primary-end,#0369a1)]'
         >
           {isSubmitting ? (
             <>
@@ -309,7 +309,7 @@ export function SignUpForm() {
           <DialogFooter>
             <Link
               href={`/auth/resend-verification?email=${encodeURIComponent(email)}`}
-              className='inline-flex h-9 items-center justify-center rounded-md bg-[#fe1451] px-4 text-sm font-medium text-white transition-colors hover:bg-[#ba264d]'
+              className='inline-flex h-9 items-center justify-center rounded-md bg-[var(--theme-primary-start,#0ea5e9)] px-4 text-sm font-medium text-white transition-colors hover:bg-[var(--theme-primary-end,#0369a1)]'
             >
               Gửi lại email xác thực
             </Link>

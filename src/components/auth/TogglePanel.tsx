@@ -19,7 +19,7 @@ export function TogglePanel({ isActive, onSignIn, onSignUp }: TogglePanelProps) 
     >
       <div
         className={cn(
-          'relative -left-full h-full w-[200%] bg-linear-to-r from-[#fe1451] to-[#ba264d] text-white transition-all duration-600 ease-in-out dark:from-[#c41d44] dark:to-[#8a1a35]',
+          'relative -left-full h-full w-[200%] bg-linear-to-r from-[var(--theme-primary-start,#0ea5e9)] to-[var(--theme-primary-end,#0369a1)] text-white transition-all duration-600 ease-in-out dark:from-[var(--theme-accent-start,#38bdf8)] dark:to-[var(--theme-primary-start,#0ea5e9)]',
           isActive && 'translate-x-1/2'
         )}
       >

@@ -233,7 +233,7 @@ export default function ProductDetailClient({
         </p>
         <Link
           href='/'
-          className='text-sm font-medium text-rose-600 hover:underline dark:text-rose-400'
+          className='text-sm font-medium text-blue-600 hover:underline dark:text-blue-400'
         >
           Quay về trang chủ
         </Link>
@@ -250,7 +250,7 @@ export default function ProductDetailClient({
             <li>
               <Link
                 href='/'
-                className='flex items-center gap-1 font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
+                className='flex items-center gap-1 font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
               >
                 Trang chủ
               </Link>
@@ -261,7 +261,7 @@ export default function ProductDetailClient({
             <li>
               <Link
                 href='/catalog'
-                className='font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
+                className='font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
               >
                 {product.categoryName || 'Sản phẩm'}
               </Link>

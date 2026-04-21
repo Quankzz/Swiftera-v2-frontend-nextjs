@@ -148,7 +148,7 @@ function DurationEditor({
           setDraft(days);
           setEditing(true);
         }}
-        className='inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-50/60 px-2 py-1 text-xs font-medium text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-900/30'
+        className='inline-flex items-center gap-1 rounded-lg border border-blue-500/30 bg-blue-50/60 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:border-blue-400 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-900/30'
         title='Nhấn để thay đổi số ngày thuê'
       >
         {days} ngày
@@ -158,7 +158,7 @@ function DurationEditor({
   }
 
   return (
-    <div className='inline-flex items-center gap-1 rounded-lg border border-rose-500/50 bg-rose-50/80 px-2 py-1 dark:bg-rose-950/40'>
+    <div className='inline-flex items-center gap-1 rounded-lg border border-blue-500/50 bg-blue-50/80 px-2 py-1 dark:bg-blue-950/40'>
       <input
         type='number'
         min={1}
@@ -173,9 +173,9 @@ function DurationEditor({
         }}
         onBlur={handleCommit}
         autoFocus
-        className='w-12 rounded border border-input bg-background px-1.5 py-0.5 text-xs font-medium text-rose-700 focus:border-rose-400 focus:outline-none focus:ring-1 focus:ring-rose-100 dark:text-rose-300 dark:bg-input dark:focus:border-rose-400 dark:focus:ring-rose-900/30'
+        className='w-12 rounded border border-input bg-background px-1.5 py-0.5 text-xs font-medium text-blue-700 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-100 dark:text-blue-300 dark:bg-input dark:focus:border-blue-400 dark:focus:ring-blue-900/30'
       />
-      <span className='text-xs text-rose-700 dark:text-rose-300'>ngày</span>
+      <span className='text-xs text-blue-700 dark:text-blue-300'>ngày</span>
       {draft !== days && (
         <button
           type='button'
@@ -245,10 +245,10 @@ function CartLineRow({
       <SpotlightCard
         className={`rounded-2xl border shadow-sm backdrop-blur-sm transition-colors ${
           isSelected
-            ? 'border-rose-500/50 bg-card/95 dark:bg-card/80 ring-1 ring-rose-500/20'
+            ? 'border-blue-500/50 bg-card/95 dark:bg-card/80 ring-1 ring-blue-500/20'
             : 'border-border/70 bg-card/90 dark:bg-card/80'
         }`}
-        spotlightColor='rgba(254, 20, 81, 0.14)'
+        spotlightColor='rgba(37, 99, 235, 0.14)'
       >
         <div className='flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-5 sm:p-5'>
           {/* Checkbox */}
@@ -262,8 +262,8 @@ function CartLineRow({
               className={cn(
                 'flex size-[22px] items-center justify-center rounded-full border-2 transition-all duration-150',
                 isSelected
-                  ? 'border-rose-500 bg-rose-500 shadow-sm shadow-rose-200 dark:shadow-rose-900/40'
-                  : 'border-muted-foreground/30 hover:border-rose-400',
+                  ? 'border-blue-500 bg-blue-500 shadow-sm shadow-blue-200 dark:shadow-blue-900/40'
+                  : 'border-muted-foreground/30 hover:border-blue-400',
               )}
             >
               {isSelected && (
@@ -285,7 +285,7 @@ function CartLineRow({
           {/* Image */}
           <Link
             href={`/product/${line.productId}`}
-            className='group relative mx-auto aspect-square w-full max-w-[148px] shrink-0 overflow-hidden rounded-xl border border-rose-500/20 bg-muted/50 shadow-inner ring-1 ring-rose-500/10 transition-transform duration-300 hover:scale-[1.02] sm:mx-0'
+            className='group relative mx-auto aspect-square w-full max-w-[148px] shrink-0 overflow-hidden rounded-xl border border-blue-500/20 bg-muted/50 shadow-inner ring-1 ring-blue-500/10 transition-transform duration-300 hover:scale-[1.02] sm:mx-0'
           >
             {line.productImageUrl ? (
               <img
@@ -308,8 +308,8 @@ function CartLineRow({
                   href={`/product/${line.productId}`}
                   className={`text-base font-semibold leading-snug transition-colors ${
                     isSelected
-                      ? 'text-rose-600 dark:text-rose-400'
-                      : 'text-foreground hover:text-rose-600 dark:hover:text-rose-400'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-foreground hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
                   {line.productName}
@@ -422,12 +422,12 @@ function CartLineRow({
                         <div className='whitespace-nowrap text-sm text-muted-foreground line-through'>
                           {formatter.format(rentalFeeAmount)}
                         </div>
-                        <div className='whitespace-nowrap text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                        <div className='whitespace-nowrap text-lg font-bold tabular-nums text-blue-600 dark:text-blue-400'>
                           {formatter.format(rentalFeeAmount - voucherDiscount)}
                         </div>
                       </>
                     ) : (
-                      <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                      <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-blue-600 dark:text-blue-400'>
                         {formatter.format(rentalFeeAmount)}
                       </div>
                     )}
@@ -452,7 +452,7 @@ function CartLineRow({
                 </div>
                 <div className='flex items-center justify-between gap-2 sm:block'>
                   <span className='text-muted-foreground'>Cần thanh toán</span>
-                  <div className='font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                  <div className='font-bold tabular-nums text-blue-600 dark:text-blue-400'>
                     {formatter.format(
                       line.totalPayableAmount != null
                         ? line.totalPayableAmount
@@ -467,9 +467,9 @@ function CartLineRow({
               <div className='flex items-center gap-2'>
                 {appliedVoucherCode ? (
                   <>
-                    <div className='flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-50/60 px-2.5 py-1.5 dark:bg-rose-950/30'>
-                      <TicketPercent className='size-3.5 shrink-0 text-rose-600 dark:text-rose-400' />
-                      <span className='font-mono text-xs font-bold text-rose-600 dark:text-rose-400'>
+                    <div className='flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-blue-500/40 bg-blue-50/60 px-2.5 py-1.5 dark:bg-blue-950/30'>
+                      <TicketPercent className='size-3.5 shrink-0 text-blue-600 dark:text-blue-400' />
+                      <span className='font-mono text-xs font-bold text-blue-600 dark:text-blue-400'>
                         {appliedVoucherCode}
                       </span>
                       {voucherDiscount > 0 && (
@@ -493,7 +493,7 @@ function CartLineRow({
                   <button
                     type='button'
                     onClick={() => onOpenVoucher(line)}
-                    className='flex items-center gap-1.5 rounded-lg border border-dashed border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-rose-400/60 hover:bg-rose-50/40 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400'
+                    className='flex items-center gap-1.5 rounded-lg border border-dashed border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-blue-400/60 hover:bg-blue-50/40 hover:text-blue-600 dark:hover:bg-blue-950/20 dark:hover:text-blue-400'
                   >
                     <Tag className='size-3.5' />
                     {(line.availableVouchers?.length ?? 0) > 0
@@ -542,7 +542,7 @@ function SummarySkeleton() {
 /* ─── Delivery Info Dialog ───────────────────────────────────────────────────── */
 
 const inputCls =
-  'h-10 w-full rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/20';
+  'h-10 w-full rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/20';
 const labelCls = 'mb-1.5 block text-xs font-semibold text-muted-foreground';
 
 function DeliveryInfoDialog({
@@ -585,8 +585,8 @@ function DeliveryInfoDialog({
       <DialogContent className='max-h-[90dvh] overflow-y-auto sm:max-w-md'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2.5'>
-            <div className='flex size-8 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-950/50'>
-              <Truck className='size-4 text-rose-600 dark:text-rose-400' />
+            <div className='flex size-8 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/50'>
+              <Truck className='size-4 text-blue-600 dark:text-blue-400' />
             </div>
             Thông tin giao hàng
           </DialogTitle>
@@ -599,7 +599,7 @@ function DeliveryInfoDialog({
               <span className='flex items-center gap-1'>
                 <User className='size-3' />
                 Họ và tên người nhận
-                <span className='ml-0.5 text-rose-500'>*</span>
+                <span className='ml-0.5 text-blue-500'>*</span>
               </span>
             </label>
             <input
@@ -619,7 +619,7 @@ function DeliveryInfoDialog({
               <span className='flex items-center gap-1'>
                 <Phone className='size-3' />
                 Số điện thoại
-                <span className='ml-0.5 text-rose-500'>*</span>
+                <span className='ml-0.5 text-blue-500'>*</span>
               </span>
             </label>
             <input
@@ -705,7 +705,7 @@ function DeliveryInfoDialog({
             Hủy
           </Button>
           <Button
-            className='flex-1 rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700 disabled:opacity-50'
+            className='flex-1 rounded-xl bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:opacity-50'
             disabled={!canConfirm}
             onClick={onConfirm}
           >
@@ -1230,7 +1230,7 @@ export default function CartPage() {
             <li>
               <Link
                 href='/'
-                className='font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
+                className='font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
               >
                 Trang chủ
               </Link>
@@ -1266,7 +1266,7 @@ export default function CartPage() {
                   </HighlightText>
                 </h1>
                 {lines.length > 0 && (
-                  <Badge className='border-0 bg-rose-600 text-white shadow-md dark:bg-rose-500'>
+                  <Badge className='border-0 bg-blue-600 text-white shadow-md dark:bg-blue-500'>
                     {totalQty} sản phẩm
                   </Badge>
                 )}
@@ -1275,7 +1275,7 @@ export default function CartPage() {
                 <ShinyText className='font-medium'>Kiểm tra đơn thuê</ShinyText>
                 {' - '}
                 trước khi tiến hành thanh toán. Giao nhanh toàn quốc.
-                <Truck className='ml-1 inline size-4 align-text-bottom text-rose-600 dark:text-rose-400' />
+                <Truck className='ml-1 inline size-4 align-text-bottom text-blue-600 dark:text-blue-400' />
               </p>
             </>
           )}
@@ -1285,7 +1285,7 @@ export default function CartPage() {
         {isError && (
           <SpotlightCard
             className='rounded-3xl border border-destructive/30 bg-destructive/5 p-12 text-center shadow-lg'
-            spotlightColor='rgba(254, 20, 81, 0.1)'
+            spotlightColor='rgba(37, 99, 235, 0.1)'
           >
             <AlertCircle className='mx-auto size-12 text-destructive' />
             <p className='mt-4 text-lg font-semibold text-foreground'>
@@ -1296,7 +1296,7 @@ export default function CartPage() {
             </p>
             <Link
               href={buildLoginHref('/cart')}
-              className='mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-rose-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-700 active:scale-[0.98]'
+              className='mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-[0.98]'
             >
               Đăng nhập
             </Link>
@@ -1307,15 +1307,15 @@ export default function CartPage() {
         {!isLoading && !isError && lines.length === 0 && (
           <SpotlightCard
             className='rounded-3xl border border-dashed border-border/80 bg-card/80 p-12 text-center shadow-lg backdrop-blur-md dark:bg-card/60'
-            spotlightColor='rgba(254, 20, 81, 0.15)'
+            spotlightColor='rgba(37, 99, 235, 0.15)'
           >
             <motion.div
               initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             >
-              <div className='mx-auto flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-rose-500/20 to-rose-400/20 ring-1 ring-rose-500/20'>
-                <ShoppingBag className='size-10 text-rose-600 dark:text-rose-400' />
+              <div className='mx-auto flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500/20 to-blue-400/20 ring-1 ring-blue-500/20'>
+                <ShoppingBag className='size-10 text-blue-600 dark:text-blue-400' />
               </div>
               <p className='mt-6 text-xl font-bold text-foreground'>
                 {!isAuthenticated && !authLoading
@@ -1331,14 +1331,14 @@ export default function CartPage() {
                 {!isAuthenticated && !authLoading ? (
                   <Link
                     href={buildLoginHref('/cart')}
-                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-rose-700 active:scale-[0.98] dark:bg-rose-500 dark:hover:bg-rose-600'
+                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-500 dark:hover:bg-blue-600'
                   >
                     Đăng nhập để tiếp tục
                   </Link>
                 ) : (
                   <Link
                     href='/'
-                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-rose-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-rose-700 active:scale-[0.98] dark:bg-rose-500 dark:hover:bg-rose-600'
+                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-500 dark:hover:bg-blue-600'
                   >
                     Khám phá sản phẩm
                   </Link>
@@ -1355,7 +1355,7 @@ export default function CartPage() {
             <div className='space-y-4 lg:col-span-7'>
               <SpotlightCard
                 className='rounded-2xl border border-border/60 bg-card/70 shadow-md backdrop-blur-sm dark:bg-card/50'
-                spotlightColor='rgba(254, 20, 81, 0.1)'
+                spotlightColor='rgba(37, 99, 235, 0.1)'
               >
                 <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-4 py-4 sm:px-6'>
                   <div className='flex items-center gap-3'>
@@ -1381,7 +1381,7 @@ export default function CartPage() {
                           className={cn(
                             'flex size-4 items-center justify-center rounded border-2 transition-all duration-150',
                             allSelectableSelected
-                              ? 'border-rose-500 bg-rose-500'
+                              ? 'border-blue-500 bg-blue-500'
                               : 'border-muted-foreground/40',
                           )}
                         >
@@ -1465,15 +1465,15 @@ export default function CartPage() {
             <div className='lg:col-span-5'>
               <div className='lg:sticky lg:top-28'>
                 <SpotlightCard
-                  className='rounded-2xl border border-rose-500/20 bg-card/90 shadow-xl backdrop-blur-md dark:border-rose-500/25 dark:bg-card/80'
-                  spotlightColor='rgba(254, 20, 81, 0.18)'
+                  className='rounded-2xl border border-blue-500/20 bg-card/90 shadow-xl backdrop-blur-md dark:border-blue-500/25 dark:bg-card/80'
+                  spotlightColor='rgba(37, 99, 235, 0.18)'
                 >
                   {isLoading ? (
                     <SummarySkeleton />
                   ) : (
                     <div className='space-y-5 p-5 sm:p-6'>
                       <div className='flex items-center gap-2'>
-                        {/* <Sparkles className='size-5 text-rose-600 dark:text-rose-400' /> */}
+                        {/* <Sparkles className='size-5 text-blue-600 dark:text-blue-400' /> */}
                         <h2 className='text-lg font-bold text-foreground'>
                           Tóm tắt thanh toán
                         </h2>
@@ -1483,7 +1483,7 @@ export default function CartPage() {
                       <div className='space-y-2'>
                         <div className='flex items-center justify-between gap-2'>
                           <div className='flex items-center gap-1.5'>
-                            <Truck className='size-4 text-rose-600 dark:text-rose-400' />
+                            <Truck className='size-4 text-blue-600 dark:text-blue-400' />
                             <span className='text-sm font-semibold text-foreground'>
                               Thông tin giao hàng
                             </span>
@@ -1536,12 +1536,12 @@ export default function CartPage() {
                                         className={cn(
                                           'w-full rounded-xl border p-3 text-left transition-colors',
                                           selected
-                                            ? 'border-rose-500 bg-rose-50/60 ring-1 ring-rose-500/20 dark:bg-rose-950/30'
-                                            : 'border-border/60 bg-muted/15 hover:border-rose-300/50',
+                                            ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500/20 dark:bg-blue-950/30'
+                                            : 'border-border/60 bg-muted/15 hover:border-blue-300/50',
                                         )}
                                       >
                                         <div className='flex items-start gap-2.5'>
-                                          <MapPin className='mt-0.5 size-4 shrink-0 text-rose-500' />
+                                          <MapPin className='mt-0.5 size-4 shrink-0 text-blue-500' />
                                           <div className='min-w-0 flex-1 space-y-0.5'>
                                             <div className='flex flex-wrap items-center gap-1.5'>
                                               <span className='text-sm font-semibold text-foreground'>
@@ -1581,7 +1581,7 @@ export default function CartPage() {
                                 type='button'
                                 variant='outline'
                                 size='sm'
-                                className='rounded-xl border-rose-300/60 text-rose-800 hover:bg-rose-50 dark:text-rose-200'
+                                className='rounded-xl border-blue-300/60 text-blue-800 hover:bg-blue-50 dark:text-blue-200'
                                 onClick={() => setCartAddAddressOpen(true)}
                                 disabled={createAddressMutation.isPending}
                               >
@@ -1624,7 +1624,7 @@ export default function CartPage() {
                             <button
                               type='button'
                               onClick={() => setDeliveryDialogOpen(true)}
-                              className='w-full rounded-xl border border-border/60 bg-muted/20 p-3.5 text-left transition-colors hover:border-rose-300/60 hover:bg-rose-50/30 dark:hover:bg-rose-950/10'
+                              className='w-full rounded-xl border border-border/60 bg-muted/20 p-3.5 text-left transition-colors hover:border-blue-300/60 hover:bg-blue-50/30 dark:hover:bg-blue-950/10'
                             >
                               <div className='flex items-start gap-3'>
                                 <CheckCircle2 className='mt-0.5 size-4 shrink-0 text-emerald-500' />
@@ -1653,22 +1653,22 @@ export default function CartPage() {
                             <button
                               type='button'
                               onClick={() => setDeliveryDialogOpen(true)}
-                              className='flex w-full items-center justify-between rounded-xl border border-dashed border-rose-300/60 bg-rose-50/30 px-4 py-3.5 text-left transition-colors hover:border-rose-400/70 hover:bg-rose-50/50 dark:border-rose-800/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20'
+                              className='flex w-full items-center justify-between rounded-xl border border-dashed border-blue-300/60 bg-blue-50/30 px-4 py-3.5 text-left transition-colors hover:border-blue-400/70 hover:bg-blue-50/50 dark:border-blue-800/40 dark:bg-blue-950/10 dark:hover:bg-blue-950/20'
                             >
                               <div className='flex items-center gap-2.5'>
-                                <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40'>
-                                  <User className='size-4 text-rose-600 dark:text-rose-400' />
+                                <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950/40'>
+                                  <User className='size-4 text-blue-600 dark:text-blue-400' />
                                 </div>
                                 <div>
-                                  <p className='text-sm font-semibold text-rose-700 dark:text-rose-300'>
+                                  <p className='text-sm font-semibold text-blue-700 dark:text-blue-300'>
                                     Nhập thông tin giao hàng
                                   </p>
-                                  <p className='text-xs text-rose-600/70 dark:text-rose-400/70'>
+                                  <p className='text-xs text-blue-600/70 dark:text-blue-400/70'>
                                     Tên người nhận &amp; số điện thoại bắt buộc
                                   </p>
                                 </div>
                               </div>
-                              <ChevronDown className='-rotate-90 size-4 text-rose-400' />
+                              <ChevronDown className='-rotate-90 size-4 text-blue-400' />
                             </button>
                           ))}
                       </div>
@@ -1703,7 +1703,7 @@ export default function CartPage() {
                         {lineVoucherDiscount > 0 && (
                           <div className='flex items-baseline justify-between gap-3'>
                             <span className='flex items-center gap-1 text-muted-foreground'>
-                              <TicketPercent className='size-3.5 text-rose-500' />
+                              <TicketPercent className='size-3.5 text-blue-500' />
                               Voucher sản phẩm
                             </span>
                             <span className='font-medium tabular-nums text-emerald-600 dark:text-emerald-400'>
@@ -1732,8 +1732,8 @@ export default function CartPage() {
                             </p>
                           )}
 
-                        <div className='rounded-xl border border-rose-200/80 bg-rose-50/60 px-4 py-3 dark:border-rose-800/50 dark:bg-rose-950/20'>
-                          <p className='mb-1 text-xs font-medium text-rose-700/80 dark:text-rose-300/80'>
+                        <div className='rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 dark:border-blue-800/50 dark:bg-blue-950/20'>
+                          <p className='mb-1 text-xs font-medium text-blue-700/80 dark:text-blue-300/80'>
                             Tổng cần thanh toán = Tiền thuê sau giảm + Tiền cọc
                             giữ
                           </p>
@@ -1741,7 +1741,7 @@ export default function CartPage() {
                             <span className='text-base font-bold text-foreground'>
                               Tổng thanh toán
                             </span>
-                            <span className='text-2xl font-extrabold tabular-nums text-rose-600 dark:text-rose-400'>
+                            <span className='text-2xl font-extrabold tabular-nums text-blue-600 dark:text-blue-400'>
                               {selectedTotals.selectedCount > 0
                                 ? formatter.format(selectedTotals.grandTotal)
                                 : formatter.format(0)}
@@ -1750,7 +1750,7 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      <div className='rounded-lg border border-rose-200 bg-rose-50/80 p-3 text-xs leading-relaxed text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100'>
+                      <div className='rounded-lg border border-blue-200 bg-blue-50/80 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-100'>
                         Giá chưa bao gồm phí vận chuyển và 8% VAT. Tiền cọc (nếu
                         có) sẽ hiển thị ở bước thanh toán VNPay.
                       </div>
@@ -1767,7 +1767,7 @@ export default function CartPage() {
                         <p className='text-center text-xs text-muted-foreground'>
                           <Link
                             href='/auth/login?redirect=/cart'
-                            className='font-medium text-rose-600 underline underline-offset-2 hover:text-rose-700 dark:text-rose-400'
+                            className='font-medium text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400'
                           >
                             Đăng nhập
                           </Link>{' '}
@@ -1778,7 +1778,7 @@ export default function CartPage() {
                       <Magnetic intensity={0.3} range={100}>
                         <Button
                           type='button'
-                          className='h-12 w-full rounded-xl bg-rose-600 text-base font-bold text-white shadow-lg hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600'
+                          className='h-12 w-full rounded-xl bg-blue-600 text-base font-bold text-white shadow-lg hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600'
                           disabled={
                             isMutating ||
                             selectedTotals.selectedCount === 0 ||

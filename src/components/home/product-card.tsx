@@ -102,8 +102,8 @@ export function ProductCard({
           className={cn(
             'absolute right-3 top-3 z-10 rounded-full p-2 shadow-sm transition-all',
             isFavorited
-              ? 'bg-rose-100 text-rose-600 ring-1 ring-rose-200 dark:bg-rose-950/45 dark:text-rose-300 dark:ring-rose-800/70'
-              : 'bg-white/90 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:bg-white/10 dark:hover:bg-rose-950/35 dark:hover:text-rose-300',
+              ? 'bg-blue-100 text-blue-600 ring-1 ring-blue-200 dark:bg-blue-950/45 dark:text-blue-300 dark:ring-blue-800/70'
+              : 'bg-white/90 text-muted-foreground hover:bg-blue-50 hover:text-blue-600 dark:bg-white/10 dark:hover:bg-blue-950/35 dark:hover:text-blue-300',
           )}
           disabled={isUpdatingFavorites}
         >

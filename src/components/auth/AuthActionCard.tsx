@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
@@ -38,7 +40,7 @@ export function AuthActionCard({
             <Link
               key={link.href}
               href={link.href}
-              className="text-[#fe1451] transition-colors hover:text-[#ba264d] hover:underline"
+              className="text-[var(--theme-primary-start,#0ea5e9)] transition-colors hover:text-[var(--theme-primary-end,#0369a1)] hover:underline"
             >
               {link.label}
             </Link>

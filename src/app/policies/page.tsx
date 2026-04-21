@@ -102,7 +102,7 @@ export default function PoliciesPage() {
           <div className='rounded-3xl border border-border/60 bg-card p-6 shadow-sm sm:p-8'>
             <div className='flex flex-wrap items-start justify-between gap-4'>
               <div>
-                <div className='mb-3 inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 dark:border-rose-400/30 dark:bg-rose-900/20 dark:text-rose-300'>
+                <div className='mb-3 inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-500 dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-400'>
                   <ShieldCheck className='size-3.5' />
                   Chính sách công ty
                 </div>
@@ -168,16 +168,16 @@ export default function PoliciesPage() {
                     <article
                       key={policy.policyDocumentId}
                       className={cn(
-                        'rounded-2xl border border-border/60 bg-background p-5 transition-all hover:border-rose-200 hover:shadow-md dark:hover:border-rose-700/50',
+                        'rounded-2xl border border-border/60 bg-background p-5 transition-all hover:border-blue-500/30 hover:shadow-md dark:hover:border-blue-400/30',
                         isHighlighted &&
-                          'border-rose-300 shadow-sm ring-1 ring-rose-200 dark:border-rose-400/40 dark:ring-rose-400/30',
+                          'border-blue-500/50 shadow-sm ring-1 ring-blue-500/30 dark:border-blue-400/40 dark:ring-blue-400/30',
                       )}
                     >
                       <div className='mb-3 flex flex-wrap items-center gap-2'>
                         <Badge variant='secondary'>{getPolicyLabel(policy.code)}</Badge>
                         <Badge variant='outline'>Phiên bản {policy.policyVersion}</Badge>
                         {isHighlighted && (
-                          <Badge className='bg-rose-600 text-white'>Đang chọn</Badge>
+                          <Badge className='bg-blue-500 text-white'>Đang chọn</Badge>
                         )}
                       </div>
 
@@ -194,7 +194,7 @@ export default function PoliciesPage() {
                         {policy.pdfUrl ? (
                           <Button
                             size='sm'
-                            className='h-9 gap-1.5 rounded-xl bg-linear-to-r from-rose-600 to-rose-500 px-4 text-white shadow-sm shadow-rose-600/25 hover:from-rose-700 hover:to-rose-600'
+                            className='h-9 gap-1.5 rounded-xl bg-linear-to-r from-blue-600 to-blue-500 px-4 text-white shadow-sm shadow-blue-600/25 hover:from-blue-700 hover:to-blue-600'
                             onClick={() => setPreviewPolicy(policy)}
                           >
                             <FileText className='size-4' />
@@ -231,7 +231,7 @@ export default function PoliciesPage() {
         <DialogContent className='max-h-[92dvh] overflow-y-auto p-5 sm:max-w-5xl'>
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2 text-lg font-bold'>
-              <Sparkles className='size-5 text-rose-500' />
+              <Sparkles className='size-5 text-blue-500' />
               {previewPolicy?.title ?? 'Xem chính sách'}
             </DialogTitle>
             <DialogDescription>
@@ -259,7 +259,7 @@ export default function PoliciesPage() {
                 href={previewPolicy.pdfUrl}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300'
+                className='inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
               >
                 Mở ở tab mới
                 <ExternalLink className='size-3.5' />

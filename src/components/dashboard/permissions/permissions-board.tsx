@@ -209,7 +209,7 @@ function ModuleNode({
             <Button
               variant='ghost'
               size='icon'
-              className='h-6 w-6 text-theme-primary-start bg-rose-50 hover:text-text-start/90 hover:bg-theme-primary-start/10 transition-opacity'
+              className='h-6 w-6 text-theme-primary-start bg-blue-50 hover:text-text-start/90 hover:bg-theme-primary-start/10 transition-opacity'
               onClick={() => setMenuOpen((v) => !v)}
             >
               <IconDots size={14} />
@@ -247,7 +247,7 @@ function ModuleNode({
         <Button
           variant='ghost'
           size='sm'
-          className='text-theme-primary-start bg-rose-50 hover:text-theme-primary-end hover:bg-rose-100 h-7 px-2 rounded-sm shrink-0'
+          className='text-theme-primary-start bg-blue-50 hover:text-theme-primary-end hover:bg-blue-100 h-7 px-2 rounded-sm shrink-0'
           onClick={(e) => {
             e.stopPropagation();
             onAddPermission?.();

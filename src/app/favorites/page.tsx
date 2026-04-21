@@ -164,7 +164,7 @@ export default function FavoritesPage() {
         <main className='bg-background pb-16 pt-12'>
           <section className='mx-auto w-full max-w-3xl px-4 text-center sm:px-6'>
             <div className='rounded-3xl border border-border/60 bg-card px-6 py-10 shadow-sm'>
-              <div className='mx-auto flex size-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/35 dark:text-rose-300'>
+              <div className='mx-auto flex size-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 dark:bg-blue-950/35 dark:text-blue-300'>
                 <Heart className='size-7' />
               </div>
               <h1 className='mt-4 text-2xl font-black text-foreground'>
@@ -175,7 +175,7 @@ export default function FavoritesPage() {
               </p>
               <div className='mt-6 flex flex-wrap justify-center gap-2'>
                 <Button
-                  className='h-10 rounded-xl bg-rose-600 px-5 text-white hover:bg-rose-700'
+                  className='h-10 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700'
                   render={<Link href={buildLoginHref('/favorites')} />}
                 >
                   Đăng nhập để tiếp tục
@@ -202,7 +202,7 @@ export default function FavoritesPage() {
           <div className='rounded-3xl border border-border/60 bg-card p-6 shadow-sm sm:p-8'>
             <div className='flex flex-wrap items-start justify-between gap-3'>
               <div>
-                <p className='inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/30 dark:text-rose-300'>
+                <p className='inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:border-blue-800/60 dark:bg-blue-950/30 dark:text-blue-300'>
                   <Sparkles className='size-3.5' />
                   Bộ sưu tập cá nhân
                 </p>
@@ -217,7 +217,7 @@ export default function FavoritesPage() {
               {favoriteIds.length > 0 && (
                 <Button
                   variant='outline'
-                  className='h-9 rounded-xl border-rose-200 text-rose-700 hover:bg-rose-50 dark:border-rose-800/60 dark:text-rose-300 dark:hover:bg-rose-950/40'
+                  className='h-9 rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800/60 dark:text-blue-300 dark:hover:bg-blue-950/40'
                   onClick={() => {
                     void handleClearFavorites();
                   }}
@@ -259,7 +259,7 @@ export default function FavoritesPage() {
                   Nhấn biểu tượng trái tim ở trang chủ hoặc danh mục để lưu sản phẩm bạn thích.
                 </p>
                 <Button
-                  className='mt-5 h-10 rounded-xl bg-rose-600 px-5 text-white hover:bg-rose-700'
+                  className='mt-5 h-10 rounded-xl bg-blue-600 px-5 text-white hover:bg-blue-700'
                   render={<Link href='/catalog' />}
                 >
                   Khám phá sản phẩm
@@ -285,7 +285,7 @@ export default function FavoritesPage() {
                         onClick={() => {
                           void handleRemoveFavorite(product.productId);
                         }}
-                        className='absolute right-3 top-3 z-10 inline-flex size-9 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/35 dark:text-rose-300 dark:hover:bg-rose-950/55'
+                        className='absolute right-3 top-3 z-10 inline-flex size-9 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100 dark:border-blue-800/60 dark:bg-blue-950/35 dark:text-blue-300 dark:hover:bg-blue-950/55'
                         title='Bỏ yêu thích'
                         aria-label='Bỏ yêu thích'
                         disabled={isUpdatingFavorites}
@@ -313,7 +313,7 @@ export default function FavoritesPage() {
 
                       <div className='mt-3'>
                         <Link href={`/product/${product.productId}`}>
-                          <h2 className='line-clamp-2 text-base font-bold text-foreground transition-colors hover:text-rose-600 dark:hover:text-rose-300'>
+                          <h2 className='line-clamp-2 text-base font-bold text-foreground transition-colors hover:text-blue-600 dark:hover:text-blue-300'>
                             {product.name}
                           </h2>
                         </Link>
@@ -323,7 +323,7 @@ export default function FavoritesPage() {
 
                         <div className='mt-2 flex items-center gap-2'>
                           {discountPercent != null && (
-                            <span className='rounded-full bg-rose-600 px-2 py-0.5 text-xs font-bold text-white'>
+                            <span className='rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold text-white'>
                               -{discountPercent}%
                             </span>
                           )}
@@ -333,7 +333,7 @@ export default function FavoritesPage() {
                         </div>
 
                         <div className='mt-3 flex items-end gap-2'>
-                          <span className='text-lg font-black text-rose-600 dark:text-rose-300'>
+                          <span className='text-lg font-black text-blue-600 dark:text-blue-300'>
                             {money.format(product.dailyPrice)}
                           </span>
                           {product.oldDailyPrice && product.oldDailyPrice > product.dailyPrice && (
@@ -354,7 +354,7 @@ export default function FavoritesPage() {
                         </Button>
                         <Button
                           className={cn(
-                            'h-9 flex-1 gap-1.5 rounded-xl bg-rose-600 text-white hover:bg-rose-700',
+                            'h-9 flex-1 gap-1.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700',
                             isAdding && 'cursor-wait opacity-80',
                           )}
                           onClick={() => void handleAddToCart(product)}

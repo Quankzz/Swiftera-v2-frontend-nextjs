@@ -145,7 +145,7 @@ function OrderContractAction({
       href={contractPdfUrl}
       target='_blank'
       rel='noopener noreferrer'
-      className='inline-flex size-8 items-center justify-center rounded-lg border border-rose-300/60 bg-rose-50/50 text-rose-600 transition-colors hover:bg-rose-100 dark:border-rose-800/60 dark:bg-rose-950/20 dark:text-rose-400 dark:hover:bg-rose-950/40'
+      className='inline-flex size-8 items-center justify-center rounded-lg border border-blue-300/60 bg-blue-50/50 text-blue-600 transition-colors hover:bg-blue-100 dark:border-blue-800/60 dark:bg-blue-950/20 dark:text-blue-400 dark:hover:bg-blue-950/40'
       title='Xem hợp đồng thuê (PDF)'
       aria-label='Xem hợp đồng thuê (PDF)'
       onClick={(e) => e.stopPropagation()}
@@ -188,7 +188,7 @@ function StatusTabBar({
             className={cn(
               '-mb-px border-b-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors',
               activeFilter === f.value
-                ? 'border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400'
+                ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                 : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
             )}
           >
@@ -272,7 +272,7 @@ function PaginationControls({
               className={cn(
                 'h-8 w-8 p-0 text-sm',
                 isActive &&
-                  'bg-rose-600 hover:bg-rose-700 text-white border-rose-600',
+                  'bg-blue-600 hover:bg-blue-700 text-white border-blue-600',
               )}
               onClick={() => onPageChange(p)}
             >
@@ -413,7 +413,7 @@ export default function RentalOrdersPage() {
                 placeholder='Tìm theo mã đơn thuê...'
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className='h-9 w-full rounded-lg border border-border/60 bg-background pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200/60 dark:bg-card'
+                className='h-9 w-full rounded-lg border border-border/60 bg-background pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200/60 dark:bg-card'
               />
               {search && (
                 <button
@@ -429,7 +429,7 @@ export default function RentalOrdersPage() {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className='rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-rose-200/60 dark:bg-card'
+                className='rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-200/60 dark:bg-card'
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -444,7 +444,7 @@ export default function RentalOrdersPage() {
           {hasActiveFilters && (
             <div className='flex flex-wrap items-center gap-2 border-b border-border/60 bg-muted/30 px-5 py-2'>
               {statusFilter && (
-                <span className='inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'>
+                <span className='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'>
                   {
                     RENTAL_ORDER_STATUS_LABELS[
                       statusFilter as RentalOrderStatus
@@ -452,7 +452,7 @@ export default function RentalOrdersPage() {
                   }
                   <button
                     onClick={() => setStatusFilter('')}
-                    className='ml-0.5 hover:text-rose-900'
+                    className='ml-0.5 hover:text-blue-900'
                   >
                     <X className='size-3' />
                   </button>
@@ -501,7 +501,7 @@ export default function RentalOrdersPage() {
                 Vui lòng đăng nhập hoặc thử lại sau.
               </p>
               <Button
-                className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                className='mt-5 h-9 rounded-xl bg-blue-600 text-sm text-white hover:bg-blue-700'
                 render={<Link href={buildLoginHref('/rental-orders')} />}
               >
                 Đăng nhập
@@ -527,7 +527,7 @@ export default function RentalOrdersPage() {
               </p>
               {hasActiveFilters ? (
                 <Button
-                  className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                  className='mt-5 h-9 rounded-xl bg-blue-600 text-sm text-white hover:bg-blue-700'
                   onClick={() => {
                     setStatusFilter('');
                     setSearch('');
@@ -537,7 +537,7 @@ export default function RentalOrdersPage() {
                 </Button>
               ) : (
                 <Button
-                  className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                  className='mt-5 h-9 rounded-xl bg-blue-600 text-sm text-white hover:bg-blue-700'
                   render={<Link href='/cart' />}
                 >
                   Đi tới giỏ hàng
@@ -571,7 +571,7 @@ export default function RentalOrdersPage() {
                       {/* Icon */}
                       <Link
                         href={`/rental-orders/${order.rentalOrderId}`}
-                        className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-opacity hover:opacity-80 dark:bg-rose-950/50 dark:text-rose-400'
+                        className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-opacity hover:opacity-80 dark:bg-blue-950/50 dark:text-blue-400'
                         tabIndex={-1}
                       >
                         <Package className='size-5' />
