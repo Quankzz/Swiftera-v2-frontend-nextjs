@@ -4,12 +4,16 @@ import { useRef, useState } from 'react';
 import { X, Loader2, Upload, Link as LinkIcon, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { isAzureBlobUrl, extractBlobPathFromUrl } from '@/lib/blob-utils';
 import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from '@/features/categories/hooks/use-category-management';
 import { parseErrorForForm } from '@/api/apiService';
-import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import {
+  useUploadFileMutation,
+  useDeleteFileMutation,
+} from '@/features/files/hooks/use-files';
 import type { CategoryResponse } from '@/features/categories/types';
 import { CategoryTreeSelect } from './category-tree-select';
 import { toast } from 'sonner';
@@ -81,6 +85,7 @@ export function CategoryFormDialog({
   const createMutation = useCreateCategoryMutation();
   const updateMutation = useUpdateCategoryMutation();
   const uploadMutation = useUploadFileMutation();
+  const deleteMutation = useDeleteFileMutation();
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   // ── Validation ─────────────────────────────────────────────────────────────
@@ -103,6 +108,10 @@ export function CategoryFormDialog({
     if (!file) return;
     e.target.value = '';
     setIsUploading(true);
+
+    // Capture old image URL before upload to delete after success
+    const oldImageUrl = form.imageUrl;
+
     try {
       const result = await uploadMutation.mutateAsync({
         file,
@@ -110,6 +119,16 @@ export function CategoryFormDialog({
       });
       setForm((f) => ({ ...f, imageUrl: result.fileUrl }));
       setUrlMode(false);
+
+      // Delete old image from Azure Blob if it was a blob URL
+      if (oldImageUrl && isAzureBlobUrl(oldImageUrl)) {
+        const oldPath = extractBlobPathFromUrl(oldImageUrl);
+        if (oldPath) {
+          deleteMutation
+            .mutateAsync(oldPath)
+            .catch(() => toast.error('Không thể xóa ảnh cũ khỏi bộ nhớ.'));
+        }
+      }
     } catch {
       setServerError('Tải ảnh lên thất bại. Vui lòng thử lại.');
     } finally {

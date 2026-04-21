@@ -6,6 +6,38 @@ import { storageApi } from '../../../../api/storageApi';
 import VideoModal from './VideoModal';
 import ColorPicker from './ColorPicker';
 
+/** Returns true if url is an Azure Blob Storage URL */
+function isAzureBlobUrl(url) {
+  try {
+    return new URL(url).hostname.includes('.blob.core.windows.net');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Extracts the blob path (folder/filename) from a full Azure Blob URL.
+ * Strips the leading container segment.
+ */
+function extractBlobPath(url) {
+  try {
+    const pathname = new URL(url).pathname; // e.g. /container/folder/file.jpg
+    const parts = pathname.split('/').filter(Boolean);
+    if (parts.length < 2) return null;
+    return parts.slice(1).join('/'); // drop container name
+  } catch {
+    return null;
+  }
+}
+
+/** Fire-and-forget deletion of an Azure blob URL */
+function deleteAzureBlobUrl(url) {
+  if (!isAzureBlobUrl(url)) return;
+  const filePath = extractBlobPath(url);
+  if (!filePath) return;
+  storageApi.deleteSingleFile({ filePath }).catch(() => {/* best-effort */ });
+}
+
 /**
  * StoryToolbar component - Editor toolbar with formatting options
  * @param {Object} props
@@ -99,6 +131,14 @@ export default function StoryToolbar({ activeEditorRef, onSave, saveStatus = 'id
 
       if (response?.data?.data?.fileUrl) {
         const imageUrl = response.data.data.fileUrl;
+
+        // Delete existing Azure blob images in this section before inserting new one
+        const section = activeEditorRef.current?.closest('section');
+        if (section) {
+          section.querySelectorAll('img').forEach((existingImg) => {
+            deleteAzureBlobUrl(existingImg.src);
+          });
+        }
 
         // Create and insert actual image
         const img = document.createElement('img');

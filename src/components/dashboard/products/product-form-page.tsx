@@ -163,7 +163,9 @@ function ImageItem({
       if (img.imageUrl && isAzureBlobUrl(img.imageUrl)) {
         const oldPath = extractBlobPathFromUrl(img.imageUrl);
         if (oldPath) {
-          void deleteMutation.mutateAsync(oldPath);
+          deleteMutation
+            .mutateAsync(oldPath)
+            .catch(() => toast.error('Không thể xóa ảnh cũ khỏi bộ nhớ.'));
         }
       }
 
@@ -605,9 +607,7 @@ export function ProductFormPage({
                   setField('description', html === '<br>' ? '' : html)
                 }
                 uploadFolder={
-                  form.productId
-                    ? `products/${form.productId}`
-                    : 'products'
+                  form.productId ? `products/${form.productId}` : 'products'
                 }
               />
             </Field>
@@ -784,7 +784,10 @@ export function ProductFormPage({
             {/* Video URL field */}
             <div className='mt-2 flex flex-col gap-1.5 rounded-md border border-gray-100 dark:border-white/8 bg-gray-50/50 dark:bg-white/3 p-3'>
               <div className='flex items-center gap-2'>
-                <Video size={14} className='text-theme-primary-start shrink-0' />
+                <Video
+                  size={14}
+                  className='text-theme-primary-start shrink-0'
+                />
                 <label className='text-sm font-medium text-text-main'>
                   Video sản phẩm (URL)
                 </label>
@@ -797,7 +800,8 @@ export function ProductFormPage({
                 className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
               />
               <p className='text-xs text-text-sub'>
-                Nhập URL video YouTube/Vimeo embed hoặc URL trực tiếp (.mp4). Video sẽ hiển thị trong gallery sản phẩm.
+                Nhập URL video YouTube/Vimeo embed hoặc URL trực tiếp (.mp4).
+                Video sẽ hiển thị trong gallery sản phẩm.
               </p>
             </div>
           </div>
