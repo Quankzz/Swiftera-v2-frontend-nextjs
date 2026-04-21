@@ -406,14 +406,18 @@ export function DeliveringWorkflow({
               Xác nhận hủy đơn hàng
             </DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập nhật trạng thái đơn hàng sang{' '}
+              Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập
+              nhật trạng thái đơn hàng sang{' '}
               <span className="font-medium text-foreground">Đã hủy</span>.
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-lg border border-border bg-muted/30 p-3">
             <p className="text-[13px] text-muted-foreground">
-              Mã đơn: <span className="font-mono font-medium text-foreground">{order.rentalOrderId}</span>
+              Mã đơn:{' '}
+              <span className="font-mono font-medium text-foreground">
+                {order.rentalOrderId}
+              </span>
             </p>
           </div>
 
@@ -434,7 +438,9 @@ export function DeliveringWorkflow({
               className="h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white"
             >
               {loading ? (
-                <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</>
+                <>
+                  <Loader2 className="size-4 animate-spin" /> Đang xử lý…
+                </>
               ) : (
                 <>Có, hủy đơn</>
               )}
