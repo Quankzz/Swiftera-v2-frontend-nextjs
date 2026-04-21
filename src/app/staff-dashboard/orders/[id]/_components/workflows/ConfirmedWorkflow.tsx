@@ -1,36 +1,69 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import Image from 'next/image';
 import {
   Warehouse,
+  Truck,
   Package,
   Camera,
   CheckCircle2,
   Loader2,
-  MapPin,
-  Building2,
   Info,
-  Truck,
-  Navigation,
-  Wifi,
   Navigation2,
-  User,
-  Phone,
-  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { StaffOrder, StaffOrderItem } from '@/types/api.types';
+import type { RentalOrderResponse, RentalOrderLineResponse } from '@/types/api.types';
 import { WorkflowBanner } from '../WorkflowBanner';
+import {
+  CustomerInfo,
+  OrderMetaCard,
+  OrderItemsList,
+} from '../OrderInfo';
 import { CameraCapture } from '../CameraCapture';
-import type { HubResponse } from '@/api/hubs';
-import { WorkflowFooter } from '../WorkflowFooter';
 import { DeliveryMiniMap } from '../DeliveryMiniMap';
 
+function ItemPickupCard({
+  line,
+  photos,
+  onAdd,
+  onRemove,
+}: {
+  line: RentalOrderLineResponse;
+  photos: string[];
+  onAdd: (url: string) => void;
+  onRemove: (idx: number) => void;
+}) {
+  const hasPhoto = photos.length > 0;
+  return (
+    <div className={cn(
+      'rounded-xl border p-3 transition-all',
+      hasPhoto
+        ? 'border-emerald-300/50 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-800/30'
+        : 'border-border bg-card',
+    )}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={cn(
+          'size-10 shrink-0 rounded-xl flex items-center justify-center transition-colors shadow-sm',
+          hasPhoto ? 'bg-emerald-500 text-white' : 'bg-muted border border-border',
+        )}>
+          {hasPhoto ? <CheckCircle2 className="size-5" /> : <Camera className="size-4 text-muted-foreground/50" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-bold text-foreground line-clamp-2 leading-snug">{line.productNameSnapshot}</p>
+          <p className="text-[10px] text-muted-foreground font-mono mt-0.5 bg-muted px-1.5 py-0.5 rounded inline-block">{line.inventorySerialNumber || '—'}</p>
+        </div>
+        {hasPhoto && (
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded shrink-0">✓ Đã chụp</span>
+        )}
+      </div>
+      <CameraCapture photos={photos} onAdd={onAdd} onRemove={onRemove} label="Chụp ảnh kiểm tra" />
+    </div>
+  );
+}
+
 interface ConfirmedWorkflowProps {
-  order: StaffOrder;
-  hubInfo?: HubResponse | null;
+  order: RentalOrderResponse;
   onStartDelivery: () => void;
   loading?: boolean;
   staffLat?: number;
@@ -38,82 +71,8 @@ interface ConfirmedWorkflowProps {
   staffLocAt?: string;
 }
 
-function ItemPickupCard({
-  item,
-  photos,
-  onAdd,
-  onRemove,
-}: {
-  item: StaffOrderItem;
-  photos: string[];
-  onAdd: (url: string) => void;
-  onRemove: (idx: number) => void;
-}) {
-  const hasPhoto = photos.length > 0;
-
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border p-4 transition-colors',
-        hasPhoto
-          ? 'border-success/40 bg-success/5 dark:bg-success/5'
-          : 'border-border bg-card',
-      )}
-    >
-      {/* Item header */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative size-12 shrink-0 rounded-xl overflow-hidden bg-muted border border-border">
-          {item.image_url ? (
-            <Image
-              src={item.image_url}
-              alt={item.product_name}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="size-full flex items-center justify-center">
-              <Package className="size-5 text-muted-foreground/40" />
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-foreground truncate">
-            {item.product_name}
-          </p>
-          <p className="text-xs text-muted-foreground font-mono mt-0.5">
-            {item.serial_number || '-'}
-          </p>
-        </div>
-        <div
-          className={cn(
-            'size-7 rounded-full flex items-center justify-center shrink-0 transition-colors',
-            hasPhoto
-              ? 'bg-success text-white'
-              : 'border-2 border-dashed border-border',
-          )}
-        >
-          {hasPhoto ? (
-            <CheckCircle2 className="size-4" />
-          ) : (
-            <Camera className="size-3.5 text-muted-foreground/50" />
-          )}
-        </div>
-      </div>
-
-      {/* Camera capture */}
-      <CameraCapture
-        photos={photos}
-        onAdd={onAdd}
-        onRemove={onRemove}
-        label="Chụp ảnh kiểm tra tại kho"
-      />
-    </div>
-  );
-}
-
 export function ConfirmedWorkflow({
   order,
-  hubInfo,
   onStartDelivery,
   loading,
   staffLat,
@@ -121,333 +80,165 @@ export function ConfirmedWorkflow({
   staffLocAt,
 }: ConfirmedWorkflowProps) {
   const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>(() =>
-    Object.fromEntries(order.items.map((i) => [i.rental_order_item_id, []])),
+    Object.fromEntries(order.rentalOrderLines.map((line) => [line.rentalOrderLineId, []])),
   );
 
-  const itemsDone = order.items.filter(
-    (i) => (itemPhotos[i.rental_order_item_id]?.length ?? 0) > 0,
+  const itemsDone = order.rentalOrderLines.filter(
+    (line) => (itemPhotos[line.rentalOrderLineId]?.length ?? 0) > 0,
   ).length;
-  const allPhotographed = itemsDone === order.items.length;
+  const total = order.rentalOrderLines.length;
+  const allPhotographed = itemsDone === total;
 
-  const handleAdd = useCallback((itemId: string, url: string) => {
-    setItemPhotos((prev) => ({
-      ...prev,
-      [itemId]: [...(prev[itemId] ?? []), url],
-    }));
+  const handleAdd = useCallback((lineId: string, url: string) => {
+    setItemPhotos((prev) => ({ ...prev, [lineId]: [...(prev[lineId] ?? []), url] }));
+  }, []);
+  const handleRemove = useCallback((lineId: string, idx: number) => {
+    setItemPhotos((prev) => ({ ...prev, [lineId]: (prev[lineId] ?? []).filter((_, j) => j !== idx) }));
   }, []);
 
-  const handleRemove = useCallback((itemId: string, idx: number) => {
-    setItemPhotos((prev) => ({
-      ...prev,
-      [itemId]: (prev[itemId] ?? []).filter((_, j) => j !== idx),
-    }));
-  }, []);
-
-  const hubAddress = hubInfo
-    ? [hubInfo.addressLine, hubInfo.ward, hubInfo.district, hubInfo.city]
-        .filter(Boolean)
-        .join(', ')
-    : null;
-
-  const hasHubMap = !!(hubInfo?.latitude && hubInfo?.longitude);
+  const hubAddress = order.hubAddressLine ?? null;
+  const hasHubMap = !!(order.hubLatitude && order.hubLongitude);
 
   return (
-    <div
-      className={cn(
-        'flex flex-col gap-4',
-        hasHubMap && 'lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-5',
-      )}
-    >
-      {/* Map panel - right on desktop, bottom on mobile */}
+    <div className="space-y-4">
+      <WorkflowBanner
+        icon={Warehouse}
+        title="Chuẩn bị hàng tại kho hub"
+        desc="Đến hub lấy thiết bị và chụp ảnh kiểm tra từng sản phẩm."
+        variant="primary"
+      />
+      {/* Desktop: map panel above the 2-col grid */}
       {hasHubMap && (
-        <div className="order-last lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-7rem)] flex flex-col z-10">
-          <div className="rounded-2xl border border-border bg-card shadow-md flex flex-col h-full overflow-hidden">
-            <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-muted/30 shrink-0">
-              <Navigation className="size-4 text-theme-primary-start" />
-              <span className="text-sm font-bold text-foreground flex-1">
-                Đường đến hub
-              </span>
-              {hubInfo!.name && (
-                <span className="text-xs font-medium text-muted-foreground truncate max-w-35">
-                  {hubInfo!.name}
-                </span>
-              )}
-            </div>
-            <div className="p-2.5 flex-1 min-h-0">
-              <DeliveryMiniMap
-                destLat={hubInfo!.latitude!}
-                destLng={hubInfo!.longitude!}
-                destAddress={hubAddress ?? undefined}
-                destLabel={hubInfo!.name ?? 'Hub'}
-                destPinColor="green"
-                staffLat={staffLat}
-                staffLng={staffLng}
-                mapHeightClass="h-48 sm:h-[50vh] lg:h-full lg:min-h-0"
-              />
-            </div>
-
-            {/* GPS status footer */}
-            <div className="px-4 py-3 border-t border-border flex items-center gap-3 bg-card shrink-0">
-              <div
-                className={cn(
-                  'size-2.5 rounded-full shrink-0 transition-colors',
-                  staffLocAt
-                    ? 'bg-success animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]'
-                    : 'bg-muted-foreground/40',
-                )}
-              />
-              <Navigation2 className="size-4 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground">
-                  {staffLocAt
-                    ? 'GPS đang theo dõi - tự động chỉ đường đến hub'
-                    : 'Đang lấy vị trí GPS… Tuyến đường sẽ hiện sau'}
-                </p>
-                {staffLocAt && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Cập nhật lúc{' '}
-                    {new Date(staffLocAt).toLocaleTimeString('vi-VN')}
-                  </p>
-                )}
-              </div>
-              <Wifi
-                className={cn(
-                  'size-4 shrink-0',
-                  staffLocAt ? 'text-success' : 'text-muted-foreground/50',
-                )}
-              />
-            </div>
+        <div className="hidden lg:block rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
+            <Navigation2 className="size-4 text-emerald-500" />
+            <span className="text-[13px] font-bold text-foreground">Đường đến hub</span>
+            {order.hubName && <span className="text-[11px] text-muted-foreground">· {order.hubName}</span>}
+            <div className={cn('ml-auto size-2 rounded-full', staffLocAt ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/40')} />
           </div>
-        </div>
-      )}
-
-      {/* Main content - left on desktop */}
-      <div className="order-last lg:order-1 flex flex-col gap-4">
-        {/* Status banner */}
-        <WorkflowBanner
-          icon={Warehouse}
-          title="Chuẩn bị hàng tại kho hub"
-          desc="Đến hub lấy thiết bị và chụp ảnh kiểm tra từng sản phẩm. Tất cả thiết bị phải được chụp ảnh trước khi xuất kho."
-          variant="primary"
-        />
-
-        {/* Customer info */}
-        <div className="rounded-2xl border border-border/80 dark:border-slate-800 bg-card shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-border/80 dark:border-slate-800 bg-muted/30 dark:bg-slate-900/50 flex items-center gap-2.5">
-            <User className="size-5 text-foreground" />
-            <h3 className="text-[15px] font-bold text-foreground">
-              Thông tin khách hàng & giao hàng
-            </h3>
-          </div>
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                <User className="size-4 text-theme-primary-start dark:text-blue-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Người nhận
-                </p>
-                <p className="text-[14px] font-bold text-foreground truncate">
-                  {order.renter.full_name}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                <Phone className="size-4 text-theme-primary-start dark:text-blue-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Điện thoại
-                </p>
-                <p className="text-[14px] font-bold text-foreground font-mono">
-                  {order.renter.phone_number}
-                </p>
-              </div>
-            </div>
-            {order.renter.email && (
-              <div className="flex items-start gap-3">
-                <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                  <Mail className="size-4 text-theme-primary-start dark:text-blue-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Email
-                  </p>
-                  <p className="text-[14px] font-medium text-foreground truncate">
-                    {order.renter.email}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="sm:col-span-3 flex items-start gap-3 pt-3 border-t border-border/60 dark:border-slate-800">
-              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                <MapPin className="size-4 text-theme-primary-start dark:text-blue-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Địa chỉ giao hàng
-                </p>
-                <p className="text-[14px] font-medium text-foreground leading-relaxed">
-                  {order.delivery_address || order.renter.address || '-'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Hub info */}
-        {hubInfo && (
-          <div className="rounded-2xl border border-border bg-card overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center gap-2">
-              <Building2 className="size-4 text-theme-primary-start" />
-              <h3 className="text-sm font-bold text-foreground">
-                Thông tin kho hub
-              </h3>
-            </div>
-            <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-start gap-3">
-                <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
-                  <Building2 className="size-4 text-theme-primary-start" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
-                    Tên hub
-                  </p>
-                  <p className="text-sm font-bold text-foreground">
-                    {hubInfo.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-mono">
-                    {hubInfo.code}
-                  </p>
-                </div>
-              </div>
-              {hubAddress && (
-                <div className="flex items-start gap-3">
-                  <div className="size-9 rounded-xl bg-theme-primary-start/10 flex items-center justify-center shrink-0">
-                    <MapPin className="size-4 text-theme-primary-start" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
-                      Địa chỉ
-                    </p>
-                    <p className="text-sm font-medium text-foreground leading-relaxed">
-                      {hubAddress}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Progress indicator */}
-        <div className="rounded-2xl border border-border bg-card px-5 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Camera className="size-4 text-theme-primary-start" />
-              <span className="text-sm font-bold text-foreground">
-                Tiến độ chụp ảnh kiểm kho
-              </span>
-            </div>
-            <span
-              className={cn(
-                'text-sm font-black tabular-nums',
-                allPhotographed ? 'text-success' : 'text-muted-foreground',
-              )}
-            >
-              {itemsDone}/{order.items.length}
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className={cn(
-                'h-full rounded-full transition-all duration-500',
-                allPhotographed ? 'bg-success' : 'bg-theme-primary-start',
-              )}
-              style={{
-                width: `${order.items.length > 0 ? (itemsDone / order.items.length) * 100 : 0}%`,
-              }}
+          <div className="p-2">
+            <DeliveryMiniMap
+              destLat={order.hubLatitude!} destLng={order.hubLongitude!}
+              destAddress={hubAddress ?? undefined}
+              destLabel={order.hubName ?? 'Hub'}
+              destPinColor="green"
+              staffLat={staffLat} staffLng={staffLng}
+              mapHeightClass="h-44 rounded-xl"
             />
           </div>
-          {!allPhotographed && (
-            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
-              <Info className="size-3.5 shrink-0" />
-              Chụp ảnh tất cả {order.items.length} thiết bị để kích hoạt nút
-              xuất kho.
-            </p>
-          )}
         </div>
+      )}
 
-        {/* Items grid */}
-        <div className="rounded-2xl border border-border bg-card overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-border bg-muted/30 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Package className="size-4 text-theme-primary-start" />
-              <h3 className="text-sm font-bold text-foreground">
-                Kiểm tra thiết bị trước xuất kho
-              </h3>
-            </div>
-            <span className="text-xs font-bold bg-muted text-muted-foreground px-2.5 py-1 rounded-lg">
-              {order.items.length} thiết bị
-            </span>
+      {/* Mobile map */}
+      {hasHubMap && (
+        <div className="lg:hidden rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
+            <Navigation2 className="size-4 text-emerald-500" />
+            <span className="text-[13px] font-bold text-foreground">Đường đến hub</span>
           </div>
-          <div className="p-4 grid grid-cols-1 gap-3">
-            {order.items.map((item) => (
-              <ItemPickupCard
-                key={item.rental_order_item_id}
-                item={item}
-                photos={itemPhotos[item.rental_order_item_id] ?? []}
-                onAdd={(url) => handleAdd(item.rental_order_item_id, url)}
-                onRemove={(idx) => handleRemove(item.rental_order_item_id, idx)}
-              />
-            ))}
+          <div className="p-2">
+            <DeliveryMiniMap
+              destLat={order.hubLatitude!} destLng={order.hubLongitude!}
+              destAddress={hubAddress ?? undefined}
+              destLabel={order.hubName ?? 'Hub'}
+              destPinColor="green"
+              staffLat={staffLat} staffLng={staffLng}
+              mapHeightClass="h-48 sm:h-56 rounded-xl"
+            />
           </div>
         </div>
+      )}
 
-        {/* Action footer */}
-        <WorkflowFooter>
-          <div className="p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="text-[14px] text-muted-foreground flex-1 min-w-0">
-              {allPhotographed ? (
-                <span className="flex items-center gap-2 text-success font-semibold">
-                  <CheckCircle2 className="size-5" />
-                  Đã hoàn tất kiểm kho - sẵn sàng xuất hàng.
-                </span>
+      {/* ── 2-column grid: left=info cards, right=items ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 items-start">
+        {/* Left: Info cards */}
+        <div className="flex flex-col gap-4">
+          <OrderMetaCard order={order} />
+          <CustomerInfo order={order} mode="delivery" />
+
+          {/* Progress */}
+          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+            <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2">
+              <Camera className="size-4 text-blue-600" />
+              <span className="text-[13px] font-bold text-foreground">Tiến độ chụp ảnh</span>
+              <span className={cn('ml-auto text-[12px] font-black tabular-nums', allPhotographed ? 'text-emerald-600' : 'text-muted-foreground')}>
+                {itemsDone}/{total}
+              </span>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                <div className={cn('h-full rounded-full transition-all duration-500', allPhotographed ? 'bg-emerald-500' : 'bg-blue-600')}
+                  style={{ width: `${total > 0 ? (itemsDone / total) * 100 : 0}%` }} />
+              </div>
+              {!allPhotographed ? (
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <Info className="size-3.5 shrink-0" />Chụp ảnh tất cả {total} thiết bị để kích hoạt nút xuất kho.
+                </p>
               ) : (
-                <span className="flex items-center gap-2">
-                  <Camera className="size-5 shrink-0" />
-                  Còn {order.items.length - itemsDone} thiết bị chưa được chụp
-                  ảnh.
-                </span>
+                <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1.5">
+                  <CheckCircle2 className="size-3.5 shrink-0" />Hoàn tất kiểm kho — sẵn sàng xuất hàng.
+                </p>
               )}
             </div>
-
-            <Button
-              onClick={onStartDelivery}
-              disabled={!allPhotographed || loading}
-              className={cn(
-                'h-16 gap-2 rounded-xl px-7 text-xl font-bold shrink-0 sm:min-w-52',
-                allPhotographed
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700'
-                  : '',
-              )}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="size-5 animate-spin" />
-                  Đang xử lý…
-                </>
-              ) : (
-                <>
-                  <Truck className="size-5" />
-                  Xuất kho & Bắt đầu giao
-                </>
-              )}
-            </Button>
           </div>
-        </WorkflowFooter>
+        </div>
+
+        {/* Right: Items */}
+        <div className="flex flex-col gap-4">
+          <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+            <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Package className="size-4 text-foreground" />
+                <h3 className="text-[13px] font-bold text-foreground">Kiểm tra thiết bị</h3>
+              </div>
+              <span className="text-[11px] font-bold bg-muted text-muted-foreground px-2 py-1 rounded-lg">{total} thiết bị</span>
+            </div>
+            <div className="p-3 space-y-3">
+              {order.rentalOrderLines.map((line) => (
+                <ItemPickupCard
+                  key={line.rentalOrderLineId}
+                  line={line}
+                  photos={itemPhotos[line.rentalOrderLineId] ?? []}
+                  onAdd={(url) => handleAdd(line.rentalOrderLineId, url)}
+                  onRemove={(idx) => handleRemove(line.rentalOrderLineId, idx)}
+                />
+              ))}
+            </div>
+          </div>
+          <OrderItemsList order={order} mode="confirm" />
+        </div>
+      </div>
+
+      {/* Sticky footer */}
+      <div className="sticky bottom-0 left-0 right-0 z-10 bg-card/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
+          <p className="text-[12px] text-muted-foreground">
+            {allPhotographed ? (
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                <CheckCircle2 className="size-3.5" />
+                Sẵn sàng xuất kho và giao hàng!
+              </span>
+            ) : (
+              <>Còn <span className="font-semibold text-blue-600 dark:text-blue-400">{total - itemsDone}</span> thiết bị chưa được chụp ảnh.</>
+            )}
+          </p>
+          <Button
+            onClick={onStartDelivery}
+            disabled={!allPhotographed || loading}
+            className={cn(
+              "h-10 rounded-lg px-5 text-[13px] font-medium w-full sm:w-auto",
+              allPhotographed
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-muted text-muted-foreground cursor-not-allowed'
+            )}
+          >
+            {loading ? (
+              <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</>
+            ) : (
+              <><Truck className="size-4" /> Xuất kho & Giao hàng</>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

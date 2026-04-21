@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import jsQR from 'jsqr';
@@ -13,7 +15,6 @@ import {
   Mail,
   CreditCard,
   MapPin,
-  Tag,
   Banknote,
   Hash,
   CheckCircle2,
@@ -21,8 +22,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { StaffOrder } from '@/types/api.types';
-import { fmt, fmtDate } from './utils';
+import type { RentalOrderResponse } from '@/types/api.types';
+import { fmt, fmtDate, fmtPhone } from './utils';
 
 const CONDITION_COLOR: Record<string, string> = {
   EXCELLENT:
@@ -42,7 +43,7 @@ export function QrScanner({
   expectedCode: string;
   onSuccess: () => void;
   onCancel: () => void;
-  order?: StaffOrder;
+  order?: RentalOrderResponse;
   /** Pass 'confirmed' or 'failed' to bypass camera and jump to that state (dev/mock). */
   simulate?: 'confirmed' | 'failed';
 }) {
@@ -174,6 +175,18 @@ export function QrScanner({
 
   /* ── SUCCESS panel ──────────────────────────────────────────────────────── */
   if (scanConfirmed) {
+    // Build display address from userAddress or fall back to flat fields
+    const deliveryAddress = order?.userAddress
+      ? [
+          order.userAddress.addressLine,
+          order.userAddress.ward,
+          order.userAddress.district,
+          order.userAddress.city,
+        ]
+            .filter(Boolean)
+            .join(', ')
+      : order?.hubAddressLine ?? '';
+
     return (
       <div className="flex flex-col gap-4">
         {/* Success badge */}
@@ -212,7 +225,7 @@ export function QrScanner({
                       Họ tên
                     </p>
                     <p className="text-sm font-bold text-foreground">
-                      {order.renter.full_name}
+                      {order.userAddress?.recipientName ?? order.hubName ?? '—'}
                     </p>
                   </div>
                 </div>
@@ -223,7 +236,7 @@ export function QrScanner({
                       Điện thoại
                     </p>
                     <p className="text-sm font-semibold text-foreground">
-                      {order.renter.phone_number}
+                      {fmtPhone(order.userAddress?.phoneNumber)}
                     </p>
                   </div>
                 </div>
@@ -234,7 +247,7 @@ export function QrScanner({
                       Email
                     </p>
                     <p className="text-xs font-medium text-foreground break-all">
-                      {order.renter.email}
+                      {order.hubName ?? '—'}
                     </p>
                   </div>
                 </div>
@@ -245,7 +258,7 @@ export function QrScanner({
                       CCCD
                     </p>
                     <p className="text-sm font-mono font-semibold text-foreground">
-                      {order.renter.cccd_number}
+                      —
                     </p>
                   </div>
                 </div>
@@ -256,7 +269,7 @@ export function QrScanner({
                       Địa chỉ giao hàng
                     </p>
                     <p className="text-sm font-medium text-foreground">
-                      {order.delivery_address ?? order.renter.address}
+                      {deliveryAddress || '—'}
                     </p>
                   </div>
                 </div>
@@ -267,9 +280,9 @@ export function QrScanner({
                       Thời gian thuê
                     </p>
                     <p className="text-sm font-semibold text-foreground">
-                      {fmtDate(order.start_date)}{' '}
+                      {fmtDate(order.expectedDeliveryDate ?? '')}{' '}
                       <span className="text-muted-foreground">→</span>{' '}
-                      {fmtDate(order.end_date)}
+                      {fmtDate(order.expectedRentalEndDate ?? '')}
                     </p>
                   </div>
                 </div>
@@ -286,73 +299,78 @@ export function QrScanner({
                   </p>
                 </div>
                 <span className="text-xs font-bold bg-theme-primary-start/10 text-theme-primary-start border border-theme-primary-start/20 px-2 py-0.5 rounded-lg">
-                  {order.items.length} sản phẩm
+                  {order.rentalOrderLines.length} sản phẩm
                 </span>
               </div>
 
               <div className="divide-y divide-border">
-                {order.items.map((item, idx) => (
-                  <div
-                    key={item.rental_order_item_id}
-                    className="p-4 flex gap-3"
-                  >
-                    {/* Thumbnail */}
-                    <div className="relative size-17 rounded-xl overflow-hidden border border-border bg-muted shrink-0">
-                      <Image
-                        src={item.image_url}
-                        alt={item.product_name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                      <span className="absolute top-0.5 left-0.5 size-4 rounded-full bg-black/65 flex items-center justify-center text-[9px] font-bold text-white">
-                        {idx + 1}
-                      </span>
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      {/* Name + condition badge */}
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <p className="text-sm font-bold text-foreground leading-snug">
-                          {item.product_name}
-                        </p>
+                {order.rentalOrderLines.map((line, idx) => {
+                  const photos = line.photos ?? [];
+                  const photoUrl = photos[0]?.photoUrl ?? '';
+                  return (
+                    <div
+                      key={line.rentalOrderLineId}
+                      className="p-4 flex gap-3"
+                    >
+                      {/* Thumbnail */}
+                      <div className="relative size-17 rounded-xl overflow-hidden border border-border bg-muted shrink-0">
+                        {photoUrl ? (
+                          <Image
+                            src={photoUrl}
+                            alt={line.productNameSnapshot}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="size-full flex items-center justify-center">
+                            <Package className="size-5 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        <span className="absolute top-0.5 left-0.5 size-4 rounded-full bg-black/65 flex items-center justify-center text-[9px] font-bold text-white">
+                          {idx + 1}
+                        </span>
                       </div>
 
-                      {/* Category badge */}
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground bg-muted border border-border px-1.5 py-0.5 rounded-md mb-2">
-                        <Tag className="size-2.5" /> {item.category}
-                      </span>
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        {/* Name */}
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <p className="text-sm font-bold text-foreground leading-snug">
+                            {line.productNameSnapshot}
+                          </p>
+                        </div>
 
-                      {/* Serial + price + deposit */}
-                      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                        <div className="col-span-2 flex items-center gap-1 text-xs text-muted-foreground">
-                          <Hash className="size-2.5 shrink-0" />
-                          <span className="font-mono truncate">
-                            {item.serial_number}
-                          </span>
+                        {/* Serial + price + deposit */}
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                          <div className="col-span-2 flex items-center gap-1 text-xs text-muted-foreground">
+                            <Hash className="size-2.5 shrink-0" />
+                            <span className="font-mono truncate">
+                              {line.inventorySerialNumber || '—'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Banknote className="size-2.5 shrink-0" />
+                            <span>{fmt(line.dailyPriceSnapshot)}/ngày</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span className="text-[10px] shrink-0">Cọc:</span>
+                            <span className="font-semibold text-foreground">
+                              {fmt(line.depositAmountSnapshot)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Banknote className="size-2.5 shrink-0" />
-                          <span>{fmt(item.daily_price)}/ngày</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <span className="text-[10px] shrink-0">Cọc:</span>
-                          <span className="font-semibold text-foreground">
-                            {fmt(item.deposit_amount)}
-                          </span>
-                        </div>
+
+                        {/* Condition note */}
+                        {line.checkoutConditionNote && (
+                          <p className="mt-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-2 py-1">
+                            📝 {line.checkoutConditionNote}
+                          </p>
+                        )}
                       </div>
-
-                      {/* Staff note */}
-                      {item.staff_note && (
-                        <p className="mt-2 text-[10px] leading-relaxed text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-2 py-1">
-                          📝 {item.staff_note}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Financial totals */}
@@ -360,13 +378,13 @@ export function QrScanner({
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Tổng phí thuê</span>
                   <span className="font-bold text-foreground">
-                    {fmt(order.total_rental_fee)}
+                    {fmt(order.rentalFeeAmount)}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Tiền cọc giữ</span>
                   <span className="font-bold text-foreground">
-                    {fmt(order.total_deposit)}
+                    {fmt(order.depositHoldAmount)}
                   </span>
                 </div>
               </div>

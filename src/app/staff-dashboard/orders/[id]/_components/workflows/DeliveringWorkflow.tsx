@@ -1,45 +1,47 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import Image from 'next/image';
 import {
   Truck,
   QrCode,
   Camera,
   CheckCircle2,
   Loader2,
-  Package,
   Circle,
   Info,
-  User,
-  Phone,
-  Mail,
-  MapPin,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { StaffOrder, StaffOrderItem } from '@/types/api.types';
+import type {
+  RentalOrderResponse,
+  RentalOrderLineResponse,
+} from '@/types/api.types';
 import { WorkflowBanner } from '../WorkflowBanner';
+import {
+  CustomerInfo,
+  OrderMetaCard,
+  OrderItemsList,
+  OverdueAlert,
+} from '../OrderInfo';
 import { CameraCapture } from '../CameraCapture';
 import { QrScanner } from '../QrScanner';
-import { WorkflowFooter } from '../WorkflowFooter';
-
-interface DeliveringWorkflowProps {
-  order: StaffOrder;
-  onConfirmDelivery: () => void;
-  loading?: boolean;
-  staffLat?: number;
-  staffLng?: number;
-  staffLocAt?: string;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 function ItemDeliveryCard({
-  item,
+  line,
   photos,
   onAdd,
   onRemove,
 }: {
-  item: StaffOrderItem;
+  line: RentalOrderLineResponse;
   photos: string[];
   onAdd: (url: string) => void;
   onRemove: (idx: number) => void;
@@ -48,386 +50,398 @@ function ItemDeliveryCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border p-4 transition-all',
+        'rounded-xl border p-3 transition-all',
         hasPhoto
-          ? 'border-success/40 bg-success/5 dark:bg-success/8'
-          : 'border-border/80 dark:border-slate-700 bg-card dark:bg-slate-800/50',
+          ? 'border-emerald-300/50 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-800/30'
+          : 'border-border bg-card',
       )}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative size-14 shrink-0 rounded-xl overflow-hidden bg-white dark:bg-slate-900 border border-border/60 dark:border-slate-700">
-          {item.image_url ? (
-            <Image
-              src={item.image_url}
-              alt={item.product_name}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="size-full flex items-center justify-center">
-              <Package className="size-5 text-muted-foreground/40" />
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-bold text-foreground line-clamp-2 leading-snug">
-            {item.product_name}
-          </p>
-          <span className="text-[11px] text-muted-foreground font-mono bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 inline-block px-2 py-0.5 rounded-md mt-1.5 truncate max-w-full">
-            {item.serial_number || 'SN: Chưa cập nhật'}
-          </span>
-        </div>
+      <div className="flex items-center gap-3 mb-3">
         <div
           className={cn(
-            'size-8 rounded-full flex items-center justify-center shrink-0 transition-all',
+            'size-10 shrink-0 rounded-xl flex items-center justify-center transition-all shadow-sm',
             hasPhoto
-              ? 'bg-success text-white shadow-sm'
-              : 'border-2 border-dashed border-border',
+              ? 'bg-emerald-500 text-white'
+              : 'border-2 border-dashed border-border bg-muted',
           )}
         >
           {hasPhoto ? (
-            <CheckCircle2 className="size-4" />
+            <CheckCircle2 className="size-5" />
           ) : (
-            <Camera className="size-3.5 text-muted-foreground/50" />
+            <Camera className="size-4 text-muted-foreground/50" />
           )}
         </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-bold text-foreground line-clamp-2 leading-snug">
+            {line.productNameSnapshot}
+          </p>
+          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+            {line.inventorySerialNumber || '—'}
+          </p>
+        </div>
+        {hasPhoto && (
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded shrink-0">
+            ✓ Đã chụp
+          </span>
+        )}
       </div>
       <CameraCapture
         photos={photos}
         onAdd={onAdd}
         onRemove={onRemove}
-        label="Chụp ảnh bàn giao thiết bị"
+        label="Chụp ảnh bàn giao"
       />
     </div>
   );
 }
 
+interface DeliveringWorkflowProps {
+  order: RentalOrderResponse;
+  onConfirmDelivery: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+}
+
 export function DeliveringWorkflow({
   order,
   onConfirmDelivery,
+  onCancel,
   loading,
 }: DeliveringWorkflowProps) {
   const [qrVerified, setQrVerified] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>(() =>
-    Object.fromEntries(order.items.map((i) => [i.rental_order_item_id, []])),
+    Object.fromEntries(
+      order.rentalOrderLines.map((line) => [line.rentalOrderLineId, []]),
+    ),
   );
 
-  const itemsDone = order.items.filter(
-    (i) => (itemPhotos[i.rental_order_item_id]?.length ?? 0) > 0,
+  const itemsDone = order.rentalOrderLines.filter(
+    (line) => (itemPhotos[line.rentalOrderLineId]?.length ?? 0) > 0,
   ).length;
-  const allPhotographed = itemsDone === order.items.length;
+  const total = order.rentalOrderLines.length;
+  const allPhotographed = itemsDone === total;
   const allReady = qrVerified && allPhotographed;
 
-  const handleAdd = useCallback((itemId: string, url: string) => {
+  const handleAdd = useCallback((lineId: string, url: string) => {
     setItemPhotos((prev) => ({
       ...prev,
-      [itemId]: [...(prev[itemId] ?? []), url],
+      [lineId]: [...(prev[lineId] ?? []), url],
+    }));
+  }, []);
+  const handleRemove = useCallback((lineId: string, idx: number) => {
+    setItemPhotos((prev) => ({
+      ...prev,
+      [lineId]: (prev[lineId] ?? []).filter((_, j) => j !== idx),
     }));
   }, []);
 
-  const handleRemove = useCallback((itemId: string, idx: number) => {
-    setItemPhotos((prev) => ({
-      ...prev,
-      [itemId]: (prev[itemId] ?? []).filter((_, j) => j !== idx),
-    }));
-  }, []);
-
-  const expectedCode = order.confirmation_code ?? order.rental_order_id;
+  const expectedCode = order.rentalOrderId;
 
   return (
-    <>
-      <div className="space-y-6 pb-20">
-        <WorkflowBanner
-          icon={Truck}
-          title="Đang trên đường giao hàng"
-          desc="Xác minh đơn hàng bằng mã QR, chụp ảnh bàn giao từng thiết bị, sau đó xác nhận hoàn tất giao hàng."
-          variant="primary"
+    <div className="space-y-4">
+      <WorkflowBanner
+        icon={Truck}
+        title="Đang trên đường giao hàng"
+        desc="Xác minh đơn hàng bằng mã QR, chụp ảnh bàn giao từng thiết bị, sau đó xác nhận hoàn tất."
+        variant={order.overdue ? 'danger' : 'primary'}
+      />
+
+      {order.overdue && (
+        <OverdueAlert
+          overdueDays={order.overdueDays ?? 0}
+          expectedDate={order.expectedDeliveryDate}
+          type="delivery"
         />
+      )}
 
-        {/* Customer info */}
-        <div className="rounded-2xl border border-border/80 dark:border-slate-800 bg-card shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-border/80 dark:border-slate-800 bg-muted/30 dark:bg-slate-900/50 flex items-center gap-2.5">
-            <User className="size-4 text-foreground" />
-            <h3 className="text-[13px] font-bold text-foreground">
-              Thông tin khách hàng & giao hàng
-            </h3>
-          </div>
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                <User className="size-4 text-theme-primary-start dark:text-blue-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Người nhận
-                </p>
-                <p className="text-[14px] font-bold text-foreground truncate">
-                  {order.renter.full_name}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                <Phone className="size-4 text-theme-primary-start dark:text-blue-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Điện thoại
-                </p>
-                <p className="text-[14px] font-bold text-foreground font-mono">
-                  {order.renter.phone_number}
-                </p>
-              </div>
-            </div>
-            {order.renter.email && (
-              <div className="flex items-start gap-3">
-                <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                  <Mail className="size-4 text-theme-primary-start dark:text-blue-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Email
-                  </p>
-                  <p className="text-[14px] font-medium text-foreground truncate">
-                    {order.renter.email}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="sm:col-span-3 flex items-start gap-3 pt-3 border-t border-border/60 dark:border-slate-800">
-              <div className="size-10 rounded-xl bg-theme-primary-start/10 dark:bg-blue-500/10 flex items-center justify-center shrink-0 border border-theme-primary-start/20 dark:border-blue-500/20">
-                <MapPin className="size-4 text-theme-primary-start dark:text-blue-400" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Địa chỉ giao hàng
-                </p>
-                <p className="text-[14px] font-medium text-foreground leading-relaxed">
-                  {order.delivery_address || order.renter.address || '-'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* ── 2-column grid: left=info cards, right=items ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
+        {/* Left: Info cards */}
+        <div className="flex flex-col gap-4">
+          <OrderMetaCard order={order} />
 
-        {/* QR Verification */}
-        <div className="rounded-2xl border border-border/80 dark:border-slate-800 bg-card shadow-sm overflow-hidden">
+          <CustomerInfo order={order} mode="delivery" />
+
+          {/* QR verification */}
           <div
             className={cn(
-              'px-5 py-4 border-b border-border/80 dark:border-slate-800 flex items-center justify-between',
-              qrVerified ? 'bg-success/8' : 'bg-muted/30 dark:bg-slate-900/50',
+              'rounded-2xl border bg-card overflow-hidden transition-colors shadow-sm',
+              qrVerified ? 'border-emerald-300/50' : 'border-border',
             )}
           >
-            <div className="flex items-center gap-2.5">
+            <div
+              className={cn(
+                'px-4 py-3 border-b flex items-center gap-2.5',
+                qrVerified
+                  ? 'border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/10'
+                  : 'border-border bg-muted/30',
+              )}
+            >
               <div
                 className={cn(
-                  'size-7 rounded-full flex items-center justify-center text-xs font-black shrink-0',
+                  'size-8 rounded-full flex items-center justify-center shrink-0 text-[12px] font-black',
                   qrVerified
-                    ? 'bg-success text-white'
-                    : 'bg-sky-500 text-white',
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-blue-500 text-white',
                 )}
               >
                 {qrVerified ? <CheckCircle2 className="size-4" /> : '1'}
               </div>
-              <h3 className="text-[15px] font-bold text-foreground">
+              <h3 className="text-[14px] font-bold text-foreground flex-1">
                 Xác minh mã QR đơn hàng
               </h3>
+              {qrVerified && (
+                <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                  <CheckCircle2 className="size-3.5" /> Đã xác minh
+                </span>
+              )}
             </div>
-            {qrVerified && (
-              <span className="text-xs font-bold text-success flex items-center gap-1">
-                <CheckCircle2 className="size-3.5" /> Đã xác minh
-              </span>
-            )}
-          </div>
-          <div className="p-6">
-            {qrVerified ? (
-              <div className="flex items-center gap-4">
-                <div className="size-12 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="size-6 text-success" />
+            <div className="p-4">
+              {qrVerified ? (
+                <div className="flex items-center gap-3 bg-emerald-50/50 dark:bg-emerald-950/10 rounded-xl p-3 border border-emerald-200/40 dark:border-emerald-800/20">
+                  <CheckCircle2 className="size-5 text-emerald-500 shrink-0" />
+                  <div>
+                    <p className="text-[14px] font-bold text-emerald-600">
+                      Đơn hàng đã được xác minh
+                    </p>
+                    <p className="text-[12px] text-muted-foreground font-mono">
+                      {expectedCode}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[15px] font-bold text-success">
-                    Đơn hàng đã được xác minh
-                  </p>
-                  <p className="text-[13px] text-muted-foreground mt-0.5">
-                    Mã đơn:{' '}
-                    <span className="font-mono font-semibold text-foreground">
-                      {order.order_code}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            ) : showQrScanner ? (
-              <QrScanner
-                expectedCode={expectedCode}
-                onSuccess={() => {
-                  setQrVerified(true);
-                  setShowQrScanner(false);
-                }}
-                onCancel={() => setShowQrScanner(false)}
-                order={order}
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-4 py-4">
-                <div className="size-16 rounded-2xl bg-sky-500/10 flex items-center justify-center">
-                  <QrCode className="size-8 text-sky-500" />
-                </div>
-                <div className="text-center">
-                  <p className="text-[15px] font-bold text-foreground">
+              ) : showQrScanner ? (
+                <QrScanner
+                  expectedCode={expectedCode}
+                  onSuccess={() => {
+                    setQrVerified(true);
+                    setShowQrScanner(false);
+                  }}
+                  onCancel={() => setShowQrScanner(false)}
+                  order={order}
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-3 py-4">
+                  <div className="size-14 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/30 flex items-center justify-center">
+                    <QrCode className="size-7 text-blue-500" />
+                  </div>
+                  <p className="text-[14px] font-bold text-foreground text-center">
                     Quét mã QR để xác minh đơn hàng
                   </p>
-                  <p className="text-[13px] text-muted-foreground mt-1">
+                  <p className="text-[12px] text-muted-foreground text-center">
                     Sử dụng camera để quét mã QR trên phiếu đơn hàng.
                   </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowQrScanner(true)}
+                    className="h-11 gap-2 rounded-xl px-5 text-[13px] font-semibold border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                  >
+                    <QrCode className="size-4" /> Mở camera quét QR
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowQrScanner(true)}
-                  className="h-11 gap-2 rounded-xl px-5 font-semibold"
-                >
-                  <QrCode className="size-4" /> Mở camera quét QR
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Photos step */}
-        <div
-          className={cn(
-            'rounded-2xl border dark:border-slate-800 bg-card shadow-sm overflow-hidden',
-            allPhotographed ? 'border-success/40' : 'border-border/80',
-          )}
-        >
+        {/* Right: Photos + Items */}
+        <div className="flex flex-col gap-4">
+          {/* Photo step */}
           <div
             className={cn(
-              'px-5 py-4 border-b dark:border-slate-800 flex items-center justify-between',
-              allPhotographed
-                ? 'border-success/40 bg-success/8'
-                : qrVerified
-                  ? 'border-border/80 bg-muted/30 dark:bg-slate-900/50'
-                  : 'border-border/80 bg-muted/20 dark:bg-slate-900/30',
+              'rounded-2xl border bg-card overflow-hidden transition-colors shadow-sm',
+              allPhotographed ? 'border-emerald-300/50' : 'border-border',
             )}
           >
-            <div className="flex items-center gap-2.5">
+            <div
+              className={cn(
+                'px-4 py-3 border-b flex items-center gap-2.5',
+                allPhotographed
+                  ? 'border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/10'
+                  : qrVerified
+                    ? 'border-border bg-muted/30'
+                    : 'border-border bg-muted/20 opacity-60',
+              )}
+            >
               <div
                 className={cn(
-                  'size-7 rounded-full flex items-center justify-center text-xs font-black shrink-0',
+                  'size-8 rounded-full flex items-center justify-center shrink-0 text-[12px] font-black',
                   allPhotographed
-                    ? 'bg-success text-white'
+                    ? 'bg-emerald-500 text-white'
                     : qrVerified
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-muted-foreground',
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-muted text-muted-foreground',
                 )}
               >
                 {allPhotographed ? <CheckCircle2 className="size-4" /> : '2'}
               </div>
-              <h3 className="text-[15px] font-bold text-foreground">
-                Chụp ảnh bàn giao thiết bị
+              <h3 className="text-[14px] font-bold text-foreground flex-1">
+                Chụp ảnh bàn giao
               </h3>
+              <span className="text-[11px] text-muted-foreground font-semibold">
+                {itemsDone}/{total}
+              </span>
             </div>
-            <span className="text-xs font-bold text-muted-foreground">
-              {itemsDone}/{order.items.length}
-            </span>
+
+            {!qrVerified ? (
+              <div className="p-4 flex items-center gap-2 text-[13px] text-muted-foreground">
+                <Circle className="size-4 shrink-0" />
+                Hoàn tất bước 1 (xác minh QR) để mở bước này.
+              </div>
+            ) : (
+              <div className="p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-500',
+                        allPhotographed ? 'bg-emerald-500' : 'bg-blue-600',
+                      )}
+                      style={{
+                        width: `${total > 0 ? (itemsDone / total) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className={cn(
+                      'text-[11px] font-bold shrink-0',
+                      allPhotographed ? 'text-emerald-600' : 'text-blue-600',
+                    )}
+                  >
+                    {itemsDone}/{total}
+                  </span>
+                </div>
+                {!allPhotographed && (
+                  <p className="text-[12px] text-muted-foreground flex items-center gap-1.5">
+                    <Info className="size-3.5 shrink-0" />
+                    Chụp ảnh từng thiết bị trước khi bàn giao.
+                  </p>
+                )}
+                <div className="space-y-3">
+                  {order.rentalOrderLines.map((line) => (
+                    <ItemDeliveryCard
+                      key={line.rentalOrderLineId}
+                      line={line}
+                      photos={itemPhotos[line.rentalOrderLineId] ?? []}
+                      onAdd={(url) => handleAdd(line.rentalOrderLineId, url)}
+                      onRemove={(idx) =>
+                        handleRemove(line.rentalOrderLineId, idx)
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {!qrVerified ? (
-            <div className="p-6 flex items-center gap-3 text-[14px] text-muted-foreground">
-              <Circle className="size-5 shrink-0" /> Hoàn tất xác minh QR để mở
-              bước này.
-            </div>
-          ) : (
-            <div className="p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-all duration-500',
-                      allPhotographed ? 'bg-success' : 'bg-sky-500',
-                    )}
-                    style={{
-                      width: `${order.items.length > 0 ? (itemsDone / order.items.length) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-                <span
-                  className={cn(
-                    'text-xs font-bold shrink-0',
-                    allPhotographed
-                      ? 'text-success'
-                      : 'text-sky-600 dark:text-sky-400',
-                  )}
-                >
-                  {itemsDone}/{order.items.length}
-                </span>
-              </div>
-              {!allPhotographed && (
-                <p className="text-[12px] text-muted-foreground flex items-center gap-1.5">
-                  <Info className="size-3.5 shrink-0" /> Chụp ảnh từng thiết bị
-                  trước khi bàn giao cho khách.
-                </p>
-              )}
-              <div className="space-y-3">
-                {order.items.map((item) => (
-                  <ItemDeliveryCard
-                    key={item.rental_order_item_id}
-                    item={item}
-                    photos={itemPhotos[item.rental_order_item_id] ?? []}
-                    onAdd={(url) => handleAdd(item.rental_order_item_id, url)}
-                    onRemove={(idx) =>
-                      handleRemove(item.rental_order_item_id, idx)
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <OrderItemsList order={order} mode="confirm" />
         </div>
       </div>
 
-      <WorkflowFooter>
-        <div className="p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="text-[14px] text-muted-foreground flex-1 min-w-0">
+      {/* Sticky footer */}
+      <div className="sticky bottom-0 left-0 right-0 z-10 bg-card/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
+          <p className="text-[12px] text-muted-foreground">
             {allReady ? (
-              <span className="flex items-center gap-2 text-success font-semibold">
-                <CheckCircle2 className="size-5" /> Sẵn sàng xác nhận giao hàng
-                thành công.
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                <CheckCircle2 className="size-3.5" />
+                Sẵn sàng xác nhận giao hàng thành công!
               </span>
             ) : !qrVerified ? (
-              <span className="flex items-center gap-2">
-                <QrCode className="size-5 shrink-0" /> Bước 1: Quét mã QR xác
-                minh đơn hàng.
+              <span className="flex items-center gap-1.5">
+                <QrCode className="size-3.5" />
+                Bước 1: Quét mã QR xác minh đơn hàng.
               </span>
             ) : (
-              <span className="flex items-center gap-2">
-                <Camera className="size-5 shrink-0" />
-                {`Bước 2: Còn ${order.items.length - itemsDone} thiết bị chưa chụp ảnh.`}
+              <span className="flex items-center gap-1.5">
+                <Camera className="size-3.5" />
+                Bước 2: Còn {total - itemsDone} thiết bị chưa chụp ảnh.
               </span>
             )}
+          </p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(true)}
+              disabled={loading}
+              className="h-10 rounded-lg px-4 text-[12px] font-medium border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 w-full sm:w-auto"
+            >
+              <XCircle className="size-4" />
+              <span className="hidden sm:inline">Hủy đơn</span>
+              <span className="sm:hidden">Hủy</span>
+            </Button>
+            <Button
+              onClick={onConfirmDelivery}
+              disabled={!allReady || loading}
+              className={cn(
+                'h-10 rounded-lg px-4 text-[13px] font-medium flex-1 sm:flex-none',
+                allReady
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed',
+              )}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" /> Đang xử lý…
+                </>
+              ) : (
+                <>
+                  <Truck className="size-4" /> Xác nhận giao
+                </>
+              )}
+            </Button>
           </div>
-          <Button
-            onClick={onConfirmDelivery}
-            disabled={!allReady || loading}
-            className={cn(
-              'h-16 gap-2 rounded-xl px-7 text-xl font-bold shrink-0 sm:min-w-52',
-              allReady
-                ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 dark:bg-teal-600 dark:hover:bg-teal-700'
-                : '',
-            )}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="size-5 animate-spin" /> Đang xử lý…
-              </>
-            ) : (
-              <>
-                <Truck className="size-5" /> Xác nhận giao hàng thành công
-              </>
-            )}
-          </Button>
         </div>
-      </WorkflowFooter>
-    </>
+      </div>
+
+      {/* Cancel confirmation dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="size-9 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <XCircle className="size-5 text-red-600 dark:text-red-400" />
+              </div>
+              Xác nhận hủy đơn hàng
+            </DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập nhật trạng thái đơn hàng sang{' '}
+              <span className="font-medium text-foreground">Đã hủy</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
+            <p className="text-[13px] text-muted-foreground">
+              Mã đơn: <span className="font-mono font-medium text-foreground">{order.rentalOrderId}</span>
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+              className="h-10 rounded-lg"
+            >
+              Không, giữ đơn
+            </Button>
+            <Button
+              onClick={() => {
+                setShowCancelDialog(false);
+                onCancel();
+              }}
+              disabled={loading}
+              className="h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+            >
+              {loading ? (
+                <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</>
+              ) : (
+                <>Có, hủy đơn</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

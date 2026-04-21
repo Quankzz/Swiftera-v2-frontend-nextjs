@@ -19,6 +19,9 @@ import {
 } from 'lucide-react';
 import type { OrderStatus } from '@/types/api.types';
 
+/** Includes OVERDUE which is a UI-only state (API never returns OVERDUE as a status). */
+export type FullOrderStatus = OrderStatus | 'OVERDUE';
+
 export interface StatusConfig {
   label: string;
   color: string;
@@ -28,7 +31,7 @@ export interface StatusConfig {
   icon: ElementType;
 }
 
-export const STATUS_CFG: Record<OrderStatus, StatusConfig> = {
+export const STATUS_CFG: Record<FullOrderStatus, StatusConfig> = {
   // ── Delivery staff statuses ────────────────────────────────────────────────
   PAID: {
     label: 'Chờ xác nhận',
@@ -71,6 +74,9 @@ export const STATUS_CFG: Record<OrderStatus, StatusConfig> = {
     dot: 'bg-success',
     icon: ShoppingBag,
   },
+  // OVERDUE is a UI-only flag derived from IN_USE + past expectedRentalEndDate.
+  // The API never returns OVERDUE as a status - it uses `overdue: boolean` instead.
+  // We still define it here so STATUS_CFG['OVERDUE'] can be used for the UI badge.
   OVERDUE: {
     label: 'Quá hạn',
     color: 'text-destructive',
@@ -132,7 +138,7 @@ export const STATUS_CFG: Record<OrderStatus, StatusConfig> = {
   },
 };
 
-export const ALL_ORDER_STATUSES: OrderStatus[] = [
+export const ALL_ORDER_STATUSES: FullOrderStatus[] = [
   'PENDING_PAYMENT',
   'PAID',
   'PREPARING',
