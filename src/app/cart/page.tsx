@@ -1078,6 +1078,23 @@ export default function CartPage() {
     setVoucherDialogOpen(false);
   }
 
+  const buildOrderLinePayload = useCallback(
+    (line: CartLineResponse) => {
+      const lineVoucherCode = lineVouchers.get(line.cartLineId)?.trim();
+
+      return {
+        productId: line.productId,
+        quantity: line.quantity,
+        rentalDurationDays: line.rentalDurationDays,
+        ...(line.productColorId ? { productColorId: line.productColorId } : {}),
+        ...(lineVoucherCode
+          ? { voucherCode: lineVoucherCode.toUpperCase() }
+          : {}),
+      };
+    },
+    [lineVouchers],
+  );
+
   /** Bước 1: Validate input rồi mở dialog điều khoản */
   async function handleProceedToRent() {
     const selectedLineIds = Array.from(selectedIds);
@@ -1212,40 +1229,26 @@ export default function CartPage() {
         setSelectedUserAddressId(addr.userAddressId);
       }
 
-    // BE yêu cầu tất cả sản phẩm trong 1 đơn phải cùng 1 kho (hub).
-    // Vì vậy FE tạo nhiều rental order (mỗi line 1 đơn), rồi thanh toán gộp
-    // bằng đúng API batch: POST /payments/initiate-batch.
-      const createdOrders: { rentalOrderId: string }[] = [];
-
-      for (const l of latestSelectedLines) {
-        const order = await createOrder.mutateAsync({
-          userAddressId,
-          expectedDeliveryDate,
-          orderLines: [
-            {
-              productId: l.productId,
-              quantity: l.quantity,
-              rentalDurationDays: l.rentalDurationDays,
-              ...(l.productColorId ? { productColorId: l.productColorId } : {}),
-              ...(lineVouchers.get(l.cartLineId)
-                ? { voucherCode: lineVouchers.get(l.cartLineId) }
-                : voucherCode
-                  ? { voucherCode }
-                  : {}),
-            },
-          ],
-        });
-        createdOrders.push({ rentalOrderId: order.rentalOrderId });
-      }
-
-      if (createdOrders.length === 0) {
+      const orderLines = latestSelectedLines.map(buildOrderLinePayload);
+      if (orderLines.length === 0) {
         toast.error('Không tạo được đơn thuê.');
         return;
       }
 
-      // Tạo 1 URL thanh toán VNPay cho tất cả đơn cùng lúc
-      const allOrderIds = createdOrders.map((o) => o.rentalOrderId);
-      const paymentUrl = await initiatePaymentBatch.mutateAsync(allOrderIds);
+      // Tạo 1 rental order duy nhất, chứa toàn bộ các cart line đã chọn.
+      const createdOrder = await createOrder.mutateAsync({
+        userAddressId,
+        expectedDeliveryDate,
+        orderLines,
+        ...(voucherCode.trim()
+          ? { voucherCode: voucherCode.trim().toUpperCase() }
+          : {}),
+      });
+
+      // Dùng batch payment API với 1 orderId để giữ nguyên flow thanh toán hiện tại.
+      const paymentUrl = await initiatePaymentBatch.mutateAsync([
+        createdOrder.rentalOrderId,
+      ]);
 
       // Xóa các dòng đã chọn khỏi cart (best-effort, không chặn redirect thanh toán)
       await Promise.allSettled(
