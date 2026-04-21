@@ -41,7 +41,7 @@ function parseBEDate(dateStr: string): Date | null {
 }
 
 function formatDateString(dateStr: string | null): string {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   try {
     const d = parseBEDate(dateStr);
     if (!d) return dateStr;
@@ -63,7 +63,7 @@ function formatAddress(hub: HubResponse): string {
   const parts = [hub.addressLine, hub.ward, hub.district, hub.city].filter(
     Boolean,
   );
-  return parts.length > 0 ? parts.join(', ') : '—';
+  return parts.length > 0 ? parts.join(', ') : '-';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -258,7 +258,7 @@ export function HubTable({
           const addr = formatAddress(row.original);
           return (
             <div className='flex items-start gap-1.5 max-w-xs'>
-              {addr !== '—' && (
+              {addr !== '-' && (
                 <MapPin className='mt-0.5 size-3.5 shrink-0 text-text-sub' />
               )}
               <span className='text-sm text-text-sub truncate' title={addr}>
@@ -273,7 +273,7 @@ export function HubTable({
         header: 'Thành phố',
         cell: ({ row }) => (
           <span className='text-sm text-text-main'>
-            {row.original.city ?? '—'}
+            {row.original.city ?? '-'}
           </span>
         ),
       },
@@ -284,7 +284,7 @@ export function HubTable({
           <div className='flex items-center gap-1.5'>
             {row.original.phone && <Phone className='size-3.5 text-text-sub' />}
             <span className='text-sm text-text-main'>
-              {row.original.phone ?? '—'}
+              {row.original.phone ?? '-'}
             </span>
           </div>
         ),

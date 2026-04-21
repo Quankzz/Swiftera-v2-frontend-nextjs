@@ -405,7 +405,7 @@ export function AssignStaffToHubDialog({
                           </td>
                           {/* Phone */}
                           <td className='hidden md:table-cell px-3 py-3 text-text-sub text-xs'>
-                            {user.phoneNumber ?? '—'}
+                            {user.phoneNumber ?? '-'}
                           </td>
                           {/* Verified */}
                           <td className='px-3 py-3 text-right'>

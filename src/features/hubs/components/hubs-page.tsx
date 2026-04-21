@@ -28,7 +28,7 @@ type DialogState =
 
 export function HubsPage() {
   const [dialog, setDialog] = useState<DialogState>({ type: 'idle' });
-  // Stats đến từ HubTable qua callback — không cần query riêng
+  // Stats đến từ HubTable qua callback - không cần query riêng
   const [meta, setMeta] = useState<HubTableMeta>({
     totalElements: 0,
     activeCount: 0,
@@ -57,7 +57,7 @@ export function HubsPage() {
         </button>
       </div>
 
-      {/* Stats — phản ánh trang hiện tại trong bảng */}
+      {/* Stats - phản ánh trang hiện tại trong bảng */}
       <div className='flex flex-wrap gap-4'>
         <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
           <Warehouse className='size-4 text-theme-primary-start' />

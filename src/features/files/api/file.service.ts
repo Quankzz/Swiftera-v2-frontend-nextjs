@@ -1,6 +1,6 @@
 /**
- * File service — tất cả API calls cho files / Azure Blob Storage.
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * File service - tất cả API calls cho files / Azure Blob Storage.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 5: FILES)
  */

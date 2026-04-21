@@ -15,6 +15,7 @@ import {
   Expand,
   X as XIcon,
   ZoomIn,
+  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +33,61 @@ import {
 import { useAddToCart } from '@/hooks/api/use-cart';
 import { useCartAnimationStore } from '@/stores/cart-animation-store';
 import { toast } from 'sonner';
+
+/* ---------- Video helpers ---------- */
+
+function isEmbeddableVideoUrl(url: string): boolean {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (
+      host.includes('youtube.com') ||
+      host.includes('youtube-nocookie.com') ||
+      host.includes('youtu.be')
+    )
+      return true;
+    if (host.includes('vimeo.com')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (host.includes('youtube.com') || host.includes('youtube-nocookie.com')) {
+      if (u.pathname.startsWith('/embed/')) {
+        const id = u.pathname.replace('/embed/', '').split('/')[0];
+        if (/^[A-Za-z0-9_-]{6,20}$/.test(id)) return id;
+      }
+      if (u.pathname.startsWith('/shorts/')) {
+        const id = u.pathname.replace('/shorts/', '').split('/')[0];
+        if (/^[A-Za-z0-9_-]{6,20}$/.test(id)) return id;
+      }
+      return u.searchParams.get('v');
+    }
+    if (host.includes('youtu.be')) {
+      const id = u.pathname.split('/').filter(Boolean)[0];
+      if (/^[A-Za-z0-9_-]{6,20}$/.test(id)) return id;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function extractVimeoId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.includes('vimeo.com')) return null;
+    return u.pathname.split('/').filter(Boolean).pop() ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /* ---------- Types ---------- */
 
@@ -59,6 +115,7 @@ export interface ProductColorOption {
 
 interface RentalProductGalleryProps {
   images: string[];
+  videoUrl?: string | null;
   currentImage: number;
   setCurrentImage: (index: number) => void;
 }
@@ -66,20 +123,25 @@ interface RentalProductGalleryProps {
 /** Lightbox fullscreen overlay */
 function GalleryLightbox({
   images,
+  videoUrl,
   initial,
   onClose,
 }: {
   images: string[];
+  videoUrl?: string | null;
   initial: number;
   onClose: () => void;
 }) {
   const [idx, setIdx] = useState(initial);
   const touchX = useRef<number | null>(null);
 
+  const hasVideo = Boolean(videoUrl);
+  const totalSlides = images.length + (hasVideo ? 1 : 0);
+
   const prev = useCallback(() => setIdx((i) => Math.max(0, i - 1)), []);
   const next = useCallback(
-    () => setIdx((i) => Math.min(images.length - 1, i + 1)),
-    [images.length],
+    () => setIdx((i) => Math.min(totalSlides - 1, i + 1)),
+    [totalSlides],
   );
 
   useEffect(() => {
@@ -91,6 +153,8 @@ function GalleryLightbox({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [prev, next, onClose]);
+
+  const isVideoSlide = hasVideo && idx === images.length;
 
   return (
     <div
@@ -109,10 +173,10 @@ function GalleryLightbox({
 
       {/* Counter */}
       <span className='absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-semibold tabular-nums text-white/80 backdrop-blur-md'>
-        {idx + 1} / {images.length}
+        {idx + 1} / {totalSlides}
       </span>
 
-      {/* Main image */}
+      {/* Main content */}
       <div
         className='relative mx-auto flex h-full max-h-[80dvh] w-full max-w-4xl items-center justify-center px-16'
         onClick={(e) => e.stopPropagation()}
@@ -139,16 +203,59 @@ function GalleryLightbox({
           </button>
         )}
 
-        <img
-          key={idx}
-          src={images[idx]}
-          alt={`Ảnh ${idx + 1}`}
-          className='max-h-[80dvh] w-full rounded-xl object-contain shadow-2xl'
-          style={{ animation: 'lb-fade .25s ease' }}
-        />
+        {isVideoSlide ? (
+          /* Video iframe in lightbox */
+          <div className='aspect-video w-full overflow-hidden rounded-xl'>
+            {(() => {
+              const ytId = videoUrl ? extractYouTubeId(videoUrl) : null;
+              const vmId = videoUrl ? extractVimeoId(videoUrl) : null;
+              if (ytId) {
+                return (
+                  <iframe
+                    key={videoUrl}
+                    src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
+                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                    allowFullScreen
+                    className='size-full rounded-xl'
+                  />
+                );
+              }
+              if (vmId) {
+                return (
+                  <iframe
+                    key={videoUrl}
+                    src={`https://player.vimeo.com/video/${vmId}?autoplay=1`}
+                    allow='autoplay; fullscreen; picture-in-picture'
+                    allowFullScreen
+                    className='size-full rounded-xl'
+                  />
+                );
+              }
+              return (
+                <video
+                  key={videoUrl}
+                  src={videoUrl ?? ''}
+                  controls
+                  autoPlay
+                  loop
+                  playsInline
+                  className='size-full rounded-xl object-contain'
+                />
+              );
+            })()}
+          </div>
+        ) : (
+          <img
+            key={idx}
+            src={images[idx]}
+            alt={`Ảnh ${idx + 1}`}
+            className='max-h-[80dvh] w-full rounded-xl object-contain shadow-2xl'
+            style={{ animation: 'lb-fade .25s ease' }}
+          />
+        )}
 
         {/* Next */}
-        {idx < images.length - 1 && (
+        {idx < totalSlides - 1 && (
           <button
             type='button'
             onClick={next}
@@ -161,25 +268,55 @@ function GalleryLightbox({
       </div>
 
       {/* Filmstrip */}
-      <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 overflow-x-auto px-4 pb-1'>
-        {images.map((img, i) => (
-          <button
-            key={i}
-            type='button'
-            onClick={(e) => {
-              e.stopPropagation();
-              setIdx(i);
-            }}
-            className={`relative size-12 shrink-0 overflow-hidden rounded-md transition-all duration-200 ${
-              i === idx
-                ? 'ring-2 ring-white ring-offset-1 ring-offset-black/60 opacity-100'
-                : 'opacity-50 hover:opacity-80'
-            }`}
-          >
-            <img src={img} alt='' className='size-full object-cover' />
-          </button>
-        ))}
-      </div>
+      {totalSlides > 1 && (
+        <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 overflow-x-auto px-4 pb-1'>
+          {images.map((img, i) => (
+            <button
+              key={i}
+              type='button'
+              onClick={(e) => {
+                e.stopPropagation();
+                setIdx(i);
+              }}
+              className={`relative size-12 shrink-0 overflow-hidden rounded-md transition-all duration-200 ${
+                i === idx
+                  ? 'ring-2 ring-white ring-offset-1 ring-offset-black/60 opacity-100'
+                  : 'opacity-50 hover:opacity-80'
+              }`}
+            >
+              <img src={img} alt='' className='size-full object-cover' />
+            </button>
+          ))}
+          {hasVideo && (
+            <button
+              type='button'
+              onClick={(e) => {
+                e.stopPropagation();
+                setIdx(images.length);
+              }}
+              className={`relative size-12 shrink-0 overflow-hidden rounded-md transition-all duration-200 ${
+                idx === images.length
+                  ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-black/60 opacity-100'
+                  : 'opacity-50 hover:opacity-80'
+              }`}
+            >
+              <img
+                src={
+                  images[0] ||
+                  'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'
+                }
+                alt='Video'
+                className='size-full object-cover'
+              />
+              <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
+                <div className='flex size-6 items-center justify-center rounded-full bg-white/90'>
+                  <Play className='size-3 text-blue-600 fill-blue-600' />
+                </div>
+              </div>
+            </button>
+          )}
+        </div>
+      )}
 
       <style>{`@keyframes lb-fade{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}`}</style>
     </div>
@@ -188,6 +325,7 @@ function GalleryLightbox({
 
 export function RentalProductGallery({
   images,
+  videoUrl,
   currentImage,
   setCurrentImage,
 }: RentalProductGalleryProps) {
@@ -198,8 +336,7 @@ export function RentalProductGallery({
   const touchStartY = useRef<number | null>(null);
 
   const prev = () => setCurrentImage(Math.max(0, currentImage - 1));
-  const next = () =>
-    setCurrentImage(Math.min(images.length - 1, currentImage + 1));
+  const next = () => setCurrentImage(Math.min(maxIndex, currentImage + 1));
 
   // Keyboard nav khi hover vào gallery
   useEffect(() => {
@@ -226,6 +363,8 @@ export function RentalProductGallery({
   }, [currentImage]);
 
   const hasManyImages = images.length > 1;
+  const totalSlides = images.length + (videoUrl ? 1 : 0);
+  const maxIndex = totalSlides - 1;
 
   if (!images.length) return null;
 
@@ -271,6 +410,47 @@ export function RentalProductGallery({
               }`}
             />
           ))}
+          {/* Video slide */}
+          {videoUrl && (
+            <div
+              className={`absolute inset-0 transition-all duration-500 ease-out ${
+                currentImage === images.length
+                  ? 'z-10 opacity-100 scale-100'
+                  : 'z-0 opacity-0 scale-[1.02]'
+              }`}
+            >
+              {isEmbeddableVideoUrl(videoUrl) ? (
+                /* YouTube / Vimeo iframe */
+                <div className='absolute inset-0'>
+                  <iframe
+                    key={videoUrl}
+                    src={
+                      extractYouTubeId(videoUrl)
+                        ? `https://www.youtube.com/embed/${extractYouTubeId(videoUrl)}`
+                        : extractVimeoId(videoUrl)
+                          ? `https://player.vimeo.com/video/${extractVimeoId(videoUrl)}`
+                          : videoUrl
+                    }
+                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                    allowFullScreen
+                    className='size-full border-0'
+                  />
+                </div>
+              ) : (
+                /* Direct mp4 / video file */
+                <video
+                  key={videoUrl}
+                  src={videoUrl}
+                  controls
+                  autoPlay={currentImage === images.length}
+                  muted={currentImage !== images.length}
+                  loop
+                  playsInline
+                  className='size-full object-cover rounded-none'
+                />
+              )}
+            </div>
+          )}
 
           {/* Left arrow */}
           {hasManyImages && currentImage > 0 && (
@@ -285,7 +465,7 @@ export function RentalProductGallery({
           )}
 
           {/* Right arrow */}
-          {hasManyImages && currentImage < images.length - 1 && (
+          {hasManyImages && currentImage < maxIndex && (
             <button
               type='button'
               aria-label='Ảnh sau'
@@ -303,12 +483,12 @@ export function RentalProductGallery({
                 {currentImage + 1}
               </span>
               <span className='text-white/40 text-xs'>/</span>
-              <span className='text-xs text-white/60'>{images.length}</span>
+              <span className='text-xs text-white/60'>{totalSlides}</span>
             </div>
           )}
 
           {/* Dot indicators */}
-          {hasManyImages && images.length <= 8 && (
+          {hasManyImages && totalSlides <= 8 && (
             <div className='absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5'>
               {images.map((_, i) => (
                 <button
@@ -323,6 +503,19 @@ export function RentalProductGallery({
                   }`}
                 />
               ))}
+              {videoUrl && (
+                <button
+                  key='video'
+                  type='button'
+                  aria-label='Video sản phẩm'
+                  onClick={() => setCurrentImage(images.length)}
+                  className={`rounded-full transition-all duration-300 ${
+                    currentImage === images.length
+                      ? 'size-2 bg-blue-400 shadow'
+                      : 'size-1.5 bg-blue-400/50 hover:bg-blue-400/80'
+                  }`}
+                />
+              )}
             </div>
           )}
 
@@ -338,7 +531,7 @@ export function RentalProductGallery({
         </div>
 
         {/* ── Filmstrip thumbnails ── */}
-        {hasManyImages && (
+        {(hasManyImages || videoUrl) && (
           <div
             ref={filmstripRef}
             className='flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide'
@@ -354,7 +547,7 @@ export function RentalProductGallery({
                   onClick={() => setCurrentImage(idx)}
                   className={`relative aspect-square w-[72px] shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 sm:w-20 ${
                     isActive
-                      ? 'border-rose-500 shadow-sm shadow-rose-500/20 dark:border-rose-400'
+                      ? 'border-blue-500 shadow-sm shadow-blue-500/20 dark:border-blue-400'
                       : 'border-transparent opacity-55 hover:border-border hover:opacity-90'
                   }`}
                 >
@@ -366,11 +559,42 @@ export function RentalProductGallery({
                   />
                   {/* Active overlay gradient */}
                   {isActive && (
-                    <span className='absolute inset-0 rounded-[10px] ring-1 ring-inset ring-rose-500/30' />
+                    <span className='absolute inset-0 rounded-[10px] ring-1 ring-inset ring-blue-500/30' />
                   )}
                 </button>
               );
             })}
+            {videoUrl && (
+              <button
+                key='video-thumb'
+                type='button'
+                aria-label='Xem video sản phẩm'
+                onClick={() => setCurrentImage(images.length)}
+                className={`relative aspect-square w-[72px] shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 sm:w-20 ${
+                  currentImage === images.length
+                    ? 'border-blue-500 shadow-sm shadow-blue-500/20 dark:border-blue-400'
+                    : 'border-transparent opacity-55 hover:border-border hover:opacity-90'
+                }`}
+              >
+                <img
+                  src={
+                    images[0] ||
+                    'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'
+                  }
+                  alt='Video thumbnail'
+                  draggable={false}
+                  className='size-full object-cover'
+                />
+                <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
+                  <div className='flex size-8 items-center justify-center rounded-full bg-white/90'>
+                    <Play className='size-4 text-blue-600 fill-blue-600' />
+                  </div>
+                </div>
+                <span className='absolute bottom-1 right-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-semibold text-white'>
+                  VIDEO
+                </span>
+              </button>
+            )}
           </div>
         )}
 
@@ -387,6 +611,7 @@ export function RentalProductGallery({
       {lightbox && (
         <GalleryLightbox
           images={images}
+          videoUrl={videoUrl}
           initial={currentImage}
           onClose={() => setLightbox(false)}
         />
@@ -442,7 +667,7 @@ function RentalStars({
 }
 
 const badgeStyles = {
-  green: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+  green: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
   blue: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
   orange:
     'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
@@ -491,11 +716,12 @@ interface RentalProductSummaryProps {
     discount?: number;
     rating?: number;
     reviews?: number;
-    rentedCount?: number;
     colors?: ProductColorOption[];
     variants?: ProductVariant[];
     durations: RentalDuration[];
   };
+  /** Minimum allowed rental days for the product (from BE) */
+  minRentalDays?: number;
   selectedColorId?: string | null;
   onColorChange?: (colorId: string) => void;
   selectedVariant: string;
@@ -525,16 +751,15 @@ export function RentalProductSummary({
     discount = 0,
     rating = 0,
     reviews = 0,
-    rentedCount = 0,
     colors = [],
     variants = [],
     durations,
   } = productData;
 
   const selectedRing =
-    'border-rose-600 bg-rose-50 text-rose-900 ring-1 ring-rose-600 dark:border-rose-400 dark:bg-rose-950/50 dark:text-rose-100 dark:ring-rose-400';
+    'border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600 dark:border-blue-400 dark:bg-blue-950/50 dark:text-blue-100 dark:ring-blue-400';
   const idleOption =
-    'border-border bg-card text-foreground hover:border-rose-500/50 dark:hover:border-rose-400/40';
+    'border-border bg-card text-foreground hover:border-blue-500/50 dark:hover:border-blue-400/40';
 
   return (
     <div className='space-y-4 font-sans sm:space-y-5'>
@@ -551,7 +776,7 @@ export function RentalProductSummary({
         </div>
         <div className='text-muted-foreground'>
           Thương hiệu:{' '}
-          <span className='font-bold text-rose-600 dark:text-rose-400'>
+          <span className='font-bold text-blue-600 dark:text-blue-400'>
             {brand}
           </span>
         </div>
@@ -566,18 +791,11 @@ export function RentalProductSummary({
         <span className='hidden text-sm text-muted-foreground/50 sm:inline'>
           |
         </span>
-        <div className='text-xs text-muted-foreground sm:text-sm'>
-          Đã cho thuê{' '}
-          <span className='font-semibold text-foreground'>
-            {rentedCount.toLocaleString()}
-          </span>{' '}
-          lần
-        </div>
       </div>
 
       <div className='rounded-xl border border-border/60 bg-muted/40 p-3 dark:bg-muted/20 sm:p-4'>
         <div className='flex flex-wrap items-baseline gap-2 sm:gap-3'>
-          <span className='text-2xl font-bold text-rose-600 sm:text-3xl dark:text-rose-400'>
+          <span className='text-2xl font-bold text-blue-600 sm:text-3xl dark:text-blue-400'>
             {currentPrice.toLocaleString()}₫
           </span>
           {originalPrice && originalPrice > currentPrice && (
@@ -585,7 +803,7 @@ export function RentalProductSummary({
               <span className='text-lg text-muted-foreground line-through'>
                 {originalPrice.toLocaleString()}₫
               </span>
-              <span className='rounded bg-rose-600 px-2 py-0.5 text-xs font-bold text-white dark:bg-rose-500'>
+              <span className='rounded bg-blue-600 px-2 py-0.5 text-xs font-bold text-white dark:bg-blue-500'>
                 -{discount}%
               </span>
             </>
@@ -604,7 +822,7 @@ export function RentalProductSummary({
               Màu sắc
               {selectedColorId && (
                 <span className='ml-2 font-normal text-muted-foreground'>
-                  —{' '}
+                  -{' '}
                   {colors.find((c) => c.productColorId === selectedColorId)
                     ?.name ?? ''}
                 </span>
@@ -621,14 +839,14 @@ export function RentalProductSummary({
                   type='button'
                   disabled={isUnavailable}
                   onClick={() => onColorChange?.(color.productColorId)}
-                  title={`${color.name}${isUnavailable ? ' — Hết hàng' : ` — ${color.availableQuantity} sẵn sàng`}`}
+                  title={`${color.name}${isUnavailable ? ' - Hết hàng' : ` - ${color.availableQuantity} sẵn sàng`}`}
                   className={[
                     'relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-all',
                     isUnavailable
                       ? 'cursor-not-allowed border-border/40 bg-muted/30 opacity-50'
                       : isSelected
-                        ? 'border-rose-600 bg-rose-50 ring-1 ring-rose-600 dark:border-rose-400 dark:bg-rose-950/50 dark:ring-rose-400'
-                        : 'border-border bg-card text-foreground hover:border-rose-500/50 dark:hover:border-rose-400/40',
+                        ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600 dark:border-blue-400 dark:bg-blue-950/50 dark:ring-blue-400'
+                        : 'border-border bg-card text-foreground hover:border-blue-500/50 dark:hover:border-blue-400/40',
                   ].join(' ')}
                 >
                   {/* Color swatch */}
@@ -636,7 +854,7 @@ export function RentalProductSummary({
                     className={[
                       'inline-block size-4 shrink-0 rounded-full border',
                       isSelected
-                        ? 'border-rose-600 dark:border-rose-400'
+                        ? 'border-blue-600 dark:border-blue-400'
                         : 'border-border/60',
                     ].join(' ')}
                     style={{ backgroundColor: color.code }}
@@ -644,7 +862,7 @@ export function RentalProductSummary({
                   <span
                     className={
                       isSelected
-                        ? 'text-rose-900 dark:text-rose-100'
+                        ? 'text-blue-900 dark:text-blue-100'
                         : 'text-foreground'
                     }
                   >
@@ -656,7 +874,7 @@ export function RentalProductSummary({
                       isUnavailable
                         ? 'text-muted-foreground'
                         : isSelected
-                          ? 'text-rose-700 dark:text-rose-300'
+                          ? 'text-blue-700 dark:text-blue-300'
                           : 'text-muted-foreground',
                     ].join(' ')}
                   >
@@ -719,7 +937,7 @@ export function RentalProductSummary({
               <div
                 className={`mt-0.5 text-xs ${
                   selectedDuration === duration.id
-                    ? 'text-rose-800 dark:text-rose-300'
+                    ? 'text-blue-800 dark:text-blue-300'
                     : 'text-muted-foreground'
                 }`}
               >
@@ -748,6 +966,8 @@ interface RentalCheckoutCardProps {
   durationId: string;
   quantity: number;
   setQuantity: (qty: number) => void;
+  /** Giới hạn tối đa có thể thuê (dựa trên stock hiện tại) */
+  maxQuantity?: number;
   vouchers?: RentalVoucher[];
   /** Bắt buộc để thêm vào giỏ */
   cartProduct?: {
@@ -755,7 +975,7 @@ interface RentalCheckoutCardProps {
     name: string;
     image: string;
     sku: string;
-    /** productColorId được chọn — bắt buộc nếu sản phẩm có >1 màu */
+    /** productColorId được chọn - bắt buộc nếu sản phẩm có >1 màu */
     productColorId?: string | null;
     /** Hiển thị tên màu đang chọn */
     colorName?: string | null;
@@ -775,6 +995,7 @@ export function RentalCheckoutCard({
   durationId,
   quantity,
   setQuantity,
+  maxQuantity = 99,
   vouchers = defaultRentalVouchers,
   cartProduct,
   requireColorSelection = false,
@@ -806,7 +1027,10 @@ export function RentalCheckoutCard({
   useEffect(() => {
     if (!appliedVoucher) return;
     if (computeVoucherDiscount(totalRental, appliedVoucher) <= 0) {
-      setAppliedVoucher(null);
+      const timeoutId = window.setTimeout(() => {
+        setAppliedVoucher(null);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
   }, [appliedVoucher, totalRental]);
 
@@ -890,10 +1114,10 @@ export function RentalCheckoutCard({
         </div>
         {appliedVoucher && voucherDiscount > 0 && (
           <div className='flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
-            <span className='text-xs text-rose-700 dark:text-rose-300 sm:text-sm'>
+            <span className='text-xs text-blue-700 dark:text-blue-300 sm:text-sm'>
               Giảm voucher ({appliedVoucher.code})
             </span>
-            <span className='text-sm font-semibold text-rose-600 dark:text-rose-400 sm:text-base'>
+            <span className='text-sm font-semibold text-blue-600 dark:text-blue-400 sm:text-base'>
               −{voucherDiscount.toLocaleString()}₫
             </span>
           </div>
@@ -902,13 +1126,13 @@ export function RentalCheckoutCard({
           <span className='text-sm font-bold text-foreground'>
             Tổng thanh toán
           </span>
-          <span className='text-lg font-bold text-rose-600 sm:text-xl dark:text-rose-400'>
+          <span className='text-lg font-bold text-blue-600 sm:text-xl dark:text-blue-400'>
             {totalPayment.toLocaleString()}₫
           </span>
         </div>
       </div>
 
-      <div className='rounded-lg border border-rose-200 bg-rose-50/80 p-3 text-xs leading-relaxed text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100'>
+      <div className='rounded-lg border border-blue-200 bg-blue-50/80 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-100'>
         Tiền cọc sẽ được <span className='font-bold'>hoàn trả trong 24h</span>{' '}
         sau khi bạn trả thiết bị. Giá thuê chưa bao gồm phí vận chuyển và 8%
         VAT.
@@ -924,7 +1148,9 @@ export function RentalCheckoutCard({
             type='button'
             variant='ghost'
             className='size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11'
-            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+            onClick={() =>
+              setQuantity(Math.max(1, Math.min(maxQuantity, quantity - 1)))
+            }
             aria-label='Giảm số lượng'
           >
             <Minus className='size-6' />
@@ -934,7 +1160,12 @@ export function RentalCheckoutCard({
             min={1}
             value={quantity}
             onChange={(e) =>
-              setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
+              setQuantity(
+                Math.max(
+                  1,
+                  Math.min(maxQuantity, parseInt(e.target.value, 10) || 1),
+                ),
+              )
             }
             className='h-full w-12 border-0 bg-transparent text-center text-lg font-bold tabular-nums text-foreground outline-none sm:w-14 sm:text-xl'
           />
@@ -942,7 +1173,8 @@ export function RentalCheckoutCard({
             type='button'
             variant='ghost'
             className='size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11'
-            onClick={() => setQuantity(quantity + 1)}
+            onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+            disabled={quantity >= maxQuantity}
             aria-label='Tăng số lượng'
           >
             <Plus className='size-6' />
@@ -953,7 +1185,7 @@ export function RentalCheckoutCard({
           type='button'
           disabled={!cartProduct || isAddingToCart || requireColorSelection}
           onClick={handleAddToCart}
-          className='h-12 min-h-12 min-w-0 flex-1 rounded-xl bg-rose-600 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600 sm:text-base'
+          className='h-12 min-h-12 min-w-0 flex-1 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600 sm:text-base'
           title={
             requireColorSelection
               ? 'Vui lòng chọn màu trước'
@@ -1003,7 +1235,7 @@ export function RentalCheckoutCard({
                 >
                   <div className='flex items-start justify-between gap-2'>
                     <div className='min-w-0'>
-                      <p className='font-mono text-xs font-bold text-rose-600 dark:text-rose-400'>
+                      <p className='font-mono text-xs font-bold text-blue-600 dark:text-blue-400'>
                         {v.code}
                       </p>
                       <p className='mt-0.5 text-sm font-semibold text-foreground'>

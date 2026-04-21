@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * VoucherPriceCalculator — UI component để tính dailyPrice từ oldDailyPrice + voucher.
+ * VoucherPriceCalculator - UI component để tính dailyPrice từ oldDailyPrice + voucher.
  *
  * Logic tính (theo BE spec, Module 11: VOUCHERS):
  *   PERCENTAGE:   discount = min(oldDailyPrice * discountValue/100, maxDiscountAmount ?? ∞)
@@ -32,9 +32,9 @@ import { VoucherPickerDialog } from './voucher-picker-dialog';
 
 // ─── Pricing computation ──────────────────────────────────────────
 export interface PriceValues {
-  /** Giá thuê thực tế (sau giảm) — gửi lên BE */
+  /** Giá thuê thực tế (sau giảm) - gửi lên BE */
   dailyPrice: number;
-  /** Giá gốc trước giảm — gửi lên BE khi > dailyPrice */
+  /** Giá gốc trước giảm - gửi lên BE khi > dailyPrice */
   oldDailyPrice: number | undefined;
   /** Voucher đang áp dụng (nếu có) */
   selectedVoucherId: string | undefined;
@@ -90,7 +90,7 @@ export function VoucherPriceCalculator({
 }: VoucherPriceCalculatorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Fetch active vouchers — needed to find selectedVoucher details
+  // Fetch active vouchers - needed to find selectedVoucher details
   const { data: vouchersData } = useVouchersQuery({
     page: 1,
     size: 200,
@@ -246,7 +246,7 @@ export function VoucherPriceCalculator({
                   : 'text-text-main',
               )}
             >
-              {dailyPrice > 0 ? formatVnd(dailyPrice) : '—'}
+              {dailyPrice > 0 ? formatVnd(dailyPrice) : '-'}
             </span>
           </div>
         </div>

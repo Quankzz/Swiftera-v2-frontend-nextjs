@@ -4,6 +4,38 @@ import DOMPurify from 'dompurify';
 import { buildVideoEmbed } from '../../../../utils/embed';
 import { storageApi } from '@/api/storageApi';
 
+/** Returns true if url is an Azure Blob Storage URL */
+function isAzureBlobUrl(url) {
+  try {
+    return new URL(url).hostname.includes('.blob.core.windows.net');
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Extracts the blob path (folder/filename) from a full Azure Blob URL.
+ * Strips the leading container segment.
+ */
+function extractBlobPath(url) {
+  try {
+    const pathname = new URL(url).pathname; // e.g. /container/folder/file.jpg
+    const parts = pathname.split('/').filter(Boolean);
+    if (parts.length < 2) return null;
+    return parts.slice(1).join('/'); // drop container name
+  } catch {
+    return null;
+  }
+}
+
+/** Fire-and-forget deletion of an Azure blob URL */
+function deleteAzureBlobUrl(url) {
+  if (!isAzureBlobUrl(url)) return;
+  const filePath = extractBlobPath(url);
+  if (!filePath) return;
+  storageApi.deleteSingleFile({ filePath }).catch(() => {/* best-effort */ });
+}
+
 const SANITIZE_CONFIG = {
   ALLOWED_TAGS: [
     'p',
@@ -62,6 +94,32 @@ function BlankSection({ blank, onTitleChange, onContentChange, onFocus, isReadOn
       }
     }
   }, [blank.titleHtml, blank.contentHtml]);
+
+  // MutationObserver: delete Azure blob images when they are removed from the editor
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const removedNode of mutation.removedNodes) {
+          // Directly removed <img>
+          if (removedNode.nodeName === 'IMG') {
+            deleteAzureBlobUrl(removedNode.src);
+          }
+          // Removed container that may contain <img> children
+          if (removedNode.querySelectorAll) {
+            removedNode.querySelectorAll('img').forEach((img) => {
+              deleteAzureBlobUrl(img.src);
+            });
+          }
+        }
+      }
+    });
+
+    observer.observe(editor, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   const handleTitleInput = () => {
     if (titleRef.current) {

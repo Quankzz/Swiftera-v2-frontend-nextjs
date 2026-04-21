@@ -12,6 +12,8 @@ const PAGE_SIZE = 12;
 // Map FE sort option → BE sort param
 function toBESort(sort: SortOption): string {
   switch (sort) {
+    case 'newest':
+      return 'createdAt,desc';
     case 'name-asc':
       return 'name,asc';
     case 'name-desc':
@@ -49,7 +51,7 @@ export function ProductsGrid({
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [sort, setSort] = useState<SortOption>('name-asc');
+  const [sort, setSort] = useState<SortOption>('newest');
   // BE uses 1-based page index
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -202,7 +204,7 @@ export function ProductsGrid({
         </>
       )}
 
-      {/* Pagination — bottom of grid */}
+      {/* Pagination - bottom of grid */}
       {totalPages > 1 && (
         <div className='flex items-center justify-center gap-1'>
           <button

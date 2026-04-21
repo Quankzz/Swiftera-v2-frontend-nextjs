@@ -1,17 +1,17 @@
 'use client';
 
 /**
- * VoucherPickerDialog — modal chọn voucher giảm giá.
+ * VoucherPickerDialog - modal chọn voucher giảm giá.
  *
  * Mỗi voucher hiển thị dạng "vé" (ticket) với viền nét đứt,
  * hai bên có hình tròn cutout, code lớn ở trái, chi tiết ở phải.
  *
  * Props:
- *   selectedVoucherId — voucher đang chọn (để highlight)
- *   onSelect          — callback(voucherId) khi chọn
- *   onClear           — bỏ chọn voucher
- *   onClose           — đóng dialog
- *   open              — hiển thị/ẩn
+ *   selectedVoucherId - voucher đang chọn (để highlight)
+ *   onSelect          - callback(voucherId) khi chọn
+ *   onClear           - bỏ chọn voucher
+ *   onClose           - đóng dialog
+ *   open              - hiển thị/ẩn
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -103,7 +103,7 @@ function VoucherTicket({
               : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/3 hover:border-theme-primary-start/60 hover:bg-gray-50 dark:hover:bg-white/5',
         )}
       >
-        {/* Left side — big discount value */}
+        {/* Left side - big discount value */}
         <div
           className={cn(
             'flex w-36 shrink-0 flex-col items-center justify-center px-3 py-4 border-r-2 border-dashed',
@@ -146,7 +146,7 @@ function VoucherTicket({
         <div className='absolute left-19 -top-3 h-6 w-6 rounded-full bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8' />
         <div className='absolute left-19 -bottom-3 h-6 w-6 rounded-full bg-white dark:bg-surface-card border border-gray-200 dark:border-white/8' />
 
-        {/* Right side — details */}
+        {/* Right side - details */}
         <div className='flex flex-1 flex-col gap-1.5 px-4 py-3 min-w-0'>
           {/* Code + selected check */}
           <div className='flex items-center justify-between gap-2'>
@@ -470,7 +470,7 @@ export function VoucherPickerDialog({
           )}
         </div>
 
-        {/* Footer — selected preview */}
+        {/* Footer - selected preview */}
         <div className='border-t border-gray-100 dark:border-white/8 px-5 py-3'>
           {selectedVoucher ? (
             <div className='flex items-center gap-3'>

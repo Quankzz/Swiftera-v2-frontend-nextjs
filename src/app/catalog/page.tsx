@@ -22,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const params = await searchParams;
   return {
-    title: 'Danh mục sản phẩm — Swiftera',
+    title: 'Danh mục sản phẩm - Swiftera',
     description:
       params.categoryId || params.category
         ? 'Xem sản phẩm theo danh mục trên Swiftera'

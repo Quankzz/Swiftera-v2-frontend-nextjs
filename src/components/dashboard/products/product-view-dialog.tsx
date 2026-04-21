@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
   X,
@@ -31,6 +31,7 @@ import type {
 } from '@/features/products/types';
 import { useInventoryItemsQuery } from '@/features/products/hooks/use-inventory-items';
 import { useProductQuery } from '@/features/products/hooks/use-product-management';
+import { sanitizeRichHtml } from '@/lib/sanitize-rich-html';
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -260,15 +261,21 @@ function OverviewTab({ product }: { product: ProductResponse }) {
 
 // ─── Tab: Mô tả HTML ──────────────────────────────────────────────
 function DescriptionTab({ description }: { description: string | null }) {
-  if (!description) {
+  const safeDescription = useMemo(
+    () => (description ? sanitizeRichHtml(description) : ''),
+    [description],
+  );
+
+  if (!safeDescription) {
     return (
       <p className='text-sm text-text-sub italic'>Chưa có mô tả chi tiết.</p>
     );
   }
+
   return (
     <div
       className='rich-content max-w-none text-sm text-text-main leading-relaxed'
-      dangerouslySetInnerHTML={{ __html: description }}
+      dangerouslySetInnerHTML={{ __html: safeDescription }}
     />
   );
 }
@@ -315,10 +322,10 @@ const STATUS_CONFIG: Record<
 };
 
 const CONDITION_LABEL: Record<string, string> = {
-  NEW: 'Mới — Như hộp',
-  GOOD: 'Tốt — Vài vết nhỏ',
-  FAIR: 'Trung bình — Dùng nhiều',
-  POOR: 'Kém — Cần kiểm tra',
+  NEW: 'Mới - Như hộp',
+  GOOD: 'Tốt - Vài vết nhỏ',
+  FAIR: 'Trung bình - Dùng nhiều',
+  POOR: 'Kém - Cần kiểm tra',
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -341,8 +348,19 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-/** Union item type — InventoryCard works with both embedded and standalone types */
+/** Union item type - InventoryCard works with both embedded and standalone types */
 type InventoryItem = InventoryItemResponse | InventoryItemInProduct;
+
+/** Resolve hub name/id from either flat (InventoryItemResponse) or nested hub (InventoryItemInProduct) */
+function getHubDisplay(item: InventoryItem): string {
+  if ('hub' in item && item.hub) return item.hub.name ?? item.hub.hubId;
+  if ('hubName' in item)
+    return (
+      (item as InventoryItemResponse).hubName ??
+      (item as InventoryItemResponse).hubId
+    );
+  return '';
+}
 
 function InventoryCard({ item }: { item: InventoryItem }) {
   return (
@@ -359,7 +377,7 @@ function InventoryCard({ item }: { item: InventoryItem }) {
         <span>
           📦{' '}
           <span className='font-medium text-text-main'>
-            {item.hubName ?? item.hubId}
+            {getHubDisplay(item)}
           </span>
         </span>
         {item.conditionGrade && (
@@ -383,7 +401,7 @@ function InventoryCard({ item }: { item: InventoryItem }) {
           {item.staffNote}
         </p>
       )}
-      {/* Timestamps — only available from standalone InventoryItemResponse */}
+      {/* Timestamps - only available from standalone InventoryItemResponse */}
       {'createdAt' in item && item.createdAt && (
         <p className='text-[11px] text-text-sub/60 border-t border-gray-100 dark:border-white/8 pt-1.5'>
           Thêm vào:{' '}

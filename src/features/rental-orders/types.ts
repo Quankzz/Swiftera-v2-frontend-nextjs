@@ -1,9 +1,9 @@
 /**
  * Rental Orders module types
- * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md — Module 12: RENTAL ORDERS
+ * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 12: RENTAL ORDERS
  *
  * Tất cả field dùng camelCase đúng theo JSON trả về từ BE.
- * Không tự suy đoán field — chỉ model field có trong spec.
+ * Không tự suy đoán field - chỉ model field có trong spec.
  */
 
 import type { PaginationResponse } from '@/types/api.types';
@@ -167,30 +167,46 @@ export interface RentalOrderLine {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Rental Order Response (full — API-073 / API-074 / API-075)
+// Rental Order Response (full - API-073 / API-074 / API-075)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
 
-  // Hub assignment (expanded details from BE)
-  hubId: string | null;
-  hubCode: string | null;
+  // Hub assignment — BE returns hub as nested HubResponse object + flat hubName
+  hub: {
+    hubId: string;
+    code: string;
+    name: string;
+    addressLine: string | null;
+    ward: string | null;
+    district: string | null;
+    city: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    phone: string | null;
+    isActive: boolean;
+  } | null;
+  /** Convenience flat field — same as hub.name, sent by BE mapper */
   hubName: string | null;
-  hubAddressLine: string | null;
-  hubWard: string | null;
-  hubDistrict: string | null;
-  hubCity: string | null;
-  hubLatitude: number | null;
-  hubLongitude: number | null;
-  hubPhone: string | null;
 
-  // Staff assignment (nested objects — trả về từ API sau khi gán)
+  // Kept for backward-compat (all undefined at runtime — read from hub.* instead)
+  hubId?: string | null;
+  hubCode?: string | null;
+  hubAddressLine?: string | null;
+  hubWard?: string | null;
+  hubDistrict?: string | null;
+  hubCity?: string | null;
+  hubLatitude?: number | null;
+  hubLongitude?: number | null;
+  hubPhone?: string | null;
+
+  // Staff assignment (nested objects - trả về từ API sau khi gán)
   deliveryStaff: HubStaffResponse | null;
   pickupStaff: HubStaffResponse | null;
 
-  // User address (nested from BE — thay thế delivery* fields cũ)
+  // User address (nested from BE - thay thế delivery* fields cũ)
   userAddressId: string | null;
   userAddress: UserAddress | null;
 
@@ -234,6 +250,13 @@ export interface RentalOrderResponse {
   // QR Code (sinh sau khi PAID)
   qrCode: string | null;
 
+  // Cancellation request tracking (khi customer yeu cau huy don PAID)
+  cancellationRequested: boolean | null;
+  cancellationReason: string | null;
+  cancellationRequestedAt: string | null;
+  refundConfirmedByAdmin: boolean | null;
+  refundConfirmedAt: string | null;
+
   // Timestamps
   placedAt: string; // ISO datetime
   createdAt: string;
@@ -271,7 +294,17 @@ export interface UpdateOrderStatusInput {
   status: RentalOrderStatus;
 }
 
-/** API-078: Hủy đơn thuê — POST /rental-orders/{id}/cancel (no body) */
+/** API-078: Hủy đơn thuê - POST /rental-orders/{id}/cancel (no body) */
+
+/** API: Customer requests cancellation for PAID orders */
+export interface CancellationRequestInput {
+  reason: string;
+}
+
+/** API: Admin confirms cancellation with refund reason */
+export interface ConfirmCancellationRefundInput {
+  reason: string;
+}
 
 /** API-079: Gia hạn đơn thuê */
 export interface ExtendOrderInput {
@@ -323,7 +356,7 @@ export interface AssignStaffToHubInput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Staff types (dùng trong assign-staff-dialog — lấy từ GET /users)
+// Staff types (dùng trong assign-staff-dialog - lấy từ GET /users)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Staff option hiển thị trong dialog chọn nhân viên */

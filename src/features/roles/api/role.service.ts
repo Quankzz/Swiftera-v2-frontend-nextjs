@@ -1,6 +1,6 @@
 /**
- * Role & Permission service — tất cả API calls.
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * Role & Permission service - tất cả API calls.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Module 3: ROLES  (API-020 → API-025)
  * Module 4: PERMISSIONS (API-026 → API-033)

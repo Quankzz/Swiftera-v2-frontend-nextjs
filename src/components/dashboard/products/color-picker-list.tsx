@@ -134,7 +134,7 @@ export function ColorPickerList({
                 type='button'
                 disabled={isDisabled}
                 onClick={() => handlePresetClick(preset)}
-                title={`${preset.name} (${preset.code.toUpperCase()})${isSelected ? ' — Đã chọn' : isDisabled ? ' — Đã đạt tối đa' : ''}`}
+                title={`${preset.name} (${preset.code.toUpperCase()})${isSelected ? ' - Đã chọn' : isDisabled ? ' - Đã đạt tối đa' : ''}`}
                 className={cn(
                   'relative h-8 w-8 rounded-md border-2 transition-all',
                   preset.code === '#ffffff'

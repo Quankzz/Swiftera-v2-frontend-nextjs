@@ -87,7 +87,7 @@ export function ContactTicketsTable({ onUpdateStatus }: TicketsTableProps) {
           return (
             <div>
               <p className='text-sm font-medium text-text-main'>
-                {userFullName ?? '—'}
+                {userFullName ?? '-'}
               </p>
               {userEmail && (
                 <p className='text-xs text-text-sub'>{userEmail}</p>
@@ -105,7 +105,7 @@ export function ContactTicketsTable({ onUpdateStatus }: TicketsTableProps) {
               <Package size={11} />#{row.original.rentalOrderId}
             </span>
           ) : (
-            <span className='text-xs text-text-sub'>—</span>
+            <span className='text-xs text-text-sub'>-</span>
           ),
       },
       {

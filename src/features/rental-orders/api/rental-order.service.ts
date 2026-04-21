@@ -1,6 +1,6 @@
 /**
- * Rental Order service — tất cả API calls cho rental orders module.
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * Rental Order service - tất cả API calls cho rental orders module.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 12: RENTAL ORDERS)
  *
@@ -243,7 +243,7 @@ export async function setPenalty(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Hoàn tất đơn thuê — chuyển status PICKED_UP → COMPLETED.
+ * Hoàn tất đơn thuê - chuyển status PICKED_UP → COMPLETED.
  * Sử dụng API-079: PATCH /rental-orders/{id}/status
  */
 export async function completeRentalOrder(
@@ -258,7 +258,7 @@ export async function completeRentalOrder(
 }
 
 /**
- * Thu hồi sớm do sự cố — ADMIN only.
+ * Thu hồi sớm do sự cố - ADMIN only.
  * Chuyển DELIVERED / IN_USE → PENDING_PICKUP kèm issueNote.
  * API-079: PATCH /rental-orders/{id}/status
  */
@@ -321,6 +321,61 @@ export async function getContractByOrder(
 ): Promise<RentalContractResponse> {
   const res = await httpService.get<ApiResponse<RentalContractResponse>>(
     `/contracts/rental-order/${rentalOrderId}`,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. Admin Cancellation / Support Actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface CancelOrderInput {
+  reason?: string;
+}
+
+/**
+ * Admin confirms cancellation with refund for PAID orders
+ * POST /rental-orders/{rentalOrderId}/confirm-cancellation-refund [ADMIN]
+ */
+export async function confirmCancellationRefund(
+  rentalOrderId: string,
+  input: CancelOrderInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/confirm-cancellation-refund`,
+    input,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * Admin directly cancels a PAID order (support case)
+ * POST /rental-orders/{rentalOrderId}/admin-cancel-paid [ADMIN]
+ */
+export async function adminCancelFromPaid(
+  rentalOrderId: string,
+  input: CancelOrderInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/admin-cancel-paid`,
+    input,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * Admin triggers early pickup for IN_USE orders (support/fraud cases)
+ * POST /rental-orders/{rentalOrderId}/admin-early-pickup [ADMIN]
+ */
+export async function adminEarlyPickupFromInUse(
+  rentalOrderId: string,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/admin-early-pickup`,
+    undefined,
     authOpts,
   );
   return res.data.data!;

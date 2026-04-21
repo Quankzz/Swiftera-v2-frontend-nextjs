@@ -2,6 +2,7 @@
 
 import { useState, useDeferredValue, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   Package,
@@ -22,12 +23,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
+import { useRentalContractByOrderQuery } from '@/hooks/api/use-contract';
 import {
   RENTAL_ORDER_STATUS_LABELS,
   RENTAL_ORDER_STATUS_COLORS,
 } from '@/api/rentalOrderApi';
 import type { RentalOrderStatus } from '@/api/rentalOrderApi';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { buildLoginHref } from '@/lib/auth-redirect';
 
 const PolicyConsentDialog = dynamic(
   () =>
@@ -39,6 +43,8 @@ const PolicyConsentDialog = dynamic(
 
 const PAGE_SIZE = 5;
 const MAX_VISIBLE_PAGES = 5;
+// Fetch a large batch per BE-page so client-side status filter has enough data
+const FETCH_SIZE = 100;
 
 const SORT_OPTIONS = [
   { label: 'Mới nhất', value: 'placedAt,desc' },
@@ -79,6 +85,79 @@ function formatDate(iso: string) {
   }
 }
 
+function OrderContractAction({
+  rentalOrderId,
+  enabled,
+}: {
+  rentalOrderId: string;
+  enabled: boolean;
+}) {
+  const {
+    data: contract,
+    isLoading,
+    isError,
+  } = useRentalContractByOrderQuery(rentalOrderId, { enabled });
+
+  if (!enabled) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground/50'
+        title='Hợp đồng sẽ có sau khi thanh toán thành công.'
+      >
+        <FileText className='size-4' />
+      </span>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground'
+        title='Đang tải hợp đồng...'
+      >
+        <Loader2 className='size-4 animate-spin' />
+      </span>
+    );
+  }
+
+  if (isError) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-amber-300/60 bg-amber-50/40 text-amber-600 dark:border-amber-700/60 dark:bg-amber-950/20 dark:text-amber-400'
+        title='Không tải được hợp đồng cho đơn này.'
+      >
+        <AlertCircle className='size-4' />
+      </span>
+    );
+  }
+
+  const contractPdfUrl = contract?.contractPdfUrl;
+  if (!contractPdfUrl) {
+    return (
+      <span
+        className='inline-flex size-8 items-center justify-center rounded-lg border border-border/60 text-muted-foreground/50'
+        title='Đơn này chưa có hợp đồng thuê.'
+      >
+        <FileText className='size-4' />
+      </span>
+    );
+  }
+
+  return (
+    <a
+      href={contractPdfUrl}
+      target='_blank'
+      rel='noopener noreferrer'
+      className='inline-flex size-8 items-center justify-center rounded-lg border border-blue-300/60 bg-blue-50/50 text-blue-600 transition-colors hover:bg-blue-100 dark:border-blue-800/60 dark:bg-blue-950/20 dark:text-blue-400 dark:hover:bg-blue-950/40'
+      title='Xem hợp đồng thuê (PDF)'
+      aria-label='Xem hợp đồng thuê (PDF)'
+      onClick={(e) => e.stopPropagation()}
+    >
+      <FileText className='size-4' />
+    </a>
+  );
+}
+
 function OrderRowSkeleton() {
   return (
     <div className='flex items-center gap-4 px-5 py-4'>
@@ -104,15 +183,15 @@ function StatusTabBar({
 }) {
   return (
     <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-      <div className='flex min-w-max border-b border-border/60'>
+      <div className='flex min-w-max border-b border-border/60 px-2'>
         {STATUS_FILTERS.map((f) => (
           <button
             key={f.value || 'all'}
             onClick={() => onFilterChange(f.value)}
             className={cn(
-              '-mb-px border-b-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+              '-mb-px border-b-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors',
               activeFilter === f.value
-                ? 'border-rose-600 text-rose-600 dark:border-rose-400 dark:text-rose-400'
+                ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
                 : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
             )}
           >
@@ -196,7 +275,7 @@ function PaginationControls({
               className={cn(
                 'h-8 w-8 p-0 text-sm',
                 isActive &&
-                  'bg-rose-600 hover:bg-rose-700 text-white border-rose-600',
+                  'bg-blue-600 hover:bg-blue-700 text-white border-blue-600',
               )}
               onClick={() => onPageChange(p)}
             >
@@ -220,6 +299,9 @@ function PaginationControls({
 }
 
 export default function RentalOrdersPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(SORT_OPTIONS[0].value);
   const [statusFilter, setStatusFilter] = useState('');
@@ -237,12 +319,35 @@ export default function RentalOrdersPage() {
   async function handlePay(e: React.MouseEvent, rentalOrderId: string) {
     e.preventDefault(); // ngăn Link navigate
     e.stopPropagation();
+
+    if (!isAuthenticated) {
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
+      toast.error('Vui lòng đăng nhập để thanh toán đơn thuê.');
+      router.push(buildLoginHref('/rental-orders'));
+      return;
+    }
+
     if (payingId) return;
     setPendingPayOrderId(rentalOrderId);
     setPolicyOpen(true);
   }
 
   async function handlePayAfterConsent() {
+    if (!isAuthenticated) {
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
+      toast.error('Vui lòng đăng nhập để thanh toán đơn thuê.');
+      router.push(buildLoginHref('/rental-orders'));
+      return;
+    }
+
     if (!pendingPayOrderId || payingId) return;
     setPolicyOpen(false);
     setPayingId(pendingPayOrderId);
@@ -260,36 +365,49 @@ export default function RentalOrdersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [sort, statusFilter, deferredSearch]);
-
-  const filterQuery = statusFilter ? `status:'${statusFilter}'` : undefined;
+  }, [sort, deferredSearch, statusFilter]);
 
   const { data, isLoading, isError } = useMyOrdersQuery({
-    page,
-    size: PAGE_SIZE,
+    page: 1,
+    size: FETCH_SIZE,
     sort,
-    filter: filterQuery,
   });
 
   const orders = data?.items ?? [];
 
+  // Filter by status client-side (BE /my-orders does not support filter param)
+  const statusFiltered = statusFilter
+    ? orders.filter((o) => o.status === statusFilter)
+    : orders;
+
   const filteredOrders = deferredSearch
-    ? orders.filter((o) =>
+    ? statusFiltered.filter((o) =>
         o.rentalOrderId.toLowerCase().includes(deferredSearch.toLowerCase()),
       )
-    : orders;
+    : statusFiltered;
+
+  // Client-side pagination over filtered results
+  const totalFilteredItems = filteredOrders.length;
+  const totalClientPages = Math.max(
+    1,
+    Math.ceil(totalFilteredItems / PAGE_SIZE),
+  );
+  const pagedOrders = filteredOrders.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
 
   const hasActiveFilters = statusFilter !== '' || deferredSearch !== '';
 
   return (
     <div className='min-h-screen bg-muted/30 px-3 pb-16 pt-20 font-sans sm:px-4 sm:pt-4 md:px-6 md:pt-8 dark:bg-background'>
-      <div className='mx-auto max-w-3xl'>
+      <div className='mx-auto max-w-5xl'>
         {/* Page header */}
-        <div className='mb-6'>
-          <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>
+        <div className='mb-8'>
+          <h1 className='text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl'>
             Đơn thuê của tôi
           </h1>
-          <p className='mt-1 text-sm text-muted-foreground'>
+          <p className='mt-2 text-base text-muted-foreground'>
             Theo dõi tất cả đơn thuê thiết bị của bạn.
           </p>
         </div>
@@ -303,7 +421,7 @@ export default function RentalOrdersPage() {
           />
 
           {/* Controls row */}
-          <div className='flex items-center gap-3 border-b border-border/60 px-4 py-3 sm:px-5'>
+          <div className='flex items-center gap-3 border-b border-border/60 px-5 py-3.5 sm:px-6'>
             <div className='relative flex-1'>
               <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
               <input
@@ -311,7 +429,7 @@ export default function RentalOrdersPage() {
                 placeholder='Tìm theo mã đơn thuê...'
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className='h-9 w-full rounded-lg border border-border/60 bg-background pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200/60 dark:bg-card'
+                className='h-9 w-full rounded-lg border border-border/60 bg-background pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200/60 dark:bg-card'
               />
               {search && (
                 <button
@@ -327,7 +445,7 @@ export default function RentalOrdersPage() {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className='rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-rose-200/60 dark:bg-card'
+                className='rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-200/60 dark:bg-card'
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -342,7 +460,7 @@ export default function RentalOrdersPage() {
           {hasActiveFilters && (
             <div className='flex flex-wrap items-center gap-2 border-b border-border/60 bg-muted/30 px-5 py-2'>
               {statusFilter && (
-                <span className='inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'>
+                <span className='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'>
                   {
                     RENTAL_ORDER_STATUS_LABELS[
                       statusFilter as RentalOrderStatus
@@ -350,7 +468,7 @@ export default function RentalOrdersPage() {
                   }
                   <button
                     onClick={() => setStatusFilter('')}
-                    className='ml-0.5 hover:text-rose-900'
+                    className='ml-0.5 hover:text-blue-900'
                   >
                     <X className='size-3' />
                   </button>
@@ -399,8 +517,8 @@ export default function RentalOrdersPage() {
                 Vui lòng đăng nhập hoặc thử lại sau.
               </p>
               <Button
-                className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
-                render={<Link href='/login?redirect=/rental-orders' />}
+                className='mt-5 h-9 rounded-xl bg-blue-600 text-sm text-white hover:bg-blue-700'
+                render={<Link href={buildLoginHref('/rental-orders')} />}
               >
                 Đăng nhập
               </Button>
@@ -408,7 +526,7 @@ export default function RentalOrdersPage() {
           )}
 
           {/* Empty */}
-          {!isLoading && !isError && filteredOrders.length === 0 && (
+          {!isLoading && !isError && pagedOrders.length === 0 && (
             <div className='px-5 py-16 text-center'>
               <div className='mx-auto flex size-16 items-center justify-center rounded-2xl bg-muted/60'>
                 <Package className='size-8 text-muted-foreground/50' />
@@ -425,7 +543,7 @@ export default function RentalOrdersPage() {
               </p>
               {hasActiveFilters ? (
                 <Button
-                  className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                  className='mt-5 h-9 rounded-xl bg-blue-600 text-sm text-white hover:bg-blue-700'
                   onClick={() => {
                     setStatusFilter('');
                     setSearch('');
@@ -435,7 +553,7 @@ export default function RentalOrdersPage() {
                 </Button>
               ) : (
                 <Button
-                  className='mt-5 h-9 rounded-xl bg-rose-600 text-sm text-white hover:bg-rose-700'
+                  className='mt-5 h-9 rounded-xl bg-blue-600 text-sm text-white hover:bg-blue-700'
                   render={<Link href='/cart' />}
                 >
                   Đi tới giỏ hàng
@@ -445,9 +563,9 @@ export default function RentalOrdersPage() {
           )}
 
           {/* Orders list */}
-          {!isLoading && !isError && filteredOrders.length > 0 && (
+          {!isLoading && !isError && pagedOrders.length > 0 && (
             <ul className='divide-y divide-border/60'>
-              {filteredOrders.map((order) => {
+              {pagedOrders.map((order) => {
                 const status = order.status as RentalOrderStatus;
                 const isPending = status === 'PENDING_PAYMENT';
                 const isPaying = payingId === order.rentalOrderId;
@@ -465,28 +583,28 @@ export default function RentalOrdersPage() {
                       <span className='absolute inset-y-0 left-0 w-0.5 rounded-r-full bg-amber-400 dark:bg-amber-500' />
                     )}
 
-                    <div className='group flex items-center gap-3 px-5 py-4 sm:gap-4'>
+                    <div className='group flex items-center gap-4 px-5 py-4 sm:gap-5 sm:px-6 sm:py-5'>
                       {/* Icon */}
                       <Link
                         href={`/rental-orders/${order.rentalOrderId}`}
-                        className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-opacity hover:opacity-80 dark:bg-rose-950/50 dark:text-rose-400'
+                        className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-opacity hover:opacity-80 dark:bg-blue-950/50 dark:text-blue-400'
                         tabIndex={-1}
                       >
-                        <FileText className='size-[18px]' />
+                        <Package className='size-5' />
                       </Link>
 
-                      {/* Info — chiếm phần lớn width, click → detail */}
+                      {/* Info - chiếm phần lớn width, click → detail */}
                       <Link
                         href={`/rental-orders/${order.rentalOrderId}`}
                         className='min-w-0 flex-1'
                       >
-                        <div className='flex flex-wrap items-center gap-1.5'>
+                        <div className='flex flex-wrap items-center gap-2'>
                           <span className='font-mono text-sm font-bold text-foreground'>
                             #{order.rentalOrderId.slice(0, 8).toUpperCase()}
                           </span>
                           <Badge
                             className={cn(
-                              'rounded-full px-2 py-0.5 text-[11px] font-medium',
+                              'rounded-full px-2.5 py-0.5 text-[11px] font-semibold',
                               RENTAL_ORDER_STATUS_COLORS[status],
                             )}
                           >
@@ -519,7 +637,7 @@ export default function RentalOrdersPage() {
                             </p>
                           )}
 
-                        {/* Amount — hiển thị trong info khi có nút Pay để tránh crowding */}
+                        {/* Amount - hiển thị trong info khi có nút Pay để tránh crowding */}
                         {isPending && (
                           <p className='mt-1 text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-400'>
                             {fmt.format(order.totalPayableAmount)}
@@ -530,48 +648,66 @@ export default function RentalOrdersPage() {
                       {/* Right side */}
                       {isPending ? (
                         /* ── Nút thanh toán cho PENDING_PAYMENT ── */
-                        <button
-                          type='button'
-                          disabled={!!payingId}
-                          onClick={(e) =>
-                            void handlePay(e, order.rentalOrderId)
-                          }
-                          className={cn(
-                            'flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
-                            isPaying
-                              ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                              : payingId
-                                ? 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
-                                : 'bg-amber-500 text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-95 dark:bg-amber-500 dark:hover:bg-amber-600',
-                          )}
-                        >
-                          {isPaying ? (
-                            <>
-                              <Loader2 className='size-3.5 animate-spin' />
-                              <span className='hidden sm:inline'>
-                                Đang xử lý…
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <CreditCard className='size-3.5' />
-                              <span className='hidden sm:inline'>
-                                Thanh toán
-                              </span>
-                            </>
-                          )}
-                        </button>
+                        <div className='flex shrink-0 items-center gap-1.5'>
+                          <div className='flex w-9 justify-center'>
+                            <OrderContractAction
+                              rentalOrderId={order.rentalOrderId}
+                              enabled={false}
+                            />
+                          </div>
+                          <div className='flex w-28 justify-end'>
+                            <button
+                              type='button'
+                              disabled={!!payingId}
+                              onClick={(e) =>
+                                void handlePay(e, order.rentalOrderId)
+                              }
+                              className={cn(
+                                'flex w-full shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
+                                isPaying
+                                  ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                  : payingId
+                                    ? 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
+                                    : 'bg-amber-500 text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-95 dark:bg-amber-500 dark:hover:bg-amber-600',
+                              )}
+                            >
+                              {isPaying ? (
+                                <>
+                                  <Loader2 className='size-3.5 animate-spin' />
+                                  <span className='hidden sm:inline'>
+                                    Đang xử lý…
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <CreditCard className='size-3.5' />
+                                  <span className='hidden sm:inline'>
+                                    Thanh toán
+                                  </span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       ) : (
                         /* ── Amount + chevron cho status khác ── */
-                        <Link
-                          href={`/rental-orders/${order.rentalOrderId}`}
-                          className='flex shrink-0 items-center gap-2'
-                        >
-                          <span className='text-sm font-semibold tabular-nums text-foreground'>
-                            {fmt.format(order.totalPayableAmount)}
-                          </span>
-                          <ChevronRight className='size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
-                        </Link>
+                        <div className='flex shrink-0 items-center gap-1.5'>
+                          <div className='flex w-9 justify-center'>
+                            <OrderContractAction
+                              rentalOrderId={order.rentalOrderId}
+                              enabled
+                            />
+                          </div>
+                          <Link
+                            href={`/rental-orders/${order.rentalOrderId}`}
+                            className='flex w-28 items-center justify-end gap-2'
+                          >
+                            <span className='text-right text-sm font-semibold tabular-nums text-foreground'>
+                              {fmt.format(order.totalPayableAmount)}
+                            </span>
+                            <ChevronRight className='size-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
+                          </Link>
+                        </div>
                       )}
                     </div>
 
@@ -580,7 +716,7 @@ export default function RentalOrdersPage() {
                       <div className='flex items-center gap-1.5 border-t border-amber-200/60 bg-amber-50/80 px-5 py-2 dark:border-amber-900/30 dark:bg-amber-950/20'>
                         <AlertCircle className='size-3 shrink-0 text-amber-600 dark:text-amber-400' />
                         <p className='text-[11px] text-amber-700 dark:text-amber-300'>
-                          Đơn chờ thanh toán — ấn{' '}
+                          Đơn chờ thanh toán - ấn{' '}
                           <span className='font-semibold'>Thanh toán</span> để
                           tiếp tục qua cổng VNPay.
                         </p>
@@ -593,11 +729,11 @@ export default function RentalOrdersPage() {
           )}
 
           {/* Pagination */}
-          {!isLoading && !isError && data && data.totalPages > 0 && (
+          {!isLoading && !isError && totalClientPages > 0 && (
             <PaginationControls
-              page={data.page}
-              totalPages={data.totalPages}
-              totalItems={data.totalItems}
+              page={page}
+              totalPages={totalClientPages}
+              totalItems={totalFilteredItems}
               onPageChange={setPage}
             />
           )}

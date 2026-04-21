@@ -1,7 +1,12 @@
+"use client";
+
+import type { MouseEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useFavoriteProducts } from '@/hooks/use-favorite-products';
 import type { Product } from '@/types/catalog';
 
 interface ProductCardProps {
@@ -26,6 +31,8 @@ export function ProductCard({
   variant = 'storefront',
 }: ProductCardProps) {
   const isPreview = variant === 'preview';
+  const { isFavorite, toggleFavorite, isUpdatingFavorites } = useFavoriteProducts();
+  const isFavorited = isFavorite(product.productId);
 
   const primaryImage = (() => {
     const img =
@@ -41,6 +48,32 @@ export function ProductCard({
 
   const displayColors = product.colors ?? [];
   const hasColors = displayColors.length > 0;
+
+  const handleFavoriteClick = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+      const result = await toggleFavorite(product.productId, {
+        fallbackPath: `/product/${product.productId}`,
+      });
+
+      if (!result.ok) return;
+
+      toast.success(
+        result.added
+          ? 'Đã thêm vào danh sách yêu thích.'
+          : 'Đã bỏ khỏi danh sách yêu thích.',
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Không thể cập nhật danh sách yêu thích.';
+      toast.error(message);
+    }
+  };
+
   return (
     <Link
       href={`/product/${product.productId}`}
@@ -51,12 +84,33 @@ export function ProductCard({
       )}
     >
       {!isPreview && (
-        <div
-          className='absolute right-3 top-3 z-10 rounded-full bg-white/90 dark:bg-white/10 p-2 shadow-sm'
-          onClick={(e) => e.preventDefault()}
+        <button
+          type='button'
+          onClick={(event) => {
+            void handleFavoriteClick(event);
+          }}
+          aria-label={
+            isFavorited
+              ? 'Bỏ khỏi danh sách yêu thích'
+              : 'Thêm vào danh sách yêu thích'
+          }
+          title={
+            isFavorited
+              ? 'Bỏ khỏi danh sách yêu thích'
+              : 'Thêm vào danh sách yêu thích'
+          }
+          className={cn(
+            'absolute right-3 top-3 z-10 rounded-full p-2 shadow-sm transition-all',
+            isFavorited
+              ? 'bg-blue-100 text-blue-600 ring-1 ring-blue-200 dark:bg-blue-950/45 dark:text-blue-300 dark:ring-blue-800/70'
+              : 'bg-white/90 text-muted-foreground hover:bg-blue-50 hover:text-blue-600 dark:bg-white/10 dark:hover:bg-blue-950/35 dark:hover:text-blue-300',
+          )}
+          disabled={isUpdatingFavorites}
         >
-          <Heart className='size-4 text-muted-foreground' />
-        </div>
+          <Heart
+            className={cn('size-4', isFavorited && 'fill-current')}
+          />
+        </button>
       )}
 
       {salePercent !== null && (
@@ -86,7 +140,7 @@ export function ProductCard({
             src={primaryImage.imageUrl}
             alt={product.name}
             fill
-            sizes='(min-width: 1024px) 300px, 50vw'
+            sizes='(min-width: 1280px) 300px, (min-width: 768px) 33vw, 50vw'
             className={cn(
               'object-contain',
               !isPreview &&
@@ -110,7 +164,7 @@ export function ProductCard({
                   key={`${product.productId}-${c.name}`}
                   aria-label={c.name}
                   title={c.name}
-                  className='size-3.5 rounded-full border border-white shadow ring-1 ring-black/10'
+                  className='size-4 sm:size-3.5 rounded-full border border-white shadow ring-1 ring-black/10'
                   style={{ backgroundColor: c.value }}
                 />
               ))}
@@ -132,7 +186,7 @@ export function ProductCard({
               {product.dailyPrice ? (
                 formatter.format(product.dailyPrice)
               ) : (
-                <span className='text-text-sub italic text-base'>—</span>
+                <span className='text-text-sub italic text-base'>-</span>
               )}
             </span>
             {product.oldDailyPrice && (

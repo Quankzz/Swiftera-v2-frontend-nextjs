@@ -17,6 +17,7 @@ import type {
 } from '@/types/auth';
 import type { UserSecuredResponse } from '@/types/api.types';
 import { authApi } from '@/api/authApi';
+import { normalizeError } from '@/api/apiService';
 import { setLogoutCallback } from '@/api/http';
 import { storageService } from '@/services/storage';
 import { useAuthStore } from '@/stores/auth-store';
@@ -93,57 +94,6 @@ function toStoredUser(user: AuthUser) {
   };
 }
 
-type ApiErrorShape = {
-  message?: string;
-  errors?: Array<{
-    message?: string;
-  }>;
-};
-
-function toAuthError(error: unknown, fallback: string): Error {
-  if (
-    error &&
-    typeof error === 'object' &&
-    'response' in error &&
-    error.response &&
-    typeof error.response === 'object'
-  ) {
-    const response = error.response as { data?: ApiErrorShape };
-    const message =
-      response.data?.errors?.[0]?.message ?? response.data?.message;
-
-    if (typeof message === 'string' && message.trim()) {
-      return new Error(message);
-    }
-  }
-
-  if (
-    error &&
-    typeof error === 'object' &&
-    'errors' in error &&
-    Array.isArray(error.errors) &&
-    error.errors[0] &&
-    typeof error.errors[0] === 'object' &&
-    'message' in error.errors[0] &&
-    typeof error.errors[0].message === 'string' &&
-    error.errors[0].message.trim()
-  ) {
-    return new Error(error.errors[0].message);
-  }
-
-  if (
-    error &&
-    typeof error === 'object' &&
-    'message' in error &&
-    typeof error.message === 'string' &&
-    error.message.trim()
-  ) {
-    return new Error(error.message);
-  }
-
-  return new Error(fallback);
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -194,14 +144,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         if (isMounted) {
-          const normalizedError = toAuthError(
+          const normalizedError = normalizeError(
             error,
             'Không thể tải thông tin người dùng',
           );
 
           if (
-            normalizedError.message !== 'Network Error' &&
-            normalizedError.message !== 'Lỗi kết nối server'
+            normalizedError.errorCode !== 'NETWORK_ERROR' &&
+            normalizedError.errorCode !== 'TIMEOUT'
           ) {
             clearSession();
           }
@@ -250,7 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result;
     } catch (error) {
-      throw toAuthError(error, 'Đăng nhập thất bại');
+      throw normalizeError(error, 'Đăng nhập thất bại');
     } finally {
       setIsLoading(false);
     }
@@ -268,7 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result;
     } catch (error) {
-      throw toAuthError(error, 'Đăng ký thất bại');
+      throw normalizeError(error, 'Đăng ký thất bại');
     } finally {
       setIsLoading(false);
     }
@@ -288,7 +238,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result;
     } catch (error) {
-      throw toAuthError(error, 'Không thể gửi yêu cầu đặt lại mật khẩu');
+      throw normalizeError(error, 'Không thể gửi yêu cầu đặt lại mật khẩu');
     } finally {
       setIsLoading(false);
     }
@@ -311,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return result;
       } catch (error) {
-        throw toAuthError(error, 'Không thể đặt lại mật khẩu');
+        throw normalizeError(error, 'Không thể đặt lại mật khẩu');
       } finally {
         setIsLoading(false);
       }
@@ -332,7 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return result;
       } catch (error) {
-        throw toAuthError(error, 'Không thể xác thực email');
+        throw normalizeError(error, 'Không thể xác thực email');
       } finally {
         setIsLoading(false);
       }
@@ -352,7 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result;
     } catch (error) {
-      throw toAuthError(error, 'Gửi lại email thất bại');
+      throw normalizeError(error, 'Gửi lại email thất bại');
     } finally {
       setIsLoading(false);
     }

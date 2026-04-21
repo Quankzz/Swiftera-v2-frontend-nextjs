@@ -8,7 +8,7 @@
  * Field mapping:
  *   ProductResponse.images[]          → Product.productImages[]
  *   ProductResponse.color (string)    → Product.colors[]  (mapped to {name, value})
- *   ProductResponse.brand             → (ignored by ProductCard — no field used)
+ *   ProductResponse.brand             → (ignored by ProductCard - no field used)
  *   All other fields are 1-to-1.
  *
  * Note on `color`:
@@ -31,9 +31,9 @@ import type { Product } from '@/types/catalog';
  * Map a BE ProductResponse to the local Product type that ProductCard expects.
  *
  * `productImages` ← `images`  (field rename)
- * `colors`        ← []        (BE has only a single color name, no hex — skipped)
+ * `colors`        ← []        (BE has only a single color name, no hex - skipped)
  */
-function toLocalProduct(p: ProductResponse): Product {
+export function toLocalProduct(p: ProductResponse): Product {
   return {
     productId: p.productId,
     categoryId: p.categoryId,
@@ -52,8 +52,12 @@ function toLocalProduct(p: ProductResponse): Product {
       sortOrder: img.sortOrder,
       isPrimary: img.isPrimary,
     })),
-    // BE sends a single color string (no hex) → we can't render swatches
-    colors: [],
+    // BE gửi colors[] với productColorId, name, code (hex) → map sang ProductColor local
+    colors: (p.colors ?? []).map((c) => ({
+      colorId: c.productColorId,
+      name: c.name,
+      value: c.code ?? '',
+    })),
   };
 }
 
@@ -62,6 +66,9 @@ function selectProducts(data: PaginatedProductsResponse): Product[] {
   return (data?.content ?? []).filter((p) => p.isActive).map(toLocalProduct);
 }
 
+const HOME_PRODUCTS_STALE_TIME = 5 * 60 * 1000;
+const HOME_PRODUCTS_GC_TIME = 45 * 60 * 1000;
+
 // ─── Featured products: sorted by dailyPrice desc ─────────────────────────────
 
 const FEATURED_PARAMS = {
@@ -69,17 +76,20 @@ const FEATURED_PARAMS = {
   size: 8,
   sort: 'dailyPrice,desc',
   filter: 'isActive:true',
+  onlyWithStock: true,
 } as const;
 
 /**
- * "Sản phẩm nổi bật" — products sorted by dailyPrice descending.
- * staleTime 60 s (home page content, refreshed on each visit).
+ * "Sản phẩm nổi bật" - products sorted by dailyPrice descending.
+ * staleTime 5 min to avoid repeat refetches when users revisit homepage.
  */
 export function useHomeFeaturedProductsQuery() {
   return useQuery<PaginatedProductsResponse, Error, Product[]>({
     queryKey: productKeys.list(FEATURED_PARAMS),
     queryFn: () => getProducts(FEATURED_PARAMS),
-    staleTime: 60 * 1000,
+    staleTime: HOME_PRODUCTS_STALE_TIME,
+    gcTime: HOME_PRODUCTS_GC_TIME,
+    refetchOnMount: false,
     select: selectProducts,
   });
 }
@@ -91,17 +101,20 @@ const BUDGET_PARAMS = {
   size: 8,
   sort: 'dailyPrice,asc',
   filter: 'isActive:true',
+  onlyWithStock: true,
 } as const;
 
 /**
- * "Có thể bạn thích" — products sorted by dailyPrice ascending.
- * staleTime 60 s.
+ * "Có thể bạn thích" - products sorted by dailyPrice ascending.
+ * staleTime 5 min.
  */
 export function useHomeBudgetProductsQuery() {
   return useQuery<PaginatedProductsResponse, Error, Product[]>({
     queryKey: productKeys.list(BUDGET_PARAMS),
     queryFn: () => getProducts(BUDGET_PARAMS),
-    staleTime: 60 * 1000,
+    staleTime: HOME_PRODUCTS_STALE_TIME,
+    gcTime: HOME_PRODUCTS_GC_TIME,
+    refetchOnMount: false,
     select: selectProducts,
   });
 }

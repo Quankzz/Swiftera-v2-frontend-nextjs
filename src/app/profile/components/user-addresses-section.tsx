@@ -214,7 +214,7 @@ export function UserAddressesSection() {
                 className={cn(
                   'rounded-xl border p-4 flex flex-col sm:flex-row sm:items-start gap-3 transition-colors',
                   a.isDefault
-                    ? 'border-rose-300/70 bg-rose-50/50 dark:border-rose-800/50 dark:bg-rose-950/20'
+                    ? 'border-blue-300/70 bg-blue-50/50 dark:border-blue-800/50 dark:bg-blue-950/20'
                     : 'border-border/80 bg-background/50',
                 )}
               >
@@ -226,7 +226,7 @@ export function UserAddressesSection() {
                     {a.isDefault && (
                       <Badge
                         variant='secondary'
-                        className='gap-1 rounded-md bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200'
+                        className='gap-1 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
                       >
                         <Star className='size-3 fill-amber-400 text-amber-600' />
                         Mặc định

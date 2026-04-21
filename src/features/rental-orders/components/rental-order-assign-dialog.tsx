@@ -36,7 +36,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useAssignStaffMutation } from '@/features/rental-orders/hooks/use-rental-order-assignment';
+import {
+  useAssignStaffMutation,
+  useConfirmCancellationRefund,
+  useAdminCancelFromPaid,
+  useAdminEarlyPickup,
+} from '@/features/rental-orders/hooks/use-rental-order-assignment';
 import { useRentalOrderContractQuery } from '@/features/rental-orders/hooks/use-rental-order-management';
 import { StaffPickerDialog } from '@/features/rental-orders/components/staff-picker-dialog';
 import {
@@ -45,6 +50,9 @@ import {
   type RentalOrderResponse,
 } from '@/features/rental-orders/types';
 import type { HubStaffResponse } from '@/features/hubs/types';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -57,7 +65,7 @@ interface RentalOrderAssignDialogProps {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function formatCurrency(v: number | null | undefined) {
-  if (v == null) return '—';
+  if (v == null) return '-';
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND',
@@ -66,7 +74,7 @@ function formatCurrency(v: number | null | undefined) {
 }
 
 /**
- * Parse ngày giờ linh hoạt — hỗ trợ:
+ * Parse ngày giờ linh hoạt - hỗ trợ:
  *  - ISO 8601: "2026-03-24T10:30:00Z"
  *  - BE custom: "2026-03-24 10:30:00 AM"
  *  - Date-only: "2026-03-24"
@@ -103,7 +111,7 @@ function parseDate(raw: string | null | undefined): Date | null {
 
 function formatDate(raw: string | null | undefined) {
   const d = parseDate(raw);
-  if (!d) return '—';
+  if (!d) return '-';
   return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -113,7 +121,7 @@ function formatDate(raw: string | null | undefined) {
 
 function formatDateTime(raw: string | null | undefined) {
   const d = parseDate(raw);
-  if (!d) return '—';
+  if (!d) return '-';
   return d.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -147,7 +155,7 @@ function InfoRow({
       <Icon className='w-3.5 h-3.5 text-text-sub mt-0.5 shrink-0' />
       <span className='text-xs text-text-sub w-28 shrink-0'>{label}</span>
       <span className='text-xs font-medium text-text-main flex-1'>
-        {value || '—'}
+        {value || '-'}
       </span>
     </div>
   );
@@ -216,13 +224,213 @@ function StaffSlot({
             </p>
           ) : (
             <p className='text-sm text-text-sub italic'>
-              Chưa chọn — bấm để chọn
+              Chưa chọn - bấm để chọn
             </p>
           )}
         </div>
       </div>
       <ChevronRight className='w-4 h-4 text-text-sub shrink-0' />
     </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin support actions section
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatDateTimeAdmin(raw: string | null | undefined) {
+  if (!raw) return '-';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function AdminSupportSection({ order }: { order: RentalOrderResponse }) {
+  const [cancelReason, setCancelReason] = useState('');
+  const [refundConfirmed, setRefundConfirmed] = useState(false);
+  const [showCancelForm, setShowCancelForm] = useState(false);
+
+  const confirmMutation = useConfirmCancellationRefund();
+  const adminCancelMutation = useAdminCancelFromPaid();
+  const earlyPickupMutation = useAdminEarlyPickup();
+
+  const hasCancellationRequest = order.cancellationRequested === true;
+
+  return (
+    <div>
+      <SectionLabel>Hỗ trợ & Hủy đơn</SectionLabel>
+      <div className='space-y-3'>
+        {/* Cancellation request info */}
+        {hasCancellationRequest && (
+          <div className='rounded-xl border border-cyan-200 dark:border-cyan-700/50 bg-cyan-50/60 dark:bg-cyan-950/20 px-4 py-3 space-y-2'>
+            <div className='flex items-start gap-2'>
+              <AlertTriangle className='w-4 h-4 text-cyan-600 dark:text-cyan-400 mt-0.5 shrink-0' />
+              <div className='flex-1'>
+                <p className='text-sm font-semibold text-cyan-700 dark:text-cyan-400'>
+                  Yêu cầu hủy đơn từ khách hàng
+                </p>
+                {order.cancellationReason && (
+                  <p className='text-xs text-cyan-600/80 dark:text-cyan-400/70 mt-0.5'>
+                    Lý do: {order.cancellationReason}
+                  </p>
+                )}
+                {order.cancellationRequestedAt && (
+                  <p className='text-xs text-cyan-500/70 dark:text-cyan-500/50 mt-0.5'>
+                    Lúc: {formatDateTimeAdmin(order.cancellationRequestedAt)}
+                  </p>
+                )}
+                {order.depositHoldAmount != null &&
+                  order.depositHoldAmount > 0 && (
+                    <p className='text-xs font-semibold text-cyan-700 dark:text-cyan-400 mt-1'>
+                      Số tiền cọc cần hoàn:{' '}
+                      {formatCurrency(order.depositHoldAmount)}
+                    </p>
+                  )}
+              </div>
+            </div>
+
+            {/* Confirm refund form */}
+            <div className='space-y-2 pt-2 border-t border-cyan-200/60 dark:border-cyan-700/30'>
+              <label className='flex items-start gap-2.5 cursor-pointer select-none'>
+                <Switch
+                  id='refund-confirmed'
+                  checked={refundConfirmed}
+                  onCheckedChange={(v) => setRefundConfirmed(v)}
+                  className='mt-0.5'
+                />
+                <span className='text-xs text-cyan-700/80 dark:text-cyan-400/80 leading-relaxed'>
+                  Tôi xác nhận đã chuyển khoản hoàn tiền cho khách hàng
+                </span>
+              </label>
+              {order.depositHoldAmount != null &&
+                order.depositHoldAmount > 0 && (
+                  <p className='text-xs text-amber-600 dark:text-amber-400 px-1'>
+                    Tiền hoàn: {formatCurrency(order.depositHoldAmount)}
+                  </p>
+                )}
+              <Button
+                size='sm'
+                disabled={!refundConfirmed || confirmMutation.isPending}
+                onClick={() => {
+                  confirmMutation.mutate({
+                    rentalOrderId: order.rentalOrderId,
+                    input: { reason: order.cancellationReason ?? undefined },
+                  });
+                }}
+                className='w-full bg-cyan-600 hover:bg-cyan-700 text-white'
+              >
+                {confirmMutation.isPending ? (
+                  <Loader2 className='w-4 h-4 animate-spin' />
+                ) : (
+                  <>Xác nhận hủy đơn & hoàn tiền</>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Direct cancel + early pickup - shown only when no cancellation request is pending */}
+        {!hasCancellationRequest && (
+          <div className='space-y-2'>
+            {/* Early pickup for IN_USE */}
+            {order.status === 'IN_USE' && (
+              <Button
+                size='sm'
+                variant='outline'
+                disabled={earlyPickupMutation.isPending}
+                onClick={() => earlyPickupMutation.mutate(order.rentalOrderId)}
+                className='w-full border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+              >
+                {earlyPickupMutation.isPending ? (
+                  <Loader2 className='w-4 h-4 animate-spin mr-2' />
+                ) : (
+                  <AlertTriangle className='w-4 h-4 mr-2' />
+                )}
+                Thu hồi sớm đơn hàng
+              </Button>
+            )}
+
+            {/* Direct cancel for PAID */}
+            {order.status === 'PAID' && (
+              <>
+                {!showCancelForm ? (
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    disabled={adminCancelMutation.isPending}
+                    onClick={() => setShowCancelForm(true)}
+                    className='w-full border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20'
+                  >
+                    {adminCancelMutation.isPending ? (
+                      <Loader2 className='w-4 h-4 animate-spin mr-2' />
+                    ) : (
+                      <AlertTriangle className='w-4 h-4 mr-2' />
+                    )}
+                    Hủy đơn hàng (Admin)
+                  </Button>
+                ) : (
+                  <div className='rounded-xl border border-red-200 dark:border-red-800/50 bg-red-50/60 dark:bg-red-950/20 px-4 py-3 space-y-2'>
+                    <p className='text-xs font-semibold text-red-700 dark:text-red-400'>
+                      Lý do hủy đơn:
+                    </p>
+                    <Input
+                      placeholder='Nhập lý do hủy đơn...'
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      className='text-sm'
+                    />
+                    {order.depositHoldAmount != null &&
+                      order.depositHoldAmount > 0 && (
+                        <p className='text-xs text-red-600/80 dark:text-red-400/70'>
+                          Tiền cọc {formatCurrency(order.depositHoldAmount)} sẽ
+                          được hoàn cho khách.
+                        </p>
+                      )}
+                    <div className='flex gap-2'>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        onClick={() => {
+                          setShowCancelForm(false);
+                          setCancelReason('');
+                        }}
+                        className='flex-1'
+                      >
+                        Hủy bỏ
+                      </Button>
+                      <Button
+                        size='sm'
+                        disabled={
+                          !cancelReason.trim() || adminCancelMutation.isPending
+                        }
+                        onClick={() => {
+                          adminCancelMutation.mutate({
+                            rentalOrderId: order.rentalOrderId,
+                            input: { reason: cancelReason.trim() },
+                          });
+                        }}
+                        className='flex-1 bg-red-600 hover:bg-red-700 text-white'
+                      >
+                        {adminCancelMutation.isPending ? (
+                          <Loader2 className='w-4 h-4 animate-spin' />
+                        ) : null}
+                        Xác nhận hủy đơn
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -268,6 +476,7 @@ export function RentalOrderAssignDialog({
     'DELIVERING',
     'DELIVERED',
     'IN_USE',
+    'PENDING_PICKUP',
   ] as const);
 
   const canAssignDelivery = order.status === 'PAID';
@@ -284,7 +493,7 @@ export function RentalOrderAssignDialog({
       return;
     }
     try {
-      await assignMutation.mutateAsync({
+      const updatedOrder = await assignMutation.mutateAsync({
         rentalOrderId: order.rentalOrderId,
         payload: {
           // Chỉ gửi field khi slot đó được phép và đã chọn nhân viên
@@ -296,7 +505,24 @@ export function RentalOrderAssignDialog({
             : undefined,
         },
       });
-      toast.success('Gán nhân viên thành công!');
+
+      // Kiểm tra xem BE đã ghép đơn cho nhân viên chưa
+      const deliveryLinked =
+        !canAssignDelivery || !deliveryStaff || !!updatedOrder.deliveryStaff;
+      const pickupLinked =
+        !canAssignPickup || !pickupStaff || !!updatedOrder.pickupStaff;
+
+      if (!deliveryLinked || !pickupLinked) {
+        toast.warning(
+          'Gán nhân viên có thể chưa hoàn tất - vui lòng kiểm tra lại.',
+        );
+      }
+
+      // Cập nhật state local từ phản hồi BE để phản ánh ngay lập tức
+      if (updatedOrder.deliveryStaff)
+        setDeliveryStaff(updatedOrder.deliveryStaff);
+      if (updatedOrder.pickupStaff) setPickupStaff(updatedOrder.pickupStaff);
+
       onClose();
     } catch (err) {
       toast.error(
@@ -330,8 +556,8 @@ export function RentalOrderAssignDialog({
                   Gán đơn thuê
                 </h2>
                 <p className='text-xs text-text-sub'>
-                  #{order.rentalOrderId.slice(0, 8).toUpperCase()} —{' '}
-                  {order.userAddress?.recipientName ?? '—'}
+                  #{order.rentalOrderId.slice(0, 8).toUpperCase()} -{' '}
+                  {order.userAddress?.recipientName ?? '-'}
                 </p>
               </div>
             </div>
@@ -367,9 +593,13 @@ export function RentalOrderAssignDialog({
                   icon={Building2}
                   label='Hub xử lý'
                   value={
-                    order.hubName ? (
+                    order.hub ? (
                       <span className='text-indigo-600 dark:text-indigo-400 font-semibold'>
-                        {order.hubCode ? `[${order.hubCode}] ` : ''}
+                        {order.hub.code ? `[${order.hub.code}] ` : ''}
+                        {order.hub.name}
+                      </span>
+                    ) : order.hubName ? (
+                      <span className='text-indigo-600 dark:text-indigo-400 font-semibold'>
                         {order.hubName}
                       </span>
                     ) : (
@@ -377,33 +607,33 @@ export function RentalOrderAssignDialog({
                     )
                   }
                 />
-                {order.hubAddressLine && (
+                {order.hub?.addressLine && (
                   <InfoRow
                     icon={MapPin}
                     label='Địa chỉ hub'
                     value={
                       [
-                        order.hubAddressLine,
-                        order.hubWard,
-                        order.hubDistrict,
-                        order.hubCity,
+                        order.hub.addressLine,
+                        order.hub.ward,
+                        order.hub.district,
+                        order.hub.city,
                       ]
                         .filter(Boolean)
-                        .join(', ') || '—'
+                        .join(', ') || '-'
                     }
                   />
                 )}
-                {order.hubPhone && (
+                {order.hub?.phone && (
                   <InfoRow
                     icon={Phone}
                     label='SĐT hub'
-                    value={order.hubPhone}
+                    value={order.hub.phone}
                   />
                 )}
                 <InfoRow
                   icon={Phone}
                   label='Người nhận'
-                  value={`${order.userAddress?.recipientName ?? '—'} · ${order.userAddress?.phoneNumber ?? '—'}`}
+                  value={`${order.userAddress?.recipientName ?? '-'} · ${order.userAddress?.phoneNumber ?? '-'}`}
                 />
                 <InfoRow
                   icon={MapPin}
@@ -416,7 +646,7 @@ export function RentalOrderAssignDialog({
                       order.userAddress?.city,
                     ]
                       .filter(Boolean)
-                      .join(', ') || '—'
+                      .join(', ') || '-'
                   }
                 />
                 <InfoRow
@@ -599,7 +829,7 @@ export function RentalOrderAssignDialog({
                       label: 'Giảm giá',
                       value: order.voucherDiscountAmount
                         ? `- ${formatCurrency(order.voucherDiscountAmount)}`
-                        : '—',
+                        : '-',
                       accent: false,
                     },
                     {
@@ -617,7 +847,7 @@ export function RentalOrderAssignDialog({
                       value: formatCurrency(order.totalPayableAmount),
                       accent: true,
                     },
-                    // Penalty fields — chỉ hiện khi có giá trị
+                    // Penalty fields - chỉ hiện khi có giá trị
                     order.damagePenaltyAmount != null && {
                       label: 'Phí hư hại',
                       value: formatCurrency(order.damagePenaltyAmount),
@@ -759,7 +989,16 @@ export function RentalOrderAssignDialog({
             <div>
               <SectionLabel>Phân công nhân viên</SectionLabel>
 
-              {!canAssignDelivery && !canAssignPickup ? (
+              {!(order.hub?.hubId ?? order.hubId) ? (
+                /* Hub chưa được gán → không thể chọn nhân viên */
+                <div className='flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3'>
+                  <CircleDot className='w-4 h-4 text-amber-500 shrink-0' />
+                  <p className='text-sm text-amber-700 dark:text-amber-400'>
+                    Đơn chưa được gán hub — vui lòng gán hub trước khi phân công
+                    nhân viên.
+                  </p>
+                </div>
+              ) : !canAssignDelivery && !canAssignPickup ? (
                 /* Trạng thái không hỗ trợ gán */
                 <div className='flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3'>
                   <CircleDot className='w-4 h-4 text-amber-500 shrink-0' />
@@ -768,7 +1007,7 @@ export function RentalOrderAssignDialog({
                     <span className='font-semibold'>
                       {STATUS_LABELS[order.status]}
                     </span>{' '}
-                    — không thể phân công nhân viên.
+                    - không thể phân công nhân viên.
                   </p>
                 </div>
               ) : (
@@ -777,7 +1016,7 @@ export function RentalOrderAssignDialog({
                   {canAssignDelivery && (
                     <>
                       <p className='text-xs text-text-sub'>
-                        Đơn đã thanh toán — chọn nhân viên{' '}
+                        Đơn đã thanh toán - chọn nhân viên{' '}
                         <span className='font-medium text-indigo-600 dark:text-indigo-400'>
                           giao hàng
                         </span>{' '}
@@ -821,6 +1060,9 @@ export function RentalOrderAssignDialog({
                 </div>
               )}
             </div>
+
+            {/* ── Cancellation request display + Admin support actions ── */}
+            {order.status === 'PAID' && <AdminSupportSection order={order} />}
           </div>
 
           {/* ── Footer ── */}
@@ -869,7 +1111,7 @@ export function RentalOrderAssignDialog({
       {pickerOpen && (canAssignDelivery || canAssignPickup) && (
         <StaffPickerDialog
           role={pickerOpen}
-          hubId={order.hubId ?? ''}
+          hubId={order.hub?.hubId ?? order.hubId ?? ''}
           isOpen={!!pickerOpen}
           onClose={() => setPickerOpen(null)}
           onSelected={(staff) => {

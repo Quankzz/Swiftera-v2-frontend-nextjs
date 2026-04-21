@@ -1,6 +1,8 @@
 /**
  * useRelatedProductsQuery
- * API-054: GET /api/v1/products — không gửi filter theo id; lấy danh sách rồi bỏ sản phẩm đang xem ở client.
+ * API-054: GET /api/v1/products
+ * - Ưu tiên lấy theo cùng category để tăng độ liên quan
+ * - Loại bỏ sản phẩm đang xem ở client
  */
 
 import { useQuery } from '@tanstack/react-query';
@@ -8,9 +10,9 @@ import { productKeys } from '../api/product.keys';
 import { getProducts } from '../api/product.service';
 import type { ProductResponse } from '../types';
 
-const DISPLAY_COUNT = 8;
+const DISPLAY_COUNT = 5;
 /** Lấy dư để sau khi loại trừ productId vẫn đủ slide */
-const FETCH_SIZE = 16;
+const FETCH_SIZE = 12;
 
 function pickPrimaryImageUrl(p: ProductResponse): string | null {
   const imgs = p.images ?? [];
@@ -57,15 +59,24 @@ function toCardModels(
     }));
 }
 
-export function useRelatedProductsQuery(excludeProductId: string | undefined) {
+export function useRelatedProductsQuery(
+  excludeProductId: string | undefined,
+  categoryId?: string | null,
+) {
   return useQuery({
-    queryKey: productKeys.related(excludeProductId ?? ''),
+    queryKey: productKeys.related(excludeProductId ?? '', categoryId),
     queryFn: async () => {
+      const filters = ['isActive:true'];
+      if (categoryId) {
+        filters.push(`categoryId:'${categoryId}'`);
+      }
+
       const data = await getProducts({
-        page: 0,
+        page: 1,
         size: FETCH_SIZE,
         sort: 'createdAt,desc',
-        filter: 'isActive:true',
+        filter: filters.join(' and '),
+        onlyWithStock: true,
       });
       return toCardModels(data.content ?? [], excludeProductId!);
     },

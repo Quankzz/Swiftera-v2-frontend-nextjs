@@ -1,11 +1,11 @@
 /**
  * Hooks for the categories module (dashboard CRUD).
  *
- *  - useCategoriesQuery        — flat paginated list (API-047)
- *  - useCategoryQuery          — single category by ID (API-046)
- *  - useCreateCategoryMutation — create (API-045)
- *  - useUpdateCategoryMutation — update (API-049)
- *  - useDeleteCategoryMutation — delete (API-050)
+ *  - useCategoriesQuery        - flat paginated list (API-047)
+ *  - useCategoryQuery          - single category by ID (API-046)
+ *  - useCreateCategoryMutation - create (API-045)
+ *  - useUpdateCategoryMutation - update (API-049)
+ *  - useDeleteCategoryMutation - delete (API-050)
  *
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  *   Module 7: CATEGORIES (API-045 → API-050)

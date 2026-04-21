@@ -20,7 +20,7 @@ import type { Hub, HubWithDistance, RouteInfo } from '@/types/map.types';
 import MapSidebar from '@/components/map/MapSidebar';
 import LocationButton from '@/components/map/LocationButton';
 import HubModal from '@/components/map/HubModal';
-import { MapHeader } from '@/components/map/MapHeader';
+import { Header } from '@/components/Header';
 import { AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 const ROUTE_ACTIVE_COLOR = '#0EA5E9';
@@ -171,8 +171,14 @@ const MapView: React.FC = () => {
       .then((hubResponses: HubResponse[]) => {
         setHubs(hubResponses.map(adaptHubForMap));
       })
-      .catch(() => {}); // fail silently
-  }, [setHubs]);
+      .catch(() => {
+        showNotification(
+          'error',
+          'Không thể tải danh sách hub. Vui lòng tải lại trang.',
+        );
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setHubs, showNotification]);
 
   // ── Silent geolocation on mount ────────────────────────────────────────────
   useEffect(() => {
@@ -227,7 +233,7 @@ const MapView: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Hub markers — re-drawn whenever hubs load or map becomes ready ────────
+  // ── Hub markers - re-drawn whenever hubs load or map becomes ready ────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isMapReady || hubs.length === 0) return;
@@ -248,11 +254,11 @@ const MapView: React.FC = () => {
       const pin = document.createElement('div');
       pin.style.cssText = [
         'width:36px;height:36px;',
-        'background:linear-gradient(135deg,#fe1451,#c7003a);',
+        'background:linear-gradient(135deg,var(--theme-primary-start,#0ea5e9),var(--theme-primary-end,#0369a1));',
         'border:2.5px solid white;',
         'border-radius:50% 50% 50% 0;',
         'transform:rotate(-45deg);',
-        'box-shadow:0 3px 12px rgba(254,20,81,0.45);',
+        'box-shadow:0 3px 12px rgba(14,165,233,0.4);',
         'display:flex;align-items:center;justify-content:center;',
         'transition:transform 0.2s ease,box-shadow 0.2s ease;',
       ].join('');
@@ -329,7 +335,7 @@ const MapView: React.FC = () => {
   }, [selectedRouteIndex]);
   // ── Auto-clear routes when either address field becomes empty ───────────────
   useEffect(() => {
-    // Both filled — nothing to clear
+    // Both filled - nothing to clear
     if (startAddress.trim() && endAddress.trim()) return;
 
     // Cancel any in-flight search so stale results won’t re-draw routes
@@ -494,7 +500,7 @@ const MapView: React.FC = () => {
         },
       });
 
-      // Wide transparent hit-area layer — makes it easy to click narrow lines
+      // Wide transparent hit-area layer - makes it easy to click narrow lines
       map.addLayer({
         id: hitLayerId,
         type: 'line',
@@ -955,8 +961,6 @@ const MapView: React.FC = () => {
         ref={mapContainerRef}
         className="absolute inset-0 w-full h-full dark:invert-[.95] dark:hue-rotate-180 dark:contrast-[0.85] dark:saturate-150 transition-all duration-500 ease-in-out"
       />
-
-      <MapHeader />
 
       <MapSidebar
         onRouteSearch={handleRouteSearch}

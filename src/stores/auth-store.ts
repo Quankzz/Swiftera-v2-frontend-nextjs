@@ -38,7 +38,7 @@ export async function restoreSession(): Promise<void> {
       useAuthStore.getState().setAuth(res.accessToken, res.userSecured);
     }
   } catch {
-    // Not logged in — that's fine, leave the store empty
+    // Not logged in - that's fine, leave the store empty
   }
 }
 

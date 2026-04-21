@@ -24,6 +24,8 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { storageApi } from '@/api/storageApi';
+import { parseErrorForForm } from '@/api/apiService';
+import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 import { useUpdatePolicyMutation } from '../hooks/use-policy-management';
 import { PolicyPdfPreview } from './policy-pdf-preview';
 import type { PolicyDocumentResponse } from '../types';
@@ -142,13 +144,25 @@ export function PolicyEditDialog({
       });
       const url = res.data?.data?.fileUrl;
       if (!url) throw new Error('Không nhận được URL file.');
+
+      // Delete old PDF from Azure Blob if it's a Swiftera blob URL
+      if (policy.pdfUrl && isAzureBlobUrl(policy.pdfUrl)) {
+        const oldPath = extractBlobPathFromUrl(policy.pdfUrl);
+        if (oldPath) {
+          try {
+            await storageApi.deleteSingleFile({ filePath: oldPath });
+          } catch {
+            // ignore delete error - non-critical
+          }
+        }
+      }
+
       setUploadedUrl(url);
       setCurrentPdfUrl(url);
       toast.success('Upload PDF mới thành công!');
     } catch (err) {
-      setUploadError(
-        err instanceof Error ? err.message : 'Upload thất bại. Thử lại.',
-      );
+      const { formMessage } = parseErrorForForm(err, 'Upload thất bại. Thử lại.');
+      setUploadError(formMessage ?? 'Upload thất bại. Thử lại.');
       setSelectedFile(null);
     } finally {
       setIsUploading(false);
@@ -167,7 +181,7 @@ export function PolicyEditDialog({
   const handleSubmit = async () => {
     if (!validate()) return;
 
-    // Build payload — chỉ gửi field thay đổi
+    // Build payload - chỉ gửi field thay đổi
     const payload: Record<string, unknown> = {};
 
     if (title.trim() !== policy.title) {
@@ -198,7 +212,20 @@ export function PolicyEditDialog({
       toast.success('Cập nhật chính sách thành công!');
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Cập nhật thất bại.');
+      const { fieldErrors, formMessage } = parseErrorForForm(
+        err,
+        'Cập nhật thất bại.',
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        title: fieldErrors.title,
+        effectiveFrom: fieldErrors.effectiveFrom,
+      }));
+
+      if (formMessage) {
+        toast.error(formMessage);
+      }
     }
   };
 

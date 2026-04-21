@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import nextDynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
   Trash2,
   Minus,
   Plus,
   ShoppingBag,
-  Sparkles,
   Truck,
   AlertCircle,
   TicketPercent,
@@ -43,22 +46,9 @@ import {
   useClearCart,
 } from '@/hooks/api/use-cart';
 import { useCreateRentalOrder } from '@/hooks/api/use-rental-orders';
-import { useInitiatePayment } from '@/hooks/api/use-payments';
-import dynamic from 'next/dynamic';
+import { useInitiateBatchPayment } from '@/hooks/api/use-payments';
 import { VoucherLinePickerDialog } from '@/components/checkout/voucher-line-picker-dialog';
-const PolicyConsentDialog = dynamic(
-  () =>
-    import('@/components/checkout/policy-consent-dialog').then(
-      (m) => m.PolicyConsentDialog,
-    ),
-  { ssr: false },
-);
-import {
-  useCustomerVouchersQuery,
-  useValidateVoucherMutation,
-} from '@/features/vouchers/hooks/use-customer-vouchers';
 import { toast } from 'sonner';
-import type { VoucherResponse } from '@/features/vouchers/types';
 import type { CartLineResponse, CartLineVoucherItem } from '@/api/cart';
 import { useDeliveryInfo } from '@/hooks/use-delivery-info';
 import { useAuth } from '@/hooks/useAuth';
@@ -72,6 +62,15 @@ import {
 } from '@/components/user-address/address-form-dialog';
 import type { UserAddressResponse } from '@/api/userAddressApi';
 import { getApiErrorMessage } from '@/app/profile/utils';
+import { buildLoginHref } from '@/lib/auth-redirect';
+
+const PolicyConsentDialog = nextDynamic(
+  () =>
+    import('@/components/checkout/policy-consent-dialog').then(
+      (module) => module.PolicyConsentDialog,
+    ),
+  { ssr: false },
+);
 
 const formatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -117,6 +116,81 @@ function calcLineVoucherDiscount(
   return Math.min(v.discountValue, lineSubtotal);
 }
 
+/* ─── Inline duration editor for cart lines ─────────────────────────────────── */
+
+function DurationEditor({
+  days,
+  cartLineId,
+  onUpdateDuration,
+  disabled,
+}: {
+  days: number;
+  cartLineId: string;
+  onUpdateDuration: (cartLineId: string, rentalDurationDays: number) => void;
+  disabled: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(days);
+
+  const handleCommit = () => {
+    const parsed = parseInt(String(draft), 10);
+    if (!isNaN(parsed) && parsed >= 1 && parsed !== days) {
+      onUpdateDuration(cartLineId, parsed);
+    }
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type='button'
+        disabled={disabled}
+        onClick={() => {
+          setDraft(days);
+          setEditing(true);
+        }}
+        className='inline-flex items-center gap-1 rounded-lg border border-blue-500/30 bg-blue-50/60 px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:border-blue-400 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-500/30 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-900/30'
+        title='Nhấn để thay đổi số ngày thuê'
+      >
+        {days} ngày
+        <Pencil className='size-2.5 shrink-0 opacity-60' />
+      </button>
+    );
+  }
+
+  return (
+    <div className='inline-flex items-center gap-1 rounded-lg border border-blue-500/50 bg-blue-50/80 px-2 py-1 dark:bg-blue-950/40'>
+      <input
+        type='number'
+        min={1}
+        value={draft}
+        onChange={(e) => {
+          const parsed = Number.parseInt(e.target.value, 10);
+          setDraft(Number.isNaN(parsed) ? 1 : Math.max(1, parsed));
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleCommit();
+          if (e.key === 'Escape') setEditing(false);
+        }}
+        onBlur={handleCommit}
+        autoFocus
+        className='w-12 rounded border border-input bg-background px-1.5 py-0.5 text-xs font-medium text-blue-700 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-100 dark:text-blue-300 dark:bg-input dark:focus:border-blue-400 dark:focus:ring-blue-900/30'
+      />
+      <span className='text-xs text-blue-700 dark:text-blue-300'>ngày</span>
+      {draft !== days && (
+        <button
+          type='button'
+          onClick={handleCommit}
+          className='ml-0.5 rounded text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
+          title='Xác nhận'
+        >
+          ✓
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ─── Cart line row ───────────────────────────────────────────────────────── */
 
 function CartLineRow({
@@ -126,6 +200,7 @@ function CartLineRow({
   onToggle,
   onRemove,
   onUpdateQty,
+  onUpdateDuration,
   isRemoving,
   isUpdating,
   appliedVoucherCode,
@@ -138,6 +213,7 @@ function CartLineRow({
   onToggle: (cartLineId: string) => void;
   onRemove: (cartLineId: string) => void;
   onUpdateQty: (cartLineId: string, quantity: number) => void;
+  onUpdateDuration: (cartLineId: string, rentalDurationDays: number) => void;
   isRemoving: boolean;
   isUpdating: boolean;
   appliedVoucherCode: string | null;
@@ -151,8 +227,11 @@ function CartLineRow({
   const depositHoldAmount =
     line.depositHoldAmount ??
     (line.depositAmount != null ? line.depositAmount * qty : 0);
+  const maxQty = line.availableStock ?? 99;
 
   const isMutating = isRemoving || isUpdating;
+  const isOutOfStock = maxQty <= 0;
+  const isOverStock = !isOutOfStock && qty > maxQty;
 
   return (
     <motion.div
@@ -167,25 +246,25 @@ function CartLineRow({
       <SpotlightCard
         className={`rounded-2xl border shadow-sm backdrop-blur-sm transition-colors ${
           isSelected
-            ? 'border-rose-500/50 bg-card/95 dark:bg-card/80 ring-1 ring-rose-500/20'
+            ? 'border-blue-500/50 bg-card/95 dark:bg-card/80 ring-1 ring-blue-500/20'
             : 'border-border/70 bg-card/90 dark:bg-card/80'
         }`}
-        spotlightColor='rgba(254, 20, 81, 0.14)'
+        spotlightColor='rgba(37, 99, 235, 0.14)'
       >
         <div className='flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-5 sm:p-5'>
           {/* Checkbox */}
           <button
             type='button'
             onClick={() => onToggle(line.cartLineId)}
-            className='mx-auto mt-1 flex shrink-0 items-start sm:mx-0'
+            className='mt-1 flex shrink-0 items-start sm:mx-0'
             aria-label={isSelected ? 'Bỏ chọn' : 'Chọn'}
           >
             <span
               className={cn(
-                'flex size-[22px] items-center justify-center rounded-full border-2 transition-all duration-150',
+                'flex size-[22px] rounded-full border-2 transition-all duration-150',
                 isSelected
-                  ? 'border-rose-500 bg-rose-500 shadow-sm shadow-rose-200 dark:shadow-rose-900/40'
-                  : 'border-muted-foreground/30 hover:border-rose-400',
+                  ? 'border-blue-500 bg-blue-500 shadow-sm shadow-blue-200 dark:shadow-blue-900/40'
+                  : 'border-muted-foreground/30 hover:border-blue-400',
               )}
             >
               {isSelected && (
@@ -207,7 +286,7 @@ function CartLineRow({
           {/* Image */}
           <Link
             href={`/product/${line.productId}`}
-            className='group relative mx-auto aspect-square w-full max-w-[148px] shrink-0 overflow-hidden rounded-xl border border-rose-500/20 bg-muted/50 shadow-inner ring-1 ring-rose-500/10 transition-transform duration-300 hover:scale-[1.02] sm:mx-0'
+            className='group relative mx-auto aspect-square w-full max-w-[148px] shrink-0 overflow-hidden rounded-xl border border-blue-500/20 bg-muted/50 shadow-inner ring-1 ring-blue-500/10 transition-transform duration-300 hover:scale-[1.02] sm:mx-0'
           >
             {line.productImageUrl ? (
               <img
@@ -230,25 +309,25 @@ function CartLineRow({
                   href={`/product/${line.productId}`}
                   className={`text-base font-semibold leading-snug transition-colors ${
                     isSelected
-                      ? 'text-rose-600 dark:text-rose-400'
-                      : 'text-foreground hover:text-rose-600 dark:hover:text-rose-400'
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-foreground hover:text-blue-600 dark:hover:text-blue-400'
                   }`}
                 >
                   {line.productName}
                 </Link>
 
                 <div className='mt-2 flex flex-wrap items-center gap-2'>
-                  <Badge
-                    variant='outline'
-                    className='rounded-lg border-rose-500/30 text-xs font-normal text-rose-700 dark:text-rose-300'
-                  >
-                    {days} ngày
-                  </Badge>
+                  <DurationEditor
+                    days={days}
+                    cartLineId={line.cartLineId}
+                    onUpdateDuration={onUpdateDuration}
+                    disabled={isMutating}
+                  />
                   <Badge
                     variant='secondary'
                     className='rounded-lg text-xs font-normal'
                   >
-                    {formatter.format(line.dailyPrice)}₫ / ngày
+                    {formatter.format(line.dailyPrice)} / ngày
                   </Badge>
 
                   {/* Màu sắc */}
@@ -264,6 +343,11 @@ function CartLineRow({
                         />
                       )}
                       {line.colorName}
+                    </Badge>
+                  )}
+                  {isOutOfStock && (
+                    <Badge className='rounded-lg border border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300'>
+                      Hết hàng tạm thời
                     </Badge>
                   )}
                 </div>
@@ -287,6 +371,20 @@ function CartLineRow({
 
             {/* Quantity + Price + Voucher */}
             <div className='flex flex-col gap-3 border-t border-border/60 pt-3'>
+              {isOutOfStock ? (
+                <div className='flex items-center gap-1.5 rounded-lg border border-red-300/70 bg-red-50/70 px-3 py-2 text-xs text-red-800 dark:border-red-700/50 dark:bg-red-950/30 dark:text-red-200'>
+                  <AlertCircle className='size-3.5 shrink-0' />
+                  Sản phẩm hiện đã hết tồn kho khả dụng. Vui lòng bỏ chọn hoặc
+                  xóa khỏi giỏ để tiếp tục thanh toán.
+                </div>
+              ) : isOverStock ? (
+                <div className='flex items-center gap-1.5 rounded-lg border border-amber-300/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-950/30 dark:text-amber-200'>
+                  <AlertCircle className='size-3.5 shrink-0' />
+                  Số lượng vượt quá tồn kho ({maxQty} sản phẩm). Đang điều
+                  chỉnh…
+                </div>
+              ) : null}
+
               <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div className='flex items-center gap-1 rounded-xl border border-input bg-muted/30 p-1 dark:bg-muted/20'>
                   <Button
@@ -294,8 +392,10 @@ function CartLineRow({
                     variant='ghost'
                     size='sm'
                     className='size-9 rounded-lg p-0'
-                    disabled={qty <= 1 || isMutating}
-                    onClick={() => onUpdateQty(line.cartLineId, qty - 1)}
+                    disabled={qty <= 1 || isMutating || isOutOfStock}
+                    onClick={() =>
+                      onUpdateQty(line.cartLineId, Math.max(1, qty - 1))
+                    }
                   >
                     <Minus className='size-4' />
                   </Button>
@@ -309,8 +409,10 @@ function CartLineRow({
                     variant='ghost'
                     size='sm'
                     className='size-9 rounded-lg p-0'
-                    disabled={isMutating}
-                    onClick={() => onUpdateQty(line.cartLineId, qty + 1)}
+                    disabled={isOutOfStock || qty >= maxQty || isMutating}
+                    onClick={() =>
+                      onUpdateQty(line.cartLineId, Math.min(maxQty, qty + 1))
+                    }
                   >
                     <Plus className='size-4' />
                   </Button>
@@ -326,12 +428,12 @@ function CartLineRow({
                         <div className='whitespace-nowrap text-sm text-muted-foreground line-through'>
                           {formatter.format(rentalFeeAmount)}
                         </div>
-                        <div className='whitespace-nowrap text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                        <div className='whitespace-nowrap text-lg font-bold tabular-nums text-blue-600 dark:text-blue-400'>
                           {formatter.format(rentalFeeAmount - voucherDiscount)}
                         </div>
                       </>
                     ) : (
-                      <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                      <div className='whitespace-nowrap pt-1 text-lg font-bold tabular-nums text-blue-600 dark:text-blue-400'>
                         {formatter.format(rentalFeeAmount)}
                       </div>
                     )}
@@ -356,7 +458,7 @@ function CartLineRow({
                 </div>
                 <div className='flex items-center justify-between gap-2 sm:block'>
                   <span className='text-muted-foreground'>Cần thanh toán</span>
-                  <div className='font-bold tabular-nums text-rose-600 dark:text-rose-400'>
+                  <div className='font-bold tabular-nums text-blue-600 dark:text-blue-400'>
                     {formatter.format(
                       line.totalPayableAmount != null
                         ? line.totalPayableAmount
@@ -371,9 +473,9 @@ function CartLineRow({
               <div className='flex items-center gap-2'>
                 {appliedVoucherCode ? (
                   <>
-                    <div className='flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-50/60 px-2.5 py-1.5 dark:bg-rose-950/30'>
-                      <TicketPercent className='size-3.5 shrink-0 text-rose-600 dark:text-rose-400' />
-                      <span className='font-mono text-xs font-bold text-rose-600 dark:text-rose-400'>
+                    <div className='flex min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-blue-500/40 bg-blue-50/60 px-2.5 py-1.5 dark:bg-blue-950/30'>
+                      <TicketPercent className='size-3.5 shrink-0 text-blue-600 dark:text-blue-400' />
+                      <span className='font-mono text-xs font-bold text-blue-600 dark:text-blue-400'>
                         {appliedVoucherCode}
                       </span>
                       {voucherDiscount > 0 && (
@@ -397,7 +499,7 @@ function CartLineRow({
                   <button
                     type='button'
                     onClick={() => onOpenVoucher(line)}
-                    className='flex items-center gap-1.5 rounded-lg border border-dashed border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-rose-400/60 hover:bg-rose-50/40 hover:text-rose-600 dark:hover:bg-rose-950/20 dark:hover:text-rose-400'
+                    className='flex items-center gap-1.5 rounded-lg border border-dashed border-border/60 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-blue-400/60 hover:bg-blue-50/40 hover:text-blue-600 dark:hover:bg-blue-950/20 dark:hover:text-blue-400'
                   >
                     <Tag className='size-3.5' />
                     {(line.availableVouchers?.length ?? 0) > 0
@@ -443,125 +545,10 @@ function SummarySkeleton() {
   );
 }
 
-/* ─── Voucher input section ────────────────────────────────────────────────── */
-
-function VoucherSection({
-  voucherCode,
-  onApply,
-  onClear,
-  cartRentalSubtotal,
-  cartRentalDays,
-}: {
-  voucherCode: string;
-  onApply: (code: string) => void;
-  onClear: () => void;
-  cartRentalSubtotal: number;
-  cartRentalDays: number;
-}) {
-  const [input, setInput] = useState(voucherCode);
-  const { data: vouchersData, isLoading } = useCustomerVouchersQuery();
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const vouchers: VoucherResponse[] = vouchersData?.items ?? [];
-
-  // Validate voucher trước khi apply
-  const validateVoucher = useValidateVoucherMutation();
-
-  async function handleApply() {
-    if (!input.trim()) return;
-    try {
-      const result = await validateVoucher.mutateAsync({
-        code: input.trim().toUpperCase(),
-        rentalDurationDays: cartRentalDays,
-        rentalSubtotalAmount: cartRentalSubtotal,
-      });
-      if (result.valid) {
-        onApply(input.trim().toUpperCase());
-      } else {
-        toast.error('Voucher không hợp lệ hoặc chưa đủ điều kiện.');
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Mã voucher không đúng.';
-      toast.error(msg);
-    }
-  }
-
-  function handlePick(v: VoucherResponse) {
-    setInput(v.code);
-    onApply(v.code);
-    setDialogOpen(false);
-  }
-
-  return (
-    <div className='space-y-2'>
-      <label className='flex items-center gap-1.5 text-sm font-semibold text-foreground'>
-        <TicketPercent className='size-4 text-rose-600 dark:text-rose-400' />
-        Mã voucher
-      </label>
-
-      {voucherCode ? (
-        <div className='flex items-center justify-between rounded-lg border border-rose-500/40 bg-rose-50/60 px-3 py-2 dark:bg-rose-950/30'>
-          <span className='font-mono text-sm font-bold text-rose-600 dark:text-rose-400'>
-            {voucherCode}
-          </span>
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon-sm'
-            className='size-7 shrink-0 text-destructive hover:bg-red-50 dark:hover:bg-red-950/30'
-            onClick={onClear}
-          >
-            <X className='size-3.5' />
-          </Button>
-        </div>
-      ) : (
-        <div className='flex gap-2'>
-          <input
-            type='text'
-            placeholder='Nhập mã voucher…'
-            value={input}
-            onChange={(e) => setInput(e.target.value.toUpperCase())}
-            onKeyDown={(e) => e.key === 'Enter' && void handleApply()}
-            className='h-10 w-full rounded-lg border border-input bg-background px-3 font-mono text-sm uppercase placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200'
-          />
-          <Button
-            type='button'
-            size='sm'
-            className='h-10 shrink-0 gap-1.5 bg-rose-600 px-3 hover:bg-rose-700'
-            onClick={() => void handleApply()}
-            disabled={!input.trim()}
-          >
-            Áp dụng
-          </Button>
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            className='h-10 shrink-0 gap-1.5 border-rose-500/30'
-            onClick={() => setDialogOpen(true)}
-          >
-            Chọn voucher
-          </Button>
-        </div>
-      )}
-
-      <VoucherLinePickerDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        lineRentalSubtotal={cartRentalSubtotal}
-        lineRentalDays={cartRentalDays}
-        appliedCode={voucherCode}
-        onApply={(v) => handlePick(v)}
-        onClear={() => setDialogOpen(false)}
-      />
-    </div>
-  );
-}
-
 /* ─── Delivery Info Dialog ───────────────────────────────────────────────────── */
 
 const inputCls =
-  'h-10 w-full rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/20';
+  'h-10 w-full rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/20';
 const labelCls = 'mb-1.5 block text-xs font-semibold text-muted-foreground';
 
 function DeliveryInfoDialog({
@@ -604,8 +591,8 @@ function DeliveryInfoDialog({
       <DialogContent className='max-h-[90dvh] overflow-y-auto sm:max-w-md'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2.5'>
-            <div className='flex size-8 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-950/50'>
-              <Truck className='size-4 text-rose-600 dark:text-rose-400' />
+            <div className='flex size-8 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/50'>
+              <Truck className='size-4 text-blue-600 dark:text-blue-400' />
             </div>
             Thông tin giao hàng
           </DialogTitle>
@@ -618,7 +605,7 @@ function DeliveryInfoDialog({
               <span className='flex items-center gap-1'>
                 <User className='size-3' />
                 Họ và tên người nhận
-                <span className='ml-0.5 text-rose-500'>*</span>
+                <span className='ml-0.5 text-blue-500'>*</span>
               </span>
             </label>
             <input
@@ -638,7 +625,7 @@ function DeliveryInfoDialog({
               <span className='flex items-center gap-1'>
                 <Phone className='size-3' />
                 Số điện thoại
-                <span className='ml-0.5 text-rose-500'>*</span>
+                <span className='ml-0.5 text-blue-500'>*</span>
               </span>
             </label>
             <input
@@ -669,7 +656,7 @@ function DeliveryInfoDialog({
           </div>
 
           {/* Phường / Xã + Quận / Huyện */}
-          <div className='grid grid-cols-2 gap-3'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
             <div>
               <label htmlFor='d-ward' className={labelCls}>
                 Phường / Xã
@@ -724,7 +711,7 @@ function DeliveryInfoDialog({
             Hủy
           </Button>
           <Button
-            className='flex-1 rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700 disabled:opacity-50'
+            className='flex-1 rounded-xl bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:opacity-50'
             disabled={!canConfirm}
             onClick={onConfirm}
           >
@@ -739,20 +726,27 @@ function DeliveryInfoDialog({
 /* ─── Cart page ────────────────────────────────────────────────────────────── */
 
 export default function CartPage() {
-  const { data: cart, isLoading, isError } = useCartQuery();
+  const router = useRouter();
+  const {
+    data: cart,
+    isLoading,
+    isError,
+    refetch: refetchCart,
+  } = useCartQuery();
   const removeMutation = useRemoveCartLine();
   const updateQtyMutation = useUpdateCartLineQuantity();
   const clearMutation = useClearCart();
   const createOrder = useCreateRentalOrder();
-  const initiatePayment = useInitiatePayment();
+  const initiatePaymentBatch = useInitiateBatchPayment();
 
   // Chọn sản phẩm
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const autoAdjustingLineIdsRef = useRef<Set<string>>(new Set());
 
   // Voucher toàn đơn
   const [voucherCode, setVoucherCode] = useState('');
 
-  // Thông tin giao hàng — lưu vào sessionStorage
+  // Thông tin giao hàng - lưu vào sessionStorage
   const {
     recipientName,
     setRecipientName,
@@ -774,9 +768,33 @@ export default function CartPage() {
   >(null);
   const addressesInitRef = useRef(false);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: savedAddresses, isLoading: savedAddressesLoading } =
     useUserAddressesQuery({ enabled: !!isAuthenticated });
+
+  const delivery = useMemo(
+    () => ({
+      setRecipientName,
+      setPhone,
+      setAddressLine,
+      setWard,
+      setDistrict,
+      setCity,
+    }),
+    [setRecipientName, setPhone, setAddressLine, setWard, setDistrict, setCity],
+  );
+
+  const syncDeliveryFromSaved = useCallback(
+    (addr: UserAddressResponse) => {
+      delivery.setRecipientName(addr.recipientName);
+      delivery.setPhone(addr.phoneNumber);
+      delivery.setAddressLine(addr.addressLine ?? '');
+      delivery.setWard(addr.ward ?? '');
+      delivery.setDistrict(addr.district ?? '');
+      delivery.setCity(addr.city ?? '');
+    },
+    [delivery],
+  );
 
   const createAddressMutation = useCreateUserAddress({
     onSuccess: (addr) => {
@@ -809,31 +827,13 @@ export default function CartPage() {
     });
   }
 
-  const delivery = useMemo(
-    () => ({
-      setRecipientName,
-      setPhone,
-      setAddressLine,
-      setWard,
-      setDistrict,
-      setCity,
-    }),
-    [setRecipientName, setPhone, setAddressLine, setWard, setDistrict, setCity],
-  );
-
-  function syncDeliveryFromSaved(addr: UserAddressResponse) {
-    delivery.setRecipientName(addr.recipientName);
-    delivery.setPhone(addr.phoneNumber);
-    delivery.setAddressLine(addr.addressLine ?? '');
-    delivery.setWard(addr.ward ?? '');
-    delivery.setDistrict(addr.district ?? '');
-    delivery.setCity(addr.city ?? '');
-  }
-
   useEffect(() => {
     if (!isAuthenticated) {
       addressesInitRef.current = false;
-      setSelectedUserAddressId(null);
+      const timeoutId = window.setTimeout(() => {
+        setSelectedUserAddressId(null);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
   }, [isAuthenticated]);
 
@@ -842,16 +842,22 @@ export default function CartPage() {
       return;
     addressesInitRef.current = true;
     const pick = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
-    setSelectedUserAddressId(pick.userAddressId);
-    syncDeliveryFromSaved(pick);
-  }, [isAuthenticated, savedAddresses]);
+    const timeoutId = window.setTimeout(() => {
+      setSelectedUserAddressId(pick.userAddressId);
+      syncDeliveryFromSaved(pick);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [isAuthenticated, savedAddresses, syncDeliveryFromSaved]);
 
   useEffect(() => {
     if (!savedAddresses?.length || !selectedUserAddressId) return;
     if (
       !savedAddresses.some((a) => a.userAddressId === selectedUserAddressId)
     ) {
-      setSelectedUserAddressId(null);
+      const timeoutId = window.setTimeout(() => {
+        setSelectedUserAddressId(null);
+      }, 0);
+      return () => window.clearTimeout(timeoutId);
     }
   }, [savedAddresses, selectedUserAddressId]);
 
@@ -866,7 +872,25 @@ export default function CartPage() {
   // Policy consent dialog
   const [policyDialogOpen, setPolicyDialogOpen] = useState(false);
 
-  const lines: CartLineResponse[] = cart?.cartLines ?? [];
+  const lines = useMemo<CartLineResponse[]>(
+    () => cart?.cartLines ?? [],
+    [cart],
+  );
+  const selectableLineIds = useMemo(
+    () =>
+      lines
+        .filter((line) => {
+          if (typeof line.availableStock !== 'number') return true;
+          return (
+            line.availableStock > 0 && line.quantity <= line.availableStock
+          );
+        })
+        .map((line) => line.cartLineId),
+    [lines],
+  );
+  const allSelectableSelected =
+    selectableLineIds.length > 0 &&
+    selectableLineIds.every((lineId) => selectedIds.has(lineId));
 
   // Toggle checkbox
   function toggleSelect(cartLineId: string) {
@@ -875,6 +899,17 @@ export default function CartPage() {
       if (next.has(cartLineId)) {
         next.delete(cartLineId);
       } else {
+        const line = lines.find((item) => item.cartLineId === cartLineId);
+        if (
+          line &&
+          typeof line.availableStock === 'number' &&
+          (line.availableStock < 1 || line.quantity > line.availableStock)
+        ) {
+          toast.error(
+            'Sản phẩm này không đủ tồn kho để thanh toán. Vui lòng cập nhật giỏ hàng.',
+          );
+          return prev;
+        }
         next.add(cartLineId);
       }
       return next;
@@ -883,10 +918,10 @@ export default function CartPage() {
 
   // Select all / deselect all
   function toggleSelectAll() {
-    if (selectedIds.size === lines.length) {
+    if (allSelectableSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(lines.map((l) => l.cartLineId)));
+      setSelectedIds(new Set(selectableLineIds));
     }
   }
 
@@ -894,6 +929,45 @@ export default function CartPage() {
     () => lines.filter((l) => selectedIds.has(l.cartLineId)),
     [lines, selectedIds],
   );
+
+  const hasOutOfStockSelected = useMemo(
+    () =>
+      selectedLines.some((line) => {
+        if (typeof line.availableStock !== 'number') return false;
+        return line.availableStock < 1 || line.quantity > line.availableStock;
+      }),
+    [selectedLines],
+  );
+
+  useEffect(() => {
+    if (!lines.length || updateQtyMutation.isPending) return;
+
+    const overStockLine = lines.find((line) => {
+      if (typeof line.availableStock !== 'number') return false;
+      if (line.availableStock <= 0) return false;
+      if (line.quantity <= line.availableStock) return false;
+      return !autoAdjustingLineIdsRef.current.has(line.cartLineId);
+    });
+
+    if (!overStockLine) return;
+
+    const targetQuantity = overStockLine.availableStock as number;
+    const targetLineId = overStockLine.cartLineId;
+
+    autoAdjustingLineIdsRef.current.add(targetLineId);
+
+    updateQtyMutation.mutate(
+      {
+        cartLineId: targetLineId,
+        quantity: targetQuantity,
+      },
+      {
+        onSettled: () => {
+          autoAdjustingLineIdsRef.current.delete(targetLineId);
+        },
+      },
+    );
+  }, [lines, updateQtyMutation]);
 
   // Tính tổng discount từ voucher per-line cho selectedLines
   const lineVoucherDiscount = useMemo(() => {
@@ -954,7 +1028,22 @@ export default function CartPage() {
 
   const handleUpdateQty = (cartLineId: string, quantity: number) => {
     if (quantity < 1) return;
-    updateQtyMutation.mutate({ cartLineId, quantity });
+    const line = lines.find((l) => l.cartLineId === cartLineId);
+    const maxQty = line?.availableStock ?? 99;
+    if (maxQty <= 0) {
+      toast.error('Sản phẩm này hiện đã hết tồn kho khả dụng.');
+      return;
+    }
+    const clampedQty = Math.min(Math.max(1, quantity), maxQty);
+    updateQtyMutation.mutate({ cartLineId, quantity: clampedQty });
+  };
+
+  const handleUpdateDuration = (
+    cartLineId: string,
+    rentalDurationDays: number,
+  ) => {
+    if (rentalDurationDays < 1) return;
+    updateQtyMutation.mutate({ cartLineId, rentalDurationDays });
   };
 
   const handleClear = () => {
@@ -963,14 +1052,6 @@ export default function CartPage() {
       setSelectedIds(new Set());
     }
   };
-
-  function handleApplyVoucher(code: string) {
-    setVoucherCode(code.toUpperCase());
-  }
-
-  function handleRemoveVoucher() {
-    setVoucherCode('');
-  }
 
   function handleOpenLineVoucher(line: CartLineResponse) {
     setVoucherDialogLine(line);
@@ -995,16 +1076,69 @@ export default function CartPage() {
     setVoucherDialogOpen(false);
   }
 
+  const buildOrderLinePayload = useCallback(
+    (line: CartLineResponse) => {
+      const lineVoucherCode = lineVouchers.get(line.cartLineId)?.trim();
+
+      return {
+        productId: line.productId,
+        quantity: line.quantity,
+        rentalDurationDays: line.rentalDurationDays,
+        ...(line.productColorId ? { productColorId: line.productColorId } : {}),
+        ...(lineVoucherCode
+          ? { voucherCode: lineVoucherCode.toUpperCase() }
+          : {}),
+      };
+    },
+    [lineVouchers],
+  );
+
   /** Bước 1: Validate input rồi mở dialog điều khoản */
-  function handleProceedToRent() {
-    if (selectedLines.length === 0) {
+  async function handleProceedToRent() {
+    const selectedLineIds = Array.from(selectedIds);
+    if (selectedLineIds.length === 0) {
       toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
       return;
     }
-    if (!isAuthenticated) {
+
+    const latestCartResult = await refetchCart();
+    const latestLines = latestCartResult.data?.cartLines ?? [];
+    const latestLineById = new Map(
+      latestLines.map((line) => [line.cartLineId, line]),
+    );
+    const latestSelectedLines = selectedLineIds
+      .map((lineId) => latestLineById.get(lineId))
+      .filter((line): line is CartLineResponse => !!line);
+
+    if (latestSelectedLines.length !== selectedLineIds.length) {
       toast.error(
-        'Vui lòng đăng nhập để đặt thuê — đơn cần địa chỉ trong sổ (API-074).',
+        'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại sản phẩm đã chọn trước khi thanh toán.',
       );
+      setSelectedIds(
+        new Set(latestSelectedLines.map((line) => line.cartLineId)),
+      );
+      return;
+    }
+
+    const hasInvalidStock = latestSelectedLines.some((line) => {
+      if (typeof line.availableStock !== 'number') return false;
+      return line.availableStock < 1 || line.quantity > line.availableStock;
+    });
+
+    if (hasInvalidStock) {
+      toast.error(
+        'Có sản phẩm đã hết hoặc thiếu tồn kho trong danh sách đã chọn. Vui lòng cập nhật giỏ hàng.',
+      );
+      return;
+    }
+    if (!isAuthenticated) {
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
+      toast.error('Vui lòng đăng nhập để đặt thuê.');
+      router.push(buildLoginHref('/cart'));
       return;
     }
     if (!recipientName.trim()) {
@@ -1021,7 +1155,50 @@ export default function CartPage() {
   /** Bước 2: Gọi sau khi user đã đồng ý điều khoản → tạo đơn + thanh toán */
   async function handleCreateOrder() {
     if (!isAuthenticated) {
+      if (authLoading) {
+        toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+        return;
+      }
+
       toast.error('Vui lòng đăng nhập để đặt thuê.');
+      router.push(buildLoginHref('/cart'));
+      return;
+    }
+
+    const selectedLineIds = Array.from(selectedIds);
+    if (selectedLineIds.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
+      return;
+    }
+
+    const latestCartResult = await refetchCart();
+    const latestLines = latestCartResult.data?.cartLines ?? [];
+    const latestLineById = new Map(
+      latestLines.map((line) => [line.cartLineId, line]),
+    );
+    const latestSelectedLines = selectedLineIds
+      .map((lineId) => latestLineById.get(lineId))
+      .filter((line): line is CartLineResponse => !!line);
+
+    if (latestSelectedLines.length !== selectedLineIds.length) {
+      toast.error(
+        'Giỏ hàng vừa thay đổi. Vui lòng kiểm tra lại sản phẩm đã chọn trước khi thanh toán.',
+      );
+      setSelectedIds(
+        new Set(latestSelectedLines.map((line) => line.cartLineId)),
+      );
+      return;
+    }
+
+    const hasInvalidStock = latestSelectedLines.some((line) => {
+      if (typeof line.availableStock !== 'number') return false;
+      return line.availableStock < 1 || line.quantity > line.availableStock;
+    });
+
+    if (hasInvalidStock) {
+      toast.error(
+        'Có sản phẩm đã hết hoặc thiếu tồn kho trong danh sách đã chọn. Vui lòng cập nhật giỏ hàng.',
+      );
       return;
     }
 
@@ -1050,29 +1227,32 @@ export default function CartPage() {
         setSelectedUserAddressId(addr.userAddressId);
       }
 
-      const result = await createOrder.mutateAsync({
+      const orderLines = latestSelectedLines.map(buildOrderLinePayload);
+      if (orderLines.length === 0) {
+        toast.error('Không tạo được đơn thuê.');
+        return;
+      }
+
+      // Tạo 1 rental order duy nhất, chứa toàn bộ các cart line đã chọn.
+      const createdOrder = await createOrder.mutateAsync({
         userAddressId,
         expectedDeliveryDate,
-        voucherCode: voucherCode || undefined,
-        orderLines: selectedLines.map((l) => ({
-          productId: l.productId,
-          quantity: l.quantity,
-          rentalDurationDays: l.rentalDurationDays,
-          ...(l.productColorId ? { productColorId: l.productColorId } : {}),
-          ...(lineVouchers.get(l.cartLineId)
-            ? { voucherCode: lineVouchers.get(l.cartLineId) }
-            : {}),
-        })),
+        orderLines,
+        ...(voucherCode.trim()
+          ? { voucherCode: voucherCode.trim().toUpperCase() }
+          : {}),
       });
 
-      // Lấy payment URL
-      const paymentUrl = await initiatePayment.mutateAsync(
-        result.rentalOrderId,
-      );
+      // Dùng batch payment API với 1 orderId để giữ nguyên flow thanh toán hiện tại.
+      const paymentUrl = await initiatePaymentBatch.mutateAsync([
+        createdOrder.rentalOrderId,
+      ]);
 
-      // Xóa các dòng đã chọn khỏi cart (gọi từng dòng)
-      await Promise.all(
-        selectedLines.map((l) => removeMutation.mutateAsync(l.cartLineId)),
+      // Xóa các dòng đã chọn khỏi cart (best-effort, không chặn redirect thanh toán)
+      await Promise.allSettled(
+        latestSelectedLines.map((l) =>
+          removeMutation.mutateAsync(l.cartLineId),
+        ),
       );
 
       // Redirect Vnpay
@@ -1092,7 +1272,7 @@ export default function CartPage() {
             <li>
               <Link
                 href='/'
-                className='font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
+                className='font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
               >
                 Trang chủ
               </Link>
@@ -1121,23 +1301,23 @@ export default function CartPage() {
                   Giỏ hàng{' '}
                   <HighlightText
                     variant='marker'
-                    color='destructive'
+                    color='teal'
                     className='font-extrabold'
                   >
                     cho thuê
                   </HighlightText>
                 </h1>
                 {lines.length > 0 && (
-                  <Badge className='border-0 bg-rose-600 text-white shadow-md dark:bg-rose-500'>
+                  <Badge className='border-0 bg-blue-600 text-white shadow-md dark:bg-blue-500'>
                     {totalQty} sản phẩm
                   </Badge>
                 )}
               </div>
-              <p className='mt-2 max-w-xl text-sm text-muted-foreground sm:text-base'>
+              <p className='mt-2 max-w-4xl text-sm text-muted-foreground sm:text-base'>
                 <ShinyText className='font-medium'>Kiểm tra đơn thuê</ShinyText>
-                {' — '}
+                {' - '}
                 trước khi tiến hành thanh toán. Giao nhanh toàn quốc.
-                <Truck className='ml-1 inline size-4 align-text-bottom text-rose-600 dark:text-rose-400' />
+                <Truck className='ml-1 inline size-4 align-text-bottom text-blue-600 dark:text-blue-400' />
               </p>
             </>
           )}
@@ -1147,7 +1327,7 @@ export default function CartPage() {
         {isError && (
           <SpotlightCard
             className='rounded-3xl border border-destructive/30 bg-destructive/5 p-12 text-center shadow-lg'
-            spotlightColor='rgba(254, 20, 81, 0.1)'
+            spotlightColor='rgba(37, 99, 235, 0.1)'
           >
             <AlertCircle className='mx-auto size-12 text-destructive' />
             <p className='mt-4 text-lg font-semibold text-foreground'>
@@ -1156,12 +1336,12 @@ export default function CartPage() {
             <p className='mx-auto mt-2 max-w-sm text-sm text-muted-foreground'>
               Vui lòng đăng nhập hoặc thử lại sau.
             </p>
-            <Button
-              className='mt-6 rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700'
-              render={<Link href='/login?redirect=/cart' />}
+            <Link
+              href={buildLoginHref('/cart')}
+              className='mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 active:scale-[0.98]'
             >
               Đăng nhập
-            </Button>
+            </Link>
           </SpotlightCard>
         )}
 
@@ -1169,29 +1349,42 @@ export default function CartPage() {
         {!isLoading && !isError && lines.length === 0 && (
           <SpotlightCard
             className='rounded-3xl border border-dashed border-border/80 bg-card/80 p-12 text-center shadow-lg backdrop-blur-md dark:bg-card/60'
-            spotlightColor='rgba(254, 20, 81, 0.15)'
+            spotlightColor='rgba(37, 99, 235, 0.15)'
           >
             <motion.div
               initial={{ scale: 0.92, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             >
-              <div className='mx-auto flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-rose-500/20 to-rose-400/20 ring-1 ring-rose-500/20'>
-                <ShoppingBag className='size-10 text-rose-600 dark:text-rose-400' />
+              <div className='mx-auto flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500/20 to-blue-400/20 ring-1 ring-blue-500/20'>
+                <ShoppingBag className='size-10 text-blue-600 dark:text-blue-400' />
               </div>
               <p className='mt-6 text-xl font-bold text-foreground'>
-                Giỏ hàng trống
+                {!isAuthenticated && !authLoading
+                  ? 'Vui lòng đăng nhập để xem giỏ hàng'
+                  : 'Giỏ hàng trống'}
               </p>
               <p className='mx-auto mt-2 max-w-sm text-sm text-muted-foreground'>
-                Thêm thiết bị từ trang chi tiết sản phẩm để bắt đầu thuê.
+                {!isAuthenticated && !authLoading
+                  ? 'Bạn cần đăng nhập trước khi thêm sản phẩm và tiến hành thuê.'
+                  : 'Thêm thiết bị từ trang chi tiết sản phẩm để bắt đầu thuê.'}
               </p>
               <Magnetic intensity={0.35} range={120}>
-                <Button
-                  className='mt-8 rounded-xl bg-rose-600 px-8 font-semibold text-white shadow-lg hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
-                  render={<Link href='/' />}
-                >
-                  Khám phá sản phẩm
-                </Button>
+                {!isAuthenticated && !authLoading ? (
+                  <Link
+                    href={buildLoginHref('/cart')}
+                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-500 dark:hover:bg-blue-600'
+                  >
+                    Đăng nhập để tiếp tục
+                  </Link>
+                ) : (
+                  <Link
+                    href='/'
+                    className='mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700 active:scale-[0.98] dark:bg-blue-500 dark:hover:bg-blue-600'
+                  >
+                    Khám phá sản phẩm
+                  </Link>
+                )}
               </Magnetic>
             </motion.div>
           </SpotlightCard>
@@ -1204,7 +1397,7 @@ export default function CartPage() {
             <div className='space-y-4 lg:col-span-7'>
               <SpotlightCard
                 className='rounded-2xl border border-border/60 bg-card/70 shadow-md backdrop-blur-sm dark:bg-card/50'
-                spotlightColor='rgba(254, 20, 81, 0.1)'
+                spotlightColor='rgba(37, 99, 235, 0.1)'
               >
                 <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-4 py-4 sm:px-6'>
                   <div className='flex items-center gap-3'>
@@ -1229,28 +1422,26 @@ export default function CartPage() {
                         <span
                           className={cn(
                             'flex size-4 items-center justify-center rounded border-2 transition-all duration-150',
-                            selectedIds.size === lines.length &&
-                              lines.length > 0
-                              ? 'border-rose-500 bg-rose-500'
+                            allSelectableSelected
+                              ? 'border-blue-500 bg-blue-500'
                               : 'border-muted-foreground/40',
                           )}
                         >
-                          {selectedIds.size === lines.length &&
-                            lines.length > 0 && (
-                              <svg
-                                viewBox='0 0 24 24'
-                                className='size-2.5 text-white'
-                                fill='none'
-                                stroke='currentColor'
-                                strokeWidth='3.5'
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                              >
-                                <polyline points='20 6 9 17 4 12' />
-                              </svg>
-                            )}
+                          {allSelectableSelected && (
+                            <svg
+                              viewBox='0 0 24 24'
+                              className='size-2.5 text-white'
+                              fill='none'
+                              stroke='currentColor'
+                              strokeWidth='3.5'
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                            >
+                              <polyline points='20 6 9 17 4 12' />
+                            </svg>
+                          )}
                         </span>
-                        {selectedIds.size === lines.length
+                        {allSelectableSelected
                           ? 'Bỏ chọn tất cả'
                           : 'Chọn tất cả'}
                       </button>
@@ -1304,6 +1495,7 @@ export default function CartPage() {
                             appliedVoucherCode={appliedCode}
                             voucherDiscount={voucherDiscount}
                             onOpenVoucher={handleOpenLineVoucher}
+                            onUpdateDuration={handleUpdateDuration}
                           />
                         );
                       })}
@@ -1315,15 +1507,15 @@ export default function CartPage() {
             <div className='lg:col-span-5'>
               <div className='lg:sticky lg:top-28'>
                 <SpotlightCard
-                  className='rounded-2xl border border-rose-500/20 bg-card/90 shadow-xl backdrop-blur-md dark:border-rose-500/25 dark:bg-card/80'
-                  spotlightColor='rgba(254, 20, 81, 0.18)'
+                  className='rounded-2xl border border-blue-500/20 bg-card/90 shadow-xl backdrop-blur-md dark:border-blue-500/25 dark:bg-card/80'
+                  spotlightColor='rgba(37, 99, 235, 0.18)'
                 >
                   {isLoading ? (
                     <SummarySkeleton />
                   ) : (
                     <div className='space-y-5 p-5 sm:p-6'>
                       <div className='flex items-center gap-2'>
-                        {/* <Sparkles className='size-5 text-rose-600 dark:text-rose-400' /> */}
+                        {/* <Sparkles className='size-5 text-blue-600 dark:text-blue-400' /> */}
                         <h2 className='text-lg font-bold text-foreground'>
                           Tóm tắt thanh toán
                         </h2>
@@ -1333,7 +1525,7 @@ export default function CartPage() {
                       <div className='space-y-2'>
                         <div className='flex items-center justify-between gap-2'>
                           <div className='flex items-center gap-1.5'>
-                            <Truck className='size-4 text-rose-600 dark:text-rose-400' />
+                            <Truck className='size-4 text-blue-600 dark:text-blue-400' />
                             <span className='text-sm font-semibold text-foreground'>
                               Thông tin giao hàng
                             </span>
@@ -1386,12 +1578,12 @@ export default function CartPage() {
                                         className={cn(
                                           'w-full rounded-xl border p-3 text-left transition-colors',
                                           selected
-                                            ? 'border-rose-500 bg-rose-50/60 ring-1 ring-rose-500/20 dark:bg-rose-950/30'
-                                            : 'border-border/60 bg-muted/15 hover:border-rose-300/50',
+                                            ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500/20 dark:bg-blue-950/30'
+                                            : 'border-border/60 bg-muted/15 hover:border-blue-300/50',
                                         )}
                                       >
                                         <div className='flex items-start gap-2.5'>
-                                          <MapPin className='mt-0.5 size-4 shrink-0 text-rose-500' />
+                                          <MapPin className='mt-0.5 size-4 shrink-0 text-blue-500' />
                                           <div className='min-w-0 flex-1 space-y-0.5'>
                                             <div className='flex flex-wrap items-center gap-1.5'>
                                               <span className='text-sm font-semibold text-foreground'>
@@ -1431,7 +1623,7 @@ export default function CartPage() {
                                 type='button'
                                 variant='outline'
                                 size='sm'
-                                className='rounded-xl border-rose-300/60 text-rose-800 hover:bg-rose-50 dark:text-rose-200'
+                                className='rounded-xl border-blue-300/60 text-blue-800 hover:bg-blue-50 dark:text-blue-200'
                                 onClick={() => setCartAddAddressOpen(true)}
                                 disabled={createAddressMutation.isPending}
                               >
@@ -1455,7 +1647,7 @@ export default function CartPage() {
                             {savedAddresses?.length === 0 &&
                               !(recipientName || phone) && (
                                 <p className='text-xs text-amber-700 dark:text-amber-400'>
-                                  Chưa có địa chỉ trong sổ — thêm mới hoặc nhập
+                                  Chưa có địa chỉ trong sổ - thêm mới hoặc nhập
                                   nhanh để tiếp tục.
                                 </p>
                               )}
@@ -1474,7 +1666,7 @@ export default function CartPage() {
                             <button
                               type='button'
                               onClick={() => setDeliveryDialogOpen(true)}
-                              className='w-full rounded-xl border border-border/60 bg-muted/20 p-3.5 text-left transition-colors hover:border-rose-300/60 hover:bg-rose-50/30 dark:hover:bg-rose-950/10'
+                              className='w-full rounded-xl border border-border/60 bg-muted/20 p-3.5 text-left transition-colors hover:border-blue-300/60 hover:bg-blue-50/30 dark:hover:bg-blue-950/10'
                             >
                               <div className='flex items-start gap-3'>
                                 <CheckCircle2 className='mt-0.5 size-4 shrink-0 text-emerald-500' />
@@ -1503,22 +1695,22 @@ export default function CartPage() {
                             <button
                               type='button'
                               onClick={() => setDeliveryDialogOpen(true)}
-                              className='flex w-full items-center justify-between rounded-xl border border-dashed border-rose-300/60 bg-rose-50/30 px-4 py-3.5 text-left transition-colors hover:border-rose-400/70 hover:bg-rose-50/50 dark:border-rose-800/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20'
+                              className='flex w-full items-center justify-between rounded-xl border border-dashed border-blue-300/60 bg-blue-50/30 px-4 py-3.5 text-left transition-colors hover:border-blue-400/70 hover:bg-blue-50/50 dark:border-blue-800/40 dark:bg-blue-950/10 dark:hover:bg-blue-950/20'
                             >
                               <div className='flex items-center gap-2.5'>
-                                <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/40'>
-                                  <User className='size-4 text-rose-600 dark:text-rose-400' />
+                                <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950/40'>
+                                  <User className='size-4 text-blue-600 dark:text-blue-400' />
                                 </div>
                                 <div>
-                                  <p className='text-sm font-semibold text-rose-700 dark:text-rose-300'>
+                                  <p className='text-sm font-semibold text-blue-700 dark:text-blue-300'>
                                     Nhập thông tin giao hàng
                                   </p>
-                                  <p className='text-xs text-rose-600/70 dark:text-rose-400/70'>
+                                  <p className='text-xs text-blue-600/70 dark:text-blue-400/70'>
                                     Tên người nhận &amp; số điện thoại bắt buộc
                                   </p>
                                 </div>
                               </div>
-                              <ChevronDown className='-rotate-90 size-4 text-rose-400' />
+                              <ChevronDown className='-rotate-90 size-4 text-blue-400' />
                             </button>
                           ))}
                       </div>
@@ -1553,7 +1745,7 @@ export default function CartPage() {
                         {lineVoucherDiscount > 0 && (
                           <div className='flex items-baseline justify-between gap-3'>
                             <span className='flex items-center gap-1 text-muted-foreground'>
-                              <TicketPercent className='size-3.5 text-rose-500' />
+                              <TicketPercent className='size-3.5 text-blue-500' />
                               Voucher sản phẩm
                             </span>
                             <span className='font-medium tabular-nums text-emerald-600 dark:text-emerald-400'>
@@ -1582,8 +1774,8 @@ export default function CartPage() {
                             </p>
                           )}
 
-                        <div className='rounded-xl border border-rose-200/80 bg-rose-50/60 px-4 py-3 dark:border-rose-800/50 dark:bg-rose-950/20'>
-                          <p className='mb-1 text-xs font-medium text-rose-700/80 dark:text-rose-300/80'>
+                        <div className='rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 dark:border-blue-800/50 dark:bg-blue-950/20'>
+                          <p className='mb-1 text-xs font-medium text-blue-700/80 dark:text-blue-300/80'>
                             Tổng cần thanh toán = Tiền thuê sau giảm + Tiền cọc
                             giữ
                           </p>
@@ -1591,7 +1783,7 @@ export default function CartPage() {
                             <span className='text-base font-bold text-foreground'>
                               Tổng thanh toán
                             </span>
-                            <span className='text-2xl font-extrabold tabular-nums text-rose-600 dark:text-rose-400'>
+                            <span className='text-2xl font-extrabold tabular-nums text-blue-600 dark:text-blue-400'>
                               {selectedTotals.selectedCount > 0
                                 ? formatter.format(selectedTotals.grandTotal)
                                 : formatter.format(0)}
@@ -1600,35 +1792,44 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      <div className='rounded-lg border border-rose-200 bg-rose-50/80 p-3 text-xs leading-relaxed text-rose-900 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-100'>
+                      <div className='rounded-lg border border-blue-200 bg-blue-50/80 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-100'>
                         Giá chưa bao gồm phí vận chuyển và 8% VAT. Tiền cọc (nếu
                         có) sẽ hiển thị ở bước thanh toán VNPay.
                       </div>
+
+                      {hasOutOfStockSelected && (
+                        <div className='rounded-lg border border-red-300 bg-red-50/80 p-3 text-xs leading-relaxed text-red-900 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200'>
+                          Có sản phẩm trong danh sách đang chọn đã hết hoặc
+                          thiếu tồn kho. Vui lòng bỏ chọn hoặc cập nhật lại số
+                          lượng trước khi tiến hành thuê.
+                        </div>
+                      )}
 
                       {!isAuthenticated && (
                         <p className='text-center text-xs text-muted-foreground'>
                           <Link
                             href='/auth/login?redirect=/cart'
-                            className='font-medium text-rose-600 underline underline-offset-2 hover:text-rose-700 dark:text-rose-400'
+                            className='font-medium text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400'
                           >
                             Đăng nhập
                           </Link>{' '}
-                          để đặt thuê — đơn gắn với địa chỉ đã lưu.
+                          để đặt thuê - đơn gắn với địa chỉ đã lưu.
                         </p>
                       )}
 
                       <Magnetic intensity={0.3} range={100}>
                         <Button
                           type='button'
-                          className='h-12 w-full rounded-xl bg-rose-600 text-base font-bold text-white shadow-lg hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600'
+                          className='h-12 w-full rounded-xl bg-blue-600 text-base font-bold text-white shadow-lg hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600'
                           disabled={
                             isMutating ||
                             selectedTotals.selectedCount === 0 ||
                             !recipientName.trim() ||
                             !phone.trim() ||
                             !isAuthenticated ||
+                            hasOutOfStockSelected ||
                             createOrder.isPending ||
-                            initiatePayment.isPending ||
+                            initiatePaymentBatch.isPending ||
                             createAddressMutation.isPending ||
                             (isAuthenticated && savedAddressesLoading)
                           }
@@ -1640,7 +1841,7 @@ export default function CartPage() {
                               Đang lưu địa chỉ…
                             </span>
                           ) : createOrder.isPending ||
-                            initiatePayment.isPending ? (
+                            initiatePaymentBatch.isPending ? (
                             <span className='flex items-center gap-2'>
                               <span className='size-4 animate-spin rounded-full border-2 border-white/30 border-t-white' />
                               Đang xử lý…
@@ -1651,14 +1852,12 @@ export default function CartPage() {
                         </Button>
                       </Magnetic>
 
-                      <Button
-                        variant='outline'
-                        className='w-full rounded-xl border-rose-500/30'
-                        disabled={isMutating}
-                        render={<Link href='/' />}
+                      <Link
+                        href='/'
+                        className='inline-flex h-9 w-full items-center justify-center rounded-xl border border-input bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50'
                       >
                         Tiếp tục xem sản phẩm
-                      </Button>
+                      </Link>
                     </div>
                   )}
                 </SpotlightCard>
@@ -1710,7 +1909,7 @@ export default function CartPage() {
         onAllConsented={() => void handleCreateOrder()}
       />
 
-      {/* Voucher picker dialog — per-line */}
+      {/* Voucher picker dialog - per-line */}
       {voucherDialogLine &&
         (() => {
           // Tập hợp các code đang được dùng ở các dòng KHÁC (không phải dòng đang mở dialog)

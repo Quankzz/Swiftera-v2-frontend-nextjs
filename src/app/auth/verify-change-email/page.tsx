@@ -67,7 +67,7 @@ function VerifyChangeEmailContent() {
       <div className='space-y-4 text-center'>
         {status === 'loading' && (
           <div className='flex flex-col items-center gap-3 py-6 text-zinc-600 dark:text-zinc-400'>
-            <Loader2 className='size-10 animate-spin text-[#fe1451]' />
+            <Loader2 className='size-10 animate-spin text-[[var(--theme-primary-start,#0ea5e9)]]' />
             <p className='text-sm'>Đang xác thực, vui lòng đợi...</p>
           </div>
         )}
@@ -82,7 +82,7 @@ function VerifyChangeEmailContent() {
             <p className='text-sm text-zinc-700 dark:text-zinc-300'>{message}</p>
             <Link
               href='/auth/login'
-              className='inline-flex h-auto w-full items-center justify-center rounded-lg bg-[#fe1451] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#ba264d]'
+              className='inline-flex h-auto w-full items-center justify-center rounded-lg bg-[[var(--theme-primary-start,#0ea5e9)]] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[[var(--theme-primary-end,#0369a1)]]'
             >
               Đăng nhập với email mới
             </Link>
@@ -122,7 +122,7 @@ function VerifyChangeEmailFallback() {
       footerLinks={[{ href: '/auth/login', label: 'Đăng nhập' }]}
     >
       <div className='flex justify-center py-8'>
-        <Loader2 className='size-8 animate-spin text-[#fe1451]' />
+        <Loader2 className='size-8 animate-spin text-[[var(--theme-primary-start,#0ea5e9)]]' />
       </div>
     </AuthActionCard>
   );

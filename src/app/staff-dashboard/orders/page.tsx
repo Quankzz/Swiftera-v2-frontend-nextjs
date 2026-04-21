@@ -6,26 +6,36 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Search,
   Filter,
-  ChevronDown,
   ShoppingBag,
   ArrowRight,
   User,
-  Calendar,
   Package,
   X,
   MapPin,
   Phone,
   Loader2,
+  AlertTriangle,
+  RotateCcw,
+  Check,
+  ChevronDown,
+  CalendarClock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { STATUS_CFG } from '@/lib/order-status';
-import { fmt, fmtDateShort } from '@/lib/formatters';
+import { fmt, fmtDate, fmtPhone } from '@/lib/formatters';
 import { getStaffOrders } from '@/api/staff-orders';
 import { useAuthStore } from '@/stores/auth-store';
 import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
-import type { DashboardOrder, OrderStatus } from '@/types/dashboard.types';
+import type { RentalOrderResponse, OrderStatus } from '@/types/api.types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import {
   Pagination,
   PaginationContent,
@@ -38,12 +48,7 @@ import {
 
 const PAGE_SIZE = 5;
 
-// Default landing view for "Đơn hàng": show the two queues that require staff
-// confirmation right now.
-const DEFAULT_QUEUE_STATUSES: OrderStatus[] = ['PAID', 'PENDING_PICKUP'];
-
-// Full staff workflow statuses must remain available so the shipper can re-open
-// an in-progress order after leaving the page by mistake.
+// All staff workflow statuses
 const ALL_STATUSES: OrderStatus[] = [
   'PAID',
   'PREPARING',
@@ -55,8 +60,17 @@ const ALL_STATUSES: OrderStatus[] = [
   'COMPLETED',
 ];
 
-type SortKey = 'created_at' | 'start_date' | 'end_date' | 'total_rental_fee';
-type SortDir = 'asc' | 'desc';
+type QuickFilter = 'all' | 'overdue-pickup' | 'overdue-delivery' | 'today';
+
+const QUICK_FILTERS: {
+  id: QuickFilter;
+  label: string;
+  icon: typeof AlertTriangle;
+}[] = [
+  { id: 'overdue-pickup', label: 'Quá hạn thu hồi', icon: RotateCcw },
+  { id: 'overdue-delivery', label: 'Trễ giao', icon: AlertTriangle },
+  { id: 'today', label: 'Giao hôm nay', icon: CalendarClock },
+];
 
 export default function OrdersPage() {
   return (
@@ -77,9 +91,10 @@ function OrdersPageInner() {
   const router = useRouter();
   const [now] = useState(() => Date.now());
   const [search, setSearch] = useState('');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
 
   // ─── API data ────────────────────────────────────────────────────
-  const [allOrders, setAllOrders] = useState<DashboardOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<RentalOrderResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -88,10 +103,7 @@ function OrdersPageInner() {
   const setCounts = useStaffOrderCounts((s) => s.setCounts);
 
   useEffect(() => {
-    // Auth bootstrap not finished yet — keep showing spinner
     if (!isAuthenticated && user === null) return;
-
-    // Bootstrap done but no user → not logged in
     if (!staffId) {
       setIsLoading(false);
       setLoadError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
@@ -99,16 +111,13 @@ function OrdersPageInner() {
     }
 
     let cancelled = false;
-
     const load = async () => {
       setIsLoading(true);
       setLoadError(null);
       try {
         const orders = await getStaffOrders(staffId);
         if (cancelled) return;
-        console.log('[OrdersPage] orders loaded:', orders.length);
         setAllOrders(orders);
-        // Populate sidebar counts
         const counts: Partial<Record<OrderStatus, number>> = {};
         for (const o of orders) {
           counts[o.status] = (counts[o.status] ?? 0) + 1;
@@ -116,7 +125,6 @@ function OrdersPageInner() {
         setCounts(counts);
       } catch (err) {
         if (cancelled) return;
-        console.error('[OrdersPage] load error:', err);
         setLoadError(
           err instanceof Error ? err.message : 'Không thể tải dữ liệu',
         );
@@ -131,119 +139,172 @@ function OrdersPageInner() {
     };
   }, [staffId, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Multi-select filter across the full workflow. If the route has no status,
-  // fall back to the default confirmation queues (PAID + PENDING_PICKUP).
+  // ─── Filter: active statuses from URL ──────────────────────────
+  // Default to EMPTY array when no status param — empty means "no status filter = show all".
+  // The status filter is only applied when activeStatuses.length > 0.
   const activeStatuses = useMemo<OrderStatus[]>(() => {
     const s = searchParams.get('status');
-    if (!s) return DEFAULT_QUEUE_STATUSES;
-
+    if (!s) return [];
     const parsed = s
       .split(',')
-      .filter((val) =>
-        ALL_STATUSES.includes(val as OrderStatus),
-      ) as OrderStatus[];
-
-    return parsed.length > 0 ? parsed : DEFAULT_QUEUE_STATUSES;
+      .filter((v) => ALL_STATUSES.includes(v as OrderStatus)) as OrderStatus[];
+    return parsed;
   }, [searchParams]);
 
-  const toggleStatusFilter = useCallback(
-    (status: OrderStatus | 'ALL') => {
-      if (status === 'ALL') {
-        router.replace(
-          `/staff-dashboard/orders?status=${DEFAULT_QUEUE_STATUSES.join(',')}`,
-          { scroll: false },
-        );
-        return;
-      }
+  const isAllSelected = useMemo(
+    () => activeStatuses.length === ALL_STATUSES.length,
+    [activeStatuses],
+  );
 
-      let newStatuses = [...activeStatuses];
-      if (newStatuses.includes(status)) {
-        newStatuses = newStatuses.filter((s) => s !== status);
-      } else {
-        newStatuses.push(status);
-      }
+  const hasStatusFilter = activeStatuses.length > 0;
 
-      if (newStatuses.length === 0) {
-        router.replace(
-          `/staff-dashboard/orders?status=${DEFAULT_QUEUE_STATUSES.join(',')}`,
-          { scroll: false },
-        );
+  const toggleStatus = useCallback(
+    (status: OrderStatus) => {
+      const next = activeStatuses.includes(status)
+        ? activeStatuses.filter((s) => s !== status)
+        : [...activeStatuses, status];
+      if (next.length === 0) {
+        // No status selected → no filter → clear URL param
+        router.replace(`/staff-dashboard/orders`, { scroll: false });
+      } else if (next.length === ALL_STATUSES.length) {
+        // All selected → clear URL param (same as empty = show all)
+        router.replace(`/staff-dashboard/orders`, { scroll: false });
       } else {
-        router.replace(
-          `/staff-dashboard/orders?status=${newStatuses.join(',')}`,
-          { scroll: false },
-        );
+        router.replace(`/staff-dashboard/orders?status=${next.join(',')}`, {
+          scroll: false,
+        });
       }
     },
     [activeStatuses, router],
   );
 
-  const [sortKey, setSortKey] = useState<SortKey>('created_at');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [showFilters, setShowFilters] = useState(false);
+  const toggleAll = useCallback(() => {
+    // Toggle all → always go to empty (no filter = show all)
+    router.replace(`/staff-dashboard/orders`, { scroll: false });
+  }, [router]);
 
+  // ─── Sort (always uses 'priority' sort, descending — implicit default) ────
   // ─── Pagination ───────────────────────────────────────────────
   const [currentPage, setCurrentPage] = useState(1);
 
-  // allOrders already filtered by staff ID at API level
-  const myOrders = allOrders;
+  // ─── Derived: overdue info per order ───────────────────────────
+  const enrichedOrders = useMemo(() => {
+    const today = new Date(now).setHours(0, 0, 0, 0);
+    const tomorrow = today + 86400000;
+    return allOrders.map((order) => {
+      const expDelivery = order.expectedDeliveryDate
+        ? new Date(order.expectedDeliveryDate).setHours(0, 0, 0, 0)
+        : null;
+      const expEnd = order.expectedRentalEndDate
+        ? new Date(order.expectedRentalEndDate).setHours(0, 0, 0, 0)
+        : null;
 
-  const filtered = useMemo(() => {
-    let list = [...myOrders];
-    const q = search.toLowerCase().trim();
-    if (q) {
-      list = list.filter(
-        (o) =>
-          o.order_code.toLowerCase().includes(q) ||
-          o.renter.full_name.toLowerCase().includes(q) ||
-          o.renter.phone_number.includes(q) ||
-          o.delivery_address?.toLowerCase().includes(q) ||
-          o.items.some((i) => i.product_name.toLowerCase().includes(q)),
-      );
-    }
+      const isDeliveryOverdue =
+        expDelivery !== null &&
+        expDelivery < today &&
+        ['PAID', 'PREPARING', 'DELIVERING', 'PENDING_PICKUP'].includes(
+          order.status,
+        );
 
-    if (activeStatuses.length > 0) {
-      list = list.filter((o) => activeStatuses.includes(o.status));
-    }
+      const isPickupOverdue =
+        expEnd !== null &&
+        expEnd < today &&
+        ['PICKED_UP', 'PICKING_UP'].includes(order.status);
 
-    list.sort((a, b) => {
-      const av =
-        sortKey === 'total_rental_fee'
-          ? a[sortKey]
-          : new Date(a[sortKey] ?? 0).getTime();
-      const bv =
-        sortKey === 'total_rental_fee'
-          ? b[sortKey]
-          : new Date(b[sortKey] ?? 0).getTime();
-      return sortDir === 'desc' ? bv - av : av - bv;
+      const isTodayDelivery =
+        expDelivery !== null &&
+        expDelivery >= today &&
+        expDelivery < tomorrow &&
+        ['PAID', 'PREPARING', 'DELIVERING', 'PENDING_PICKUP'].includes(
+          order.status,
+        );
+
+      const daysDeliveryOverdue =
+        isDeliveryOverdue && expDelivery !== null
+          ? Math.floor((today - expDelivery) / 86400000)
+          : 0;
+
+      const daysPickupOverdue =
+        isPickupOverdue && expEnd !== null
+          ? Math.floor((today - expEnd) / 86400000)
+          : 0;
+
+      // Priority score: lower = more urgent
+      let priorityScore = 999;
+      if (isDeliveryOverdue) priorityScore = 1 + daysDeliveryOverdue * 0.001;
+      else if (isPickupOverdue) priorityScore = 2 + daysPickupOverdue * 0.001;
+      else priorityScore = 3;
+
+      return {
+        order,
+        isDeliveryOverdue,
+        isPickupOverdue,
+        isTodayDelivery,
+        daysDeliveryOverdue,
+        daysPickupOverdue,
+        priorityScore,
+      };
     });
-    return list;
-  }, [search, activeStatuses, sortKey, sortDir, myOrders]);
+  }, [allOrders, now]);
 
-  // Paginate
+  // ─── Filter + Sort ────────────────────────────────────────────
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    const list = enrichedOrders.filter(
+      ({ order, isDeliveryOverdue, isPickupOverdue, isTodayDelivery }) => {
+        // Status filter: only apply when hasStatusFilter (activeStatuses > 0)
+        if (hasStatusFilter && !activeStatuses.includes(order.status))
+          return false;
+
+        // Quick filter
+        if (quickFilter === 'overdue-pickup' && !isPickupOverdue) return false;
+        if (quickFilter === 'overdue-delivery' && !isDeliveryOverdue)
+          return false;
+        if (quickFilter === 'today' && !isTodayDelivery) return false;
+
+        // Text search
+        if (q) {
+          return (
+            order.rentalOrderId.toLowerCase().includes(q) ||
+            (order.userAddress?.recipientName ?? '')
+              .toLowerCase()
+              .includes(q) ||
+            (order.userAddress?.phoneNumber ?? '').includes(q) ||
+            (order.hubAddressLine ?? '').toLowerCase().includes(q) ||
+            order.rentalOrderLines.some((i) =>
+              i.productNameSnapshot.toLowerCase().includes(q),
+            )
+          );
+        }
+        return true;
+      },
+    );
+
+    // Always sort by priority: overdue delivery → overdue pickup → future dates closest to today
+    list.sort((a, b) => a.priorityScore - b.priorityScore);
+
+    return list;
+  }, [enrichedOrders, search, activeStatuses, hasStatusFilter, quickFilter]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(currentPage, totalPages);
-  const paginatedOrders = useMemo(
-    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [filtered, safePage],
+  const paginatedOrders = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
   );
 
-  // Reset trang về 1 khi filter/search/sort thay đổi
   useEffect(() => {
     setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, activeStatuses, sortKey, sortDir]);
+  }, [search, activeStatuses, quickFilter]);
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
-    else {
-      setSortKey(key);
-      setSortDir('desc');
-    }
-  };
-
-  const urgentCount = myOrders.filter((o) =>
-    ['PAID', 'PENDING_PICKUP'].includes(o.status),
+  const urgentDelivery = enrichedOrders.filter(
+    ({ isDeliveryOverdue }) => isDeliveryOverdue,
+  ).length;
+  const urgentPickup = enrichedOrders.filter(
+    ({ isPickupOverdue }) => isPickupOverdue,
+  ).length;
+  const todayCount = enrichedOrders.filter(
+    ({ isTodayDelivery }) => isTodayDelivery,
   ).length;
 
   if (isLoading) {
@@ -268,7 +329,7 @@ function OrdersPageInner() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-12">
+    <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="max-w-6xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         {/* ===== Header ===== */}
         <div className="mb-6 space-y-1.5">
@@ -276,7 +337,7 @@ function OrdersPageInner() {
             Đơn hàng của tôi
           </h1>
           <div className="h-0.5 w-14 rounded-full bg-linear-to-r from-theme-primary-start to-theme-primary-end" />
-          <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
             <span>
               Hiển thị{' '}
               <strong className="text-foreground font-semibold">
@@ -286,163 +347,241 @@ function OrdersPageInner() {
               </strong>{' '}
               / {filtered.length} đơn
             </span>
-            {urgentCount > 0 && (
+            {urgentDelivery > 0 && (
               <>
                 <span className="text-border">•</span>
-                <span className="inline-flex items-center gap-1.5 text-destructive font-semibold bg-destructive/10 px-2 py-0.5 rounded-md">
-                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse-gentle" />
-                  {urgentCount} cần xử lý
+                <span className="inline-flex items-center gap-1.5 text-destructive font-semibold bg-destructive/10 px-2 py-0.5 rounded-md border border-destructive/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                  <AlertTriangle className="size-3" />
+                  {urgentDelivery} trễ giao
+                </span>
+              </>
+            )}
+            {urgentPickup > 0 && (
+              <>
+                <span className="text-border">•</span>
+                <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  <RotateCcw className="size-3" />
+                  {urgentPickup} trễ thu hồi
                 </span>
               </>
             )}
           </div>
         </div>
 
-        {/* ===== Search & Filters Bar ===== */}
+        {/* ===== Search & Filter Bar ===== */}
         <div className="flex flex-col gap-3 mb-6">
-          <div className="relative w-full">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
-            <Input
-              placeholder="Tìm mã đơn, tên khách, số điện thoại, sản phẩm..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 h-12 w-full bg-card border-border/60 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-theme-primary-start/25 transition-all text-[15px]"
-            />
-          </div>
-
+          {/* Row 1: Search + Status Filter (horizontal) */}
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              variant={showFilters ? 'secondary' : 'outline'}
-              onClick={() => setShowFilters((v) => !v)}
-              className={cn(
-                'gap-2 h-10 rounded-lg border-border/60 shadow-sm transition-all',
-                !showFilters && 'bg-card hover:bg-accent',
-              )}
-            >
-              <Filter className="w-4 h-4" />
-              <span>Bộ lọc</span>
-              {activeStatuses.length > 0 && (
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold ml-1">
-                  {activeStatuses.length}
-                </span>
-              )}
-              <ChevronDown
-                className={cn(
-                  'w-4 h-4 transition-transform opacity-70',
-                  showFilters && 'rotate-180',
-                )}
+            {/* Search */}
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground" />
+              <Input
+                placeholder="Tìm mã đơn, tên khách, số điện thoại, sản phẩm..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 pr-10 h-12 w-full bg-card border-border/60 rounded-xl shadow-sm focus-visible:ring-2 focus-visible:ring-theme-primary-start/25 transition-all text-[15px]"
               />
-            </Button>
-
-            {search && (
-              <Button
-                variant="ghost"
-                onClick={() => setSearch('')}
-                className="gap-2 h-10 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg"
-              >
-                <X className="w-4 h-4" />
-                Xóa tìm kiếm
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* ===== Filter Panel ===== */}
-        {showFilters && (
-          <div className="bg-card border border-border/60 rounded-xl p-5 mb-6 space-y-6 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
-            {/* Statuses Filter (Multi-select) */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[13px] font-semibold text-foreground uppercase tracking-wide">
-                  Lọc theo Trạng thái
-                </h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
+              {search && (
                 <button
-                  onClick={() => toggleStatusFilter('ALL')}
+                  onClick={() => setSearch('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Status filter dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Button
+                  variant="outline"
                   className={cn(
-                    'px-4 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm',
-                    activeStatuses.length === DEFAULT_QUEUE_STATUSES.length &&
-                      DEFAULT_QUEUE_STATUSES.every((status) =>
-                        activeStatuses.includes(status),
-                      )
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
+                    'gap-2 h-12 rounded-xl border-border/60 shadow-sm transition-all justify-start sm:w-48 shrink-0',
+                    'hover:bg-accent text-[14px] font-medium',
+                    hasStatusFilter &&
+                      'border-theme-primary-start/40 bg-theme-primary-start/5',
                   )}
                 >
-                  Tất cả
-                </button>
+                  <Filter className="w-4 h-4" />
+                  <span>Lọc trạng thái</span>
+                  {hasStatusFilter && (
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-theme-primary-start text-white text-xs font-bold ml-1">
+                      {activeStatuses.length}
+                    </span>
+                  )}
+                  <ChevronDown className="w-4 h-4 ml-auto opacity-60" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-72 max-h-96 overflow-y-auto p-2"
+                sideOffset={6}
+              >
+                {/* Select All */}
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleAll();
+                  }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent focus:bg-accent select-none"
+                >
+                  <div
+                    className={cn(
+                      'size-5 rounded border-2 flex items-center justify-center transition-all shrink-0',
+                      isAllSelected
+                        ? 'bg-primary border-primary'
+                        : 'border-border/60 bg-card',
+                    )}
+                  >
+                    {isAllSelected && <Check className="size-3 text-white" />}
+                  </div>
+                  <span className="font-semibold text-[14px] flex-1">
+                    Tất cả trạng thái
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {ALL_STATUSES.length}
+                  </span>
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="my-2 -mx-2" />
+
+                {/* Status checkboxes */}
                 {ALL_STATUSES.map((s) => {
+                  const cfg = STATUS_CFG[s];
+                  const Icon = cfg.icon;
                   const isActive = activeStatuses.includes(s);
-                  const sCfg = STATUS_CFG[s];
+                  return (
+                    <DropdownMenuItem
+                      key={s}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleStatus(s);
+                      }}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-accent focus:bg-accent select-none"
+                    >
+                      <div
+                        className={cn(
+                          'size-5 rounded border-2 flex items-center justify-center transition-all shrink-0',
+                          isActive
+                            ? 'bg-primary border-primary'
+                            : 'border-border/60 bg-card',
+                        )}
+                      >
+                        {isActive && <Check className="size-3 text-white" />}
+                      </div>
+                      <span
+                        className={cn('size-2 rounded-full shrink-0', cfg.dot)}
+                      />
+                      <Icon className={cn('size-4 shrink-0', cfg.color)} />
+                      <span className="flex-1 text-[14px]">{cfg.label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Row 2: Quick filter chips + active status chips */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Quick filter buttons */}
+            {QUICK_FILTERS.map((f) => {
+              const Icon = f.icon;
+              const isActive = quickFilter === f.id;
+              const count =
+                f.id === 'overdue-pickup'
+                  ? urgentPickup
+                  : f.id === 'overdue-delivery'
+                    ? urgentDelivery
+                    : todayCount;
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setQuickFilter(isActive ? 'all' : f.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all',
+                    isActive
+                      ? f.id === 'overdue-pickup'
+                        ? 'bg-amber-50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600'
+                        : f.id === 'overdue-delivery'
+                          ? 'bg-destructive/10 text-destructive border-destructive/40'
+                          : 'bg-info/10 text-info border-info/40'
+                      : 'bg-muted/60 text-muted-foreground border-border/60 hover:border-muted hover:bg-muted',
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      'size-3.5',
+                      isActive &&
+                        (f.id === 'overdue-pickup'
+                          ? 'text-amber-500'
+                          : f.id === 'overdue-delivery'
+                            ? 'text-destructive'
+                            : 'text-info'),
+                    )}
+                  />
+                  {f.label}
+                  {count > 0 && (
+                    <span
+                      className={cn(
+                        'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black',
+                        isActive
+                          ? f.id === 'overdue-pickup'
+                            ? 'bg-amber-500 text-white'
+                            : f.id === 'overdue-delivery'
+                              ? 'bg-destructive text-white'
+                              : 'bg-info text-white'
+                          : 'bg-muted-foreground/30 text-muted-foreground',
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Clear quick filter when active */}
+            {quickFilter !== 'all' && (
+              <button
+                onClick={() => setQuickFilter('all')}
+                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="size-3" />
+                Bỏ lọc nhanh
+              </button>
+            )}
+
+            {/* Active status chips */}
+            {hasStatusFilter && (
+              <div className="flex flex-wrap gap-1.5 items-center ml-auto">
+                {activeStatuses.map((s) => {
+                  const cfg = STATUS_CFG[s];
                   return (
                     <button
                       key={s}
-                      onClick={() => toggleStatusFilter(s)}
+                      onClick={() => toggleStatus(s)}
                       className={cn(
-                        'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm inline-flex items-center gap-1.5',
-                        isActive
-                          ? cn(
-                              sCfg.bg,
-                              sCfg.color,
-                              sCfg.border,
-                              'ring-1 ring-current/20',
-                            )
-                          : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all',
+                        cfg.bg,
+                        cfg.color,
+                        cfg.border,
                       )}
                     >
-                      <span
-                        className={cn(
-                          'size-1.5 rounded-full',
-                          isActive ? sCfg.dot : 'bg-muted-foreground/30',
-                        )}
-                      />
-                      {sCfg.label}
+                      {cfg.label}
+                      <X className="size-2.5" />
                     </button>
                   );
                 })}
               </div>
-            </div>
-
-            {/* Sort Options */}
-            <div className="border-t border-border/40 pt-4 space-y-3">
-              <h3 className="text-[13px] font-semibold text-foreground uppercase tracking-wide">
-                Sắp xếp theo
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    { k: 'created_at', l: 'Mới nhất' },
-                    { k: 'start_date', l: 'Bắt đầu sớm' },
-                    { k: 'end_date', l: 'Kết thúc gần' },
-                    { k: 'total_rental_fee', l: 'Giá trị' },
-                  ] as { k: SortKey; l: string }[]
-                ).map(({ k, l }) => (
-                  <button
-                    key={k}
-                    onClick={() => toggleSort(k)}
-                    className={cn(
-                      'px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all border shadow-sm flex items-center gap-1.5',
-                      sortKey === k
-                        ? 'bg-foreground text-background border-foreground'
-                        : 'bg-background text-muted-foreground border-border/60 hover:border-border hover:bg-accent hover:text-foreground',
-                    )}
-                  >
-                    {l}
-                    {sortKey === k && (
-                      <span className="text-xs opacity-70">
-                        {sortDir === 'desc' ? '↓' : '↑'}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* ===== Orders List ===== */}
-        {myOrders.length === 0 ? (
+        {allOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center bg-card rounded-xl border border-dashed border-border/60 shadow-sm">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <Package className="w-8 h-8 text-muted-foreground/60" />
@@ -464,14 +603,14 @@ function OrdersPageInner() {
               Không tìm thấy đơn hàng
             </p>
             <p className="text-sm text-muted-foreground mt-2 mb-6 max-w-sm">
-              Không có đơn hàng nào khớp với tìm kiếm và bộ lọc hiện tại của
-              bạn.
+              Không có đơn hàng nào khớp với tìm kiếm và bộ lọc hiện tại.
             </p>
             <button
               className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold transition-colors shadow-sm"
               onClick={() => {
                 setSearch('');
-                toggleStatusFilter('ALL');
+                setQuickFilter('all');
+                toggleAll();
               }}
             >
               Xóa tất cả bộ lọc
@@ -480,13 +619,24 @@ function OrdersPageInner() {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4">
-              {paginatedOrders.map((order) => (
-                <OrderCard
-                  key={order.rental_order_id}
-                  order={order}
-                  now={now}
-                />
-              ))}
+              {paginatedOrders.map(
+                ({
+                  order,
+                  isDeliveryOverdue,
+                  isPickupOverdue,
+                  daysDeliveryOverdue,
+                  daysPickupOverdue,
+                }) => (
+                  <OrderCard
+                    key={order.rentalOrderId}
+                    order={order}
+                    isDeliveryOverdue={Boolean(isDeliveryOverdue)}
+                    isPickupOverdue={Boolean(isPickupOverdue)}
+                    daysDeliveryOverdue={daysDeliveryOverdue}
+                    daysPickupOverdue={daysPickupOverdue}
+                  />
+                ),
+              )}
             </div>
 
             {/* ===== Pagination ===== */}
@@ -504,18 +654,13 @@ function OrdersPageInner() {
                         )}
                       />
                     </PaginationItem>
-
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                       (page) => {
                         const isActive = page === safePage;
-                        const showEllipsisStart = page === 2 && safePage > 3;
-                        const showEllipsisEnd =
-                          page === totalPages - 1 && safePage < totalPages - 2;
                         const isHidden =
                           page !== 1 &&
                           page !== totalPages &&
                           Math.abs(page - safePage) > 1;
-
                         if (isHidden) {
                           if (
                             (page === safePage - 2 && safePage > 3) ||
@@ -529,7 +674,6 @@ function OrdersPageInner() {
                           }
                           return null;
                         }
-
                         return (
                           <PaginationItem key={page}>
                             <PaginationLink
@@ -542,7 +686,6 @@ function OrdersPageInner() {
                         );
                       },
                     )}
-
                     <PaginationItem>
                       <PaginationNext
                         onClick={() =>
@@ -565,148 +708,238 @@ function OrdersPageInner() {
   );
 }
 
-function OrderCard({ order, now }: { order: DashboardOrder; now: number }) {
+function OrderCard({
+  order,
+  isDeliveryOverdue,
+  isPickupOverdue,
+  daysDeliveryOverdue,
+  daysPickupOverdue,
+}: {
+  order: RentalOrderResponse;
+  isDeliveryOverdue: boolean;
+  isPickupOverdue: boolean;
+  daysDeliveryOverdue: number;
+  daysPickupOverdue: number;
+}) {
   const cfg = STATUS_CFG[order.status];
   const Icon = cfg.icon;
-  const daysOverdue =
-    order.status === 'OVERDUE'
-      ? Math.floor((now - new Date(order.end_date).getTime()) / 86400000)
-      : 0;
+
+  const deliveryAddress = order.userAddress
+    ? [
+        order.userAddress.addressLine,
+        order.userAddress.district,
+        order.userAddress.city,
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : (order.hubAddressLine ?? '');
 
   return (
     <Link
-      href={`/staff-dashboard/orders/${order.rental_order_id}`}
+      href={`/staff-dashboard/orders/${order.rentalOrderId}`}
       className="block group outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl"
     >
       <div
         className={cn(
           'relative bg-card border rounded-xl transition-all duration-300 overflow-hidden',
-          'hover:shadow-lg hover:-translate-y-0.5',
-          'border-border/60 hover:border-theme-primary-start/30',
+          'hover:shadow-lg hover:shadow-theme-primary-start/5 hover:-translate-y-0.5',
+          'border-border/60 hover:border-theme-primary-start/40',
+          isDeliveryOverdue &&
+            'border-destructive/40 hover:border-destructive/70',
+          isPickupOverdue &&
+            !isDeliveryOverdue &&
+            'border-amber-400/40 hover:border-amber-500/70',
         )}
       >
-        {/* ===== Left Indicator ===== */}
+        {/* VẠCH MÀU VIỀN TRÁI (LEFT BORDER STRIPE) */}
+        {/* Nằm đè lên trên cùng (z-20), bám sát lề trái, lấy màu tương ứng từ trạng thái */}
         <div
           className={cn(
-            'absolute left-0 top-0 bottom-0 w-1 transition-colors',
-            cfg.dot,
+            'absolute left-0 top-0 bottom-0 w-1.5 z-20 transition-colors',
+            isDeliveryOverdue
+              ? 'bg-destructive animate-pulse'
+              : isPickupOverdue
+                ? 'bg-amber-500 animate-pulse'
+                : cfg.dot, // Lấy class bg-* từ cấu hình trạng thái
           )}
         />
 
-        <div className="pl-1">
-          {/* ===== Header Section ===== */}
-          <div className="px-5 py-4 border-b border-border/40 flex items-center justify-between gap-4 bg-muted/10">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div
-                className={cn(
-                  'flex items-center justify-center w-10 h-10 rounded-xl shrink-0 shadow-sm border border-black/5 dark:border-white/5',
-                  cfg.bg,
-                )}
-              >
-                <Icon className={cn('w-5 h-5', cfg.color)} />
+        {/* Banner cảnh báo siêu mỏng */}
+        {isDeliveryOverdue && (
+          <div className="pl-6 pr-5 py-2 bg-destructive/10 flex items-center justify-between border-b border-destructive/20 relative z-10">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="size-3.5 text-destructive" />
+              <span className="text-[12px] font-bold text-destructive uppercase tracking-wide">
+                Trễ giao hàng
+              </span>
+            </div>
+            {daysDeliveryOverdue > 0 && (
+              <span className="text-[11px] font-black text-white bg-destructive px-1.5 py-0.5 rounded shadow-sm">
+                +{daysDeliveryOverdue} ngày
+              </span>
+            )}
+          </div>
+        )}
+        {isPickupOverdue && !isDeliveryOverdue && (
+          <div className="pl-6 pr-5 py-2 bg-amber-500/10 flex items-center justify-between border-b border-amber-500/20 relative z-10">
+            <div className="flex items-center gap-2">
+              <RotateCcw className="size-3.5 text-amber-600 dark:text-amber-400" />
+              <span className="text-[12px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">
+                Trễ thu hồi
+              </span>
+            </div>
+            {daysPickupOverdue > 0 && (
+              <span className="text-[11px] font-black text-amber-900 bg-amber-400 px-1.5 py-0.5 rounded shadow-sm">
+                +{daysPickupOverdue} ngày
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* HEADER: Chỉnh pl-6 để tạo khoảng trống nhường cho vạch màu */}
+        <div className="pl-6 pr-5 py-3.5 bg-muted/20 border-b border-border/50 flex items-center justify-between gap-3 relative z-10">
+          {/* Thêm min-w-0 vào khối cha bên trái */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className={cn(
+                'p-1.5 rounded-lg border bg-background shadow-sm shrink-0', // Thêm shrink-0 cho icon
+                cfg.border,
+                cfg.color,
+              )}
+            >
+              <Icon className="size-4" />
+            </div>
+
+            {/* Thêm min-w-0 vào khối text để truncate hoạt động */}
+            <div className="flex flex-col min-w-0">
+              <h3 className="text-sm font-bold text-foreground font-mono leading-none truncate">
+                {order.rentalOrderId}
+              </h3>
+              {order.hubName && (
+                <p className="text-[11px] text-muted-foreground mt-1 leading-none truncate">
+                  {order.hubName}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Thêm shrink-0 và whitespace-nowrap để bảo vệ khối Label */}
+          <div
+            className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase shrink-0 whitespace-nowrap',
+              cfg.color,
+              cfg.bg,
+              cfg.border || 'border border-transparent',
+            )}
+          >
+            <span className={cn('size-1.5 rounded-full shrink-0', cfg.dot)} />
+            {cfg.label}
+          </div>
+        </div>
+
+        {/* BODY: Sử dụng kỹ thuật Divide để phân tách rõ ràng */}
+        <div className="flex flex-col lg:flex-row divide-y lg:divide-y-0 lg:divide-x divide-border/50 relative z-10">
+          {/* KHỐI 1: KHÁCH HÀNG & ĐỊA CHỈ (Được tăng pl-6) */}
+          <div className="flex-6 pl-6 pr-5 py-5 space-y-4 min-w-0">
+            {/* Tên & SĐT trên cùng 1 hàng */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1 min-w-0">
+                <p className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <User className="size-3" /> Khách hàng
+                </p>
+                <p className="text-[13px] sm:text-sm font-semibold text-foreground truncate">
+                  {order.userAddress?.recipientName ?? order.hubName ?? '—'}
+                </p>
               </div>
-              <div className="min-w-0 flex flex-col justify-center gap-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-foreground tracking-tight font-mono whitespace-nowrap">
-                    {order.order_code}
-                  </h3>
-                  {daysOverdue > 0 && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold text-destructive bg-destructive/10 uppercase tracking-wider border border-destructive/20 whitespace-nowrap">
-                      Quá {daysOverdue} ngày
-                    </span>
-                  )}
+              <div className="space-y-1 min-w-0">
+                <p className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <Phone className="size-3" /> Điện thoại
+                </p>
+                <p className="text-[13px] sm:text-sm font-medium text-foreground truncate">
+                  {fmtPhone(order.userAddress?.phoneNumber)}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">
+                <MapPin className="size-3" /> Giao đến
+              </p>
+              <p className="text-[12px] sm:text-[13px] text-foreground font-medium leading-snug line-clamp-2">
+                {deliveryAddress || 'Nhận tại cửa hàng'}
+              </p>
+            </div>
+          </div>
+
+          {/* KHỐI 2: LỊCH TRÌNH TIMELINE */}
+          <div className="flex-[3.5] p-5 flex flex-col justify-center min-w-0">
+            {/* Wrapper tự động Responsive: 
+                Mobile: Lưới 2 cột (grid grid-cols-2)
+                Desktop: Xếp dọc (lg:flex lg:flex-col) 
+            */}
+            <div className="grid grid-cols-2 gap-4 lg:flex lg:flex-col lg:gap-6">
+              {/* Cột mốc 1: Nhận hàng */}
+              <div className="flex items-start gap-2.5 min-w-0">
+                {/* Điểm nhấn màu xanh */}
+                <div className="w-1.5 h-full min-h-[36px] rounded-full bg-blue-500/20 flex flex-col shrink-0">
+                  <div className="w-1.5 h-3.5 bg-blue-500 rounded-full" />
+                </div>
+                <div className="min-w-0 mt-0.5">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1.5">
+                    Nhận hàng
+                  </p>
+                  <p className="text-[13px] sm:text-sm font-bold text-blue-600 dark:text-blue-400 truncate">
+                    {fmtDate(order.expectedDeliveryDate)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Cột mốc 2: Trả hàng */}
+              <div className="flex items-start gap-2.5 min-w-0">
+                {/* Điểm nhấn màu cam */}
+                <div className="w-1.5 h-full min-h-[36px] rounded-full bg-amber-500/20 flex flex-col shrink-0">
+                  <div className="w-1.5 h-3.5 bg-amber-500 rounded-full" />
+                </div>
+                <div className="min-w-0 mt-0.5">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1.5">
+                    Trả hàng
+                  </p>
+                  <p className="text-[13px] sm:text-sm font-bold text-amber-600 dark:text-amber-400 truncate">
+                    {fmtDate(order.expectedRentalEndDate)}
+                  </p>
                 </div>
               </div>
             </div>
-
-            <div className="shrink-0">
-              <span
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] uppercase tracking-wide font-bold shadow-sm whitespace-nowrap',
-                  cfg.color,
-                  cfg.bg,
-                  cfg.border || 'border border-transparent',
-                )}
-              >
-                <span
-                  className={cn('w-1.5 h-1.5 rounded-full shrink-0', cfg.dot)}
-                />
-                {cfg.label}
-              </span>
-            </div>
           </div>
 
-          {/* ===== Main Content Grid ===== */}
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.5fr_1fr_0.8fr] gap-5 lg:gap-6">
-            {/* 1. Customer Info */}
-            <div className="space-y-1.5 min-w-0">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                <User className="w-3.5 h-3.5 shrink-0" />
-                Khách hàng
-              </p>
-              <p className="text-sm font-bold text-foreground truncate">
-                {order.renter.full_name}
-              </p>
-              <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground font-mono font-medium whitespace-nowrap">
-                <Phone className="w-3.5 h-3.5 shrink-0" />
-                {order.renter.phone_number}
-              </div>
-            </div>
-
-            {/* 2. Products */}
-            <div className="space-y-1.5 min-w-0">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                <Package className="w-3.5 h-3.5 shrink-0" />
-                Sản phẩm
-              </p>
-              <p className="text-sm font-medium text-foreground line-clamp-2 leading-relaxed">
-                {order.items.map((i) => i.product_name).join(', ')}
-              </p>
-            </div>
-
-            {/* 3. Dates */}
-            <div className="space-y-1.5">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                <Calendar className="w-3.5 h-3.5 shrink-0" />
-                Lịch trình
-              </p>
-              <p className="text-sm text-foreground font-semibold whitespace-nowrap">
-                {fmtDateShort(order.start_date)} →{' '}
-                {fmtDateShort(order.end_date)}
-              </p>
-            </div>
-
-            {/* 4. Price Summary */}
-            <div className="space-y-1.5 lg:text-right">
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+          {/* KHỐI 3: TÀI CHÍNH & ACTION */}
+          <div className="flex-3 p-5 flex flex-row lg:flex-col items-center lg:items-end justify-between bg-zinc-50/50 dark:bg-zinc-900/10 min-w-0 gap-4">
+            <div className="text-left lg:text-right w-full">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
                 Thành tiền
               </p>
-              <p className="text-lg font-black text-success tabular-nums tracking-tight leading-none pt-0.5">
-                {fmt(order.total_rental_fee)}
-              </p>
-              {order.total_penalty_amount ? (
-                <p className="text-[11px] font-bold text-destructive bg-destructive/10 inline-block px-1.5 py-0.5 rounded border border-destructive/20 whitespace-nowrap">
-                  +{fmt(order.total_penalty_amount)} phạt
+              <div className="flex items-baseline lg:justify-end gap-0.5">
+                <p className="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight">
+                  {fmt(order.rentalFeeAmount)}
                 </p>
-              ) : null}
-            </div>
-          </div>
+                <span className="text-emerald-700/60 font-semibold text-sm underline decoration-1 underline-offset-2">
+                  đ
+                </span>
+              </div>
 
-          {/* ===== Footer: Address & Action ===== */}
-          <div className="px-5 py-3.5 bg-muted/20 border-t border-border/40 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5 min-w-0 text-[13px]">
-              <MapPin className="w-4 h-4 shrink-0 text-muted-foreground" />
-              <span className="text-muted-foreground line-clamp-1">
-                Giao đến:{' '}
-                <strong className="text-foreground font-semibold ml-1">
-                  {order.delivery_address || 'Nhận tại cửa hàng'}
-                </strong>
-              </span>
+              {(order.penaltyChargeAmount ?? 0) > 0 && (
+                <div className="mt-1.5">
+                  <span className="inline-block text-[11px] font-bold text-destructive bg-destructive/10 px-2 py-0.5 rounded border border-destructive/20">
+                    Phạt: +{fmt(order.penaltyChargeAmount ?? 0)}
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-1.5 text-[13px] font-bold text-theme-primary-start group-hover:text-theme-primary-end transition-colors shrink-0">
+            {/* Nút Action ảo */}
+            <div className="flex items-center gap-1.5 text-lg font-bold text-theme-primary-start group-hover:text-theme-primary-end transition-colors shrink-0 bg-theme-primary-start/10 px-12 py-2 rounded-lg">
               <span>Xem chi tiết</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </div>

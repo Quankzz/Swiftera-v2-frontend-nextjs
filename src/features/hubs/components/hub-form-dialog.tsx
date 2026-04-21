@@ -112,7 +112,7 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
 
     try {
       if (isEdit && hubId) {
-        // PATCH — chỉ gửi các field có thể update (code không trong PATCH body)
+        // PATCH - chỉ gửi các field có thể update (code không trong PATCH body)
         await updateMutation.mutateAsync({
           hubId,
           payload: {
@@ -130,7 +130,7 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
         });
         toast.success(`Đã cập nhật hub "${form.name}" thành công`);
       } else {
-        // POST — gửi code + name (required) + optional fields
+        // POST - gửi code + name (required) + optional fields
         await createMutation.mutateAsync({
           code: form.code,
           name: form.name,
@@ -201,7 +201,7 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
               Thông tin bắt buộc
             </p>
 
-            {/* Code — chỉ required khi tạo mới, không sửa được khi edit */}
+            {/* Code - chỉ required khi tạo mới, không sửa được khi edit */}
             <div className='space-y-1.5'>
               <label className='text-sm font-medium text-text-main'>
                 Mã hub <span className='text-red-500'>*</span>
@@ -365,7 +365,7 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
               />
             </div>
 
-            {/* isActive — chỉ hiện khi edit */}
+            {/* isActive - chỉ hiện khi edit */}
             {isEdit && (
               <div className='flex items-center gap-3'>
                 <label className='relative inline-flex cursor-pointer items-center'>
@@ -394,7 +394,7 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
           </div>
         </form>
 
-        {/* Location picker modal — render outside form để không conflict với form submit */}
+        {/* Location picker modal - render outside form để không conflict với form submit */}
         {locationPickerOpen && (
           <LocationPickerModal
             initialLat={form.latitude ? parseFloat(form.latitude) : undefined}

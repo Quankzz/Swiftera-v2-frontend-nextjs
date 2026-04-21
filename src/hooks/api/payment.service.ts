@@ -1,8 +1,8 @@
 /**
- * Payment API service — Module 13: PAYMENTS (API-086 → API-089)
+ * Payment API service - Module 13: PAYMENTS (API-086 → API-089)
  *
  * Service layer chỉ chứa hàm gọi API thuần túy.
- * Không chứa UI logic — chỉ trả về raw data.
+ * Không chứa UI logic - chỉ trả về raw data.
  */
 
 import { httpService } from '@/api/http';
@@ -23,6 +23,11 @@ export interface NormalizedPaginatedTransactions {
   size: number;
   totalItems: number;
   totalPages: number;
+}
+
+export interface InitiatePaymentInput {
+  rentalOrderId: string;
+  additionalRentalDays?: number;
 }
 
 // ─── API functions ─────────────────────────────────────────────────────────────
@@ -93,16 +98,40 @@ export async function getPaymentsByRentalOrder(
  * Tạo link thanh toán VNPay, trả về URL redirect
  *
  * Logic backend:
- *   amount = totalPayableAmount - totalPaidAmount
+ *   amount = (totalPayableAmount - totalPaidAmount) + provisional extension amount (nếu có additionalRentalDays)
  *   Tạo transaction RENTAL_FEE status=PENDING
  *   Ký và trả URL thanh toán VNPay
  *
- * Nếu đơn không ở PENDING_PAYMENT hoặc đã thanh toán đủ → trả lỗi 4xx
+ * Nếu đơn ở trạng thái không cho phép thanh toán (ví dụ CANCELLED/COMPLETED)
+ * hoặc đã thanh toán đủ → trả lỗi 4xx
  */
-export async function initiatePayment(rentalOrderId: string): Promise<string> {
+export async function initiatePayment(
+  input: string | InitiatePaymentInput,
+): Promise<string> {
+  const rentalOrderId = typeof input === 'string' ? input : input.rentalOrderId;
+  const additionalRentalDays =
+    typeof input === 'string' ? undefined : input.additionalRentalDays;
+
   const res = await httpService.post<PaymentInitiateResponse>(
     `/payments/${rentalOrderId}/initiate`,
     undefined,
+    {
+      ...authOpts,
+      params:
+        typeof additionalRentalDays === 'number'
+          ? { additionalRentalDays }
+          : undefined,
+    },
+  );
+  return res.data.data;
+}
+
+export async function initiatePaymentBatch(
+  orderIds: string[],
+): Promise<string> {
+  const res = await httpService.post<PaymentInitiateResponse>(
+    '/payments/initiate-batch',
+    { orderIds },
     authOpts,
   );
   return res.data.data;

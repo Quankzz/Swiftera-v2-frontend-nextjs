@@ -29,7 +29,11 @@ import {
   Minus,
   Quote,
 } from 'lucide-react';
-import { uploadSingleFile } from '@/features/files/api/file.service';
+import {
+  uploadSingleFile,
+  deleteSingleFile,
+} from '@/features/files/api/file.service';
+import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 import ColorPicker from './color-picker';
 import VideoModal from './video-modal';
 
@@ -38,6 +42,8 @@ interface RichEditorProps {
   onChange?: (html: string) => void;
   minHeight?: string;
   initialContent?: string;
+  /** Folder name used for uploaded images. E.g. 'products/{productId}' or 'policies/{policyId}' */
+  uploadFolder?: string;
 }
 
 // ─── Toolbar separator ────────────────────────────────────────────
@@ -82,8 +88,30 @@ function ToolBtn({
 function extractYouTubeId(url: string): string | null {
   try {
     const u = new URL(url);
-    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
-    if (u.hostname === 'youtu.be') return u.pathname.slice(1) || null;
+
+    if (u.hostname.includes('youtu.be')) {
+      return u.pathname.split('/').filter(Boolean)[0] ?? null;
+    }
+
+    if (
+      u.hostname.includes('youtube.com') ||
+      u.hostname.includes('youtube-nocookie.com')
+    ) {
+      if (u.pathname.startsWith('/watch')) {
+        return u.searchParams.get('v');
+      }
+      if (u.pathname.startsWith('/embed/')) {
+        return u.pathname.replace('/embed/', '').split('/')[0] ?? null;
+      }
+      if (u.pathname.startsWith('/shorts/')) {
+        return u.pathname.replace('/shorts/', '').split('/')[0] ?? null;
+      }
+      if (u.pathname.startsWith('/live/')) {
+        return u.pathname.replace('/live/', '').split('/')[0] ?? null;
+      }
+      return u.searchParams.get('v');
+    }
+
     return null;
   } catch {
     return null;
@@ -136,11 +164,14 @@ export default function RichEditor({
   onChange,
   minHeight = '180px',
   initialContent = '',
+  uploadFolder = 'products',
 }: RichEditorProps) {
   const imgPickerRef = useRef<HTMLInputElement>(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [imageMode, setImageMode] = useState<'none' | 'url'>('none');
   const [imageUrl, setImageUrl] = useState('');
+  // Track currently known Azure blob image URLs to detect removals
+  const trackedBlobImagesRef = useRef<Set<string>>(new Set());
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -171,9 +202,43 @@ export default function RichEditor({
     ],
     content: initialContent || '',
     immediatelyRender: false,
+    onCreate: ({ editor: e }) => {
+      // Seed the tracked set with any images already in the initial content
+      const urls = new Set<string>();
+      e.state.doc.descendants((node) => {
+        if (node.type.name === 'image' && node.attrs.src) {
+          urls.add(node.attrs.src as string);
+        }
+      });
+      trackedBlobImagesRef.current = urls;
+    },
     onUpdate: ({ editor: e }) => {
       const html = e.getHTML();
       onChange?.(html === '<p></p>' ? '' : html);
+
+      // Detect removed Azure blob images and delete them from storage
+      const currentUrls = new Set<string>();
+      e.state.doc.descendants((node) => {
+        if (node.type.name === 'image' && node.attrs.src) {
+          currentUrls.add(node.attrs.src as string);
+        }
+      });
+
+      const removedUrls = [...trackedBlobImagesRef.current].filter(
+        (u) => !currentUrls.has(u),
+      );
+      for (const url of removedUrls) {
+        if (isAzureBlobUrl(url)) {
+          const path = extractBlobPathFromUrl(url);
+          if (path) {
+            deleteSingleFile(path).catch(() => {
+              /* best-effort, silent */
+            });
+          }
+        }
+      }
+
+      trackedBlobImagesRef.current = currentUrls;
     },
     editorProps: {
       attributes: {
@@ -260,7 +325,7 @@ export default function RichEditor({
         .run();
 
       try {
-        const result = await uploadSingleFile(file, 'products');
+        const result = await uploadSingleFile(file, uploadFolder);
 
         // Find and delete the placeholder node by searching for data-upload-placeholder
         const { state } = editor;
@@ -331,7 +396,7 @@ export default function RichEditor({
         }
       }
     },
-    [editor],
+    [editor, uploadFolder],
   );
 
   const handleColorChange = useCallback(

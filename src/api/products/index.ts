@@ -1,5 +1,5 @@
 /**
- * Products API — /api/v1/products
+ * Products API - /api/v1/products
  *
  * Module 8 trong tài liệu API: PRODUCTS (5 endpoints)
  * Base URL: /api/v1

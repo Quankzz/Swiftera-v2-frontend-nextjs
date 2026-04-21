@@ -268,7 +268,7 @@ export function AssignStaffDialog({
                 Chọn nhân viên
               </h2>
               <p className='text-xs text-emerald-100'>
-                Hub: {hub.name} — Đơn:{' '}
+                Hub: {hub.name} - Đơn:{' '}
                 {order.rentalOrderId.slice(0, 8).toUpperCase()}
               </p>
             </div>

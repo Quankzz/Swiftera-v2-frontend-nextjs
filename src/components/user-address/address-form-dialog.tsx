@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 
 const inputCls =
-  'h-10 w-full rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/20';
+  'h-10 w-full rounded-xl border border-input bg-background px-3.5 text-sm placeholder:text-muted-foreground/60 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/20';
 const labelCls = 'mb-1.5 block text-xs font-semibold text-muted-foreground';
 
 export type AddressFormValues = {
@@ -85,8 +85,8 @@ export function AddressFormDialog({
       <DialogContent className='max-h-[90dvh] overflow-y-auto sm:max-w-md'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2.5'>
-            <div className='flex size-8 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-950/50'>
-              <Truck className='size-4 text-rose-600 dark:text-rose-400' />
+            <div className='flex size-8 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/50'>
+              <Truck className='size-4 text-blue-600 dark:text-blue-400' />
             </div>
             {title}
           </DialogTitle>
@@ -98,7 +98,7 @@ export function AddressFormDialog({
               <span className='flex items-center gap-1'>
                 <User className='size-3' />
                 Họ và tên người nhận
-                <span className='ml-0.5 text-rose-500'>*</span>
+                <span className='ml-0.5 text-blue-500'>*</span>
               </span>
             </label>
             <input
@@ -119,7 +119,7 @@ export function AddressFormDialog({
               <span className='flex items-center gap-1'>
                 <Phone className='size-3' />
                 Số điện thoại
-                <span className='ml-0.5 text-rose-500'>*</span>
+                <span className='ml-0.5 text-blue-500'>*</span>
               </span>
             </label>
             <input
@@ -205,7 +205,7 @@ export function AddressFormDialog({
             <label className='flex cursor-pointer items-center gap-2.5 text-sm text-foreground'>
               <input
                 type='checkbox'
-                className='size-4 rounded border-input accent-rose-600'
+                className='size-4 rounded border-input accent-blue-600'
                 checked={form.isDefault}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, isDefault: e.target.checked }))
@@ -227,7 +227,7 @@ export function AddressFormDialog({
             Hủy
           </Button>
           <Button
-            className='flex-1 rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700 disabled:opacity-50'
+            className='flex-1 rounded-xl bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:opacity-50'
             type='button'
             disabled={!canSubmit || isSubmitting}
             onClick={handleSubmit}

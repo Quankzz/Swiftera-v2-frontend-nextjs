@@ -2,6 +2,7 @@
 
 import { Trash2, X, AlertTriangle } from 'lucide-react';
 import type { ProductResponse } from '@/features/products/types';
+import { stripHtml } from '@/lib/rich-text';
 
 interface ProductDeleteDialogProps {
   product: ProductResponse | null;
@@ -57,7 +58,7 @@ export function ProductDeleteDialog({
             <p className='font-semibold text-text-main'>{product.name}</p>
             {product.description && (
               <p className='mt-0.5 line-clamp-2 text-sm text-text-sub'>
-                {product.description}
+                {stripHtml(product.description)}
               </p>
             )}
           </div>

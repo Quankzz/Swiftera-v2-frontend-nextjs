@@ -112,11 +112,11 @@ export function CategoryTreeNode({
             : 'border-gray-100 dark:border-white/8 hover:border-gray-200 dark:hover:border-white/15 hover:bg-gray-50/60 dark:hover:bg-white/5',
           isSortableOver &&
             !isDragging &&
-            'bg-rose-50/30 dark:bg-rose-900/10 border-theme-primary-start/40',
+            'bg-blue-50/30 dark:bg-blue-900/10 border-theme-primary-start/40',
         )}
         style={{ paddingLeft: depth === 0 ? '10px' : '8px' }}
       >
-        {/* Drag handle — suppressHydrationWarning because dnd-kit injects
+        {/* Drag handle - suppressHydrationWarning because dnd-kit injects
             aria-describedby="DndDescribedBy-{n}" with a counter that differs
             between SSR (0) and the first client render (incremented). */}
         <button
@@ -151,7 +151,7 @@ export function CategoryTreeNode({
 
         {/* Root badge */}
         {depth === 0 && (
-          <span className='shrink-0 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary-start'>
+          <span className='shrink-0 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-theme-primary-start'>
             Gốc
           </span>
         )}
@@ -197,7 +197,7 @@ export function CategoryTreeNode({
         </div>
       </div>
 
-      {/* Children — each level has its OWN SortableContext so DnD stays within siblings */}
+      {/* Children - each level has its OWN SortableContext so DnD stays within siblings */}
       {showChildren && hasChildren && (
         <div className='ml-5 mt-1 flex flex-col gap-1 border-l-2 border-dashed border-gray-200 dark:border-white/10 pl-3'>
           <SortableContext
@@ -228,7 +228,7 @@ export function CategoryTreeNode({
           className={cn(
             'ml-5 mt-0.5 flex items-center gap-2 rounded-md border-2 border-dashed px-3 py-1.5 text-xs transition-all',
             isDropIntoOver
-              ? 'border-theme-primary-start bg-rose-50/60 dark:bg-rose-900/10 text-theme-primary-start font-medium'
+              ? 'border-theme-primary-start bg-blue-50/60 dark:bg-blue-900/10 text-theme-primary-start font-medium'
               : 'border-gray-200 dark:border-white/15 text-text-sub',
           )}
         >

@@ -11,12 +11,12 @@ export default function Home() {
   return (
     <Layout>
       <div className='bg-white dark:bg-surface-base pb-20'>
-        {/* Hero — full viewport, self-fetches categories */}
+        {/* Hero - full viewport, self-fetches categories */}
         <HeroBanner />
 
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           {/* Danh mục */}
-          <section className='mt-14 space-y-6'>
+          <section className='mt-8 space-y-6'>
             <div className='flex items-end justify-between'>
               <div>
                 <h2 className='text-3xl font-extrabold text-text-main'>
@@ -34,7 +34,7 @@ export default function Home() {
           <HomeFeaturedProducts />
         </div>
 
-        {/* Quy trình 3 bước — full-bleed */}
+        {/* Quy trình 3 bước - full-bleed */}
         <HomeStepsProcess />
 
         <div className='mx-auto max-w-full px-4 lg:px-18'>

@@ -15,8 +15,8 @@ import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useTheme } from '@/context/theme-context';
 import { PanelLeftIcon } from 'lucide-react';
-import { MOCK_STATS } from '@/data/mockDashboard';
 import { useState, useEffect } from 'react';
+import { useStaffOrderCounts, selectUrgentTotal } from '@/stores/staff-order-counts-store';
 
 const PAGE_TITLES: Record<
   string,
@@ -72,6 +72,8 @@ function ThemeToggle() {
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   const pathname = usePathname();
+  const counts = useStaffOrderCounts((s) => s.counts);
+  const urgentTotal = selectUrgentTotal(counts);
 
   // Match dynamic routes like /staff-dashboard/orders/[id]
   const orderDetailMatch = pathname.match(/^\/dashboard\/orders\/(.+)$/);
@@ -122,9 +124,9 @@ export function SiteHeader() {
           <ThemeToggle />
           <Button variant="ghost" size="icon" className="relative h-8 w-8">
             <Bell className="size-4" />
-            {MOCK_STATS.pending_orders > 0 && (
+            {urgentTotal > 0 && (
               <span className="absolute right-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-                {MOCK_STATS.pending_orders}
+                {urgentTotal}
               </span>
             )}
           </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-// Adapted from React Bits — Particles (ts-tailwind version)
+// Adapted from React Bits - Particles (ts-tailwind version)
 // https://github.com/DavidHDev/react-bits
 // Dependency: ogl (already in package.json)
 

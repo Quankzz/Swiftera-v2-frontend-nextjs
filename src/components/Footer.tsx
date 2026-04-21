@@ -50,18 +50,26 @@ export function Footer() {
             <ul className='space-y-4 text-sm text-text-sub'>
               <li>
                 <Link
-                  href='/categories'
+                  href='/catalog'
                   className='transition-colors hover:text-theme-primary-start'
                 >
-                  Danh mục nổi bật
+                  Danh mục sản phẩm
                 </Link>
               </li>
               <li>
                 <Link
-                  href='/pricing'
+                  href='/faq'
                   className='transition-colors hover:text-theme-primary-start'
                 >
-                  Bảng giá thuê
+                  Câu hỏi thường gặp
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href='/q-and-a'
+                  className='transition-colors hover:text-theme-primary-start'
+                >
+                  Giải đáp thắc mắc
                 </Link>
               </li>
               <li>
@@ -88,18 +96,26 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href='/contact'
+                  href='/contact-sales'
                   className='transition-colors hover:text-theme-primary-start'
                 >
-                  Liên hệ
+                  Liên hệ mua hàng
                 </Link>
               </li>
               <li>
                 <Link
-                  href='/careers'
+                  href='/contact-info'
                   className='transition-colors hover:text-theme-primary-start'
                 >
-                  Tuyển dụng
+                  Thông tin liên hệ
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href='/policies'
+                  className='transition-colors hover:text-theme-primary-start'
+                >
+                  Trung tâm chính sách
                 </Link>
               </li>
             </ul>
@@ -130,22 +146,28 @@ export function Footer() {
           </p>
           <div className='flex gap-8 text-xs font-bold text-text-sub'>
             <Link
-              href='/terms'
+              href='/policies/returns'
               className='transition-colors hover:text-text-main'
             >
-              Điều khoản sử dụng
+              Chính sách đổi trả
             </Link>
             <Link
-              href='/privacy'
+              href='/policies/shipping'
               className='transition-colors hover:text-text-main'
             >
-              Chính sách bảo mật
+              Chính sách vận chuyển
             </Link>
             <Link
-              href='/cookies'
+              href='/policies/warranty'
               className='transition-colors hover:text-text-main'
             >
-              Cài đặt cookie
+              Chính sách bảo hành
+            </Link>
+            <Link
+              href='/business-license'
+              className='transition-colors hover:text-text-main'
+            >
+              Giấy phép kinh doanh
             </Link>
           </div>
         </div>

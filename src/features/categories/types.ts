@@ -1,5 +1,5 @@
 /**
- * Category feature types — source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
+ * Category feature types - source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  * Module 7: CATEGORIES (API-045 → API-050)
  */
 
@@ -38,7 +38,7 @@ export interface CategoryResponse {
 export type PaginatedCategoriesResponse = PaginatedResponse<CategoryResponse>;
 
 // ── CategoryTreeNode (API-048 GET /categories/tree) ─────────────────────────
-// Tree nodes do NOT have parentId — it is implied by nesting.
+// Tree nodes do NOT have parentId - it is implied by nesting.
 
 export interface CategoryTreeNode {
   categoryId: string;

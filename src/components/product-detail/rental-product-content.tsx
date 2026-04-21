@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { sanitizeRichHtml } from '@/lib/sanitize-rich-html';
 import { cn } from '@/lib/utils';
 
 /* ---------- Mô tả (mở rộng) ---------- */
@@ -18,27 +19,27 @@ export function RentalProductDescription({
   className,
 }: RentalProductDescriptionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const safeHtml = useMemo(() => sanitizeRichHtml(text), [text]);
 
   return (
     <div className={cn('relative font-sans', className)}>
       <div
         className={cn(
-          'prose prose-sm prose-neutral max-w-none text-foreground transition-all duration-300 whitespace-pre-wrap sm:prose-base dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground',
+          'rich-content prose prose-sm prose-neutral max-w-none text-foreground transition-all duration-300 sm:prose-base dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground',
           !isExpanded && 'overflow-hidden',
         )}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
         style={{
           maxHeight: !isExpanded ? `${maxHeight}px` : undefined,
           WebkitMaskImage: !isExpanded
             ? 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0) 100%)'
             : 'none',
         }}
-      >
-        {text}
-      </div>
+      />
       <div className='flex justify-center mt-4'>
         <Button
           variant='ghost'
-          className='flex items-center justify-center font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300'
+          className='flex items-center justify-center font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? 'Thu gọn' : 'Xem thêm'}

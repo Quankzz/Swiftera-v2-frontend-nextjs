@@ -4,13 +4,19 @@ import { useRef, useState } from 'react';
 import { X, Loader2, Upload, Link as LinkIcon, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { isAzureBlobUrl, extractBlobPathFromUrl } from '@/lib/blob-utils';
 import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
 } from '@/features/categories/hooks/use-category-management';
-import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import { parseErrorForForm } from '@/api/apiService';
+import {
+  useUploadFileMutation,
+  useDeleteFileMutation,
+} from '@/features/files/hooks/use-files';
 import type { CategoryResponse } from '@/features/categories/types';
 import { CategoryTreeSelect } from './category-tree-select';
+import { toast } from 'sonner';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -79,6 +85,7 @@ export function CategoryFormDialog({
   const createMutation = useCreateCategoryMutation();
   const updateMutation = useUpdateCategoryMutation();
   const uploadMutation = useUploadFileMutation();
+  const deleteMutation = useDeleteFileMutation();
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   // ── Validation ─────────────────────────────────────────────────────────────
@@ -101,6 +108,10 @@ export function CategoryFormDialog({
     if (!file) return;
     e.target.value = '';
     setIsUploading(true);
+
+    // Capture old image URL before upload to delete after success
+    const oldImageUrl = form.imageUrl;
+
     try {
       const result = await uploadMutation.mutateAsync({
         file,
@@ -108,6 +119,16 @@ export function CategoryFormDialog({
       });
       setForm((f) => ({ ...f, imageUrl: result.fileUrl }));
       setUrlMode(false);
+
+      // Delete old image from Azure Blob if it was a blob URL
+      if (oldImageUrl && isAzureBlobUrl(oldImageUrl)) {
+        const oldPath = extractBlobPathFromUrl(oldImageUrl);
+        if (oldPath) {
+          deleteMutation
+            .mutateAsync(oldPath)
+            .catch(() => toast.error('Không thể xóa ảnh cũ khỏi bộ nhớ.'));
+        }
+      }
     } catch {
       setServerError('Tải ảnh lên thất bại. Vui lòng thử lại.');
     } finally {
@@ -148,9 +169,22 @@ export function CategoryFormDialog({
       }
       onClose();
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại';
-      setServerError(msg);
+      const { fieldErrors, formMessage } = parseErrorForForm(
+        err,
+        'Có lỗi xảy ra, vui lòng thử lại',
+      );
+
+      setErrors((prev) => ({
+        ...prev,
+        name: fieldErrors.name,
+        sortOrder: fieldErrors.sortOrder,
+        imageUrl: fieldErrors.imageUrl,
+      }));
+
+      if (formMessage) {
+        setServerError(formMessage);
+        toast.error(formMessage);
+      }
     }
   }
 
@@ -310,7 +344,7 @@ export function CategoryFormDialog({
                 onChange={(id) => setForm((f) => ({ ...f, parentId: id }))}
                 excludeId={target?.categoryId}
                 allowRoot
-                rootLabel='— Danh mục gốc —'
+                rootLabel='- Danh mục gốc -'
                 disabled={isPending}
               />
             </div>
@@ -337,7 +371,7 @@ export function CategoryFormDialog({
             </div>
           </div>
 
-          {/* isActive — edit mode only */}
+          {/* isActive - edit mode only */}
           {isEdit && (
             <div className='flex items-center justify-between rounded-lg border border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3 px-4 py-3'>
               <div>

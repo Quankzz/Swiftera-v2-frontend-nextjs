@@ -14,30 +14,50 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import Link from 'next/link';
+
+import { useAuthStore } from '@/stores/auth-store';
+import { useUserAddressesQuery } from '@/hooks/api/use-user-addresses';
+import type { UserAddressResponse } from '@/api/userAddressApi';
 
 /* ---------- Địa chỉ giao hàng (modal) ---------- */
 
-function RentalDeliveryAddressDialog() {
-  const [selectedOption, setSelectedOption] = useState('default');
+function RentalDeliveryAddressDialog({
+  open,
+  onOpenChange,
+  selectedAddressId,
+  onSelect,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  selectedAddressId?: string | null;
+  onSelect?: (addr: UserAddressResponse) => void;
+}) {
+  const currentUserId = useAuthStore((s) => s.user?.userId ?? null);
+  const { data: addresses = [], isLoading } = useUserAddressesQuery({
+    enabled: !!currentUserId && open,
+  });
+
+  const [selectedId, setSelectedId] = useState<string | null>(
+    selectedAddressId ?? null,
+  );
+
+
+  const estimateFor = (city?: string | null) => {
+    if (!city) return 'Ước tính: 1-2 ngày';
+    const c = city.toLowerCase();
+    if (c.includes('hồ chí minh') || c.includes('ho chi minh') || c.includes('hcm') || c.includes('hà nội') || c.includes('ha noi')) {
+      return 'Ước tính: 2-4 giờ (nội thành)';
+    }
+    return 'Ước tính: 1-2 ngày';
+  };
 
   return (
-    <Dialog>
-      <DialogTrigger className='mt-2 inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'>
-        Nhập địa chỉ
-      </DialogTrigger>
-      <DialogContent className='max-h-[min(90dvh,720px)] overflow-y-auto sm:max-w-[500px]'>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className='max-h-[min(90dvh,720px)] overflow-y-auto overflow-x-hidden w-full sm:max-w-125'>
         <DialogHeader>
           <DialogTitle className='text-xl font-bold tracking-tight text-foreground'>
             Địa chỉ giao hàng
@@ -46,80 +66,103 @@ function RentalDeliveryAddressDialog() {
 
         <div className='space-y-6 font-sans'>
           <p className='text-sm leading-relaxed text-muted-foreground'>
-            Hãy chọn địa chỉ nhận hàng để được dự báo thời gian giao hàng cùng
-            phí đóng gói, vận chuyển một cách chính xác nhất.
+            Chọn địa chỉ nhận hàng để dự báo thời gian giao và lưu lại cho đơn
+            sau.
           </p>
 
-          <Button className='kinetic-gradient w-full rounded-xl font-bold text-white hover:opacity-90'>
-            Đăng nhập để chọn địa chỉ giao hàng
-          </Button>
+          {!currentUserId && (
+            <div className='space-y-3'>
+              <Link
+                href={'/auth/login'}
+                className='kinetic-gradient w-full inline-flex h-11 items-center justify-center rounded-xl font-bold text-white hover:opacity-90'
+              >
+                Đăng nhập để chọn địa chỉ giao hàng
+              </Link>
 
-          <div className='relative'>
-            <div className='absolute inset-0 flex items-center'>
-              <span className='w-full border-t border-border' />
-            </div>
-            <div className='relative flex justify-center text-xs font-bold uppercase tracking-widest'>
-              <span className='bg-card px-2 text-muted-foreground'>hoặc</span>
-            </div>
-          </div>
+              <div className='relative'>
+                <div className='absolute inset-0 flex items-center'>
+                  <span className='w-full border-t border-border' />
+                </div>
+                <div className='relative flex justify-center text-xs font-bold uppercase tracking-widest'>
+                  <span className='bg-card px-2 text-muted-foreground'>hoặc</span>
+                </div>
+              </div>
 
-          <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
-            <div className='flex items-center space-x-2'>
-              <RadioGroupItem value='default' id='default' />
-              <Label htmlFor='default'>
-                Phường Bến Nghé, Quận 1, Hồ Chí Minh
-              </Label>
-            </div>
-            <div className='flex items-center space-x-2 mt-4'>
-              <RadioGroupItem value='other' id='other' />
-              <Label htmlFor='other'>Chọn khu vực giao hàng khác</Label>
-            </div>
-          </RadioGroup>
-
-          {selectedOption === 'other' && (
-            <div className='space-y-4'>
-              <div>
-                <Label>Tỉnh/Thành phố</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Vui lòng chọn tỉnh/thành phố' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='hcm'>Hồ Chí Minh</SelectItem>
-                    <SelectItem value='hn'>Hà Nội</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Quận/Huyện</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Vui lòng chọn quận/huyện' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='q1'>Quận 1</SelectItem>
-                    <SelectItem value='q2'>Quận 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Phường/Xã</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder='Vui lòng chọn phường/xã' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='bn'>Bến Nghé</SelectItem>
-                    <SelectItem value='bt'>Bến Thành</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <p className='text-sm text-muted-foreground'>
+                Bạn có thể thêm địa chỉ sau khi đăng nhập trong trang{' '}
+                <Link href='/profile' className='text-blue-600 hover:underline'>
+                  Hồ sơ
+                </Link>
+              </p>
             </div>
           )}
 
-          <Button className='h-11 w-full rounded-xl bg-rose-600 font-bold text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'>
-            GIAO ĐẾN ĐỊA CHỈ NÀY
-          </Button>
+          {currentUserId && (
+            <div className='space-y-4'>
+              {isLoading && <p className='text-sm text-muted-foreground'>Đang tải địa chỉ…</p>}
+              {!isLoading && addresses.length === 0 && (
+                <div className='space-y-2'>
+                  <p className='text-sm text-muted-foreground'>
+                    Bạn chưa có địa chỉ giao hàng nào.
+                  </p>
+                  <Link href='/profile' className='inline-block'>
+                    <Button className='kinetic-gradient w-full rounded-xl font-bold text-white hover:opacity-90'>
+                      Thêm địa chỉ mới
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {!isLoading && addresses.length > 0 && (
+                <div>
+                  <RadioGroup value={selectedId ?? undefined} onValueChange={(v) => setSelectedId(v ?? null)}>
+                    <div className='space-y-3'>
+                      {addresses.map((addr) => (
+                        <div key={addr.userAddressId} className='flex items-start gap-2'>
+                          <RadioGroupItem value={addr.userAddressId} id={addr.userAddressId} />
+                          <div className='min-w-0'>
+                            <div className='text-sm font-semibold text-foreground'>
+                              {addr.recipientName} · {addr.phoneNumber}
+                            </div>
+                            <div className='text-xs text-muted-foreground wrap-break-word whitespace-normal'>
+                              {addr.addressLine ?? ''}
+                              {addr.ward ? `, ${addr.ward}` : ''}
+                              {addr.district ? `, ${addr.district}` : ''}
+                              {addr.city ? `, ${addr.city}` : ''}
+                            </div>
+                            <div className='mt-1 text-xs text-muted-foreground'>
+                              {estimateFor(addr.city)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </RadioGroup>
+
+                  <div className='mt-4 flex items-center gap-2'>
+                    <Button
+                      onClick={() => {
+                        if (!selectedId) return;
+                        const a = addresses.find((x) => x.userAddressId === selectedId);
+                        if (a) {
+                          onSelect?.(a);
+                          onOpenChange(false);
+                        }
+                      }}
+                      className='h-11 w-full rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
+                    >
+                      GIAO ĐẾN ĐỊA CHỈ NÀY
+                    </Button>
+                    <Link href='/profile' className='inline-block'>
+                      <Button variant='outline' className='h-11'>
+                        Thêm địa chỉ
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -128,6 +171,18 @@ function RentalDeliveryAddressDialog() {
 
 /** Thông tin giao hàng + nhập địa chỉ */
 export function RentalDeliverySection() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<UserAddressResponse | null>(null);
+
+  const estimateFor = (city?: string | null) => {
+    if (!city) return 'Ước tính: 1-2 ngày';
+    const c = city.toLowerCase();
+    if (c.includes('hồ chí minh') || c.includes('ho chi minh') || c.includes('hcm') || c.includes('hà nội') || c.includes('ha noi')) {
+      return 'Ước tính: 2-4 giờ (nội thành)';
+    }
+    return 'Ước tính: 1-2 ngày';
+  };
+
   return (
     <div className='rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5'>
       <h2 className='mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg'>
@@ -135,13 +190,48 @@ export function RentalDeliverySection() {
       </h2>
       <div className='space-y-3'>
         <div className='flex items-start gap-3'>
-          <MapPin className='mt-0.5 size-5 shrink-0 text-rose-600 dark:text-rose-400' />
+          <MapPin className='mt-0.5 size-5 shrink-0 text-blue-600 dark:text-blue-400' />
           <div className='min-w-0'>
-            <p className='text-sm leading-relaxed text-muted-foreground'>
-              Nhập địa chỉ để xem thời gian giao hàng và phí vận chuyển chính
-              xác
-            </p>
-            <RentalDeliveryAddressDialog />
+            {selectedAddress ? (
+              <>
+                <div className='flex items-center justify-between gap-3'>
+                  <div>
+                    <div className='text-sm font-semibold text-foreground'>
+                      {selectedAddress.recipientName} · {selectedAddress.phoneNumber}
+                    </div>
+                    <div className='text-xs text-muted-foreground wrap-break-word whitespace-normal'>
+                      {selectedAddress.addressLine ?? ''}
+                      {selectedAddress.ward ? `, ${selectedAddress.ward}` : ''}
+                      {selectedAddress.district ? `, ${selectedAddress.district}` : ''}
+                      {selectedAddress.city ? `, ${selectedAddress.city}` : ''}
+                    </div>
+                    <div className='mt-1 text-xs text-muted-foreground'>
+                      {estimateFor(selectedAddress.city)}
+                    </div>
+                  </div>
+                  <div className='shrink-0'>
+                    <button
+                      type='button'
+                      onClick={() => setDialogOpen(true)}
+                      className='text-sm font-medium text-blue-600 hover:underline'
+                    >
+                      Thay đổi
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className='text-sm leading-relaxed text-muted-foreground'>
+                  Nhập địa chỉ để xem thời gian giao hàng và phí vận chuyển chính xác
+                </p>
+                <RentalDeliveryAddressDialog
+                  open={dialogOpen}
+                  onOpenChange={setDialogOpen}
+                  onSelect={(a) => setSelectedAddress(a)}
+                />
+              </>
+            )}
           </div>
         </div>
         <div className='flex items-start gap-3'>
@@ -151,9 +241,9 @@ export function RentalDeliverySection() {
           </p>
         </div>
         <div className='flex items-start gap-3'>
-          <Clock className='mt-0.5 size-5 shrink-0 text-rose-600 dark:text-rose-400' />
+          <Clock className='mt-0.5 size-5 shrink-0 text-blue-600 dark:text-blue-400' />
           <p className='text-sm text-muted-foreground'>
-            Nhận hàng trong 2-4h (nội thành TP.HCM, Hà Nội)
+            {selectedAddress ? estimateFor(selectedAddress.city) : 'Nhận hàng trong 2-4h (nội thành TP.HCM, Hà Nội)'}
           </p>
         </div>
       </div>
@@ -164,7 +254,7 @@ export function RentalDeliverySection() {
 const processSteps = [
   {
     step: 1,
-    icon: <CalendarDays className='size-5 text-rose-600 dark:text-rose-400' />,
+    icon: <CalendarDays className='size-5 text-blue-600 dark:text-blue-400' />,
     title: 'Chọn thời gian thuê',
     desc: 'Chọn số ngày thuê phù hợp; hệ thống hiển thị tiền thuê tương ứng. Có thể chọn thêm dịch vụ bổ sung nếu cần.',
   },
@@ -194,7 +284,7 @@ const processSteps = [
   },
   {
     step: 5,
-    icon: <Wallet className='w-5 h-5 text-rose-500 dark:text-rose-400' />,
+    icon: <Wallet className='w-5 h-5 text-blue-500 dark:text-blue-400' />,
     title: 'Hoàn cọc',
     desc: 'Sau khi trả thiết bị và hoàn tất kiểm tra, tiền cọc được hoàn trong tối đa 24 giờ.',
   },
@@ -246,11 +336,11 @@ export function RentalProcessSection() {
 export function RentalAddonServicesSection() {
   const services = [
     {
-      icon: <Shield className='size-5 text-rose-600 dark:text-rose-400' />,
+      icon: <Shield className='size-5 text-blue-600 dark:text-blue-400' />,
       name: 'Bảo hiểm thiết bị',
       desc: 'Bảo vệ khi hư hỏng ngoài ý muốn',
       price: '50,000₫/ngày',
-      iconBg: 'bg-rose-100 dark:bg-rose-950/50',
+      iconBg: 'bg-blue-100 dark:bg-blue-950/50',
     },
     {
       icon: <Truck className='size-5 text-indigo-600 dark:text-indigo-400' />,
@@ -277,7 +367,7 @@ export function RentalAddonServicesSection() {
         {services.map((service, index) => (
           <div
             key={index}
-            className='flex flex-col gap-3 rounded-lg border border-border p-3 transition-colors hover:border-rose-500/40 sm:flex-row sm:items-center sm:justify-between dark:hover:border-rose-400/30'
+            className='flex flex-col gap-3 rounded-lg border border-border p-3 transition-colors hover:border-blue-500/40 sm:flex-row sm:items-center sm:justify-between dark:hover:border-blue-400/30'
           >
             <div className='flex min-w-0 items-center gap-3'>
               <div
@@ -301,7 +391,7 @@ export function RentalAddonServicesSection() {
               <Button
                 variant='outline'
                 size='xs'
-                className='border-rose-200 font-bold text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/50'
+                className='border-blue-200 font-bold text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/50'
               >
                 Thêm
               </Button>

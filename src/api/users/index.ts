@@ -11,7 +11,7 @@ type DataMode = 'mock' | 'api';
 const DATA_MODE = (process.env.NEXT_PUBLIC_DATA_MODE as DataMode) || 'mock';
 const USE_MOCK = DATA_MODE === 'mock';
 
-// Role lookup (mirrors mockRoles in roles/index.ts — kept in sync by roleId)
+// Role lookup (mirrors mockRoles in roles/index.ts - kept in sync by roleId)
 const MOCK_ROLE_MAP: Record<string, { roleId: string; name: string }> = {
   '1': { roleId: '1', name: 'Admin' },
   '2': { roleId: '2', name: 'Manager' },

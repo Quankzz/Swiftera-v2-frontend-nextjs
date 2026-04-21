@@ -11,6 +11,7 @@ import {
   Star,
   Upload,
   Link as LinkIcon,
+  Video,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -37,8 +38,12 @@ import {
   useCreateInventoryItemMutation,
   useUpdateInventoryItemMutation,
 } from '@/features/products/hooks/use-inventory-items';
-import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import {
+  useUploadFileMutation,
+  useDeleteFileMutation,
+} from '@/features/files/hooks/use-files';
 import { toast } from 'sonner';
+import { extractBlobPathFromUrl, isAzureBlobUrl } from '@/lib/blob-utils';
 
 // ─── Helper format VND ────────────────────────────────────────────
 function formatVND(val: string) {
@@ -125,11 +130,13 @@ function TextInput({
 // ─── Image item inside Section 3 ──────────────────────────────────
 function ImageItem({
   img,
+  productId,
   onSetPrimary,
   onRemove,
   onUpdateUrl,
 }: {
   img: DraftImage;
+  productId?: string;
   onSetPrimary: () => void;
   onRemove: () => void;
   onUpdateUrl: (url: string) => void;
@@ -138,18 +145,30 @@ function ImageItem({
   const [urlMode, setUrlMode] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const uploadMutation = useUploadFileMutation();
+  const deleteMutation = useDeleteFileMutation();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // reset input để có thể upload lại cùng file
     e.target.value = '';
     setIsUploading(true);
     try {
+      const folder = productId ? `products/${productId}` : 'products';
       const result = await uploadMutation.mutateAsync({
         file,
-        folder: 'products',
+        folder,
       });
+
+      // Delete old image from Azure Blob if it's a Swiftera blob URL
+      if (img.imageUrl && isAzureBlobUrl(img.imageUrl)) {
+        const oldPath = extractBlobPathFromUrl(img.imageUrl);
+        if (oldPath) {
+          deleteMutation
+            .mutateAsync(oldPath)
+            .catch(() => toast.error('Không thể xóa ảnh cũ khỏi bộ nhớ.'));
+        }
+      }
+
       onUpdateUrl(result.fileUrl);
       setUrlMode(false);
     } catch {
@@ -365,6 +384,7 @@ export function ProductFormPage({
           oldDailyPrice,
           minRentalDays: parseInt(form.minRentalDays) || 1,
           imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+          videoUrl: form.videoUrl || undefined,
         },
         {
           onSuccess: (newProduct) => {
@@ -427,6 +447,7 @@ export function ProductFormPage({
             minRentalDays: parseInt(form.minRentalDays) || 1,
             imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
             isActive: form.isActive,
+            videoUrl: form.videoUrl || undefined,
           },
         },
         {
@@ -452,7 +473,7 @@ export function ProductFormPage({
                 }),
               ),
               ...existingItems.flatMap((item) => {
-                // Diff against _original — only send changed fields
+                // Diff against _original - only send changed fields
                 const orig = item._original;
                 const patch: {
                   hubId?: string;
@@ -473,7 +494,7 @@ export function ProductFormPage({
                 if (!orig || item.status !== orig.status)
                   patch.status = item.status;
 
-                // Nothing changed — skip API call
+                // Nothing changed - skip API call
                 if (Object.keys(patch).length === 0) return [];
 
                 return [
@@ -531,7 +552,7 @@ export function ProductFormPage({
               <CategoryTreeSelect
                 value={form.categoryId}
                 onChange={(id) => setField('categoryId', id)}
-                placeholder='— Chọn danh mục —'
+                placeholder='- Chọn danh mục -'
               />
             </Field>
 
@@ -567,7 +588,7 @@ export function ProductFormPage({
               </Field>
               <Field
                 label='Màu sắc sản phẩm'
-                hint='Chọn hoặc thêm màu — mỗi inventory item sẽ được gắn với một màu'
+                hint='Chọn hoặc thêm màu - mỗi inventory item sẽ được gắn với một màu'
               >
                 <ColorPickerList
                   colors={form.colors}
@@ -585,10 +606,13 @@ export function ProductFormPage({
                 onChange={(html) =>
                   setField('description', html === '<br>' ? '' : html)
                 }
+                uploadFolder={
+                  form.productId ? `products/${form.productId}` : 'products'
+                }
               />
             </Field>
 
-            {/* Giá thuê — dùng VoucherPriceCalculator thay cho 2 input thủ công */}
+            {/* Giá thuê - dùng VoucherPriceCalculator thay cho 2 input thủ công */}
             <Field
               label='Giá thuê & Voucher giảm giá'
               required
@@ -690,7 +714,7 @@ export function ProductFormPage({
               </Field>
             </div>
 
-            {/* Trạng thái hoạt động — chỉ hiển thị trong edit mode */}
+            {/* Trạng thái hoạt động - chỉ hiển thị trong edit mode */}
             {mode === 'edit' && (
               <Field
                 label='Trạng thái'
@@ -728,8 +752,8 @@ export function ProductFormPage({
           </div>
         </FormSection>
 
-        {/* ── SECTION 2: Hình ảnh ── */}
-        <FormSection title='Hình ảnh sản phẩm'>
+        {/* ── SECTION 2: Hình ảnh & Video ── */}
+        <FormSection title='Hình ảnh & Video sản phẩm'>
           <div className='flex flex-col gap-3'>
             {images.length === 0 && (
               <p className='text-center text-sm text-text-sub py-4'>
@@ -741,6 +765,7 @@ export function ProductFormPage({
               <ImageItem
                 key={img.draftId}
                 img={img}
+                productId={initialProduct?.productId}
                 onSetPrimary={() => setPrimary(img.draftId)}
                 onRemove={() => removeImage(img.draftId)}
                 onUpdateUrl={(url: string) => updateImageUrl(img.draftId, url)}
@@ -755,6 +780,30 @@ export function ProductFormPage({
               <Plus size={16} />
               Thêm ảnh
             </button>
+
+            {/* Video URL field */}
+            <div className='mt-2 flex flex-col gap-1.5 rounded-md border border-gray-100 dark:border-white/8 bg-gray-50/50 dark:bg-white/3 p-3'>
+              <div className='flex items-center gap-2'>
+                <Video
+                  size={14}
+                  className='text-theme-primary-start shrink-0'
+                />
+                <label className='text-sm font-medium text-text-main'>
+                  Video sản phẩm (URL)
+                </label>
+              </div>
+              <input
+                type='url'
+                value={form.videoUrl}
+                onChange={(e) => setField('videoUrl', e.target.value)}
+                placeholder='https://www.youtube.com/embed/... hoặc URL .mp4'
+                className='h-10 w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main placeholder:text-text-sub focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20'
+              />
+              <p className='text-xs text-text-sub'>
+                Nhập URL video YouTube/Vimeo embed hoặc URL trực tiếp (.mp4).
+                Video sẽ hiển thị trong gallery sản phẩm.
+              </p>
+            </div>
           </div>
         </FormSection>
 

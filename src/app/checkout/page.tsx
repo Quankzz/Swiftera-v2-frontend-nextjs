@@ -34,6 +34,7 @@ import {
 } from '@/lib/rental-voucher';
 import type { VoucherResponse } from '@/features/vouchers/types';
 import { useAuth } from '@/context/AuthContext';
+import { buildLoginHref } from '@/lib/auth-redirect';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -50,15 +51,14 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // User đã đăng nhập → giỏ hàng thật là /cart (dùng API), không dùng checkout Zustand
-    if (isAuthenticated) {
-      router.replace('/cart');
+    if (!isAuthenticated) {
+      router.replace(buildLoginHref('/cart'));
       return;
     }
-    if (lines.length === 0) {
-      router.replace('/cart');
-    }
-  }, [isAuthenticated, lines.length, router]);
+
+    // User đã đăng nhập → giỏ hàng thật là /cart (dùng API), không dùng checkout Zustand
+    router.replace('/cart');
+  }, [isAuthenticated, router]);
 
   const totals = useMemo(() => computeCartTotals(lines), [lines]);
 
@@ -74,6 +74,14 @@ export default function CheckoutPage() {
     clearCart();
     router.push(`/rental-orders/${id}`);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className='flex min-h-screen items-center justify-center font-sans text-muted-foreground'>
+        Đang chuyển đến trang đăng nhập...
+      </div>
+    );
+  }
 
   if (lines.length === 0) {
     return (
@@ -105,7 +113,7 @@ export default function CheckoutPage() {
           Thanh toán đơn thuê
         </h1>
         <p className='mt-1 text-sm text-muted-foreground'>
-          Áp voucher từng dòng nếu cần — xác nhận thông tin và phương thức thanh
+          Áp voucher từng dòng nếu cần - xác nhận thông tin và phương thức thanh
           toán.
         </p>
 
@@ -113,7 +121,7 @@ export default function CheckoutPage() {
           <div className='space-y-6 lg:col-span-7'>
             <SpotlightCard
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md backdrop-blur-sm dark:bg-card/70'
-              spotlightColor='rgba(254, 20, 81, 0.1)'
+              spotlightColor='rgba(37, 99, 235, 0.1)'
             >
               <h2 className='text-lg font-bold text-foreground'>
                 Sản phẩm &amp; voucher
@@ -148,7 +156,7 @@ export default function CheckoutPage() {
                           {line.durationLabel} · SL: {line.quantity}
                         </p>
                         {line.voucher && disc > 0 && (
-                          <p className='mt-1 text-xs font-medium text-rose-600 dark:text-rose-400'>
+                          <p className='mt-1 text-xs font-medium text-blue-600 dark:text-blue-400'>
                             {line.voucher.code} · −
                             {disc.toLocaleString('vi-VN')}₫
                           </p>
@@ -188,7 +196,7 @@ export default function CheckoutPage() {
 
             <SpotlightCard
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md dark:bg-card/70'
-              spotlightColor='rgba(254, 20, 81, 0.08)'
+              spotlightColor='rgba(37, 99, 235, 0.08)'
             >
               <h2 className='text-lg font-bold text-foreground'>
                 Thông tin liên hệ
@@ -220,7 +228,7 @@ export default function CheckoutPage() {
 
             <SpotlightCard
               className='rounded-2xl border border-border/60 bg-card/80 p-5 shadow-md dark:bg-card/70'
-              spotlightColor='rgba(254, 20, 81, 0.08)'
+              spotlightColor='rgba(37, 99, 235, 0.08)'
             >
               <h2 className='mb-4 text-lg font-bold text-foreground'>
                 Phương thức thanh toán
@@ -235,7 +243,7 @@ export default function CheckoutPage() {
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-xl border border-input bg-muted/20 p-4 dark:bg-muted/10',
                     payment === 'bank_transfer' &&
-                      'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
+                      'border-blue-500/50 bg-blue-500/5 dark:border-blue-500/40',
                   )}
                 >
                   <RadioGroupItem
@@ -245,11 +253,11 @@ export default function CheckoutPage() {
                   />
                   <div>
                     <div className='flex items-center gap-2 font-semibold text-foreground'>
-                      <CreditCard className='size-4 text-rose-600 dark:text-rose-400' />
+                      <CreditCard className='size-4 text-blue-600 dark:text-blue-400' />
                       Chuyển khoản ngân hàng
                     </div>
                     <p className='mt-1 text-xs text-muted-foreground'>
-                      QR / số tài khoản Swiftera (demo — không thu tiền thật).
+                      QR / số tài khoản Swiftera (demo - không thu tiền thật).
                     </p>
                   </div>
                 </label>
@@ -258,7 +266,7 @@ export default function CheckoutPage() {
                   className={cn(
                     'flex cursor-pointer items-start gap-3 rounded-xl border border-input bg-muted/20 p-4 dark:bg-muted/10',
                     payment === 'e_wallet' &&
-                      'border-rose-500/50 bg-rose-500/5 dark:border-rose-500/40',
+                      'border-blue-500/50 bg-blue-500/5 dark:border-blue-500/40',
                   )}
                 >
                   <RadioGroupItem
@@ -268,7 +276,7 @@ export default function CheckoutPage() {
                   />
                   <div>
                     <div className='flex items-center gap-2 font-semibold text-foreground'>
-                      <Wallet className='size-4 text-rose-600 dark:text-rose-400' />
+                      <Wallet className='size-4 text-blue-600 dark:text-blue-400' />
                       Ví điện tử
                     </div>
                     <p className='mt-1 text-xs text-muted-foreground'>
@@ -283,10 +291,10 @@ export default function CheckoutPage() {
           <div className='lg:col-span-5'>
             <div className='lg:sticky lg:top-28'>
               <SpotlightCard
-                className='rounded-2xl border border-rose-500/25 bg-card/90 p-6 shadow-xl dark:bg-card/80'
-                spotlightColor='rgba(254, 20, 81, 0.15)'
+                className='rounded-2xl border border-blue-500/25 bg-card/90 p-6 shadow-xl dark:bg-card/80'
+                spotlightColor='rgba(37, 99, 235, 0.15)'
               >
-                <div className='flex items-center gap-2 text-rose-700 dark:text-rose-300'>
+                <div className='flex items-center gap-2 text-blue-700 dark:text-blue-300'>
                   <ShieldCheck className='size-5' />
                   <span className='font-bold'>Tóm tắt thanh toán</span>
                 </div>
@@ -298,7 +306,7 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                   {totals.voucherDiscount > 0 && (
-                    <div className='flex justify-between gap-3 text-rose-600 dark:text-rose-400'>
+                    <div className='flex justify-between gap-3 text-blue-600 dark:text-blue-400'>
                       <span className='shrink-0'>Giảm voucher</span>
                       <span className='whitespace-nowrap tabular-nums font-semibold'>
                         −{totals.voucherDiscount.toLocaleString('vi-VN')}₫
@@ -314,7 +322,7 @@ export default function CheckoutPage() {
                   <div className='border-t border-border pt-3'>
                     <div className='flex justify-between gap-3 text-base font-bold'>
                       <span className='shrink-0'>Tổng cộng</span>
-                      <span className='whitespace-nowrap tabular-nums text-rose-600 dark:text-rose-400'>
+                      <span className='whitespace-nowrap tabular-nums text-blue-600 dark:text-blue-400'>
                         {totals.grandTotal.toLocaleString('vi-VN')}₫
                       </span>
                     </div>
@@ -322,7 +330,7 @@ export default function CheckoutPage() {
                 </div>
                 <Button
                   type='button'
-                  className='mt-6 h-12 w-full rounded-xl bg-rose-600 text-base font-bold text-white hover:bg-rose-700 disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600'
+                  className='mt-6 h-12 w-full rounded-xl bg-blue-600 text-base font-bold text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600'
                   disabled={!name.trim() || !phone.trim() || submitting}
                   onClick={handlePay}
                 >

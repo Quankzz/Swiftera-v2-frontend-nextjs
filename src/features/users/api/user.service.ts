@@ -1,6 +1,6 @@
 /**
- * User service — tất cả API calls cho users module.
- * HTTP layer: httpService (axios) — dùng http.ts.
+ * User service - tất cả API calls cho users module.
+ * HTTP layer: httpService (axios) - dùng http.ts.
  *
  * Chia thành 3 section:
  *  1. Profile / self-service

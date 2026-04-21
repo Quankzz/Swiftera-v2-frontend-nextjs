@@ -1,28 +1,28 @@
-import { PackageSearch, ShieldCheck, Rocket } from 'lucide-react';
+import { Smartphone, CreditCard, PackageCheck } from 'lucide-react';
 
 const STEPS = [
   {
     number: '01',
-    icon: PackageSearch,
+    icon: Smartphone,
     title: 'Chọn thiết bị',
     description:
-      'Duyệt danh mục đa dạng và chọn gói thời gian thuê phù hợp nhất với nhu cầu của bạn.',
+      'Duyệt danh mục đa dạng, chọn thiết bị và gói thuê phù hợp với nhu cầu của bạn.',
     highlight: false,
   },
   {
     number: '02',
-    icon: ShieldCheck,
-    title: 'Xác nhận & Cọc',
+    icon: CreditCard,
+    title: 'Thanh toán & Cọc',
     description:
-      'Xác thực nhanh chóng qua CCCD và thực hiện đặt cọc linh hoạt chỉ trong vài phút.',
+      'Chọn phương thức thanh toán VNPay, áp dụng voucher (nếu có) và đặt cọc để hoàn tất đơn thuê.',
     highlight: true,
   },
   {
     number: '03',
-    icon: Rocket,
-    title: 'Nhận máy & Sáng tạo',
+    icon: PackageCheck,
+    title: 'Nhận máy tận nơi',
     description:
-      'Nhận máy tại cửa hàng hoặc giao tận nơi. Bắt đầu hành trình sáng tạo chuyên nghiệp của bạn.',
+      'Nhân viên sẽ giao thiết bị tận nơi sau khi đơn thuê được xác nhận. Bắt đầu sử dụng ngay!',
     highlight: false,
   },
 ] as const;
@@ -32,16 +32,20 @@ export function HomeStepsProcess() {
     <section className='py-24 bg-surface-container-lowest dark:bg-white/2'>
       <div className='mx-auto max-w-7xl px-6 lg:px-12'>
         {/* Heading */}
-        <h2 className='text-center text-4xl font-extrabold uppercase tracking-tighter text-text-main mb-20'>
-          QUY TRÌNH <span className='text-theme-primary-start'>3 BƯỚC</span> TỐI
-          GIẢN
+        <h2 className='mb-20 text-center text-4xl font-extrabold uppercase tracking-tighter text-text-main'>
+          THUÊ THIẾT BỊ CHỈ <span className='text-theme-primary-start'>3 BƯỚC</span> DỄ DÀNG
         </h2>
 
         <div className='relative grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-16'>
-          {/* Dashed connector line (desktop only) */}
+          {/* Dashed connector line - visible in both light and dark mode */}
           <div
             aria-hidden
-            className='hidden md:block absolute top-10 left-1/2 -translate-x-1/2 w-2/3 h-px border-t-2 border-dashed border-border/30 dark:border-white/10'
+            className='hidden md:block absolute top-10 left-1/2 -translate-x-1/2 w-2/3 h-px'
+            style={{
+              background:
+                'linear-gradient(to right, transparent, var(--theme-primary-start,#0ea5e9) 20%, var(--theme-primary-start,#0ea5e9) 80%, transparent)',
+              opacity: 0.35,
+            }}
           />
 
           {STEPS.map((step) => {

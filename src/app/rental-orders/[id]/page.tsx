@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, Fragment, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   ArrowLeft,
   Truck,
-  User,
   AlertCircle,
   Package,
   Loader2,
@@ -39,9 +38,9 @@ import {
 import {
   useRentalOrderQuery,
   useCancelOrder,
-  useExtendOrder,
   useUpdateOrderStatus,
   useOverduePenaltySuggestionQuery,
+  useRequestCancellation,
 } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
 import { useRentalContractByOrderQuery } from '@/hooks/api/use-contract';
@@ -54,10 +53,14 @@ import {
   RENTAL_ORDER_STATUS_LABELS,
   RENTAL_ORDER_STATUS_COLORS,
 } from '@/api/rentalOrderApi';
-import type {
-  RentalOrderStatus,
-  RentalOrderStaffSummary,
-} from '@/api/rentalOrderApi';
+import { useAuth } from '@/hooks/useAuth';
+import { buildLoginHref } from '@/lib/auth-redirect';
+import {
+  extractTxnRefFromPaymentUrl,
+  saveExtensionPaymentIntent,
+} from '@/lib/extension-payment-intent';
+import type { RentalOrderStatus } from '@/api/rentalOrderApi';
+import { WriteReviewDialog } from '@/components/reviews/write-review-dialog';
 
 const PolicyConsentDialog = dynamic(
   () =>
@@ -149,7 +152,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
     return (
       <div className='flex items-center gap-2.5 rounded-xl border border-red-200/80 bg-red-50/60 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300'>
         <Ban className='size-4 shrink-0' />
-        Đơn đã hủy — không còn xử lý tiếp.
+        Đơn đã hủy - không còn xử lý tiếp.
       </div>
     );
   }
@@ -158,44 +161,60 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
 
   return (
     <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-      <div className='flex min-w-[min(100%,520px)] items-start py-1 sm:min-w-0'>
+      <div className='flex min-w-max items-start py-1 sm:min-w-0'>
         {STEP_LABELS.map((label, i) => {
           const done = i < active || status === 'COMPLETED';
           const current = i === active && status !== 'COMPLETED';
-          const segmentDone =
+          const leftSegmentDone =
             i > 0 && (i - 1 < active || status === 'COMPLETED');
+          const rightSegmentDone =
+            i < STEP_LABELS.length - 1 &&
+            (i < active || status === 'COMPLETED');
 
           return (
-            <Fragment key={label}>
+            <div
+              key={label}
+              className='relative flex min-w-16 flex-1 flex-col items-center px-0.5 sm:px-1'
+            >
               {i > 0 && (
-                <div
+                <span
                   className={cn(
-                    'mt-[15px] h-px min-w-[8px] flex-1',
-                    segmentDone ? 'bg-rose-500' : 'bg-border',
+                    'pointer-events-none absolute left-0 top-3 top-3.75-sm top-3.75-md top-3.75-lg h-px w-1/2',
+                    leftSegmentDone ? 'bg-blue-500' : 'bg-border',
                   )}
                   aria-hidden
                 />
               )}
-              <div className='flex w-12 shrink-0 flex-col items-center sm:w-16'>
+              {i < STEP_LABELS.length - 1 && (
+                <span
+                  className={cn(
+                    'pointer-events-none absolute right-0 top-3 top-3.75-sm top-3.75-md top-3.75-lg h-px w-1/2',
+                    rightSegmentDone ? 'bg-blue-500' : 'bg-border',
+                  )}
+                  aria-hidden
+                />
+              )}
+
+              <div className='relative z-1 flex shrink-0 flex-col items-center'>
                 <div
                   className={cn(
-                    'flex size-[30px] items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
+                    'flex size-6 sm:size-7.5 items-center justify-center rounded-full border-2 text-[10px] sm:text-xs sm:font-bold transition-all',
                     done
-                      ? 'border-rose-500 bg-rose-500 text-white'
+                      ? 'border-blue-500 bg-blue-500 text-white'
                       : current
-                        ? 'border-rose-500 bg-card text-rose-600 ring-4 ring-rose-500/15 dark:bg-card dark:text-rose-400'
+                        ? 'border-blue-500 bg-card text-blue-600 ring-4 ring-blue-500/15 dark:bg-card dark:text-blue-400'
                         : 'border-border bg-muted/50 text-muted-foreground',
                   )}
                 >
                   {done ? (
-                    <Check className='size-3.5' strokeWidth={3} />
+                    <Check className='size-3 sm:size-3.5' strokeWidth={3} />
                   ) : (
                     i + 1
                   )}
                 </div>
                 <span
                   className={cn(
-                    'mt-2 text-center text-[10px] font-medium leading-tight sm:text-[11px]',
+                    'mt-1.5 sm:mt-2 text-center text-[9px] sm:text-[10px] font-medium leading-tight',
                     done || current
                       ? 'text-foreground'
                       : 'text-muted-foreground',
@@ -204,7 +223,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
                   {label}
                 </span>
               </div>
-            </Fragment>
+            </div>
           );
         })}
       </div>
@@ -251,39 +270,6 @@ function SectionHeader({
         {icon}
       </div>
       <span className='font-semibold text-foreground'>{title}</span>
-    </div>
-  );
-}
-
-function StaffAvatar({
-  staff,
-  role,
-}: {
-  staff: RentalOrderStaffSummary;
-  role: string;
-}) {
-  return (
-    <div className='flex items-center gap-3'>
-      {staff.avatarUrl ? (
-        <img
-          src={staff.avatarUrl}
-          alt={`${staff.firstName} ${staff.lastName}`}
-          className='size-9 shrink-0 rounded-full object-cover ring-2 ring-border'
-        />
-      ) : (
-        <div className='flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground'>
-          <User className='size-4' />
-        </div>
-      )}
-      <div>
-        <p className='text-sm font-semibold text-foreground'>
-          {staff.firstName} {staff.lastName}
-        </p>
-        <p className='text-xs text-muted-foreground'>{role}</p>
-        {staff.nickname && (
-          <p className='text-xs text-rose-500'>@{staff.nickname}</p>
-        )}
-      </div>
     </div>
   );
 }
@@ -339,22 +325,35 @@ function ExtendDialog({
   onOpenChange: (v: boolean) => void;
 }) {
   const [days, setDays] = useState(1);
+  const initiatePayment = useInitiatePayment();
+  const isSubmitting = initiatePayment.isPending;
 
-  const extendOrder = useExtendOrder({
-    onSuccess: () => {
-      toast.success(`Đã gia hạn thêm ${days} ngày thành công.`);
+  async function handleExtend() {
+    try {
+      const paymentUrl = await initiatePayment.mutateAsync({
+        rentalOrderId: orderId,
+        additionalRentalDays: days,
+      });
+
+      saveExtensionPaymentIntent({
+        rentalOrderId: orderId,
+        additionalRentalDays: days,
+        txnRef: extractTxnRefFromPaymentUrl(paymentUrl),
+        createdAt: Date.now(),
+      });
+
+      toast.success(
+        `Đang chuyển sang VNPay để thanh toán gia hạn ${days} ngày trước khi cập nhật đơn thuê.`,
+      );
       onOpenChange(false);
-    },
-    onError: (err) => {
-      toast.error(err.message || 'Gia hạn thất bại. Vui lòng thử lại.');
-    },
-  });
-
-  function handleExtend() {
-    extendOrder.mutate({
-      rentalOrderId: orderId,
-      input: { additionalRentalDays: days },
-    });
+      window.location.href = paymentUrl;
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : 'Gia hạn thất bại. Vui lòng thử lại.',
+      );
+    }
   }
 
   const endDate = new Date(expectedRentalEndDate);
@@ -365,11 +364,12 @@ function ExtendDialog({
       <DialogContent className='max-w-sm'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <CalendarPlus className='size-5 text-rose-600' />
+            <CalendarPlus className='size-5 text-blue-600' />
             Gia hạn đơn thuê
           </DialogTitle>
           <DialogDescription>
-            Thêm ngày thuê cho đơn này. Thời hạn mới sẽ được tự động cập nhật.
+            Bạn cần hoàn tất thanh toán VNPay trước. Hệ thống chỉ gọi gia hạn
+            khi nhận được kết quả thanh toán thành công.
           </DialogDescription>
         </DialogHeader>
 
@@ -393,7 +393,7 @@ function ExtendDialog({
                 onChange={(e) =>
                   setDays(Math.max(1, parseInt(e.target.value) || 1))
                 }
-                className='flex h-9 w-20 items-center justify-center rounded-lg border border-border bg-background text-center text-lg font-bold focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200'
+                className='flex h-9 w-20 items-center justify-center rounded-lg border border-border bg-background text-center text-lg font-bold focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200'
               />
               <button
                 onClick={() => setDays((d) => Math.min(30, d + 1))}
@@ -416,7 +416,7 @@ function ExtendDialog({
             </div>
             <div className='mt-2 flex justify-between'>
               <span className='text-muted-foreground'>Ngày kết thúc mới</span>
-              <span className='font-bold text-rose-600'>
+              <span className='font-bold text-blue-600'>
                 {formatDateShort(endDate.toISOString())}
               </span>
             </div>
@@ -427,21 +427,23 @@ function ExtendDialog({
           <Button
             variant='outline'
             onClick={() => onOpenChange(false)}
-            disabled={extendOrder.isPending}
+            disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
-            className='bg-rose-600 text-white hover:bg-rose-700'
+            className='bg-blue-600 text-white hover:bg-blue-700'
             onClick={handleExtend}
-            disabled={extendOrder.isPending}
+            disabled={isSubmitting}
           >
-            {extendOrder.isPending ? (
+            {isSubmitting ? (
               <Loader2 className='size-4 animate-spin' />
             ) : (
               <CalendarPlus className='size-4' />
             )}
-            Gia hạn {days} ngày
+            {isSubmitting
+              ? 'Đang chuyển thanh toán...'
+              : `Thanh toán để gia hạn ${days} ngày`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -451,12 +453,18 @@ function ExtendDialog({
 
 export default function RentalOrderDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
   const id = typeof params?.id === 'string' ? params.id : '';
   const [extendOpen, setExtendOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [paymentPolicyOpen, setPaymentPolicyOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancellationRequestOpen, setCancellationRequestOpen] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
   const [pickupConfirmOpen, setPickupConfirmOpen] = useState(false);
   const [reorderState, setReorderState] = useState<
     'idle' | 'adding' | 'success'
@@ -496,7 +504,21 @@ export default function RentalOrderDetailPage() {
   const { mutateAsync: addToCartApi } = useAddToCart();
   const addFlyingItem = useCartAnimationStore((s) => s.addFlyingItem);
 
+  function ensureAuthenticated(actionLabel: string): boolean {
+    if (isAuthenticated) return true;
+
+    if (authLoading) {
+      toast.error('Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.');
+      return false;
+    }
+
+    toast.error(`Vui lòng đăng nhập để ${actionLabel}.`);
+    router.push(buildLoginHref(`/rental-orders/${id}`));
+    return false;
+  }
+
   async function handleReorder() {
+    if (!ensureAuthenticated('thuê lại sản phẩm')) return;
     if (!order || reorderState !== 'idle') return;
 
     const btn = document.getElementById('reorder-btn');
@@ -534,6 +556,16 @@ export default function RentalOrderDetailPage() {
       toast.error(err.message || 'Hủy đơn thất bại. Vui lòng thử lại.'),
   });
 
+  const requestCancellation = useRequestCancellation({
+    onSuccess: () => {
+      toast.success('Yêu cầu hủy đơn đã được gửi. Bộ phận hỗ trợ sẽ xử lý trong thời gian sớm nhất.');
+      setCancellationRequestOpen(false);
+      setCancellationReason('');
+    },
+    onError: (err) =>
+      toast.error(err.message || 'Gửi yêu cầu hủy thất bại. Vui lòng thử lại.'),
+  });
+
   const initiatePayment = useInitiatePayment({
     onSuccess: (paymentUrl) => {
       window.location.href = paymentUrl;
@@ -555,15 +587,21 @@ export default function RentalOrderDetailPage() {
   });
 
   function handleCancel() {
+    if (!ensureAuthenticated('hủy đơn thuê')) return;
     if (!order) return;
     if (!CANCELABLE_STATUSES.includes(order.status as RentalOrderStatus)) {
       toast.error('Chỉ có thể hủy đơn trước khi bắt đầu giao hàng.');
       return;
     }
-    setCancelConfirmOpen(true);
+    if (order.status === 'PAID') {
+      setCancellationRequestOpen(true);
+    } else {
+      setCancelConfirmOpen(true);
+    }
   }
 
   function confirmCancel() {
+    if (!ensureAuthenticated('hủy đơn thuê')) return;
     if (!order) return;
     if (!CANCELABLE_STATUSES.includes(order.status as RentalOrderStatus)) {
       setCancelConfirmOpen(false);
@@ -575,18 +613,34 @@ export default function RentalOrderDetailPage() {
     });
   }
 
+  function confirmCancellationRequest() {
+    if (!ensureAuthenticated('gửi yêu cầu hủy đơn')) return;
+    if (!order) return;
+    if (!cancellationReason.trim()) {
+      toast.error('Vui lòng nhập lý do hủy đơn.');
+      return;
+    }
+    requestCancellation.mutate({
+      rentalOrderId: order.rentalOrderId,
+      input: { reason: cancellationReason.trim() },
+    });
+  }
+
   function handlePayment() {
+    if (!ensureAuthenticated('thanh toán đơn thuê')) return;
     if (!order) return;
     setPaymentPolicyOpen(true);
   }
 
   function handlePaymentAfterConsent() {
+    if (!ensureAuthenticated('thanh toán đơn thuê')) return;
     if (!order) return;
     setPaymentPolicyOpen(false);
     initiatePayment.mutate(order.rentalOrderId);
   }
 
   function handleDeliveredToInUse() {
+    if (!ensureAuthenticated('xác nhận bắt đầu sử dụng')) return;
     if (!order) return;
     updateOrderStatus.mutate({
       rentalOrderId: order.rentalOrderId,
@@ -595,11 +649,13 @@ export default function RentalOrderDetailPage() {
   }
 
   function handleInUseToPendingPickup() {
+    if (!ensureAuthenticated('yêu cầu thu hồi')) return;
     if (!order) return;
     setPickupConfirmOpen(true);
   }
 
   function confirmInUseToPendingPickup() {
+    if (!ensureAuthenticated('yêu cầu thu hồi')) return;
     if (!order) return;
     updateOrderStatus.mutate(
       {
@@ -646,7 +702,7 @@ export default function RentalOrderDetailPage() {
         <Button
           variant='ghost'
           size='sm'
-          className='mb-5 gap-1.5 text-muted-foreground hover:text-foreground'
+          className='mb-5 gap-1.5 text-muted-foreground hover:text-foreground [&>a]:hover:bg-muted'
           render={<Link href='/rental-orders' />}
         >
           <ArrowLeft className='size-4' />
@@ -725,6 +781,47 @@ export default function RentalOrderDetailPage() {
                   </div>
                 )}
 
+                {/* ── Pending cancellation request banner ── */}
+                {order.status === 'PAID' && order.cancellationRequested && (
+                  <div className='mt-4 flex flex-col gap-3 rounded-xl border border-cyan-300/70 bg-cyan-50/80 p-4 dark:border-cyan-700/40 dark:bg-cyan-950/30 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className='flex items-start gap-3'>
+                      <div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600 dark:bg-cyan-900/50 dark:text-cyan-400'>
+                        <Ban className='size-4' />
+                      </div>
+                      <div>
+                        <p className='text-sm font-bold text-cyan-800 dark:text-cyan-300'>
+                          Yêu cầu hủy đơn đã được gửi
+                        </p>
+                        <p className='mt-0.5 text-xs text-cyan-700/80 dark:text-cyan-400/80'>
+                          Bộ phận hỗ trợ đang xử lý và sẽ hoàn tiền cho bạn trong thời gian sớm nhất.
+                          {order.cancellationReason && (
+                            <span className='mt-1 block'>Lý do: {order.cancellationReason}</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Pending pickup banner ── */}
+                {order.status === 'PENDING_PICKUP' && (
+                  <div className='mt-4 flex flex-col gap-3 rounded-xl border border-orange-300/70 bg-orange-50/80 p-4 dark:border-orange-700/40 dark:bg-orange-950/30 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className='flex items-start gap-3'>
+                      <div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/50 dark:text-orange-400'>
+                        <RotateCcw className='size-4' />
+                      </div>
+                      <div>
+                        <p className='text-sm font-bold text-orange-800 dark:text-orange-300'>
+                          Yêu cầu thu hồi đã được tiếp nhận
+                        </p>
+                        <p className='mt-0.5 text-xs text-orange-700/80 dark:text-orange-400/80'>
+                          Nhân viên sẽ liên hệ và đến thu hồi thiết bị theo lịch trình. Cảm ơn bạn đã sử dụng dịch vụ.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Status stepper */}
                 <div className='mt-5 border-t border-border/60 pt-5'>
                   <p className='mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
@@ -742,7 +839,13 @@ export default function RentalOrderDetailPage() {
                     order.status as RentalOrderStatus,
                   );
                   const hasStartUse = order.status === 'DELIVERED';
-                  const hasRequestPickup = order.status === 'IN_USE';
+                  const canRequestPickup = order.status === 'IN_USE';
+                  const showRequestPickupAction = [
+                    'PREPARING',
+                    'DELIVERING',
+                    'DELIVERED',
+                    'IN_USE',
+                  ].includes(order.status as RentalOrderStatus);
                   const canRentalStatusTransition = Boolean(
                     order.actualDeliveryAt && order.actualRentalStartAt,
                   );
@@ -757,7 +860,7 @@ export default function RentalOrderDetailPage() {
                     hasPay ||
                     isExtendable ||
                     hasStartUse ||
-                    hasRequestPickup ||
+                    showRequestPickupAction ||
                     hasReview ||
                     hasReorder ||
                     hasCancel ||
@@ -775,7 +878,7 @@ export default function RentalOrderDetailPage() {
                         {/* {hasPay && (
                           <Button
                             size='default'
-                            className='gap-2 rounded-xl bg-rose-600 px-5 font-semibold text-white shadow-sm hover:bg-rose-700 active:scale-[0.98]'
+                            className='gap-2 rounded-xl bg-blue-600 px-5 font-semibold text-white shadow-sm hover:bg-blue-700 active:scale-[0.98]'
                             onClick={handlePayment}
                             disabled={initiatePayment.isPending}
                           >
@@ -792,7 +895,7 @@ export default function RentalOrderDetailPage() {
                           <Button
                             size='default'
                             variant='outline'
-                            className='gap-2 rounded-xl border-rose-300 px-5 font-semibold text-rose-700 hover:bg-rose-50 hover:border-rose-400 dark:border-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/50'
+                            className='gap-2 rounded-xl border-blue-300 px-5 font-semibold text-blue-700 hover:bg-blue-50 hover:border-blue-400 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/50'
                             onClick={() => setExtendOpen(true)}
                           >
                             <CalendarPlus className='size-4' />
@@ -829,7 +932,7 @@ export default function RentalOrderDetailPage() {
                             )}
                             {contractLoading
                               ? 'Đang tải hợp đồng…'
-                              : 'Xem hợp đồng'}
+                              : 'Xem hợp đồng hiện hành'}
                           </Button>
                         )}
 
@@ -858,20 +961,24 @@ export default function RentalOrderDetailPage() {
                           </Button>
                         )}
 
-                        {hasRequestPickup && (
+                        {showRequestPickupAction && (
                           <Button
                             size='default'
-                            variant='outline'
+                            variant='default'
                             title={
-                              !canRentalStatusTransition
-                                ? 'Cần có thời điểm giao hàng và bắt đầu thuê thực tế trước khi yêu cầu thu hồi.'
+                              !canRequestPickup
+                                ? 'Nút khả dụng khi đơn ở trạng thái Đang dùng.'
                                 : undefined
                             }
-                            className='gap-2 rounded-xl border-orange-300 px-5 font-semibold text-orange-800 hover:bg-orange-50 hover:border-orange-400 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/50'
+                            className={cn(
+                              'gap-2 rounded-xl px-5 font-semibold',
+                              canRequestPickup
+                                ? 'border-orange-400 bg-orange-600 text-white shadow-sm hover:bg-orange-700 active:scale-[0.98]'
+                                : 'border border-orange-300 bg-orange-100/70 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300',
+                            )}
                             onClick={handleInUseToPendingPickup}
                             disabled={
-                              updateOrderStatus.isPending ||
-                              !canRentalStatusTransition
+                              updateOrderStatus.isPending || !canRequestPickup
                             }
                           >
                             {updateOrderStatus.isPending ? (
@@ -879,7 +986,7 @@ export default function RentalOrderDetailPage() {
                             ) : (
                               <PackageMinus className='size-4' />
                             )}
-                            Yêu cầu thu hồi
+                            Tôi muốn trả hàng
                           </Button>
                         )}
 
@@ -887,14 +994,10 @@ export default function RentalOrderDetailPage() {
                           <Button
                             size='default'
                             variant='outline'
-                            className='gap-2 rounded-xl border-amber-300 px-5 font-semibold text-amber-800 hover:bg-amber-50 hover:border-amber-400 dark:border-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/50'
-                            render={
-                              <Link
-                                href={`/product/${order.rentalOrderLines[0].productId}#reviews`}
-                              />
-                            }
+                            onClick={() => setReviewDialogOpen(true)}
+                            className='gap-2 rounded-xl border-blue-300 px-5 font-semibold text-blue-700 hover:bg-blue-50 hover:border-blue-400 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-950/50'
                           >
-                            <Star className='size-4 fill-amber-400 text-amber-500' />
+                            <Star className='size-4 fill-blue-400 text-blue-500' />
                             Viết đánh giá
                           </Button>
                         )}
@@ -908,8 +1011,8 @@ export default function RentalOrderDetailPage() {
                               reorderState === 'success'
                                 ? 'bg-green-600 text-white hover:bg-green-700'
                                 : reorderState === 'adding'
-                                  ? 'animate-pulse cursor-wait bg-rose-400 text-white'
-                                  : 'bg-rose-600 text-white hover:bg-rose-700',
+                                  ? 'animate-pulse cursor-wait bg-blue-400 text-white'
+                                  : 'bg-blue-600 text-white hover:bg-blue-700',
                             )}
                             onClick={handleReorder}
                             disabled={reorderState !== 'idle'}
@@ -933,7 +1036,17 @@ export default function RentalOrderDetailPage() {
                           </Button>
                         )}
 
-                        {hasCancel && (
+                        {hasCancel && (order.status === 'PAID' && order.cancellationRequested ? (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-cyan-200 bg-cyan-50 px-5 font-semibold text-cyan-600 hover:border-cyan-300 hover:bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-400 dark:hover:bg-cyan-950'
+                            disabled
+                          >
+                            <Ban className='size-4' />
+                            Đã yêu cầu hủy
+                          </Button>
+                        ) : (
                           <Button
                             size='default'
                             variant='outline'
@@ -946,9 +1059,9 @@ export default function RentalOrderDetailPage() {
                             ) : (
                               <Ban className='size-4' />
                             )}
-                            Hủy đơn
+                            {order.status === 'PAID' ? 'Yêu cầu hủy đơn' : 'Hủy đơn'}
                           </Button>
-                        )}
+                        ))}
                       </div>
                     </div>
                   );
@@ -998,15 +1111,73 @@ export default function RentalOrderDetailPage() {
             </Dialog>
 
             <Dialog
+              open={cancellationRequestOpen}
+              onOpenChange={setCancellationRequestOpen}
+            >
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle className='flex items-center gap-2'>
+                    <Ban className='size-5 text-cyan-600' />
+                    Yêu cầu hủy đơn thuê
+                  </DialogTitle>
+                  <DialogDescription>
+                    Bạn đã thanh toán đơn hàng này. Vui lòng nhập lý do hủy đơn.
+                    Bộ phận hỗ trợ sẽ xác nhận và hoàn tiền cho bạn sau khi đơn được duyệt hủy.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className='space-y-3'>
+                  <div>
+                    <label className='text-sm font-medium text-foreground'>
+                      Lý do hủy đơn <span className='text-red-500'>*</span>
+                    </label>
+                    <textarea
+                      value={cancellationReason}
+                      onChange={(e) => setCancellationReason(e.target.value)}
+                      placeholder='VD: Thay đổi kế hoạch, không còn nhu cầu thuê...'
+                      className='mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none'
+                      rows={3}
+                    />
+                  </div>
+                  <div className='rounded-lg border border-amber-200/80 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200'>
+                    Tiền cọc sẽ được hoàn lại cho bạn sau khi đơn hàng được duyệt hủy.
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => {
+                      setCancellationRequestOpen(false);
+                      setCancellationReason('');
+                    }}
+                    disabled={requestCancellation.isPending}
+                  >
+                    Hủy bỏ
+                  </Button>
+                  <Button
+                    className='bg-cyan-600 text-white hover:bg-cyan-700'
+                    onClick={confirmCancellationRequest}
+                    disabled={requestCancellation.isPending || !cancellationReason.trim()}
+                  >
+                    {requestCancellation.isPending ? (
+                      <Loader2 className='size-4 animate-spin' />
+                    ) : (
+                      <Ban className='size-4' />
+                    )}
+                    {requestCancellation.isPending ? 'Đang gửi…' : 'Gửi yêu cầu hủy đơn'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
               open={pickupConfirmOpen}
               onOpenChange={setPickupConfirmOpen}
             >
               <DialogContent className='sm:max-w-md'>
                 <DialogHeader>
-                  <DialogTitle>Xác nhận yêu cầu thu hồi</DialogTitle>
+                  <DialogTitle>Xác nhận trả hàng sớm</DialogTitle>
                   <DialogDescription>
-                    Trạng thái đơn sẽ chuyển sang chờ thu hồi
-                    (`PENDING_PICKUP`).
+                    Sau khi xác nhận, nhân viên sẽ liên hệ và sắp xếp lịch thu hồi thiết bị theo địa chỉ giao hàng của bạn.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -1024,7 +1195,7 @@ export default function RentalOrderDetailPage() {
                   >
                     {updateOrderStatus.isPending
                       ? 'Đang xử lý…'
-                      : 'Xác nhận thu hồi'}
+                      : 'Xác nhận trả hàng'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1055,7 +1226,7 @@ export default function RentalOrderDetailPage() {
                       href={order.qrCode}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='text-sm font-medium text-rose-600 underline-offset-2 hover:underline dark:text-rose-400'
+                      className='text-sm font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-400'
                     >
                       Mở ảnh QR trong tab mới
                     </a>
@@ -1075,15 +1246,13 @@ export default function RentalOrderDetailPage() {
                       <span className='flex size-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800'>
                         <FileText className='size-5 text-slate-700 dark:text-slate-200' />
                       </span>
-                      Hợp đồng thuê
+                      Hợp đồng thuê hiện hành
                     </DialogTitle>
-                    {/* <DialogDescription className='text-left'>
-                      {rentalContract.contractNumber} · Phiên bản{' '}
-                      {rentalContract.contractVersion}
-                      {rentalContract.acceptedAt && (
-                        <> · Xác nhận: {rentalContract.acceptedAt}</>
-                      )}
-                    </DialogDescription> */}
+                    <DialogDescription className='text-left'>
+                      Hệ thống lưu 1 hợp đồng hiện hành cho mỗi đơn thuê. Mỗi
+                      lần gia hạn và thanh toán bổ sung thành công sẽ cập nhật
+                      lại bản này, không tách thành nhiều hợp đồng rời.
+                    </DialogDescription>
                   </DialogHeader>
                   <div className='min-h-0 flex-1 overflow-auto bg-muted/30 px-2 py-3 sm:px-4 sm:py-4'>
                     <PolicyPdfPreview
@@ -1093,13 +1262,15 @@ export default function RentalOrderDetailPage() {
                   </div>
                   <DialogFooter className='shrink-0 border-t border-border/60 px-5 py-3 sm:justify-between'>
                     <p className='text-xs text-muted-foreground'>
-                      Nếu không xem được trong khung, mở file PDF ở tab mới.
+                      {rentalContract.contractNumber} · Phiên bản{' '}
+                      {rentalContract.contractVersion} · Cập nhật{' '}
+                      {formatDate(rentalContract.updatedAt)}
                     </p>
                     <a
                       href={rentalContract.contractPdfUrl}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='inline-flex items-center gap-1.5 text-sm font-medium text-rose-600 hover:underline dark:text-rose-400'
+                      className='inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400'
                     >
                       <ExternalLink className='size-4' />
                       Mở PDF
@@ -1115,6 +1286,14 @@ export default function RentalOrderDetailPage() {
               onAllConsented={() => void handlePaymentAfterConsent()}
             />
 
+            <WriteReviewDialog
+              open={reviewDialogOpen}
+              onOpenChange={setReviewDialogOpen}
+              productId={order.rentalOrderLines[0]?.productId ?? ''}
+              productName={order.rentalOrderLines[0]?.productNameSnapshot ?? ''}
+              orderId={order.rentalOrderId}
+            />
+
             {/* ── Two-column layout ── */}
             <div className='grid gap-5 lg:grid-cols-12 lg:gap-6'>
               {/* Left column */}
@@ -1123,7 +1302,7 @@ export default function RentalOrderDetailPage() {
                 <SectionCard>
                   <SectionHeader
                     icon={<Package className='size-4' />}
-                    iconBg='bg-rose-500'
+                    iconBg='bg-blue-500'
                     title='Sản phẩm trong đơn'
                   />
                   <ul className='divide-y divide-border/60'>
@@ -1189,19 +1368,19 @@ export default function RentalOrderDetailPage() {
                       <Truck className='mt-0.5 size-4 shrink-0 text-sky-600 dark:text-sky-400' />
                       <div className='min-w-0 space-y-0.5'>
                         <p className='font-semibold text-foreground'>
-                          {order.deliveryRecipientName}
+                          {order.deliveryRecipientName ?? order.userAddress?.recipientName ?? '-'}
                         </p>
                         <p className='text-muted-foreground'>
-                          {order.deliveryPhone}
+                          {order.deliveryPhone ?? order.userAddress?.phoneNumber ?? '-'}
                         </p>
                       </div>
                     </div>
                     <p className='text-sm leading-relaxed text-muted-foreground'>
                       {[
-                        order.deliveryAddressLine,
-                        order.deliveryWard,
-                        order.deliveryDistrict,
-                        order.deliveryCity,
+                        order.deliveryAddressLine ?? order.userAddress?.addressLine,
+                        order.deliveryWard ?? order.userAddress?.ward,
+                        order.deliveryDistrict ?? order.userAddress?.district,
+                        order.deliveryCity ?? order.userAddress?.city,
                       ]
                         .filter(Boolean)
                         .join(', ')}
@@ -1234,50 +1413,6 @@ export default function RentalOrderDetailPage() {
                   </div>
                 </SectionCard>
 
-                {/* Staff */}
-                {(order.deliveryStaff ||
-                  order.pickupStaff ||
-                  order.hubName) && (
-                  <SectionCard>
-                    <SectionHeader
-                      icon={<User className='size-4' />}
-                      iconBg='bg-violet-500'
-                      title='Nhân viên phụ trách'
-                    />
-                    <div className='space-y-4 p-5'>
-                      {order.hubName && (
-                        <p className='text-xs text-muted-foreground'>
-                          Hub:{' '}
-                          <span className='font-medium text-foreground'>
-                            {order.hubName}
-                          </span>
-                        </p>
-                      )}
-                      {order.deliveryStaff && (
-                        <div>
-                          <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                            Giao hàng
-                          </p>
-                          <StaffAvatar
-                            staff={order.deliveryStaff}
-                            role='Nhân viên giao hàng'
-                          />
-                        </div>
-                      )}
-                      {order.pickupStaff && (
-                        <div>
-                          <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-                            Thu hồi
-                          </p>
-                          <StaffAvatar
-                            staff={order.pickupStaff}
-                            role='Nhân viên thu hồi'
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </SectionCard>
-                )}
               </div>
 
               {/* Right column */}
@@ -1307,7 +1442,7 @@ export default function RentalOrderDetailPage() {
                             )}
                           >
                             {overdueSuggestion.overdue
-                              ? `Đơn đang quá hạn trả — ${overdueSuggestion.overdueDays} ngày`
+                              ? `Đơn đang quá hạn trả - ${overdueSuggestion.overdueDays} ngày`
                               : 'Chưa ghi nhận quá hạn theo dữ liệu hiện tại.'}
                           </div>
                           <dl className='grid grid-cols-1 gap-2 text-xs sm:grid-cols-2'>
@@ -1355,7 +1490,7 @@ export default function RentalOrderDetailPage() {
                               <dt className='font-medium text-foreground'>
                                 Tổng phạt gợi ý
                               </dt>
-                              <dd className='font-semibold tabular-nums text-rose-600 dark:text-rose-400'>
+                              <dd className='font-semibold tabular-nums text-blue-600 dark:text-blue-400'>
                                 {fmt.format(
                                   overdueSuggestion.suggestedTotalPenaltyAmount,
                                 )}
@@ -1386,7 +1521,7 @@ export default function RentalOrderDetailPage() {
                 <SectionCard>
                   <SectionHeader
                     icon={<CreditCard className='size-4' />}
-                    iconBg='bg-rose-600'
+                    iconBg='bg-blue-600'
                     title='Tổng thanh toán'
                   />
                   <div className='space-y-2.5 p-5 text-sm'>
@@ -1404,12 +1539,12 @@ export default function RentalOrderDetailPage() {
                         <span className='text-muted-foreground'>
                           Giảm voucher
                           {order.voucherCodeSnapshot && (
-                            <span className='ml-1 font-mono text-rose-600'>
+                            <span className='ml-1 font-mono text-blue-600'>
                               ({order.voucherCodeSnapshot})
                             </span>
                           )}
                         </span>
-                        <span className='font-medium tabular-nums text-rose-600'>
+                        <span className='font-medium tabular-nums text-blue-600'>
                           −{fmt.format(order.voucherDiscountAmount)}
                         </span>
                       </div>
@@ -1465,12 +1600,12 @@ export default function RentalOrderDetailPage() {
                         </div>
                       )}
 
-                    <div className='mt-1 rounded-xl border border-rose-200/70 bg-rose-50/60 px-4 py-3 dark:border-rose-800/50 dark:bg-rose-950/30'>
+                    <div className='mt-1 rounded-xl border border-blue-200/70 bg-blue-50/60 px-4 py-3 dark:border-blue-800/50 dark:bg-blue-950/30'>
                       <div className='flex flex-wrap items-center justify-between gap-2'>
                         <span className='font-semibold text-foreground'>
                           Cần thanh toán
                         </span>
-                        <span className='text-xl font-extrabold tabular-nums text-rose-600 dark:text-rose-400'>
+                        <span className='text-xl font-extrabold tabular-nums text-blue-600 dark:text-blue-400'>
                           {fmt.format(order.totalPayableAmount)}
                         </span>
                       </div>
@@ -1494,7 +1629,7 @@ export default function RentalOrderDetailPage() {
                   />
                   <div className='relative p-5'>
                     <div
-                      className='absolute bottom-5 left-[29px] top-5 w-px bg-border/80'
+                      className='absolute bottom-5 left-7.25 top-5 w-px bg-border/80'
                       aria-hidden
                     />
                     <ul className='relative space-y-4 text-sm'>
@@ -1518,7 +1653,7 @@ export default function RentalOrderDetailPage() {
                         .filter((s) => s.date)
                         .map((s) => (
                           <li key={s.label} className='flex items-start gap-3'>
-                            <span className='relative z-1 mt-1 size-2 shrink-0 rounded-full bg-rose-500 ring-4 ring-card' />
+                            <span className='relative z-1 mt-1 size-2 shrink-0 rounded-full bg-blue-500 ring-4 ring-card' />
                             <div className='min-w-0 flex-1'>
                               <p className='text-xs text-muted-foreground'>
                                 {s.label}

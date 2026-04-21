@@ -1,7 +1,7 @@
 /**
  * Hooks cho products module (dashboard):
- *  - useProductsQuery        — paginated list
- *  - useProductQuery         — single product by ID
+ *  - useProductsQuery        - paginated list
+ *  - useProductQuery         - single product by ID
  *  - useCreateProductMutation
  *  - useUpdateProductMutation
  *  - useDeleteProductMutation
