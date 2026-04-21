@@ -117,7 +117,7 @@ export function CatalogView({
     brands: filterState.brands.length > 0 ? filterState.brands : undefined,
     minPrice: filterState.priceMin || undefined,
     maxPrice: filterState.priceMax || undefined,
-      ...(apiSort ? { sort: apiSort } : {}),
+    ...(apiSort ? { sort: apiSort } : {}),
     onlyWithStock: true,
     page,
     size: PAGE_SIZE,
@@ -182,12 +182,12 @@ export function CatalogView({
 
   const handleSortChange = (s: SortOption) => {
     const next = new URLSearchParams(searchParams.toString());
-      // `relevance` = backend default ordering → remove `sort` param.
-      if (s === 'relevance') {
-        next.delete('sort');
-      } else {
-        next.set('sort', s);
-      }
+    // `relevance` = backend default ordering → remove `sort` param.
+    if (s === 'relevance') {
+      next.delete('sort');
+    } else {
+      next.set('sort', s);
+    }
     next.delete('page');
     router.push(`?${next.toString()}`);
   };
@@ -256,9 +256,16 @@ export function CatalogView({
             activeCategoryId={categoryId ?? undefined}
             onCategoryChange={(id) => {
               const next = new URLSearchParams(searchParams.toString());
-              next.set('categoryId', id);
-              next.delete('category'); // clean up legacy ?category= param from Home
-              next.delete('subcategoryId');
+              if (!id) {
+                // Bỏ chọn danh mục → xoá filter, lấy tất cả sản phẩm
+                next.delete('categoryId');
+                next.delete('category');
+                next.delete('subcategoryId');
+              } else {
+                next.set('categoryId', id);
+                next.delete('category'); // clean up legacy ?category= param from Home
+                next.delete('subcategoryId');
+              }
               next.delete('page');
               router.push(`?${next.toString()}`);
             }}

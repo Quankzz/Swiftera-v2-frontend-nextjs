@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const inputClassName =
-  'h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
+  'h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[var(--auth-focus-ring,#0ea5e9)/30] dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[var(--auth-focus-ring-dark,#38bdf8)/40]';
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -136,7 +136,7 @@ function ResetPasswordForm() {
         <Button
           type="submit"
           disabled={isSubmitting || isLoading || !token}
-          className="h-auto w-full bg-[#fe1451] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#ba264d]"
+          className="h-auto w-full bg-[[var(--theme-primary-start,#0ea5e9)]] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[[var(--theme-primary-end,#0369a1)]]"
         >
           {isSubmitting ? (
             <>

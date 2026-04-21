@@ -45,7 +45,6 @@ export function PickedUpWorkflow({ order }: PickedUpWorkflowProps) {
           <OrderMetaCard order={order} />
           <CustomerInfo order={order} mode="pickup" />
         </div>
-
         {/* Right: Items */}
         <div className="flex flex-col gap-4">
           <OrderItemsList

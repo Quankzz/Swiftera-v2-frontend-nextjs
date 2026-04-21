@@ -187,7 +187,7 @@ function ProductInventoryGroupRow({
         <div className='min-w-0 flex-1'>
           <p className='text-sm font-semibold text-text-main truncate'>{product.name}</p>
           <p className='text-xs text-text-sub'>
-            {product.brand ?? '—'} · {product.dailyPrice.toLocaleString('vi-VN')}₫/ngày
+            {product.brand ?? '-'} · {product.dailyPrice.toLocaleString('vi-VN')}₫/ngày
           </p>
           <div className='mt-1 flex items-center gap-2 text-[11px] text-text-sub'>
             <span className='inline-flex items-center gap-1 rounded-full bg-white dark:bg-white/8 px-2 py-0.5'>
@@ -266,10 +266,10 @@ function ProductInventoryGroupRow({
                               className='size-3 rounded-full border border-gray-200 dark:border-white/20 shrink-0'
                               style={{ backgroundColor: item.colorCode }}
                             />
-                            <span className='text-xs text-text-sub'>{item.colorName ?? '—'}</span>
+                            <span className='text-xs text-text-sub'>{item.colorName ?? '-'}</span>
                           </div>
                         ) : (
-                          <span className='text-xs text-text-sub'>—</span>
+                          <span className='text-xs text-text-sub'>-</span>
                         )}
                       </td>
                       <td className='px-3 py-2'>
@@ -706,7 +706,7 @@ export function HubViewDialog({ hub, onClose }: HubViewDialogProps) {
                                     {product.name}
                                   </p>
                                   <p className='text-xs text-text-sub'>
-                                    {product.brand ?? '—'} · {product.dailyPrice.toLocaleString('vi-VN')}₫/ngày
+                                    {product.brand ?? '-'} · {product.dailyPrice.toLocaleString('vi-VN')}₫/ngày
                                   </p>
                                 </div>
 

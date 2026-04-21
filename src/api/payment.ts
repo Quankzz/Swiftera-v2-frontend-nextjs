@@ -99,6 +99,18 @@ export interface PaymentInitiateResponse {
   data: string; // → full VNPay payment URL
 }
 
+export interface CreateRefundTransactionRequest {
+  rentalOrderId: string;
+  refundAmount: number;
+  refundReason: string;
+}
+
+export interface CreateRefundTransactionResponse {
+  success: boolean;
+  message: string;
+  data: string; // → paymentTransactionId of created refund transaction
+}
+
 // ─── VNPay Return / IPN Query Params (frontend đọc khi quay về) ───────────
 
 /** Khi user quay về từ VNPay (return URL), frontend đọc query params này */
@@ -197,7 +209,7 @@ export const paymentApi = {
   /**
    * API-089: Tạo link thanh toán VNPay [AUTH]
    *
-  * @param rentalOrderId - UUID của đơn thuê (phải ở trạng thái cho phép thanh toán)
+   * @param rentalOrderId - UUID của đơn thuê (phải ở trạng thái cho phép thanh toán)
    * @param additionalRentalDays - số ngày gia hạn tạm tính để thanh toán trước gia hạn
    *
    * Logic backend: amount = totalPayableAmount - totalPaidAmount
@@ -218,6 +230,39 @@ export const paymentApi = {
             ? { additionalRentalDays }
             : undefined,
       },
+    );
+  },
+
+  /**
+   * API: POST /payments/initiate-batch
+   * Tạo một link VNPay duy nhất cho nhiều đơn thuê cùng lúc.
+   * Khi thanh toán thành công, tất cả các đơn đều được chuyển sang PAID.
+   *
+   * @param orderIds - danh sách rentalOrderId cần thanh toán gộp
+   */
+  initiateBatch(
+    orderIds: string[],
+  ): Promise<AxiosResponse<PaymentInitiateResponse>> {
+    return httpService.post<PaymentInitiateResponse>(
+      '/payments/initiate-batch',
+      { orderIds },
+      authOpts,
+    );
+  },
+
+  /**
+   * Admin creates a DEPOSIT_REFUND payment transaction record.
+   * Called after confirming the refund has been transferred to the customer.
+   *
+   * @param input - rentalOrderId, refundAmount, refundReason
+   */
+  createRefund(
+    input: CreateRefundTransactionRequest,
+  ): Promise<AxiosResponse<CreateRefundTransactionResponse>> {
+    return httpService.post<CreateRefundTransactionResponse>(
+      '/payments/refund',
+      input,
+      authOpts,
     );
   },
 };

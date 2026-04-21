@@ -36,6 +36,7 @@ export function DeliveredWorkflow({ order }: DeliveredWorkflowProps) {
           <OrderMetaCard order={order} />
 
           <CustomerInfo order={order} mode="delivery" />
+
         </div>
 
         {/* Right: Items */}

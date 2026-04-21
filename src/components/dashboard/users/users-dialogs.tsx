@@ -28,8 +28,12 @@ import {
 import { useRolesListQuery } from '@/features/roles/hooks/use-roles';
 import type { RoleResponse } from '@/features/roles/types';
 import type { UserResponse, UpdateUserInput } from '@/features/users/types';
-import { useUploadFileMutation } from '@/features/files/hooks/use-files';
+import {
+  useUploadFileMutation,
+  useDeleteFileMutation,
+} from '@/features/files/hooks/use-files';
 import { normalizeError } from '@/api/apiService';
+import { isAzureBlobUrl, extractBlobPathFromUrl } from '@/lib/blob-utils';
 import {
   Camera,
   User as UserIcon,
@@ -70,6 +74,7 @@ export function UserFormDialog({
   const updateMutation = useUpdateUserMutation();
   const removeRolesMutation = useRemoveUserRolesMutation();
   const uploadMutation = useUploadFileMutation();
+  const deleteMutation = useDeleteFileMutation();
   const { data: userDetail, isFetching: isDetailLoading } = useUserQuery(
     initialUser?.userId,
   );
@@ -169,11 +174,22 @@ export function UserFormDialog({
         // Xóa role cũ qua DELETE /users/{userId}/roles (API-018) - gọi song song sau update
         // Avatar: nếu user chọn ảnh mới → upload → lấy URL
         if (avatarFile) {
+          const oldAvatarUrl = userDetail.avatarUrl;
           const uploadResult = await uploadMutation.mutateAsync({
             file: avatarFile,
             folder: 'avatars',
           });
           payload.avatarUrl = uploadResult.fileUrl;
+
+          // Delete old avatar from Azure Blob after successful upload
+          if (oldAvatarUrl && isAzureBlobUrl(oldAvatarUrl)) {
+            const oldPath = extractBlobPathFromUrl(oldAvatarUrl);
+            if (oldPath) {
+              deleteMutation
+                .mutateAsync(oldPath)
+                .catch(() => toast.error('Không thể xóa ảnh đại diện cũ.'));
+            }
+          }
         }
 
         // Nếu không có gì thay đổi (kể cả roles) → đóng dialog luôn

@@ -96,14 +96,22 @@ export default function ProductDetailClient({
         o.rentalOrderLines.some((l) => l.productId === productId),
     )?.rentalOrderId ?? null;
 
-  const reviewsCount = reviewsMeta?.totalItems ?? initialReviewsMeta?.totalItems ?? 0;
+  const reviewsCount =
+    reviewsMeta?.totalItems ?? initialReviewsMeta?.totalItems ?? 0;
 
   const [currentImage, setCurrentImage] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState<string>(String(1));
+  const [selectedDuration, setSelectedDuration] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
 
   const defaultDurationId = String(product?.minRentalDays ?? 1);
+
+  // Khởi tạo selectedDuration khi product load xong (chỉ lần đầu)
+  const [durationInitialized, setDurationInitialized] = useState(false);
+  if (product && !durationInitialized) {
+    setDurationInitialized(true);
+    setSelectedDuration(defaultDurationId);
+  }
 
   const durations = product?.dailyPrice
     ? buildDurations(
@@ -120,19 +128,23 @@ export default function ProductDetailClient({
     : [];
 
   const videoUrl = product?.images?.length
-    ? [...product.images].sort((a, b) => b.sortOrder - a.sortOrder).find((img) => img.videoUrl)?.videoUrl ?? null
+    ? ([...product.images]
+        .sort((a, b) => b.sortOrder - a.sortOrder)
+        .find((img) => img.videoUrl)?.videoUrl ?? null)
     : null;
 
   const effectiveDurationId =
-    durations.find((d) => d.id === selectedDuration) != null
-      ? selectedDuration
-      : defaultDurationId;
+    selectedDuration !== '' ? selectedDuration : defaultDurationId;
 
   const currentDuration = (() => {
     const found = durations.find((d) => d.id === effectiveDurationId);
     if (found) return found;
     const days = parseInt(effectiveDurationId, 10);
-    if (!isNaN(days) && days >= (product?.minRentalDays ?? 1) && product?.dailyPrice) {
+    if (
+      !isNaN(days) &&
+      days >= (product?.minRentalDays ?? 1) &&
+      product?.dailyPrice
+    ) {
       const total = Math.round(product.dailyPrice * days);
       const original = product.oldDailyPrice
         ? Math.round(product.oldDailyPrice * days)
@@ -167,7 +179,7 @@ export default function ProductDetailClient({
 
   const maxQuantity =
     selectedColorId && selectedColor
-      ? selectedColor.availableQuantity ?? 99
+      ? (selectedColor.availableQuantity ?? 99)
       : (product?.availableStock ?? 99);
 
   const safeQuantity = Math.min(quantity, maxQuantity);
@@ -179,9 +191,15 @@ export default function ProductDetailClient({
   const specifications = useMemo(() => {
     if (!product) return [];
     return [
-    { label: 'Thương hiệu', value: product.brand ?? '-' },
-    { label: 'Danh mục', value: product.categoryName ?? '-' },
-    { label: 'Màu sắc', value: colors && colors.length > 0 ? colors.map((c) => c.name).join(', ') : '-' },
+      { label: 'Thương hiệu', value: product.brand ?? '-' },
+      { label: 'Danh mục', value: product.categoryName ?? '-' },
+      {
+        label: 'Màu sắc',
+        value:
+          colors && colors.length > 0
+            ? colors.map((c) => c.name).join(', ')
+            : '-',
+      },
       {
         label: 'Số ngày thuê tối thiểu',
         value: `${product.minRentalDays} ngày`,
@@ -233,7 +251,7 @@ export default function ProductDetailClient({
         </p>
         <Link
           href='/'
-          className='text-sm font-medium text-rose-600 hover:underline dark:text-rose-400'
+          className='text-sm font-medium text-blue-600 hover:underline dark:text-blue-400'
         >
           Quay về trang chủ
         </Link>
@@ -250,7 +268,7 @@ export default function ProductDetailClient({
             <li>
               <Link
                 href='/'
-                className='flex items-center gap-1 font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
+                className='flex items-center gap-1 font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
               >
                 Trang chủ
               </Link>
@@ -261,7 +279,7 @@ export default function ProductDetailClient({
             <li>
               <Link
                 href='/catalog'
-                className='font-medium text-rose-600 transition-colors hover:underline dark:text-rose-400'
+                className='font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
               >
                 {product.categoryName || 'Sản phẩm'}
               </Link>
@@ -302,7 +320,6 @@ export default function ProductDetailClient({
                   discount,
                   rating: product.averageRating ?? 0,
                   reviews: reviewsCount,
-                  rentedCount: 0,
                   colors,
                   durations,
                 }}
@@ -383,7 +400,10 @@ export default function ProductDetailClient({
 
         {/* Related Products */}
         <div className='mt-4 sm:mt-6'>
-          <RentalRelatedProducts currentProductId={product.productId} />
+          <RentalRelatedProducts
+            currentProductId={product.productId}
+            currentCategoryId={product.categoryId}
+          />
         </div>
       </div>
     </div>

@@ -89,9 +89,9 @@ function StatusFilter({
     <select
       value={statusFilter}
       onChange={(e) => onStatusChange(e.target.value as RentalOrderStatus | '')}
-      className="h-9 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition"
+      className='h-9 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
     >
-      <option value="">Tất cả trạng thái</option>
+      <option value=''>Tất cả trạng thái</option>
       {STATUS_ORDER.map((status) => (
         <option key={status} value={status}>
           {STATUS_LABELS[status]}
@@ -109,14 +109,14 @@ function SearchInput({
   onSearchChange: (v: string) => void;
 }) {
   return (
-    <div className="relative">
-      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-sub pointer-events-none" />
+    <div className='relative'>
+      <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-sub pointer-events-none' />
       <input
-        type="text"
+        type='text'
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        placeholder="Tìm khách hàng, SĐT..."
-        className="h-9 w-56 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition"
+        placeholder='Tìm khách hàng, SĐT...'
+        className='h-9 w-56 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
       />
     </div>
   );
@@ -342,14 +342,14 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         accessorKey: 'rentalOrderId',
         header: 'Đơn hàng',
         cell: ({ row }) => (
-          <div className="min-w-28">
-            <div className="flex items-center gap-1.5 mb-1">
-              <ClipboardList className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-              <span className="font-mono text-xs font-semibold text-gray-800 dark:text-gray-200 tracking-tight">
+          <div className='min-w-28'>
+            <div className='flex items-center gap-1.5 mb-1'>
+              <ClipboardList className='w-3.5 h-3.5 text-blue-500 shrink-0' />
+              <span className='font-mono text-xs font-semibold text-gray-800 dark:text-gray-200 tracking-tight'>
                 {row.original.rentalOrderId.slice(0, 8).toUpperCase()}
               </span>
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500">
+            <p className='text-xs text-gray-400 dark:text-gray-500'>
               {formatDate(row.original.placedAt)}
             </p>
           </div>
@@ -365,15 +365,15 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
           const name = userAddress?.recipientName || '';
 
           return (
-            <div className="flex items-center gap-2.5 min-w-40">
-              <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+            <div className='flex items-center gap-2.5 min-w-40'>
+              <div className='w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shrink-0'>
                 {(name[0] || '?').toUpperCase()}
               </div>
-              <div className="min-w-0">
-                <p className="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">
+              <div className='min-w-0'>
+                <p className='font-medium text-sm text-gray-800 dark:text-gray-200 truncate'>
                   {name || '-'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
                   {userAddress?.phoneNumber ?? '-'}
                 </p>
               </div>
@@ -388,16 +388,15 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         cell: ({ row }) => {
           const addr = row.original.userAddress;
           return (
-            <div className="flex items-start gap-1.5 min-w-35 max-w-50">
-              <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-1">
+            <div className='flex items-start gap-1.5 min-w-35 max-w-50'>
+              <MapPin className='w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0' />
+              <div className='min-w-0'>
+                <p className='text-xs text-gray-700 dark:text-gray-300 line-clamp-1'>
                   {addr?.addressLine || '-'}
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                  {[addr?.district, addr?.city]
-                    .filter(Boolean)
-                    .join(', ') || '-'}
+                <p className='text-xs text-gray-400 dark:text-gray-500 mt-0.5'>
+                  {[addr?.district, addr?.city].filter(Boolean).join(', ') ||
+                    '-'}
                 </p>
               </div>
             </div>
@@ -409,12 +408,12 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         accessorKey: 'expectedDeliveryDate',
         header: 'Ngày thuê',
         cell: ({ row }) => (
-          <div className="min-w-28">
-            <div className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300 font-medium">
-              <Calendar className="w-3 h-3 text-gray-400" />
+          <div className='min-w-28'>
+            <div className='flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300 font-medium'>
+              <Calendar className='w-3 h-3 text-gray-400' />
               {formatDate(row.original.expectedDeliveryDate)}
             </div>
-            <p className="text-xs text-gray-400 mt-0.5 pl-4">
+            <p className='text-xs text-gray-400 mt-0.5 pl-4'>
               → {formatDate(row.original.expectedRentalEndDate)}
             </p>
           </div>
@@ -425,11 +424,11 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         accessorKey: 'totalPayableAmount',
         header: 'Thanh toán',
         cell: ({ row }) => (
-          <div className="min-w-30">
-            <p className="font-semibold text-sm text-gray-800 dark:text-gray-100">
+          <div className='min-w-30'>
+            <p className='font-semibold text-sm text-gray-800 dark:text-gray-100'>
               {formatCurrency(row.original.totalPayableAmount)}
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            <p className='text-xs text-gray-400 dark:text-gray-500 mt-0.5'>
               Cọc: {formatCurrency(row.original.depositHoldAmount)}
             </p>
           </div>
@@ -440,30 +439,30 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         id: 'hub',
         header: 'Hub / Nhân viên',
         cell: ({ row }) => {
-          const { hubCode, hubName, deliveryStaff, pickupStaff } = row.original;
-          if (!hubName) {
+          const { hub, hubName, deliveryStaff, pickupStaff } = row.original;
+          if (!hubName && !hub?.name) {
             return (
-              <span className="inline-flex items-center gap-1 text-xs text-gray-400 italic">
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <span className='inline-flex items-center gap-1 text-xs text-gray-400 italic'>
+                <span className='w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600' />
                 Chưa gán
               </span>
             );
           }
           return (
-            <div className="min-w-35">
-              <div className="flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400">
-                <MapPin className="w-3 h-3 shrink-0" />
-                <span className="line-clamp-1">{hubName}</span>
+            <div className='min-w-35'>
+              <div className='flex items-center gap-1 text-xs font-medium text-indigo-600 dark:text-indigo-400'>
+                <MapPin className='w-3 h-3 shrink-0' />
+                <span className='line-clamp-1'>{hub?.name ?? hubName}</span>
               </div>
               {deliveryStaff && (
-                <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  <User2 className="w-3 h-3 shrink-0" />
+                <div className='flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-0.5'>
+                  <User2 className='w-3 h-3 shrink-0' />
                   <span>
-                    <span className="text-cyan-600">Giao</span>
+                    <span className='text-cyan-600'>Giao</span>
                     {pickupStaff ? (
-                      <span className="text-purple-600">
+                      <span className='text-purple-600'>
                         {' '}
-                        <span className="text-gray-500 dark:text-gray-400">
+                        <span className='text-gray-500 dark:text-gray-400'>
                           {' '}
                           +{' '}
                         </span>{' '}
@@ -491,13 +490,16 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
         header: '',
         cell: ({ row }) => {
           const status = row.original.status;
-          const canAssign = status === 'PAID' || status === 'PREPARING';
+          const canAssign =
+            status === 'PAID' ||
+            status === 'PREPARING' ||
+            status === 'PENDING_PICKUP';
           const canComplete = status === 'PICKED_UP';
           const canReportIssue = status === 'DELIVERED' || status === 'IN_USE';
 
           return (
             <Button
-              size="sm"
+              size='sm'
               variant={canAssign ? 'default' : 'ghost'}
               onClick={() => onAssign(row.original)}
               className={cn(
@@ -506,7 +508,7 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
                   'text-text-sub border border-gray-200 dark:border-white/8',
               )}
             >
-              <Truck className="w-3.5 h-3.5" />
+              <Truck className='w-3.5 h-3.5' />
               {canAssign ? 'Gán đơn' : 'Xem'}
             </Button>
           );
@@ -522,9 +524,9 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
       data={orders}
       isLoading={isLoading}
       isError={isError}
-      errorMessage="Không thể tải danh sách đơn thuê. Vui lòng thử lại."
-      emptyMessage="Chưa có đơn thuê nào."
-      totalLabel="đơn thuê"
+      errorMessage='Không thể tải danh sách đơn thuê. Vui lòng thử lại.'
+      emptyMessage='Chưa có đơn thuê nào.'
+      totalLabel='đơn thuê'
       manualPagination
       pageIndex={page}
       pageCount={totalPages}

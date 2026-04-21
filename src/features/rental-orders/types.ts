@@ -174,17 +174,33 @@ export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
 
-  // Hub assignment (expanded details from BE)
-  hubId: string | null;
-  hubCode: string | null;
+  // Hub assignment — BE returns hub as nested HubResponse object + flat hubName
+  hub: {
+    hubId: string;
+    code: string;
+    name: string;
+    addressLine: string | null;
+    ward: string | null;
+    district: string | null;
+    city: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    phone: string | null;
+    isActive: boolean;
+  } | null;
+  /** Convenience flat field — same as hub.name, sent by BE mapper */
   hubName: string | null;
-  hubAddressLine: string | null;
-  hubWard: string | null;
-  hubDistrict: string | null;
-  hubCity: string | null;
-  hubLatitude: number | null;
-  hubLongitude: number | null;
-  hubPhone: string | null;
+
+  // Kept for backward-compat (all undefined at runtime — read from hub.* instead)
+  hubId?: string | null;
+  hubCode?: string | null;
+  hubAddressLine?: string | null;
+  hubWard?: string | null;
+  hubDistrict?: string | null;
+  hubCity?: string | null;
+  hubLatitude?: number | null;
+  hubLongitude?: number | null;
+  hubPhone?: string | null;
 
   // Staff assignment (nested objects - trả về từ API sau khi gán)
   deliveryStaff: HubStaffResponse | null;
@@ -234,6 +250,13 @@ export interface RentalOrderResponse {
   // QR Code (sinh sau khi PAID)
   qrCode: string | null;
 
+  // Cancellation request tracking (khi customer yeu cau huy don PAID)
+  cancellationRequested: boolean | null;
+  cancellationReason: string | null;
+  cancellationRequestedAt: string | null;
+  refundConfirmedByAdmin: boolean | null;
+  refundConfirmedAt: string | null;
+
   // Timestamps
   placedAt: string; // ISO datetime
   createdAt: string;
@@ -272,6 +295,16 @@ export interface UpdateOrderStatusInput {
 }
 
 /** API-078: Hủy đơn thuê - POST /rental-orders/{id}/cancel (no body) */
+
+/** API: Customer requests cancellation for PAID orders */
+export interface CancellationRequestInput {
+  reason: string;
+}
+
+/** API: Admin confirms cancellation with refund reason */
+export interface ConfirmCancellationRefundInput {
+  reason: string;
+}
 
 /** API-079: Gia hạn đơn thuê */
 export interface ExtendOrderInput {

@@ -325,3 +325,58 @@ export async function getContractByOrder(
   );
   return res.data.data!;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. Admin Cancellation / Support Actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface CancelOrderInput {
+  reason?: string;
+}
+
+/**
+ * Admin confirms cancellation with refund for PAID orders
+ * POST /rental-orders/{rentalOrderId}/confirm-cancellation-refund [ADMIN]
+ */
+export async function confirmCancellationRefund(
+  rentalOrderId: string,
+  input: CancelOrderInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/confirm-cancellation-refund`,
+    input,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * Admin directly cancels a PAID order (support case)
+ * POST /rental-orders/{rentalOrderId}/admin-cancel-paid [ADMIN]
+ */
+export async function adminCancelFromPaid(
+  rentalOrderId: string,
+  input: CancelOrderInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/admin-cancel-paid`,
+    input,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * Admin triggers early pickup for IN_USE orders (support/fraud cases)
+ * POST /rental-orders/{rentalOrderId}/admin-early-pickup [ADMIN]
+ */
+export async function adminEarlyPickupFromInUse(
+  rentalOrderId: string,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/admin-early-pickup`,
+    undefined,
+    authOpts,
+  );
+  return res.data.data!;
+}

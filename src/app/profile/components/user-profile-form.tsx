@@ -672,7 +672,7 @@ export function UserProfileForm({
                 setCity('');
               }}
               disabled={countriesLoading}
-              className='h-10 w-full rounded-md border border-input bg-gray-50/50 px-3 text-sm text-text-main outline-none transition-colors focus:border-rose-400 focus:ring-2 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:focus:ring-rose-900/20'
+              className='h-10 w-full rounded-md border border-input bg-gray-50/50 px-3 text-sm text-text-main outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:focus:ring-blue-900/20'
             >
               <option value=''>
                 {countriesLoading ? 'Đang tải quốc gia...' : 'Chọn quốc gia'}
@@ -699,7 +699,7 @@ export function UserProfileForm({
               value={city}
               onChange={(e) => setCity(e.target.value)}
               disabled={!nationality.trim() || citiesLoading}
-              className='h-10 w-full rounded-md border border-input bg-gray-50/50 px-3 text-sm text-text-main outline-none transition-colors focus:border-rose-400 focus:ring-2 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:focus:ring-rose-900/20'
+              className='h-10 w-full rounded-md border border-input bg-gray-50/50 px-3 text-sm text-text-main outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:focus:ring-blue-900/20'
             >
               <option value=''>
                 {!nationality.trim()

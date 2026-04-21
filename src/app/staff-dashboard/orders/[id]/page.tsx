@@ -458,7 +458,7 @@ export default function OrderDetailPage({
                       destPinColor={mapConfig.destPinColor}
                       destLabel={mapConfig.destLabel}
                       // Trên mobile: vẫn giữ chiều cao cố định (vh). Trên Desktop: chiếm 100% thẻ cha (h-full)
-                      mapHeightClass="h-[55vh] sm:h-[65vh] lg:h-full lg:min-h-0"
+                      mapHeightClass="h-48 sm:h-[55vh] lg:h-full lg:min-h-0"
                     />
                   </div>
 

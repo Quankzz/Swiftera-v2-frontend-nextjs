@@ -168,7 +168,7 @@
     --radius: 0.625rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary: #0ea5e9;
     --sidebar-primary-foreground: oklch(0.985 0 0);
     --sidebar-accent: oklch(0.97 0 0);
     --sidebar-accent-foreground: oklch(0.205 0 0);
@@ -199,25 +199,23 @@
     --scanner-accent: #14b8a6;
     --scanner-accent-muted: rgba(20, 184, 166, 0.1);
 
-    /* ── Theme color options ── */
+    /* ── Brand colors - BLUE TECH (replacing ROSE) ── */
+    --theme-primary-start: #0ea5e9;
+    --theme-primary-end: #0369a1;
+    --theme-accent-start: #38bdf8;
+    --theme-accent-end: #0c4a6e;
 
-    /* OPTION 1: ROSE */
-    --theme-primary-start: #fe1451;
-    --theme-primary-end: #ba264d;
-    --theme-accent-start: #fe1451;
-    --theme-accent-end: #ba264d;
-
-    /* OPTION 2: CHỈ MÀU PINK */
+    /* OPTION 2: PINK THEME */
     /* --theme-primary-start: #ff007f;
   --theme-primary-end: #cc0066;
   --theme-accent-start: #ff007f;
   --theme-accent-end: #cc0066; */
 
-    /* OPTION 3: MINT + ROSE  */
+    /* OPTION 3: MINT + BLUE */
     /* --theme-primary-start: #10b981;
   --theme-primary-end: #059669;
-  --theme-accent-start: #fe1451;
-  --theme-accent-end: #ba264d; */
+  --theme-accent-start: #0ea5e9;
+  --theme-accent-end: #0369a1; */
 }
 
 /* =========================================
@@ -249,7 +247,7 @@
     --chart-5: oklch(0.424 0.199 265.638);
     --sidebar: #15151a;
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: #fe1451;
+    --sidebar-primary: #0ea5e9;
     --sidebar-primary-foreground: oklch(0.985 0 0);
     --sidebar-accent: #252530;
     --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -264,11 +262,56 @@
     --surface-base: #0f0f11;
     --surface-card: #1a1a1f;
 
-    /* ── Brand colors - giữ nguyên đỏ chủ đạo ── */
-    --theme-primary-start: #fe2560;
-    --theme-primary-end: #c41d44;
-    --theme-accent-start: #fe2560;
-    --theme-accent-end: #c41d44;
+    /* ── Brand colors - BLUE TECH (replacing ROSE) ── */
+    --theme-primary-start: #0ea5e9;
+    --theme-primary-end: #0369a1;
+    --theme-accent-start: #38bdf8;
+    --theme-accent-end: #0c4a6e;
+}
+.dark {
+    --background: #0f0f11;
+    --foreground: oklch(0.985 0 0);
+    --card: #1a1a1f;
+    --card-foreground: oklch(0.985 0 0);
+    --popover: #1a1a1f;
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: #252530;
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: #252530;
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: #252530;
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 8%);
+    --input: oklch(1 0 0 / 10%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.809 0.105 251.813);
+    --chart-2: oklch(0.623 0.214 259.815);
+    --chart-3: oklch(0.546 0.245 262.881);
+    --chart-4: oklch(0.488 0.243 264.376);
+    --chart-5: oklch(0.424 0.199 265.638);
+    --sidebar: #15151a;
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: #0ea5e9;
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: #252530;
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 8%);
+    --sidebar-ring: oklch(0.556 0 0);
+
+    /* ── Text ── */
+    --text-main: #f0f0f2;
+    --text-sub: #8a8a9a;
+
+    /* ── Surfaces ── */
+    --surface-base: #0f0f11;
+    --surface-card: #1a1a1f;
+
+    /* ── Auth focus ring (brand color for form inputs) ── */
+    --auth-focus-ring: rgba(56, 189, 248, 0.3);
+    --auth-focus-ring-dark: rgba(56, 189, 248, 0.4);
 }
 
 @layer base {
@@ -545,7 +588,7 @@ iframe.rich-media {
     text-decoration: underline;
 }
 .rich-content blockquote {
-    border-left: 3px solid var(--theme-primary-start, #fe1451);
+    border-left: 3px solid var(--theme-primary-start, #0ea5e9);
     padding-left: 0.85em;
     color: var(--color-text-sub, #6b7280);
     margin: 0.75em 0;
@@ -553,11 +596,11 @@ iframe.rich-media {
     opacity: 0.85;
 }
 .dark .rich-content blockquote {
-    border-left-color: var(--theme-primary-start, #fe1451);
+    border-left-color: var(--theme-primary-start, #0ea5e9);
     opacity: 0.75;
 }
 .rich-content a {
-    color: var(--theme-primary-start, #fe1451);
+    color: var(--theme-primary-start, #0ea5e9);
     text-decoration: underline;
 }
 .rich-content hr {
@@ -614,16 +657,16 @@ iframe.rich-media {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--theme-primary-start, #fe1451), var(--theme-primary-end, #ba264d));
+    background: linear-gradient(180deg, var(--theme-primary-start, #0ea5e9), var(--theme-primary-end, #0369a1));
     border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--theme-primary-start, #fe1451), var(--theme-primary-end, #ba264d));
+    background: linear-gradient(180deg, var(--theme-primary-start, #38bdf8), var(--theme-primary-end, #0ea5e9));
 }
 
 /* ===== Firefox ===== */
 * {
     scrollbar-width: thin;
-    scrollbar-color: var(--theme-primary-start, #fe1451) transparent;
+    scrollbar-color: var(--theme-primary-start, #0ea5e9) transparent;
 }

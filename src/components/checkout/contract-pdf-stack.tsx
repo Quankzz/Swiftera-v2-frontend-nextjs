@@ -60,7 +60,7 @@ export function ContractPdfStack({
         {/* Trang chính - nội dung hợp đồng */}
         <div className='relative z-10 mx-auto w-[92%] animate-contract-pdf-float'>
           <div className='relative overflow-hidden rounded-xl border border-border bg-white shadow-2xl dark:bg-zinc-900 dark:shadow-black/40'>
-            <div className='absolute inset-x-0 top-0 z-20 h-10 bg-linear-to-b from-rose-600/90 to-rose-700/80 dark:from-rose-700/90 dark:to-rose-900/90'>
+            <div className='absolute inset-x-0 top-0 z-20 h-10 bg-linear-to-b from-blue-600/90 to-blue-700/80 dark:from-blue-700/90 dark:to-blue-900/90'>
               <div className='flex h-full items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider text-white'>
                 <FileText className='size-4' />
                 Hợp đồng cho thuê
@@ -70,12 +70,12 @@ export function ContractPdfStack({
             {/* Vệt quét giống máy scan PDF */}
             <div className='pointer-events-none absolute inset-0 top-10 z-30 overflow-hidden'>
               <div
-                className='h-16 w-full bg-linear-to-b from-transparent via-rose-400/25 to-transparent dark:via-rose-300/20 animate-contract-pdf-scan'
+                className='h-16 w-full bg-linear-to-b from-transparent via-blue-400/25 to-transparent dark:via-blue-300/20 animate-contract-pdf-scan'
               />
             </div>
 
             <div className='relative z-10 space-y-3 px-5 pb-6 pt-14 text-left text-xs leading-relaxed text-zinc-800 dark:text-zinc-200'>
-              <p className='font-mono text-[11px] text-rose-700 dark:text-rose-300'>Mã hợp đồng: {orderCode}</p>
+              <p className='font-mono text-[11px] text-blue-700 dark:text-blue-300'>Mã hợp đồng: {orderCode}</p>
               <p>
                 <span className='font-semibold'>Bên A (Swiftera):</span> Cung cấp dịch vụ cho thuê thiết bị theo điều khoản
                 đăng tải trên website.
@@ -85,7 +85,7 @@ export function ContractPdfStack({
               </p>
               <p>
                 <span className='font-semibold'>Tổng thanh toán (thuê + cọc):</span>{' '}
-                <span className='tabular-nums font-bold text-rose-700 dark:text-rose-300'>
+                <span className='tabular-nums font-bold text-blue-700 dark:text-blue-300'>
                   {grandTotal.toLocaleString('vi-VN')}₫
                 </span>
               </p>
@@ -100,7 +100,7 @@ export function ContractPdfStack({
                 </div>
                 <div>
                   <p className='text-[10px] uppercase text-muted-foreground'>Chữ ký điện tử</p>
-                <p className='text-lg italic text-rose-600/80 dark:text-rose-400/90'>Swiftera ✓</p>
+                <p className='text-lg italic text-blue-600/80 dark:text-blue-400/90'>Swiftera ✓</p>
                 </div>
               </div>
             </div>

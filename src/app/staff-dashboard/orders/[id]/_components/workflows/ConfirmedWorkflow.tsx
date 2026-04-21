@@ -107,7 +107,6 @@ export function ConfirmedWorkflow({
         desc="Đến hub lấy thiết bị và chụp ảnh kiểm tra từng sản phẩm."
         variant="primary"
       />
-
       {/* Desktop: map panel above the 2-col grid */}
       {hasHubMap && (
         <div className="hidden lg:block rounded-2xl border border-border bg-card shadow-sm overflow-hidden">

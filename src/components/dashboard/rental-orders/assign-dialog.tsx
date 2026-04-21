@@ -121,14 +121,23 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
     label: order.status,
     color: '',
   };
-  const canAssign = order.status === 'PENDING' || order.status === 'CONFIRMED';
+  const canAssign =
+    order.status === 'PENDING' ||
+    order.status === 'CONFIRMED' ||
+    order.status === 'RETURNING';
+  const requiresDeliveryStaff =
+    order.status === 'PENDING' || order.status === 'CONFIRMED';
+  const requiresPickupStaff = order.status === 'RETURNING';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedHubId || !deliveryStaffId) return;
+    if (!selectedHubId) return;
+    if (requiresDeliveryStaff && !deliveryStaffId) return;
+    if (requiresPickupStaff && !pickupStaffId) return;
+
     const input: AssignOrderInput = {
       hubId: selectedHubId,
-      deliveryStaffId,
+      deliveryStaffId: deliveryStaffId || undefined,
       pickupStaffId: pickupStaffId || undefined,
       plannedDeliveryAt: plannedDeliveryAt
         ? new Date(plannedDeliveryAt).toISOString()
@@ -280,13 +289,20 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
               <div>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
                   <Truck className='w-3.5 h-3.5 inline mr-1' />
-                  Nhân viên giao hàng <span className='text-red-500'>*</span>
+                  Nhân viên giao hàng{' '}
+                  {requiresDeliveryStaff ? (
+                    <span className='text-red-500'>*</span>
+                  ) : (
+                    <span className='text-gray-400 dark:text-gray-500 font-normal'>
+                      (tùy chọn)
+                    </span>
+                  )}
                 </label>
                 <select
                   value={deliveryStaffId}
                   onChange={(e) => setDeliveryStaffId(e.target.value)}
                   disabled={!canAssign || !selectedHubId || staffLoading}
-                  required
+                  required={requiresDeliveryStaff}
                   className='w-full rounded-xl border border-gray-200 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50'
                 >
                   <option value=''>
@@ -310,14 +326,19 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
                   <User className='w-3.5 h-3.5 inline mr-1' />
                   Nhân viên thu hồi{' '}
-                  <span className='text-gray-400 dark:text-gray-500 font-normal'>
-                    (tùy chọn)
-                  </span>
+                  {requiresPickupStaff ? (
+                    <span className='text-red-500'>*</span>
+                  ) : (
+                    <span className='text-gray-400 dark:text-gray-500 font-normal'>
+                      (tùy chọn)
+                    </span>
+                  )}
                 </label>
                 <select
                   value={pickupStaffId}
                   onChange={(e) => setPickupStaffId(e.target.value)}
                   disabled={!canAssign || !selectedHubId || staffLoading}
+                  required={requiresPickupStaff}
                   className='w-full rounded-xl border border-gray-200 dark:border-white/15 bg-white dark:bg-white/5 px-3 py-2.5 text-sm text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none disabled:opacity-50'
                 >
                   <option value=''>- Chưa phân công -</option>
@@ -382,7 +403,8 @@ export function AssignDialog({ order, isOpen, onClose }: AssignDialogProps) {
                   type='submit'
                   disabled={
                     !selectedHubId ||
-                    !deliveryStaffId ||
+                    (requiresDeliveryStaff && !deliveryStaffId) ||
+                    (requiresPickupStaff && !pickupStaffId) ||
                     assignMutation.isPending
                   }
                   className='px-5 py-2 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 flex items-center gap-2'

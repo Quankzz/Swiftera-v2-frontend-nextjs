@@ -43,7 +43,7 @@ export function HomeStepsProcess() {
             className='hidden md:block absolute top-10 left-1/2 -translate-x-1/2 w-2/3 h-px'
             style={{
               background:
-                'linear-gradient(to right, transparent, #fe1451 20%, #fe1451 80%, transparent)',
+                'linear-gradient(to right, transparent, var(--theme-primary-start,#0ea5e9) 20%, var(--theme-primary-start,#0ea5e9) 80%, transparent)',
               opacity: 0.35,
             }}
           />

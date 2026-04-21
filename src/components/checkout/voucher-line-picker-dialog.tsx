@@ -164,7 +164,7 @@ export function VoucherLinePickerDialog({
       <DialogContent className='max-h-[min(90dvh,620px)] gap-0 overflow-hidden p-0 sm:max-w-md'>
         <DialogHeader className='border-b border-border px-4 py-4 sm:px-5'>
           <div className='flex items-center gap-2'>
-            <TicketPercent className='size-5 text-rose-600 dark:text-rose-400' />
+            <TicketPercent className='size-5 text-blue-600 dark:text-blue-400' />
             <DialogTitle className='text-lg font-bold'>
               Chọn voucher
             </DialogTitle>
@@ -192,7 +192,7 @@ export function VoucherLinePickerDialog({
             <Button
               type='button'
               size='sm'
-              className='shrink-0 bg-rose-600 hover:bg-rose-700'
+              className='shrink-0 bg-blue-600 hover:bg-blue-700'
               onClick={() => void handleApplyInput()}
               disabled={!inputCode.trim() || isValidating || !!applyingCode}
             >
@@ -238,19 +238,19 @@ export function VoucherLinePickerDialog({
                       usedByOther
                         ? 'border-border/40 bg-muted/20 opacity-60'
                         : isApplied
-                          ? 'border-rose-500/50 bg-rose-50/50 dark:border-rose-500/40 dark:bg-rose-950/20'
-                          : 'border-rose-300/50 bg-rose-50/30 dark:border-rose-800/40 dark:bg-rose-950/10',
+                          ? 'border-blue-500/50 bg-blue-50/50 dark:border-blue-500/40 dark:bg-blue-950/20'
+                          : 'border-blue-300/50 bg-blue-50/30 dark:border-blue-800/40 dark:bg-blue-950/10',
                     )}
                   >
                     <div className='flex items-start justify-between gap-2'>
                       <div className='min-w-0 flex-1'>
                         <div className='flex flex-wrap items-center gap-1.5'>
-                          <span className='font-mono text-xs font-bold text-rose-600 dark:text-rose-400'>
+                          <span className='font-mono text-xs font-bold text-blue-600 dark:text-blue-400'>
                             {sv.code}
                           </span>
                           <Badge
                             variant='secondary'
-                            className='bg-rose-100 text-xs text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'
+                            className='bg-blue-100 text-xs text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
                           >
                             {sv.discountType === 'PERCENTAGE'
                               ? `−${sv.discountValue}%`
@@ -269,7 +269,7 @@ export function VoucherLinePickerDialog({
                             Đã dùng ở sản phẩm khác
                           </span>
                         ) : isApplied ? (
-                          <div className='flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400'>
+                          <div className='flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400'>
                             <CheckCircle2 className='size-4' />
                             Đang dùng
                           </div>
@@ -277,7 +277,7 @@ export function VoucherLinePickerDialog({
                           <Button
                             type='button'
                             size='sm'
-                            className='h-7 gap-1 bg-rose-600 text-xs hover:bg-rose-700'
+                            className='h-7 gap-1 bg-blue-600 text-xs hover:bg-blue-700'
                             disabled={!eligible || !!applyingCode}
                             onClick={() => void handleApplySuggested(sv)}
                           >
@@ -289,7 +289,7 @@ export function VoucherLinePickerDialog({
                           </Button>
                         )}
                         {eligible && !isApplied && !usedByOther && (
-                          <span className='text-xs font-medium text-rose-600 dark:text-rose-400'>
+                          <span className='text-xs font-medium text-blue-600 dark:text-blue-400'>
                             −{fmt(discount)}
                           </span>
                         )}

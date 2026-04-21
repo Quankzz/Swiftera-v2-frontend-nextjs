@@ -103,10 +103,6 @@ export function RentalStockSection({
     ? inventoryItems
     : inventoryItems.filter((item) => item.status === 'AVAILABLE');
 
-  const rentedCount = inventoryItems.filter(
-    (i) => i.status === 'RENTED',
-  ).length;
-
   return (
     <div className='rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5'>
       <div className='mb-4'>
@@ -117,7 +113,7 @@ export function RentalStockSection({
           <button
             type='button'
             onClick={() => setExpanded((v) => !v)}
-            className='flex items-center gap-1 text-xs font-medium text-rose-600 transition-colors hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300'
+            className='flex items-center gap-1 text-xs font-medium text-blue-600 transition-colors hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
           >
             {expanded ? (
               <>
@@ -137,11 +133,6 @@ export function RentalStockSection({
             <Package className='size-3.5' />
             {availableStock} thiết bị sẵn sàng
           </div>
-          {rentedCount > 0 && (
-            <div className='flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'>
-              {rentedCount} đang cho thuê
-            </div>
-          )}
           <div className='flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground'>
             Tối thiểu {minRentalDays} ngày
           </div>
@@ -262,7 +253,7 @@ function InventoryItemRow({ item }: { item: ProductInventoryItemResponse }) {
         <div className='mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground'>
           <span className='flex items-center gap-1'>
             <MapPin className='size-3' />
-            {item.hubName}
+            {item.hub?.name ?? item.hub?.hubId}
           </span>
           {item.conditionGrade && (
             <span className='flex items-center gap-1'>

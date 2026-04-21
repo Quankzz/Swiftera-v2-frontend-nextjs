@@ -125,3 +125,14 @@ export async function initiatePayment(
   );
   return res.data.data;
 }
+
+export async function initiatePaymentBatch(
+  orderIds: string[],
+): Promise<string> {
+  const res = await httpService.post<PaymentInitiateResponse>(
+    '/payments/initiate-batch',
+    { orderIds },
+    authOpts,
+  );
+  return res.data.data;
+}

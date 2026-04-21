@@ -90,7 +90,7 @@ function RentalDeliveryAddressDialog({
 
               <p className='text-sm text-muted-foreground'>
                 Bạn có thể thêm địa chỉ sau khi đăng nhập trong trang{' '}
-                <Link href='/profile' className='text-rose-600 hover:underline'>
+                <Link href='/profile' className='text-blue-600 hover:underline'>
                   Hồ sơ
                 </Link>
               </p>
@@ -149,7 +149,7 @@ function RentalDeliveryAddressDialog({
                           onOpenChange(false);
                         }
                       }}
-                      className='h-11 w-full rounded-xl bg-rose-600 font-bold text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600'
+                      className='h-11 w-full rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
                     >
                       GIAO ĐẾN ĐỊA CHỈ NÀY
                     </Button>
@@ -190,7 +190,7 @@ export function RentalDeliverySection() {
       </h2>
       <div className='space-y-3'>
         <div className='flex items-start gap-3'>
-          <MapPin className='mt-0.5 size-5 shrink-0 text-rose-600 dark:text-rose-400' />
+          <MapPin className='mt-0.5 size-5 shrink-0 text-blue-600 dark:text-blue-400' />
           <div className='min-w-0'>
             {selectedAddress ? (
               <>
@@ -213,7 +213,7 @@ export function RentalDeliverySection() {
                     <button
                       type='button'
                       onClick={() => setDialogOpen(true)}
-                      className='text-sm font-medium text-rose-600 hover:underline'
+                      className='text-sm font-medium text-blue-600 hover:underline'
                     >
                       Thay đổi
                     </button>
@@ -241,7 +241,7 @@ export function RentalDeliverySection() {
           </p>
         </div>
         <div className='flex items-start gap-3'>
-          <Clock className='mt-0.5 size-5 shrink-0 text-rose-600 dark:text-rose-400' />
+          <Clock className='mt-0.5 size-5 shrink-0 text-blue-600 dark:text-blue-400' />
           <p className='text-sm text-muted-foreground'>
             {selectedAddress ? estimateFor(selectedAddress.city) : 'Nhận hàng trong 2-4h (nội thành TP.HCM, Hà Nội)'}
           </p>
@@ -254,7 +254,7 @@ export function RentalDeliverySection() {
 const processSteps = [
   {
     step: 1,
-    icon: <CalendarDays className='size-5 text-rose-600 dark:text-rose-400' />,
+    icon: <CalendarDays className='size-5 text-blue-600 dark:text-blue-400' />,
     title: 'Chọn thời gian thuê',
     desc: 'Chọn số ngày thuê phù hợp; hệ thống hiển thị tiền thuê tương ứng. Có thể chọn thêm dịch vụ bổ sung nếu cần.',
   },
@@ -284,7 +284,7 @@ const processSteps = [
   },
   {
     step: 5,
-    icon: <Wallet className='w-5 h-5 text-rose-500 dark:text-rose-400' />,
+    icon: <Wallet className='w-5 h-5 text-blue-500 dark:text-blue-400' />,
     title: 'Hoàn cọc',
     desc: 'Sau khi trả thiết bị và hoàn tất kiểm tra, tiền cọc được hoàn trong tối đa 24 giờ.',
   },
@@ -336,11 +336,11 @@ export function RentalProcessSection() {
 export function RentalAddonServicesSection() {
   const services = [
     {
-      icon: <Shield className='size-5 text-rose-600 dark:text-rose-400' />,
+      icon: <Shield className='size-5 text-blue-600 dark:text-blue-400' />,
       name: 'Bảo hiểm thiết bị',
       desc: 'Bảo vệ khi hư hỏng ngoài ý muốn',
       price: '50,000₫/ngày',
-      iconBg: 'bg-rose-100 dark:bg-rose-950/50',
+      iconBg: 'bg-blue-100 dark:bg-blue-950/50',
     },
     {
       icon: <Truck className='size-5 text-indigo-600 dark:text-indigo-400' />,
@@ -367,7 +367,7 @@ export function RentalAddonServicesSection() {
         {services.map((service, index) => (
           <div
             key={index}
-            className='flex flex-col gap-3 rounded-lg border border-border p-3 transition-colors hover:border-rose-500/40 sm:flex-row sm:items-center sm:justify-between dark:hover:border-rose-400/30'
+            className='flex flex-col gap-3 rounded-lg border border-border p-3 transition-colors hover:border-blue-500/40 sm:flex-row sm:items-center sm:justify-between dark:hover:border-blue-400/30'
           >
             <div className='flex min-w-0 items-center gap-3'>
               <div
@@ -391,7 +391,7 @@ export function RentalAddonServicesSection() {
               <Button
                 variant='outline'
                 size='xs'
-                className='border-rose-200 font-bold text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/50'
+                className='border-blue-200 font-bold text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/50'
               >
                 Thêm
               </Button>

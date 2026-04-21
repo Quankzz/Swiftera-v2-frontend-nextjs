@@ -147,7 +147,7 @@ export function CameraCapture({
         {photos.map((url, i) => (
           <div
             key={i}
-            className="relative size-28 shrink-0 rounded-xl overflow-hidden border border-border bg-muted group"
+            className="relative size-24 sm:size-28 shrink-0 rounded-xl overflow-hidden border border-border bg-muted group"
           >
             <Image
               src={url}
@@ -174,7 +174,7 @@ export function CameraCapture({
           <button
             type="button"
             onClick={() => startCamera()}
-            className="size-28 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-theme-primary-start/60 hover:bg-theme-primary-start/8 transition-all"
+            className="size-24 sm:size-28 shrink-0 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:border-theme-primary-start/60 hover:bg-theme-primary-start/8 transition-all"
           >
             <Camera className="size-7 text-muted-foreground" />
             <span className="text-xs font-semibold text-muted-foreground">
@@ -208,7 +208,7 @@ export function CameraCapture({
               <SwitchCamera className="size-4 text-white" />
             </button>
           </div>
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <Button
               type="button"
               variant="outline"

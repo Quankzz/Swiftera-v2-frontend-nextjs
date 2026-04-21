@@ -265,9 +265,13 @@ export function CatalogFilter({
                     <input
                       type='checkbox'
                       checked={isActive}
-                      readOnly={isActive}
                       onChange={() => {
-                        if (!isActive) onCategoryChange?.(cat.id);
+                        if (isActive) {
+                          // Bỏ chọn danh mục hiện tại → trở về tất cả sản phẩm
+                          onCategoryChange?.('');
+                        } else {
+                          onCategoryChange?.(cat.id);
+                        }
                       }}
                       className='size-5 rounded-sm border-gray-300 dark:border-white/20 accent-theme-primary-start'
                     />

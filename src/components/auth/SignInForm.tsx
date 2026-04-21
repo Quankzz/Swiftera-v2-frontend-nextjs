@@ -12,7 +12,7 @@ import { normalizeRedirectPath } from '@/lib/auth-redirect';
 import { toast } from 'sonner';
 
 const inputClassName =
-  'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#fe1451]/30 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[#fe2560]/40';
+  'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[var(--auth-focus-ring,#0ea5e9)/30] dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[var(--auth-focus-ring-dark,#38bdf8)/40]';
 
 type SignInField = 'email' | 'password';
 
@@ -155,7 +155,7 @@ export function SignInForm() {
         Chưa xác thực email?{' '}
         <Link
           href="/auth/resend-verification"
-          className="text-[#fe1451] hover:underline"
+          className="text-theme-primary-start hover:underline"
         >
           Gửi lại mã xác thực
         </Link>
@@ -164,7 +164,7 @@ export function SignInForm() {
       <Button
         type="submit"
         disabled={isSubmitting || isLoading}
-        className="mt-2.5 h-auto w-full bg-[#fe1451] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[#ba264d]"
+        className="mt-2.5 h-auto w-full bg-[var(--theme-primary-start,#0ea5e9)] px-11 py-2.5 text-xs font-semibold uppercase tracking-wider text-white sm:w-auto hover:bg-[var(--theme-primary-end,#0369a1)]"
       >
         {isSubmitting ? (
           <>

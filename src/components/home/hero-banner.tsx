@@ -9,7 +9,6 @@ import {
   Package,
   ShieldCheck,
   Truck,
-  RefreshCw,
   ArrowRight,
   Smartphone,
 } from 'lucide-react';
@@ -31,20 +30,12 @@ export interface SlideData {
   categorySlug?: string;
 }
 
-// ─── STATS BAR ────────────────────────────────────────────────────────────────
-const TRUST_STATS = [
-  { icon: Package, label: 'Thiết bị', value: '500+' },
-  { icon: ShieldCheck, label: 'Cọc an toàn', value: '100%' },
-  { icon: Truck, label: 'Giao & thu hồi', value: 'Miễn phí' },
-  { icon: RefreshCw, label: 'Đổi trả', value: 'Dễ dàng' },
-];
-
 // ─── VALUE PROPS ─────────────────────────────────────────────────────────────
 const VALUE_PROPS = [
   {
     icon: Smartphone,
     label: 'Giá thuê theo ngày',
-    detail: 'Chỉ từ 120K/ngày — không phí mua đứt',
+    detail: 'Chỉ từ 120K/ngày - không phí mua đứt',
   },
   {
     icon: ShieldCheck,
@@ -62,7 +53,7 @@ const VALUE_PROPS = [
 const FALLBACK_SLIDE: SlideData = {
   title: 'Thuê thiết bị công nghệ',
   description:
-    'MacBook, camera, drone, thiết bị gaming — thuê theo ngày, cọc minh bạch, giao tận nơi.',
+    'MacBook, camera, drone, thiết bị gaming - thuê theo ngày, cọc minh bạch, giao tận nơi.',
   image: '',
 };
 
@@ -106,35 +97,17 @@ export function HeroBanner() {
   return (
     <section className='relative overflow-hidden bg-background'>
       {/* Particle atmosphere */}
-      <div className='absolute inset-0 z-0 opacity-40 dark:opacity-40'>
+      <div className='absolute inset-0 z-0 opacity-40 dark:opacity-30'>
         <ParticlesBg particleCount={80} speed={0.02} particleBaseSize={60} />
       </div>
 
-      {/* Ambient glow blobs */}
-      <div className='pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 z-0 h-[500px] w-[500px] rounded-full bg-rose-500/[0.06] blur-[120px]' />
-      <div className='pointer-events-none absolute -right-24 top-1/3 -translate-y-1/2 z-0 h-[400px] w-[400px] rounded-full bg-rose-600/[0.05] blur-[100px]' />
-
-      {/* ── TOP: Trust bar ──────────────────────────────────────── */}
-      <div className='relative z-10 border-b border-foreground/10'>
-        <div className='mx-auto flex max-w-7xl items-center justify-center gap-6 overflow-x-auto px-4 py-3 scrollbar-none sm:justify-between sm:gap-0'>
-          {TRUST_STATS.map(({ icon: Icon, label, value }) => (
-            <div
-              key={label}
-              className='flex shrink-0 items-center gap-2 text-foreground/70'
-            >
-              <Icon className='size-4 text-rose-500 dark:text-rose-400' strokeWidth={2} />
-              <span className='text-xs font-medium'>
-                <span className='text-foreground/90'>{value}</span>{' '}
-                <span className='hidden sm:inline'>{label}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Ambient glow blobs - blue tech palette */}
+      <div className='pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 z-0 h-125 w-125 rounded-full bg-blue-500/[0.06] blur-[120px]' />
+      <div className='pointer-events-none absolute -right-24 top-1/3 -translate-y-1/2 z-0 h-100 w-100 rounded-full bg-sky-500/[0.05] blur-[100px]' />
 
       {/* ── MAIN HERO AREA ──────────────────────────────────────── */}
-      <div className='relative z-10 mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:py-24'>
-        <div className='grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16 lg:items-center'>
+      <div className='relative z-10 mx-auto max-w-7xl px-4 py-8 sm:py-12 lg:py-16'>
+        <div className='grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14 lg:items-center'>
           {/* ── LEFT: Copy ─────────────────────────────────── */}
           <div className='flex flex-col'>
             {/* Badge */}
@@ -142,11 +115,11 @@ export function HeroBanner() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className='mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-rose-500/20 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-400'
+              className='mb-5 inline-flex w-fit items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-500'
             >
               <span className='relative flex size-2'>
-                <span className='absolute inline-flex size-full animate-ping rounded-full bg-rose-400 opacity-75' />
-                <span className='relative inline-flex size-2 rounded-full bg-rose-400' />
+                <span className='absolute inline-flex size-full animate-ping rounded-full bg-blue-400 opacity-75' />
+                <span className='relative inline-flex size-2 rounded-full bg-blue-400' />
               </span>
               Cho thuê thiết bị công nghệ cao cấp
             </motion.div>
@@ -163,7 +136,7 @@ export function HeroBanner() {
                 <h1 className='text-4xl font-black leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]'>
                   {current?.title}
                   <br />
-                  <span className='bg-gradient-to-r from-rose-400 via-rose-500 to-pink-400 bg-clip-text text-transparent'>
+                  <span className='bg-linear-to-r from-blue-400 via-blue-500 to-cyan-400 bg-clip-text text-transparent'>
                     với giá thuê theo ngày
                   </span>
                 </h1>
@@ -179,11 +152,11 @@ export function HeroBanner() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className='mt-8 flex flex-wrap items-center gap-3'
+              className='mt-7 flex flex-wrap items-center gap-3'
             >
               <Link
                 href='/catalog'
-                className='group inline-flex items-center gap-2 rounded-full bg-rose-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-rose-600/25 transition-all hover:bg-rose-500 hover:shadow-rose-500/40 active:scale-[0.97]'
+                className='group inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all hover:bg-blue-500 hover:shadow-blue-500/40 active:scale-[0.97]'
               >
                 Khám phá thiết bị
                 <ArrowRight
@@ -204,15 +177,15 @@ export function HeroBanner() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className='mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1 lg:gap-4'
+              className='mt-9 grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1 xl:gap-4'
             >
               {VALUE_PROPS.map(({ icon: Icon, label, detail }) => (
                 <div
                   key={label}
-                  className='flex items-start gap-3 rounded-xl border border-foreground/10 bg-foreground/[0.03] p-3'
+                  className='flex items-start gap-3 rounded-xl border border-foreground/10 bg-foreground/3 p-3'
                 >
-                  <div className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/15'>
-                    <Icon className='size-4 text-rose-500 dark:text-rose-400' strokeWidth={2} />
+                  <div className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/15'>
+                    <Icon className='size-4 text-blue-500 dark:text-blue-400' strokeWidth={2} />
                   </div>
                   <div>
                     <p className='text-sm font-semibold text-foreground/80'>{label}</p>
@@ -227,10 +200,10 @@ export function HeroBanner() {
           <div className='hidden lg:block'>
             <div className='relative'>
               {/* Outer glow ring */}
-              <div className='absolute inset-0 rounded-3xl bg-gradient-to-br from-rose-600/10 via-transparent to-pink-600/10 blur-3xl' />
+              <div className='absolute inset-0 rounded-3xl bg-linear-to-br from-blue-600/10 via-transparent to-cyan-600/10 blur-3xl' />
 
               {/* Main image card */}
-              <div className='relative aspect-[4/3] overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.04] shadow-2xl dark:shadow-black/50'>
+              <div className='relative aspect-4/3 overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/4 shadow-2xl dark:shadow-black/50'>
                 <AnimatePresence mode='wait'>
                   <motion.div
                     key={current?.image || 'default'}
@@ -260,7 +233,7 @@ export function HeroBanner() {
                 </AnimatePresence>
 
                 {/* Gradient overlay at bottom */}
-                <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent' />
+                <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-background to-transparent' />
 
                 {/* Slide indicators */}
                 {slides.length > 1 && (
@@ -271,7 +244,7 @@ export function HeroBanner() {
                         onClick={() => setIndex(i)}
                         className={`h-1 rounded-full transition-all duration-300 ${
                           i === index
-                            ? 'w-6 bg-rose-500 dark:bg-rose-400'
+                            ? 'w-6 bg-blue-500 dark:bg-blue-400'
                             : 'w-1 bg-foreground/30 hover:bg-foreground/50 dark:bg-white/30 dark:hover:bg-white/50'
                         }`}
                         aria-label={`Go to slide ${i + 1}`}

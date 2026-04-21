@@ -251,11 +251,11 @@ const MapView: React.FC = () => {
       const pin = document.createElement('div');
       pin.style.cssText = [
         'width:36px;height:36px;',
-        'background:linear-gradient(135deg,#fe1451,#c7003a);',
+        'background:linear-gradient(135deg,var(--theme-primary-start,#0ea5e9),var(--theme-primary-end,#0369a1));',
         'border:2.5px solid white;',
         'border-radius:50% 50% 50% 0;',
         'transform:rotate(-45deg);',
-        'box-shadow:0 3px 12px rgba(254,20,81,0.45);',
+        'box-shadow:0 3px 12px rgba(14,165,233,0.4);',
         'display:flex;align-items:center;justify-content:center;',
         'transition:transform 0.2s ease,box-shadow 0.2s ease;',
       ].join('');

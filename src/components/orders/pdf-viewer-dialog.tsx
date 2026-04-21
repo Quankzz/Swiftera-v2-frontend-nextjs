@@ -135,7 +135,7 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
       <Button
         type="button"
         onClick={handleOpen}
-        className="bg-rose-600 hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600 gap-2 rounded-xl text-white hover:opacity-90"
+        className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 gap-2 rounded-xl text-white hover:opacity-90"
       >
         <FileText className="size-4" />
         Xem hợp đồng PDF
@@ -157,7 +157,7 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
           >
             {loading && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-200/80 dark:bg-zinc-900/80">
-                <Loader2 className="size-10 animate-spin text-rose-600 dark:text-rose-400" />
+                <Loader2 className="size-10 animate-spin text-blue-600 dark:text-blue-400" />
                 <p className="text-sm font-medium text-muted-foreground">
                   Đang tạo hợp đồng PDF...
                 </p>
@@ -226,7 +226,10 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 function PdfCanvasRenderer({
   url,

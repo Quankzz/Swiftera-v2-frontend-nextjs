@@ -16,7 +16,7 @@ export default function Home() {
 
         <div className='mx-auto max-w-full px-4 py-3 lg:px-18'>
           {/* Danh mục */}
-          <section className='mt-14 space-y-6'>
+          <section className='mt-8 space-y-6'>
             <div className='flex items-end justify-between'>
               <div>
                 <h2 className='text-3xl font-extrabold text-text-main'>
