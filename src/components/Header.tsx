@@ -30,6 +30,8 @@ import {
   FileText,
   User,
   MessageSquare,
+  ShieldCheck,
+  Heart,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -465,7 +467,7 @@ export function Header({
                   {cartCount > 0 && (
                     <span
                       className={cn(
-                        'absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full text-[10px] font-bold flex items-center justify-center transition-all duration-300',
+                        'absolute -top-1 -right-1 h-4.5 min-w-4.5 rounded-full text-[10px] font-bold flex items-center justify-center transition-all duration-300',
                         isFlying
                           ? 'bg-green-500 text-white scale-125'
                           : 'bg-rose-500 text-white',
@@ -528,6 +530,14 @@ export function Header({
                             <User size={15} className="text-text-sub shrink-0" />
                             Đăng ký
                           </Link>
+                          <Link
+                            href="/policies"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
+                          >
+                            <ShieldCheck size={15} className="text-text-sub shrink-0" />
+                            Trung tâm chính sách
+                          </Link>
                         </div>
                       </>
                     ) : (
@@ -559,6 +569,14 @@ export function Header({
                             Đơn thuê của tôi
                           </Link>
                           <Link
+                            href="/favorites"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
+                          >
+                            <Heart size={15} className="text-text-sub shrink-0" />
+                            Sản phẩm yêu thích
+                          </Link>
+                          <Link
                             href="/tickets"
                             onClick={() => setIsUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
@@ -566,13 +584,21 @@ export function Header({
                             <MessageSquare size={15} className="text-text-sub shrink-0" />
                             Phản hồi yêu cầu
                           </Link>
+                          <Link
+                            href="/policies"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
+                          >
+                            <ShieldCheck size={15} className="text-text-sub shrink-0" />
+                            Trung tâm chính sách
+                          </Link>
                           {isAdminUser && (
                             <Link
                               href="/dashboard"
                               onClick={() => setIsUserMenuOpen(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 hover:text-theme-primary-start transition-colors"
+                              className="mx-2 my-1 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-800/70 dark:bg-amber-950/35 dark:text-amber-300 dark:hover:bg-amber-950/55"
                             >
-                              <LayoutDashboard size={15} className="text-text-sub shrink-0" />
+                              <LayoutDashboard size={15} className="shrink-0" />
                               Trang quản trị
                             </Link>
                           )}

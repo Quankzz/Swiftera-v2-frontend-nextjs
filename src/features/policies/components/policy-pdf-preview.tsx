@@ -35,6 +35,11 @@ interface PolicyPdfPreviewProps {
   className?: string;
 }
 
+const PDF_WORKER_SRC = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
+
 // ─── Single page image forwarded to HTMLFlipBook ────────────────────────────
 // react-pageflip yêu cầu child dùng React.forwardRef
 import { forwardRef } from 'react';
@@ -87,8 +92,8 @@ export function PolicyPdfPreview({
       // Dynamic import để tránh SSR issues
       const pdfjsLib = await import('pdfjs-dist');
 
-      // pdfjs-dist v5: worker src dùng CDN ổn định (unpkg có thể bị block CORS)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      // Use bundled worker to avoid external CDN failures in Next dev/prod.
+      pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
 
       const loadingTask = pdfjsLib.getDocument(
         typeof src === 'string'

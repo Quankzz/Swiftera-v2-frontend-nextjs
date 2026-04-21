@@ -268,6 +268,7 @@ export function RentalOrderAssignDialog({
     'DELIVERING',
     'DELIVERED',
     'IN_USE',
+    'PENDING_PICKUP',
   ] as const);
 
   const canAssignDelivery = order.status === 'PAID';

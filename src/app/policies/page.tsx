@@ -1,22 +1,31 @@
 'use client';
 
-import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   CalendarClock,
+  CircleHelp,
   ExternalLink,
   FileText,
+  Sparkles,
   ShieldCheck,
 } from 'lucide-react';
 
 import { Layout } from '@/components/Layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePoliciesQuery } from '@/hooks/api/use-policies';
 import type { PolicyDocumentResponse } from '@/api/policies';
 import { cn } from '@/lib/utils';
+import { PolicyPdfPreview } from '@/features/policies/components/policy-pdf-preview';
 
 const POLICY_CODE_LABELS: Record<string, string> = {
   RENTAL_TERMS: 'Điều khoản thuê',
@@ -57,6 +66,8 @@ function comparePolicies(
 export default function PoliciesPage() {
   const searchParams = useSearchParams();
   const highlightedCode = (searchParams.get('code') ?? '').toUpperCase().trim();
+  const [previewPolicy, setPreviewPolicy] =
+    useState<PolicyDocumentResponse | null>(null);
 
   const {
     data: policies = [],
@@ -157,7 +168,7 @@ export default function PoliciesPage() {
                     <article
                       key={policy.policyDocumentId}
                       className={cn(
-                        'rounded-2xl border border-border/60 bg-background p-5 transition-shadow hover:shadow-md',
+                        'rounded-2xl border border-border/60 bg-background p-5 transition-all hover:border-rose-200 hover:shadow-md dark:hover:border-rose-700/50',
                         isHighlighted &&
                           'border-rose-300 shadow-sm ring-1 ring-rose-200 dark:border-rose-400/40 dark:ring-rose-400/30',
                       )}
@@ -181,16 +192,13 @@ export default function PoliciesPage() {
 
                       <div className='mt-4 flex flex-wrap items-center gap-2'>
                         {policy.pdfUrl ? (
-                          <Button asChild size='sm' className='gap-1.5'>
-                            <Link
-                              href={policy.pdfUrl}
-                              target='_blank'
-                              rel='noopener noreferrer'
-                            >
-                              <FileText className='size-4' />
-                              Xem chính sách
-                              <ExternalLink className='size-3.5' />
-                            </Link>
+                          <Button
+                            size='sm'
+                            className='h-9 gap-1.5 rounded-xl bg-linear-to-r from-rose-600 to-rose-500 px-4 text-white shadow-sm shadow-rose-600/25 hover:from-rose-700 hover:to-rose-600'
+                            onClick={() => setPreviewPolicy(policy)}
+                          >
+                            <FileText className='size-4' />
+                            Xem chính sách
                           </Button>
                         ) : (
                           <span className='rounded-md border border-border/60 px-3 py-1.5 text-xs text-muted-foreground'>
@@ -204,8 +212,62 @@ export default function PoliciesPage() {
               </div>
             )}
           </div>
+
+          <div className='mt-5 rounded-2xl border border-border/60 bg-muted/25 p-4 text-sm text-muted-foreground'>
+            <p className='flex items-start gap-2'>
+              <CircleHelp className='mt-0.5 size-4 shrink-0' />
+              Mẹo: Bạn có thể xem nhanh PDF trực tiếp ngay trên trang để không bị ngắt luồng thao tác, hoặc mở tab mới nếu cần tải file về.
+            </p>
+          </div>
         </section>
       </div>
+
+      <Dialog
+        open={!!previewPolicy}
+        onOpenChange={(open) => {
+          if (!open) setPreviewPolicy(null);
+        }}
+      >
+        <DialogContent className='max-h-[92dvh] overflow-y-auto p-5 sm:max-w-5xl'>
+          <DialogHeader>
+            <DialogTitle className='flex items-center gap-2 text-lg font-bold'>
+              <Sparkles className='size-5 text-rose-500' />
+              {previewPolicy?.title ?? 'Xem chính sách'}
+            </DialogTitle>
+            <DialogDescription>
+              Phiên bản {previewPolicy?.policyVersion ?? '-'} • Hiệu lực từ{' '}
+              {previewPolicy ? formatPolicyDate(previewPolicy.effectiveFrom) : '-'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewPolicy?.pdfUrl ? (
+            <div className='rounded-2xl border border-border/60 bg-muted/20 p-3'>
+              <PolicyPdfPreview
+                pdfUrl={previewPolicy.pdfUrl}
+                className='w-full'
+              />
+            </div>
+          ) : (
+            <div className='rounded-xl border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground'>
+              Chính sách này hiện chưa có tệp PDF để xem trước.
+            </div>
+          )}
+
+          {previewPolicy?.pdfUrl && (
+            <div className='flex justify-end'>
+              <a
+                href={previewPolicy.pdfUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300'
+              >
+                Mở ở tab mới
+                <ExternalLink className='size-3.5' />
+              </a>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

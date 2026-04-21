@@ -787,7 +787,6 @@ export default function RentalOrderDetailPage() {
                   const hasStartUse = order.status === 'DELIVERED';
                   const canRequestPickup = order.status === 'IN_USE';
                   const showRequestPickupAction = [
-                    'PAID',
                     'PREPARING',
                     'DELIVERING',
                     'DELIVERED',

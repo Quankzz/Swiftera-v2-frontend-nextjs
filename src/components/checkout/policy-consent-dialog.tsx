@@ -34,7 +34,10 @@ import { toast } from 'sonner';
 
 /* ─── PDF.js worker ──────────────────────────────────────────────────────────── */
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 
@@ -221,7 +224,7 @@ function PdfViewerDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-[680px] gap-4'>
+      <DialogContent className='max-w-170 gap-4'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2 text-base'>
             <BookOpen className='size-4 text-rose-500' />
@@ -273,7 +276,7 @@ function PolicyItem({
           >
             <span
               className={cn(
-                'flex size-[22px] items-center justify-center rounded-full border-2 transition-all duration-150',
+                'flex size-5.5 items-center justify-center rounded-full border-2 transition-all duration-150',
                 checked || alreadyConsented
                   ? alreadyConsented
                     ? 'border-rose-400 bg-rose-400/60'
@@ -363,7 +366,7 @@ function PolicySkeleton() {
       {Array.from({ length: 2 }).map((_, i) => (
         <div key={i} className='rounded-xl border border-border/60 p-4'>
           <div className='flex items-start gap-3'>
-            <Skeleton className='mt-0.5 size-[22px] shrink-0 rounded-full' />
+            <Skeleton className='mt-0.5 size-5.5 shrink-0 rounded-full' />
             <div className='flex-1 space-y-2'>
               <Skeleton className='h-4 w-3/4' />
               <Skeleton className='h-3 w-1/2' />

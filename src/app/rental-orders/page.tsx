@@ -574,7 +574,7 @@ export default function RentalOrdersPage() {
                         className='flex size-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-opacity hover:opacity-80 dark:bg-rose-950/50 dark:text-rose-400'
                         tabIndex={-1}
                       >
-                        <FileText className='size-5' />
+                        <Package className='size-5' />
                       </Link>
 
                       {/* Info - chiếm phần lớn width, click → detail */}
@@ -632,58 +632,64 @@ export default function RentalOrdersPage() {
                       {/* Right side */}
                       {isPending ? (
                         /* ── Nút thanh toán cho PENDING_PAYMENT ── */
-                        <div className='flex shrink-0 items-center gap-2'>
-                          <OrderContractAction
-                            rentalOrderId={order.rentalOrderId}
-                            enabled={false}
-                          />
-                          <button
-                            type='button'
-                            disabled={!!payingId}
-                            onClick={(e) =>
-                              void handlePay(e, order.rentalOrderId)
-                            }
-                            className={cn(
-                              'flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
-                              isPaying
-                                ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                                : payingId
-                                  ? 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
-                                  : 'bg-amber-500 text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-95 dark:bg-amber-500 dark:hover:bg-amber-600',
-                            )}
-                          >
-                            {isPaying ? (
-                              <>
-                                <Loader2 className='size-3.5 animate-spin' />
-                                <span className='hidden sm:inline'>
-                                  Đang xử lý…
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <CreditCard className='size-3.5' />
-                                <span className='hidden sm:inline'>
-                                  Thanh toán
-                                </span>
-                              </>
-                            )}
-                          </button>
+                        <div className='grid shrink-0 grid-cols-[2.25rem_auto] items-center gap-1.5'>
+                          <div className='flex justify-center'>
+                            <OrderContractAction
+                              rentalOrderId={order.rentalOrderId}
+                              enabled={false}
+                            />
+                          </div>
+                          <div className='flex justify-end'>
+                            <button
+                              type='button'
+                              disabled={!!payingId}
+                              onClick={(e) =>
+                                void handlePay(e, order.rentalOrderId)
+                              }
+                              className={cn(
+                                'flex min-w-28 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all',
+                                isPaying
+                                  ? 'cursor-wait bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                  : payingId
+                                    ? 'cursor-not-allowed bg-muted text-muted-foreground opacity-50'
+                                    : 'bg-amber-500 text-white shadow-sm shadow-amber-500/30 hover:bg-amber-600 active:scale-95 dark:bg-amber-500 dark:hover:bg-amber-600',
+                              )}
+                            >
+                              {isPaying ? (
+                                <>
+                                  <Loader2 className='size-3.5 animate-spin' />
+                                  <span className='hidden sm:inline'>
+                                    Đang xử lý…
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <CreditCard className='size-3.5' />
+                                  <span className='hidden sm:inline'>
+                                    Thanh toán
+                                  </span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         /* ── Amount + chevron cho status khác ── */
-                        <div className='flex shrink-0 items-center gap-2'>
-                          <OrderContractAction
-                            rentalOrderId={order.rentalOrderId}
-                            enabled
-                          />
+                        <div className='grid shrink-0 grid-cols-[2.25rem_auto] items-center gap-1.5'>
+                          <div className='flex justify-center'>
+                            <OrderContractAction
+                              rentalOrderId={order.rentalOrderId}
+                              enabled
+                            />
+                          </div>
                           <Link
                             href={`/rental-orders/${order.rentalOrderId}`}
-                            className='flex items-center gap-2'
+                            className='flex min-w-0 items-center justify-end gap-2'
                           >
-                            <span className='text-sm font-semibold tabular-nums text-foreground'>
+                            <span className='text-right text-sm font-semibold tabular-nums text-foreground'>
                               {fmt.format(order.totalPayableAmount)}
                             </span>
-                            <ChevronRight className='size-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
+                            <ChevronRight className='size-4 shrink-0 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5' />
                           </Link>
                         </div>
                       )}

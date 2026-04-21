@@ -9,7 +9,6 @@ import {
   Package,
   ShieldCheck,
   Truck,
-  RefreshCw,
   ArrowRight,
   Smartphone,
 } from 'lucide-react';
@@ -30,14 +29,6 @@ export interface SlideData {
   image: string;
   categorySlug?: string;
 }
-
-// ─── STATS BAR ────────────────────────────────────────────────────────────────
-const TRUST_STATS = [
-  { icon: Package, label: 'Thiết bị', value: '500+' },
-  { icon: ShieldCheck, label: 'Cọc an toàn', value: '100%' },
-  { icon: Truck, label: 'Giao & thu hồi', value: 'Miễn phí' },
-  { icon: RefreshCw, label: 'Đổi trả', value: 'Dễ dàng' },
-];
 
 // ─── VALUE PROPS ─────────────────────────────────────────────────────────────
 const VALUE_PROPS = [
@@ -111,26 +102,8 @@ export function HeroBanner() {
       </div>
 
       {/* Ambient glow blobs */}
-      <div className='pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 z-0 h-[500px] w-[500px] rounded-full bg-rose-500/[0.06] blur-[120px]' />
-      <div className='pointer-events-none absolute -right-24 top-1/3 -translate-y-1/2 z-0 h-[400px] w-[400px] rounded-full bg-rose-600/[0.05] blur-[100px]' />
-
-      {/* ── TOP: Trust bar ──────────────────────────────────────── */}
-      <div className='relative z-10 border-b border-foreground/10'>
-        <div className='mx-auto flex max-w-7xl items-center justify-center gap-6 overflow-x-auto px-4 py-3 scrollbar-none sm:justify-between sm:gap-0'>
-          {TRUST_STATS.map(({ icon: Icon, label, value }) => (
-            <div
-              key={label}
-              className='flex shrink-0 items-center gap-2 text-foreground/70'
-            >
-              <Icon className='size-4 text-rose-500 dark:text-rose-400' strokeWidth={2} />
-              <span className='text-xs font-medium'>
-                <span className='text-foreground/90'>{value}</span>{' '}
-                <span className='hidden sm:inline'>{label}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <div className='pointer-events-none absolute -left-32 top-1/2 -translate-y-1/2 z-0 h-125 w-125 rounded-full bg-rose-500/6 blur-[120px]' />
+      <div className='pointer-events-none absolute -right-24 top-1/3 -translate-y-1/2 z-0 h-100 w-100 rounded-full bg-rose-600/5 blur-[100px]' />
 
       {/* ── MAIN HERO AREA ──────────────────────────────────────── */}
       <div className='relative z-10 mx-auto max-w-7xl px-4 py-14 sm:py-20 lg:py-24'>
@@ -163,7 +136,7 @@ export function HeroBanner() {
                 <h1 className='text-4xl font-black leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]'>
                   {current?.title}
                   <br />
-                  <span className='bg-gradient-to-r from-rose-400 via-rose-500 to-pink-400 bg-clip-text text-transparent'>
+                  <span className='bg-linear-to-r from-rose-400 via-rose-500 to-pink-400 bg-clip-text text-transparent'>
                     với giá thuê theo ngày
                   </span>
                 </h1>
@@ -209,7 +182,7 @@ export function HeroBanner() {
               {VALUE_PROPS.map(({ icon: Icon, label, detail }) => (
                 <div
                   key={label}
-                  className='flex items-start gap-3 rounded-xl border border-foreground/10 bg-foreground/[0.03] p-3'
+                  className='flex items-start gap-3 rounded-xl border border-foreground/10 bg-foreground/3 p-3'
                 >
                   <div className='mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/15'>
                     <Icon className='size-4 text-rose-500 dark:text-rose-400' strokeWidth={2} />
@@ -227,10 +200,10 @@ export function HeroBanner() {
           <div className='hidden lg:block'>
             <div className='relative'>
               {/* Outer glow ring */}
-              <div className='absolute inset-0 rounded-3xl bg-gradient-to-br from-rose-600/10 via-transparent to-pink-600/10 blur-3xl' />
+              <div className='absolute inset-0 rounded-3xl bg-linear-to-br from-rose-600/10 via-transparent to-pink-600/10 blur-3xl' />
 
               {/* Main image card */}
-              <div className='relative aspect-[4/3] overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.04] shadow-2xl dark:shadow-black/50'>
+              <div className='relative aspect-4/3 overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/4 shadow-2xl dark:shadow-black/50'>
                 <AnimatePresence mode='wait'>
                   <motion.div
                     key={current?.image || 'default'}
@@ -260,7 +233,7 @@ export function HeroBanner() {
                 </AnimatePresence>
 
                 {/* Gradient overlay at bottom */}
-                <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent' />
+                <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-background to-transparent' />
 
                 {/* Slide indicators */}
                 {slides.length > 1 && (

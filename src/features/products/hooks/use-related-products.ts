@@ -10,9 +10,9 @@ import { productKeys } from '../api/product.keys';
 import { getProducts } from '../api/product.service';
 import type { ProductResponse } from '../types';
 
-const DISPLAY_COUNT = 8;
+const DISPLAY_COUNT = 5;
 /** Lấy dư để sau khi loại trừ productId vẫn đủ slide */
-const FETCH_SIZE = 16;
+const FETCH_SIZE = 12;
 
 function pickPrimaryImageUrl(p: ProductResponse): string | null {
   const imgs = p.images ?? [];
