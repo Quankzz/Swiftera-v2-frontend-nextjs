@@ -422,11 +422,11 @@ function OrdersPageInner() {
               >
                 {/* Select All */}
                 <DropdownMenuItem
-                  onSelect={(e) => {
+                  onClick={(e) => {
                     e.preventDefault();
                     toggleAll();
                   }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent focus:bg-accent"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-accent focus:bg-accent select-none"
                 >
                   <div
                     className={cn(
@@ -456,11 +456,11 @@ function OrdersPageInner() {
                   return (
                     <DropdownMenuItem
                       key={s}
-                      onSelect={(e) => {
+                      onClick={(e) => {
                         e.preventDefault();
                         toggleStatus(s);
                       }}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-accent focus:bg-accent"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-accent focus:bg-accent select-none"
                     >
                       <div
                         className={cn(
