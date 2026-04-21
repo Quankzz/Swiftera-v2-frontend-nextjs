@@ -4,7 +4,10 @@
  *  - useHubsForAssignQuery      → lấy danh sách hub active (GET /hubs)
  *  - useHubStaffForAssignQuery  → lấy nhân viên theo hub (GET /hubs/{hubId}/staff)
  *  - useAssignHubMutation       → API-080: PATCH /rental-orders/{id}/assign-hub
- *  - useAssignStaffMutation     → API-081: PATCH /rental-orders/{id}/assign-staff
+ *  - useAssignStaffMutation    → API-081: PATCH /rental-orders/{id}/assign-staff
+ *  - useConfirmCancellationRefund → POST /rental-orders/{id}/confirm-cancellation-refund [ADMIN]
+ *  - useAdminCancelFromPaid     → POST /rental-orders/{id}/admin-cancel-paid [ADMIN]
+ *  - useAdminEarlyPickup       → POST /rental-orders/{id}/admin-early-pickup [ADMIN]
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,6 +16,10 @@ import {
   assignHubToOrder,
   assignStaffToOrder,
   assignStaffToHub,
+  confirmCancellationRefund,
+  adminCancelFromPaid,
+  adminEarlyPickupFromInUse,
+  type CancelOrderInput,
 } from '../api/rental-order.service';
 import { httpService } from '@/api/http';
 import type { ApiResponse, PaginationResponse } from '@/types/api.types';
@@ -159,6 +166,67 @@ export function useAssignStaffToHubMutation() {
     },
     onError: (error) => {
       toast.error(error.message || 'Gán nhân viên vào hub thất bại');
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin cancellation / support actions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Admin confirms cancellation with refund for PAID orders
+ * POST /rental-orders/{rentalOrderId}/confirm-cancellation-refund [ADMIN]
+ */
+export function useConfirmCancellationRefund() {
+  const qc = useQueryClient();
+  return useMutation<RentalOrderResponse, Error, { rentalOrderId: string; input: CancelOrderInput }>({
+    mutationFn: ({ rentalOrderId, input }) => confirmCancellationRefund(rentalOrderId, input),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.detail(variables.rentalOrderId) });
+      toast.success('Đã xác nhận hủy đơn và hoàn tiền thành công');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Xác nhận hủy đơn thất bại');
+    },
+  });
+}
+
+/**
+ * Admin directly cancels a PAID order (support case)
+ * POST /rental-orders/{rentalOrderId}/admin-cancel-paid [ADMIN]
+ */
+export function useAdminCancelFromPaid() {
+  const qc = useQueryClient();
+  return useMutation<RentalOrderResponse, Error, { rentalOrderId: string; input: CancelOrderInput }>({
+    mutationFn: ({ rentalOrderId, input }) => adminCancelFromPaid(rentalOrderId, input),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.detail(variables.rentalOrderId) });
+      toast.success('Đã hủy đơn PAID thành công');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Hủy đơn thất bại');
+    },
+  });
+}
+
+/**
+ * Admin triggers early pickup for IN_USE orders (support/fraud cases)
+ * POST /rental-orders/{rentalOrderId}/admin-early-pickup [ADMIN]
+ */
+export function useAdminEarlyPickup() {
+  const qc = useQueryClient();
+  return useMutation<RentalOrderResponse, Error, string>({
+    mutationFn: (rentalOrderId) => adminEarlyPickupFromInUse(rentalOrderId),
+    onSuccess: (_, rentalOrderId) => {
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
+      qc.invalidateQueries({ queryKey: rentalOrderKeys.detail(rentalOrderId) });
+      toast.success('Đã kích hoạt thu hồi sớm thành công');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Kích hoạt thu hồi sớm thất bại');
     },
   });
 }

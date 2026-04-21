@@ -40,6 +40,7 @@ import {
   useCancelOrder,
   useUpdateOrderStatus,
   useOverduePenaltySuggestionQuery,
+  useRequestCancellation,
 } from '@/hooks/api/use-rental-orders';
 import { useInitiatePayment } from '@/hooks/api/use-payments';
 import { useRentalContractByOrderQuery } from '@/hooks/api/use-contract';
@@ -159,7 +160,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
 
   return (
     <div className='overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-      <div className='flex min-w-160 items-start py-1'>
+      <div className='flex min-w-max items-start py-1 sm:min-w-0'>
         {STEP_LABELS.map((label, i) => {
           const done = i < active || status === 'COMPLETED';
           const current = i === active && status !== 'COMPLETED';
@@ -172,12 +173,12 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
           return (
             <div
               key={label}
-              className='relative flex min-w-24 flex-1 flex-col items-center px-1'
+              className='relative flex min-w-16 flex-1 flex-col items-center px-0.5 sm:px-1'
             >
               {i > 0 && (
                 <span
                   className={cn(
-                    'pointer-events-none absolute left-0 top-3.75 h-px w-1/2',
+                    'pointer-events-none absolute left-0 top-3 top-3.75-sm top-3.75-md top-3.75-lg h-px w-1/2',
                     leftSegmentDone ? 'bg-rose-500' : 'bg-border',
                   )}
                   aria-hidden
@@ -186,7 +187,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
               {i < STEP_LABELS.length - 1 && (
                 <span
                   className={cn(
-                    'pointer-events-none absolute right-0 top-3.75 h-px w-1/2',
+                    'pointer-events-none absolute right-0 top-3 top-3.75-sm top-3.75-md top-3.75-lg h-px w-1/2',
                     rightSegmentDone ? 'bg-rose-500' : 'bg-border',
                   )}
                   aria-hidden
@@ -196,7 +197,7 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
               <div className='relative z-1 flex shrink-0 flex-col items-center'>
                 <div
                   className={cn(
-                    'flex size-7.5 items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
+                    'flex size-6 sm:size-7.5 items-center justify-center rounded-full border-2 text-[10px] sm:text-xs sm:font-bold transition-all',
                     done
                       ? 'border-rose-500 bg-rose-500 text-white'
                       : current
@@ -205,14 +206,14 @@ function OrderStatusStepper({ status }: { status: RentalOrderStatus }) {
                   )}
                 >
                   {done ? (
-                    <Check className='size-3.5' strokeWidth={3} />
+                    <Check className='size-3 sm:size-3.5' strokeWidth={3} />
                   ) : (
                     i + 1
                   )}
                 </div>
                 <span
                   className={cn(
-                    'mt-2 text-center text-[10px] font-medium leading-tight',
+                    'mt-1.5 sm:mt-2 text-center text-[9px] sm:text-[10px] font-medium leading-tight',
                     done || current
                       ? 'text-foreground'
                       : 'text-muted-foreground',
@@ -460,6 +461,8 @@ export default function RentalOrderDetailPage() {
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [paymentPolicyOpen, setPaymentPolicyOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [cancellationRequestOpen, setCancellationRequestOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
   const [pickupConfirmOpen, setPickupConfirmOpen] = useState(false);
   const [reorderState, setReorderState] = useState<
     'idle' | 'adding' | 'success'
@@ -551,6 +554,16 @@ export default function RentalOrderDetailPage() {
       toast.error(err.message || 'Hủy đơn thất bại. Vui lòng thử lại.'),
   });
 
+  const requestCancellation = useRequestCancellation({
+    onSuccess: () => {
+      toast.success('Yêu cầu hủy đơn đã được gửi. Bộ phận hỗ trợ sẽ xử lý trong thời gian sớm nhất.');
+      setCancellationRequestOpen(false);
+      setCancellationReason('');
+    },
+    onError: (err) =>
+      toast.error(err.message || 'Gửi yêu cầu hủy thất bại. Vui lòng thử lại.'),
+  });
+
   const initiatePayment = useInitiatePayment({
     onSuccess: (paymentUrl) => {
       window.location.href = paymentUrl;
@@ -578,7 +591,11 @@ export default function RentalOrderDetailPage() {
       toast.error('Chỉ có thể hủy đơn trước khi bắt đầu giao hàng.');
       return;
     }
-    setCancelConfirmOpen(true);
+    if (order.status === 'PAID') {
+      setCancellationRequestOpen(true);
+    } else {
+      setCancelConfirmOpen(true);
+    }
   }
 
   function confirmCancel() {
@@ -591,6 +608,19 @@ export default function RentalOrderDetailPage() {
     }
     cancelOrder.mutate(order.rentalOrderId, {
       onSuccess: () => setCancelConfirmOpen(false),
+    });
+  }
+
+  function confirmCancellationRequest() {
+    if (!ensureAuthenticated('gửi yêu cầu hủy đơn')) return;
+    if (!order) return;
+    if (!cancellationReason.trim()) {
+      toast.error('Vui lòng nhập lý do hủy đơn.');
+      return;
+    }
+    requestCancellation.mutate({
+      rentalOrderId: order.rentalOrderId,
+      input: { reason: cancellationReason.trim() },
     });
   }
 
@@ -746,6 +776,28 @@ export default function RentalOrderDetailPage() {
                         ? 'Đang xử lý…'
                         : 'Thanh toán ngay'}
                     </Button>
+                  </div>
+                )}
+
+                {/* ── Pending cancellation request banner ── */}
+                {order.status === 'PAID' && order.cancellationRequested && (
+                  <div className='mt-4 flex flex-col gap-3 rounded-xl border border-cyan-300/70 bg-cyan-50/80 p-4 dark:border-cyan-700/40 dark:bg-cyan-950/30 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className='flex items-start gap-3'>
+                      <div className='mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600 dark:bg-cyan-900/50 dark:text-cyan-400'>
+                        <Ban className='size-4' />
+                      </div>
+                      <div>
+                        <p className='text-sm font-bold text-cyan-800 dark:text-cyan-300'>
+                          Yêu cầu hủy đơn đã được gửi
+                        </p>
+                        <p className='mt-0.5 text-xs text-cyan-700/80 dark:text-cyan-400/80'>
+                          Bộ phận hỗ trợ đang xử lý và sẽ hoàn tiền cho bạn trong thời gian sớm nhất.
+                          {order.cancellationReason && (
+                            <span className='mt-1 block'>Lý do: {order.cancellationReason}</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -987,7 +1039,17 @@ export default function RentalOrderDetailPage() {
                           </Button>
                         )}
 
-                        {hasCancel && (
+                        {hasCancel && (order.status === 'PAID' && order.cancellationRequested ? (
+                          <Button
+                            size='default'
+                            variant='outline'
+                            className='gap-2 rounded-xl border-cyan-200 bg-cyan-50 px-5 font-semibold text-cyan-600 hover:border-cyan-300 hover:bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-400 dark:hover:bg-cyan-950'
+                            disabled
+                          >
+                            <Ban className='size-4' />
+                            Đã yêu cầu hủy
+                          </Button>
+                        ) : (
                           <Button
                             size='default'
                             variant='outline'
@@ -1000,9 +1062,9 @@ export default function RentalOrderDetailPage() {
                             ) : (
                               <Ban className='size-4' />
                             )}
-                            Hủy đơn
+                            {order.status === 'PAID' ? 'Yêu cầu hủy đơn' : 'Hủy đơn'}
                           </Button>
-                        )}
+                        ))}
                       </div>
                     </div>
                   );
@@ -1046,6 +1108,65 @@ export default function RentalOrderDetailPage() {
                     disabled={cancelOrder.isPending}
                   >
                     {cancelOrder.isPending ? 'Đang xử lý…' : 'Xác nhận hủy đơn'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={cancellationRequestOpen}
+              onOpenChange={setCancellationRequestOpen}
+            >
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle className='flex items-center gap-2'>
+                    <Ban className='size-5 text-cyan-600' />
+                    Yêu cầu hủy đơn thuê
+                  </DialogTitle>
+                  <DialogDescription>
+                    Bạn đã thanh toán đơn hàng này. Vui lòng nhập lý do hủy đơn.
+                    Bộ phận hỗ trợ sẽ xác nhận và hoàn tiền cho bạn sau khi đơn được duyệt hủy.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className='space-y-3'>
+                  <div>
+                    <label className='text-sm font-medium text-foreground'>
+                      Lý do hủy đơn <span className='text-red-500'>*</span>
+                    </label>
+                    <textarea
+                      value={cancellationReason}
+                      onChange={(e) => setCancellationReason(e.target.value)}
+                      placeholder='VD: Thay đổi kế hoạch, không còn nhu cầu thuê...'
+                      className='mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-200 resize-none'
+                      rows={3}
+                    />
+                  </div>
+                  <div className='rounded-lg border border-amber-200/80 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200'>
+                    Tiền cọc sẽ được hoàn lại cho bạn sau khi đơn hàng được duyệt hủy.
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => {
+                      setCancellationRequestOpen(false);
+                      setCancellationReason('');
+                    }}
+                    disabled={requestCancellation.isPending}
+                  >
+                    Hủy bỏ
+                  </Button>
+                  <Button
+                    className='bg-cyan-600 text-white hover:bg-cyan-700'
+                    onClick={confirmCancellationRequest}
+                    disabled={requestCancellation.isPending || !cancellationReason.trim()}
+                  >
+                    {requestCancellation.isPending ? (
+                      <Loader2 className='size-4 animate-spin' />
+                    ) : (
+                      <Ban className='size-4' />
+                    )}
+                    {requestCancellation.isPending ? 'Đang gửi…' : 'Gửi yêu cầu hủy đơn'}
                   </Button>
                 </DialogFooter>
               </DialogContent>

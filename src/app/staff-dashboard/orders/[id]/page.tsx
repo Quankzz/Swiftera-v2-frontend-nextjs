@@ -446,7 +446,7 @@ export default function OrderDetailPage({
                       destPinColor={mapConfig.destPinColor}
                       destLabel={mapConfig.destLabel}
                       // Trên mobile: vẫn giữ chiều cao cố định (vh). Trên Desktop: chiếm 100% thẻ cha (h-full)
-                      mapHeightClass="h-[55vh] sm:h-[65vh] lg:h-full lg:min-h-0"
+                      mapHeightClass="h-48 sm:h-[55vh] lg:h-full lg:min-h-0"
                     />
                   </div>
 
@@ -715,7 +715,7 @@ export default function OrderDetailPage({
       </div>
       <div
         id="workflow-footer-portal"
-        className="sticky border-t border-border bg-card px-28 bottom-0 z-40 w-full"
+        className="sticky border-t border-border bg-card px-4 sm:px-6 lg:px-28 bottom-0 z-40 w-full"
       />
     </>
   );

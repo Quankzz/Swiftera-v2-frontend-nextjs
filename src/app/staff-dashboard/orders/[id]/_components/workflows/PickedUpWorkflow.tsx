@@ -111,7 +111,7 @@ export function PickedUpWorkflow({
 
         <div className='p-6 space-y-5'>
           {/* Deposit breakdown */}
-          <div className='grid grid-cols-3 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
             <div className='rounded-xl px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-border/60 dark:border-slate-700'>
               <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5'>
                 Tiền cọc

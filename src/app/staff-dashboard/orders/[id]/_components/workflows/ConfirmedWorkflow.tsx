@@ -158,9 +158,9 @@ export function ConfirmedWorkflow({
         hasHubMap && 'lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-5',
       )}
     >
-      {/* Map panel - right on desktop, top on mobile */}
+      {/* Map panel - right on desktop, bottom on mobile */}
       {hasHubMap && (
-        <div className="order-first lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-7rem)] flex flex-col z-10">
+        <div className="order-last lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-7rem)] flex flex-col z-10">
           <div className="rounded-2xl border border-border bg-card shadow-md flex flex-col h-full overflow-hidden">
             <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-muted/30 shrink-0">
               <Navigation className="size-4 text-theme-primary-start" />
@@ -182,7 +182,7 @@ export function ConfirmedWorkflow({
                 destPinColor="green"
                 staffLat={staffLat}
                 staffLng={staffLng}
-                mapHeightClass="h-[50vh] sm:h-[60vh] lg:h-full lg:min-h-0"
+                mapHeightClass="h-48 sm:h-[50vh] lg:h-full lg:min-h-0"
               />
             </div>
 

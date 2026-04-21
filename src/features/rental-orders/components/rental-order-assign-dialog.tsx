@@ -36,7 +36,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useAssignStaffMutation } from '@/features/rental-orders/hooks/use-rental-order-assignment';
+import {
+  useAssignStaffMutation,
+  useConfirmCancellationRefund,
+  useAdminCancelFromPaid,
+  useAdminEarlyPickup,
+} from '@/features/rental-orders/hooks/use-rental-order-assignment';
 import { useRentalOrderContractQuery } from '@/features/rental-orders/hooks/use-rental-order-management';
 import { StaffPickerDialog } from '@/features/rental-orders/components/staff-picker-dialog';
 import {
@@ -45,6 +50,9 @@ import {
   type RentalOrderResponse,
 } from '@/features/rental-orders/types';
 import type { HubStaffResponse } from '@/features/hubs/types';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -223,6 +231,202 @@ function StaffSlot({
       </div>
       <ChevronRight className='w-4 h-4 text-text-sub shrink-0' />
     </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin support actions section
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatDateTimeAdmin(raw: string | null | undefined) {
+  if (!raw) return '-';
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function AdminSupportSection({ order }: { order: RentalOrderResponse }) {
+  const [cancelReason, setCancelReason] = useState('');
+  const [refundConfirmed, setRefundConfirmed] = useState(false);
+  const [showCancelForm, setShowCancelForm] = useState(false);
+
+  const confirmMutation = useConfirmCancellationRefund();
+  const adminCancelMutation = useAdminCancelFromPaid();
+  const earlyPickupMutation = useAdminEarlyPickup();
+
+  const hasCancellationRequest = order.cancellationRequested === true;
+
+  return (
+    <div>
+      <SectionLabel>Hỗ trợ & Hủy đơn</SectionLabel>
+      <div className='space-y-3'>
+        {/* Cancellation request info */}
+        {hasCancellationRequest && (
+          <div className='rounded-xl border border-cyan-200 dark:border-cyan-700/50 bg-cyan-50/60 dark:bg-cyan-950/20 px-4 py-3 space-y-2'>
+            <div className='flex items-start gap-2'>
+              <AlertTriangle className='w-4 h-4 text-cyan-600 dark:text-cyan-400 mt-0.5 shrink-0' />
+              <div className='flex-1'>
+                <p className='text-sm font-semibold text-cyan-700 dark:text-cyan-400'>
+                  Yêu cầu hủy đơn từ khách hàng
+                </p>
+                {order.cancellationReason && (
+                  <p className='text-xs text-cyan-600/80 dark:text-cyan-400/70 mt-0.5'>
+                    Lý do: {order.cancellationReason}
+                  </p>
+                )}
+                {order.cancellationRequestedAt && (
+                  <p className='text-xs text-cyan-500/70 dark:text-cyan-500/50 mt-0.5'>
+                    Lúc: {formatDateTimeAdmin(order.cancellationRequestedAt)}
+                  </p>
+                )}
+                {order.depositHoldAmount != null && order.depositHoldAmount > 0 && (
+                  <p className='text-xs font-semibold text-cyan-700 dark:text-cyan-400 mt-1'>
+                    Số tiền cọc cần hoàn: {formatCurrency(order.depositHoldAmount)}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Confirm refund form */}
+            <div className='space-y-2 pt-2 border-t border-cyan-200/60 dark:border-cyan-700/30'>
+              <label className='flex items-start gap-2.5 cursor-pointer select-none'>
+                <Switch
+                  id='refund-confirmed'
+                  checked={refundConfirmed}
+                  onCheckedChange={(v) => setRefundConfirmed(v)}
+                  className='mt-0.5'
+                />
+                <span className='text-xs text-cyan-700/80 dark:text-cyan-400/80 leading-relaxed'>
+                  Tôi xác nhận đã chuyển khoản hoàn tiền cho khách hàng
+                </span>
+              </label>
+              {order.depositHoldAmount != null && order.depositHoldAmount > 0 && (
+                <p className='text-xs text-amber-600 dark:text-amber-400 px-1'>
+                  Tiền hoàn: {formatCurrency(order.depositHoldAmount)}
+                </p>
+              )}
+              <Button
+                size='sm'
+                disabled={
+                  !refundConfirmed ||
+                  confirmMutation.isPending
+                }
+                onClick={() => {
+                  confirmMutation.mutate({
+                    rentalOrderId: order.rentalOrderId,
+                    input: { reason: order.cancellationReason ?? undefined },
+                  });
+                }}
+                className='w-full bg-cyan-600 hover:bg-cyan-700 text-white'
+              >
+                {confirmMutation.isPending ? (
+                  <Loader2 className='w-4 h-4 animate-spin' />
+                ) : (
+                  <>Xác nhận hủy đơn & hoàn tiền</>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Direct cancel + early pickup - shown only when no cancellation request is pending */}
+        {!hasCancellationRequest && (
+          <div className='space-y-2'>
+            {/* Early pickup for IN_USE */}
+            {order.status === 'IN_USE' && (
+              <Button
+                size='sm'
+                variant='outline'
+                disabled={earlyPickupMutation.isPending}
+                onClick={() => earlyPickupMutation.mutate(order.rentalOrderId)}
+                className='w-full border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+              >
+                {earlyPickupMutation.isPending ? (
+                  <Loader2 className='w-4 h-4 animate-spin mr-2' />
+                ) : (
+                  <AlertTriangle className='w-4 h-4 mr-2' />
+                )}
+                Thu hồi sớm đơn hàng
+              </Button>
+            )}
+
+            {/* Direct cancel for PAID */}
+            {order.status === 'PAID' && (
+              <>
+                {!showCancelForm ? (
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    disabled={adminCancelMutation.isPending}
+                    onClick={() => setShowCancelForm(true)}
+                    className='w-full border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20'
+                  >
+                    {adminCancelMutation.isPending ? (
+                      <Loader2 className='w-4 h-4 animate-spin mr-2' />
+                    ) : (
+                      <AlertTriangle className='w-4 h-4 mr-2' />
+                    )}
+                    Hủy đơn hàng (Admin)
+                  </Button>
+                ) : (
+                  <div className='rounded-xl border border-red-200 dark:border-red-800/50 bg-red-50/60 dark:bg-red-950/20 px-4 py-3 space-y-2'>
+                    <p className='text-xs font-semibold text-red-700 dark:text-red-400'>
+                      Lý do hủy đơn:
+                    </p>
+                    <Input
+                      placeholder='Nhập lý do hủy đơn...'
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      className='text-sm'
+                    />
+                    {order.depositHoldAmount != null && order.depositHoldAmount > 0 && (
+                      <p className='text-xs text-red-600/80 dark:text-red-400/70'>
+                        Tiền cọc {formatCurrency(order.depositHoldAmount)} sẽ được hoàn cho khách.
+                      </p>
+                    )}
+                    <div className='flex gap-2'>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        onClick={() => {
+                          setShowCancelForm(false);
+                          setCancelReason('');
+                        }}
+                        className='flex-1'
+                      >
+                        Hủy bỏ
+                      </Button>
+                      <Button
+                        size='sm'
+                        disabled={!cancelReason.trim() || adminCancelMutation.isPending}
+                        onClick={() => {
+                          adminCancelMutation.mutate({
+                            rentalOrderId: order.rentalOrderId,
+                            input: { reason: cancelReason.trim() },
+                          });
+                        }}
+                        className='flex-1 bg-red-600 hover:bg-red-700 text-white'
+                      >
+                        {adminCancelMutation.isPending ? (
+                          <Loader2 className='w-4 h-4 animate-spin' />
+                        ) : null}
+                        Xác nhận hủy đơn
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -822,6 +1026,11 @@ export function RentalOrderAssignDialog({
                 </div>
               )}
             </div>
+
+            {/* ── Cancellation request display + Admin support actions ── */}
+            {order.status === 'PAID' && (
+              <AdminSupportSection order={order} />
+            )}
           </div>
 
           {/* ── Footer ── */}

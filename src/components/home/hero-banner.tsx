@@ -177,7 +177,7 @@ export function HeroBanner() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className='mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1 lg:gap-4'
+              className='mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1 xl:gap-4'
             >
               {VALUE_PROPS.map(({ icon: Icon, label, detail }) => (
                 <div

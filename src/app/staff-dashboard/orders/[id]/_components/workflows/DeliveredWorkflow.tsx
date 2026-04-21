@@ -176,7 +176,7 @@ export function DeliveredWorkflow({ order }: DeliveredWorkflowProps) {
           </div>
 
           {/* RIGHT: Delivered items */}
-          <div className="lg:col-span-5 flex flex-col h-[28rem] lg:h-auto">
+          <div className="lg:col-span-5 flex flex-col min-h-[320px] lg:h-auto lg:min-h-0">
             <div className="rounded-2xl border border-border/80 dark:border-slate-800 bg-card shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
               <div className="px-5 py-4 border-b border-border/80 dark:border-slate-800 bg-muted/30 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">

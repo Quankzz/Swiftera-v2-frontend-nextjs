@@ -99,6 +99,18 @@ export interface PaymentInitiateResponse {
   data: string; // → full VNPay payment URL
 }
 
+export interface CreateRefundTransactionRequest {
+  rentalOrderId: string;
+  refundAmount: number;
+  refundReason: string;
+}
+
+export interface CreateRefundTransactionResponse {
+  success: boolean;
+  message: string;
+  data: string; // → paymentTransactionId of created refund transaction
+}
+
 // ─── VNPay Return / IPN Query Params (frontend đọc khi quay về) ───────────
 
 /** Khi user quay về từ VNPay (return URL), frontend đọc query params này */
@@ -218,6 +230,22 @@ export const paymentApi = {
             ? { additionalRentalDays }
             : undefined,
       },
+    );
+  },
+
+  /**
+   * Admin creates a DEPOSIT_REFUND payment transaction record.
+   * Called after confirming the refund has been transferred to the customer.
+   *
+   * @param input - rentalOrderId, refundAmount, refundReason
+   */
+  createRefund(
+    input: CreateRefundTransactionRequest,
+  ): Promise<AxiosResponse<CreateRefundTransactionResponse>> {
+    return httpService.post<CreateRefundTransactionResponse>(
+      '/payments/refund',
+      input,
+      authOpts,
     );
   },
 };

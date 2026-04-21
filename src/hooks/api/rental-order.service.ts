@@ -8,6 +8,8 @@ import type {
   CreateRentalOrderInput,
   UpdateOrderStatusInput,
   ExtendOrderInput,
+  CancellationRequestInput,
+  ConfirmCancellationRefundInput,
   RentalOrderSingleResponse,
   RentalOrderVoidResponse,
   PaginatedRentalOrdersResponse,
@@ -171,6 +173,30 @@ export async function getOverduePenaltySuggestion(
 ): Promise<OverduePenaltySuggestionData> {
   const res = await httpService.get<OverduePenaltySuggestionResponse>(
     `/rental-orders/${rentalOrderId}/overdue-penalty-suggestion`,
+    authOpts,
+  );
+  return res.data.data;
+}
+
+export async function requestCancellation(
+  rentalOrderId: string,
+  input: CancellationRequestInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/cancellation-request`,
+    input,
+    authOpts,
+  );
+  return res.data.data;
+}
+
+export async function confirmCancellationRefund(
+  rentalOrderId: string,
+  input: ConfirmCancellationRefundInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/confirm-cancellation-refund`,
+    input,
     authOpts,
   );
   return res.data.data;

@@ -159,6 +159,12 @@ export interface RentalOrderResponse {
   deliveryStaff: RentalOrderStaffSummary | null;
   pickupStaff: RentalOrderStaffSummary | null;
   rentalOrderLines: RentalOrderLineResponse[];
+  /** Cancellation request tracking (customer cancellation for PAID orders) */
+  cancellationRequested?: boolean | null;
+  cancellationReason?: string | null;
+  cancellationRequestedAt?: string | null;
+  refundConfirmedByAdmin?: boolean | null;
+  refundConfirmedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -254,6 +260,14 @@ export interface SetPenaltyInput {
   damagePenaltyAmount?: number;
   overduePenaltyAmount?: number;
   note?: string;
+}
+
+export interface CancellationRequestInput {
+  reason: string;
+}
+
+export interface ConfirmCancellationRefundInput {
+  reason: string;
 }
 
 
@@ -563,6 +577,42 @@ export function getOverduePenaltySuggestion(
 ): Promise<AxiosResponse<OverduePenaltySuggestionResponse>> {
   return httpService.get<OverduePenaltySuggestionResponse>(
     `/rental-orders/${rentalOrderId}/overdue-penalty-suggestion`,
+    authOpts,
+  );
+}
+
+/**
+ * Customer requests cancellation for PAID orders.
+ * Sets cancellationRequested flag for admin processing.
+ *
+ * @param rentalOrderId - UUID của đơn thuê (phải đang ở trạng thái PAID)
+ * @param input - cancellation reason
+ */
+export function requestCancellation(
+  rentalOrderId: string,
+  input: CancellationRequestInput,
+): Promise<AxiosResponse<RentalOrderSingleResponse>> {
+  return httpService.post<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/cancellation-request`,
+    input,
+    authOpts,
+  );
+}
+
+/**
+ * Admin confirms cancellation with refund.
+ * Creates DEPOSIT_REFUND payment transaction and transitions order to CANCELLED.
+ *
+ * @param rentalOrderId - UUID của đơn thuê (phải có cancellationRequested = true và status = PAID)
+ * @param input - refund reason (e.g., "Hoàn tiền do hủy đơn theo yêu cầu khách hàng")
+ */
+export function confirmCancellationRefund(
+  rentalOrderId: string,
+  input: ConfirmCancellationRefundInput,
+): Promise<AxiosResponse<RentalOrderSingleResponse>> {
+  return httpService.post<RentalOrderSingleResponse>(
+    `/rental-orders/${rentalOrderId}/confirm-cancellation-refund`,
+    input,
     authOpts,
   );
 }

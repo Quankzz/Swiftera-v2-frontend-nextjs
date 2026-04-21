@@ -502,7 +502,7 @@ export function Header({
                 </Button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/50 py-1 z-50 animate-in fade-in slide-in-from-top-1">
                     {!isAuthenticated ? (
                       <>
                         <div className="px-4 py-3 border-b border-gray-100 dark:border-white/8">
@@ -673,7 +673,7 @@ export function Header({
                     setHoveredCategoryId(hoveredCategoryData.categoryId);
                   }}
                 >
-                  <div className="px-4 w-full max-w-full py-4 flex gap-32">
+                  <div className="px-4 w-full max-w-full py-4 flex gap-8 lg:gap-12">
                     {hoveredCategoryData.children &&
                       hoveredCategoryData.children.length > 0 && (
                         <div className="w-70 shrink-0">

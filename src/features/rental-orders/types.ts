@@ -234,6 +234,13 @@ export interface RentalOrderResponse {
   // QR Code (sinh sau khi PAID)
   qrCode: string | null;
 
+  // Cancellation request tracking (khi customer yeu cau huy don PAID)
+  cancellationRequested: boolean | null;
+  cancellationReason: string | null;
+  cancellationRequestedAt: string | null;
+  refundConfirmedByAdmin: boolean | null;
+  refundConfirmedAt: string | null;
+
   // Timestamps
   placedAt: string; // ISO datetime
   createdAt: string;
@@ -272,6 +279,16 @@ export interface UpdateOrderStatusInput {
 }
 
 /** API-078: Hủy đơn thuê - POST /rental-orders/{id}/cancel (no body) */
+
+/** API: Customer requests cancellation for PAID orders */
+export interface CancellationRequestInput {
+  reason: string;
+}
+
+/** API: Admin confirms cancellation with refund reason */
+export interface ConfirmCancellationRefundInput {
+  reason: string;
+}
 
 /** API-079: Gia hạn đơn thuê */
 export interface ExtendOrderInput {

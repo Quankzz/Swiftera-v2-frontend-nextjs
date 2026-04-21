@@ -24,12 +24,16 @@ import {
   assignRentalOrder,
   getRentalOrders,
   getOverduePenaltySuggestion,
+  requestCancellation,
+  confirmCancellationRefund,
   type NormalizedPaginatedOrders,
 } from './rental-order.service';
 import type {
   CreateRentalOrderInput,
   UpdateOrderStatusInput,
   ExtendOrderInput,
+  CancellationRequestInput,
+  ConfirmCancellationRefundInput,
 } from '@/api/rentalOrderApi';
 import type {
   AssignOrderInput,
@@ -629,6 +633,73 @@ export function useExtendOrder(options?: {
       });
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.overdueSuggestion(variables.rentalOrderId),
+      });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
+    },
+  });
+}
+
+/**
+ * Customer requests cancellation for PAID orders [AUTH]
+ */
+export function useRequestCancellation(options?: {
+  onSuccess?: (data: RentalOrderResponse) => void;
+  onError?: (error: Error) => void;
+}) {
+  const qc = useQueryClient();
+  const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      rentalOrderId,
+      input,
+    }: {
+      rentalOrderId: string;
+      input: CancellationRequestInput;
+    }) => {
+      requireAuthForMutation({
+        isAuthenticated,
+        isAuthLoading,
+        router,
+        fallbackPath: '/rental-orders',
+        errorMessage: 'Vui lòng đăng nhập để gửi yêu cầu hủy đơn.',
+      });
+
+      return requestCancellation(rentalOrderId, input);
+    },
+
+    onMutate: async ({ rentalOrderId }) => {
+      await qc.cancelQueries({
+        queryKey: rentalOrderKeys.detail(rentalOrderId),
+      });
+
+      const previousDetail = qc.getQueryData<RentalOrderResponse>(
+        rentalOrderKeys.detail(rentalOrderId),
+      );
+
+      return { previousDetail };
+    },
+
+    onSuccess: (data) => {
+      qc.setQueryData(rentalOrderKeys.detail(data.rentalOrderId), data);
+      mergeOrderIntoMyOrdersCaches(qc, data);
+      options?.onSuccess?.(data);
+    },
+
+    onError: (error: Error, variables, context) => {
+      if (context?.previousDetail !== undefined) {
+        qc.setQueryData(
+          rentalOrderKeys.detail(variables.rentalOrderId),
+          context.previousDetail,
+        );
+      }
+      options?.onError?.(error);
+    },
+
+    onSettled: (_data, _error, variables) => {
+      void qc.invalidateQueries({
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
       void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
     },

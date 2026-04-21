@@ -140,7 +140,7 @@ export function ProductCard({
             src={primaryImage.imageUrl}
             alt={product.name}
             fill
-            sizes='(min-width: 1024px) 300px, 50vw'
+            sizes='(min-width: 1280px) 300px, (min-width: 768px) 33vw, 50vw'
             className={cn(
               'object-contain',
               !isPreview &&
@@ -164,7 +164,7 @@ export function ProductCard({
                   key={`${product.productId}-${c.name}`}
                   aria-label={c.name}
                   title={c.name}
-                  className='size-3.5 rounded-full border border-white shadow ring-1 ring-black/10'
+                  className='size-4 sm:size-3.5 rounded-full border border-white shadow ring-1 ring-black/10'
                   style={{ backgroundColor: c.value }}
                 />
               ))}

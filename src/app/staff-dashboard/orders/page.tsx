@@ -633,7 +633,7 @@ function OrderCard({ order, now }: { order: StaffOrder; now: number }) {
           </div>
 
           {/* ===== Main Content Grid ===== */}
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.5fr_1fr_0.8fr] gap-5 lg:gap-6">
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.2fr_1.5fr_1fr_0.8fr] gap-5 lg:gap-6">
             {/* 1. Customer Info */}
             <div className="space-y-1.5 min-w-0">
               <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">

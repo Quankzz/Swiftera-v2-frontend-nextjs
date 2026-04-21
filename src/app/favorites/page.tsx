@@ -269,7 +269,7 @@ export default function FavoritesPage() {
             )}
 
             {!isLoadingProducts && favoriteProducts.length > 0 && (
-              <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3'>
                 {favoriteProducts.map((product) => {
                   const imageUrl = getPrimaryImage(product);
                   const discountPercent = getDiscountPercent(product);
@@ -294,17 +294,17 @@ export default function FavoritesPage() {
                       </button>
 
                       <Link href={`/product/${product.productId}`}>
-                        <div className='overflow-hidden rounded-xl border border-border/60 bg-muted/20'>
+                        <div className='relative overflow-hidden rounded-xl border border-border/60 bg-muted/20 aspect-[16/9]'>
                           {imageUrl ? (
                             <Image
                               src={imageUrl}
                               alt={product.name}
-                              width={640}
-                              height={360}
-                              className='h-44 w-full object-cover transition-transform duration-500 group-hover:scale-102'
+                              fill
+                              sizes='(min-width: 1280px) 400px, (min-width: 768px) 33vw, 50vw'
+                              className='object-cover transition-transform duration-500 group-hover:scale-102'
                             />
                           ) : (
-                            <div className='flex h-44 items-center justify-center text-sm text-muted-foreground'>
+                            <div className='flex h-full w-full items-center justify-center text-sm text-muted-foreground'>
                               Chưa có ảnh sản phẩm
                             </div>
                           )}
