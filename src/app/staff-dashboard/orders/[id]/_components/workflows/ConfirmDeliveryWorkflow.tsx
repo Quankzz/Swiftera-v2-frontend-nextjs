@@ -58,7 +58,7 @@ export function ConfirmDeliveryWorkflow({
           <Button
             onClick={onConfirm}
             disabled={loading}
-            className="h-10 rounded-lg px-5 text-[13px] font-medium bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+            className="h-10 rounded-lg px-5 text-[13px] font-medium bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
           >
             {loading ? (
               <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</>

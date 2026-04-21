@@ -26,6 +26,14 @@ import {
 } from '../OrderInfo';
 import { CameraCapture } from '../CameraCapture';
 import { QrScanner } from '../QrScanner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 function ItemDeliveryCard({
   line,
@@ -102,6 +110,7 @@ export function DeliveringWorkflow({
 }: DeliveringWorkflowProps) {
   const [qrVerified, setQrVerified] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [itemPhotos, setItemPhotos] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(
       order.rentalOrderLines.map((line) => [line.rentalOrderLineId, []]),
@@ -351,12 +360,12 @@ export function DeliveringWorkflow({
               </span>
             )}
           </p>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
             <Button
               variant="outline"
-              onClick={onCancel}
+              onClick={() => setShowCancelDialog(true)}
               disabled={loading}
-              className="h-10 rounded-lg px-4 text-[12px] font-medium border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50"
+              className="h-10 rounded-lg px-4 text-[12px] font-medium border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 w-full sm:w-auto"
             >
               <XCircle className="size-4" />
               <span className="hidden sm:inline">Hủy đơn</span>
@@ -366,7 +375,7 @@ export function DeliveringWorkflow({
               onClick={onConfirmDelivery}
               disabled={!allReady || loading}
               className={cn(
-                'h-10 rounded-lg px-4 text-[13px] font-medium shrink-0',
+                'h-10 rounded-lg px-4 text-[13px] font-medium flex-1 sm:flex-none',
                 allReady
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   : 'bg-muted text-muted-foreground cursor-not-allowed',
@@ -385,6 +394,54 @@ export function DeliveringWorkflow({
           </div>
         </div>
       </div>
+
+      {/* Cancel confirmation dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="size-9 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <XCircle className="size-5 text-red-600 dark:text-red-400" />
+              </div>
+              Xác nhận hủy đơn hàng
+            </DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập nhật trạng thái đơn hàng sang{' '}
+              <span className="font-medium text-foreground">Đã hủy</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
+            <p className="text-[13px] text-muted-foreground">
+              Mã đơn: <span className="font-mono font-medium text-foreground">{order.rentalOrderId}</span>
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+              className="h-10 rounded-lg"
+            >
+              Không, giữ đơn
+            </Button>
+            <Button
+              onClick={() => {
+                setShowCancelDialog(false);
+                onCancel();
+              }}
+              disabled={loading}
+              className="h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+            >
+              {loading ? (
+                <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</>
+              ) : (
+                <>Có, hủy đơn</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

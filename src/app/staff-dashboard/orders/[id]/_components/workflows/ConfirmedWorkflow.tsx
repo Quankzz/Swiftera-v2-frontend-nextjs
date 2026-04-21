@@ -227,7 +227,7 @@ export function ConfirmedWorkflow({
             onClick={onStartDelivery}
             disabled={!allPhotographed || loading}
             className={cn(
-              "h-10 rounded-lg px-5 text-[13px] font-medium shrink-0",
+              "h-10 rounded-lg px-5 text-[13px] font-medium w-full sm:w-auto",
               allPhotographed
                 ? 'bg-blue-600 hover:bg-blue-700 text-white'
                 : 'bg-muted text-muted-foreground cursor-not-allowed'

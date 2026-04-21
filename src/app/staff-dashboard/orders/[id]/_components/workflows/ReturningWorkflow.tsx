@@ -611,7 +611,7 @@ export function ReturningWorkflow({
       {/* Sticky footer */}
       <div className="sticky bottom-0 left-0 right-0 z-10 bg-card/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
-          <p className="text-[12px] text-muted-foreground">
+          <p className="text-[12px] text-muted-foreground sm:flex-1">
             {allPhotographed ? (
               totalDamagePenalty + overduePenalty > 0 ? (
                 <span className="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1.5">
@@ -639,7 +639,7 @@ export function ReturningWorkflow({
             onClick={handleSubmit}
             disabled={!allPhotographed || loading}
             className={cn(
-              'h-10 rounded-lg px-5 text-[13px] font-medium shrink-0',
+              'h-10 rounded-lg px-5 text-[13px] font-medium w-full sm:w-auto',
               allPhotographed
                 ? 'bg-purple-600 hover:bg-purple-700 text-white'
                 : 'bg-muted text-muted-foreground cursor-not-allowed',

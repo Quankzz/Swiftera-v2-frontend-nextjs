@@ -82,7 +82,7 @@ export function ConfirmReturnWorkflow({
             onClick={onConfirmPickup}
             disabled={loading}
             className={cn(
-              'h-10 rounded-lg px-5 text-[13px] font-medium shrink-0',
+              'h-10 rounded-lg px-5 text-[13px] font-medium w-full sm:w-auto',
               isOverdue
                 ? 'bg-red-600 hover:bg-red-700 text-white'
                 : 'bg-orange-500 hover:bg-orange-600 text-white',
