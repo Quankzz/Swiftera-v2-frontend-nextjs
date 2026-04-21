@@ -1,13 +1,11 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/dashboard/ui/data-table';
 import {
   useRentalOrdersQuery,
-  useCompleteOrderMutation,
-  useReportIssueMutation,
+  useUpdateOrderStatusMutation,
 } from '@/features/rental-orders/hooks/use-rental-order-management';
 import {
   STATUS_LABELS,
@@ -17,6 +15,7 @@ import {
   type RentalOrderStatus,
   type RentalOrderListParams,
 } from '@/features/rental-orders/types';
+import { RentalOrderDetailDialog } from '@/features/rental-orders/components/rental-order-detail-dialog';
 import {
   Truck,
   MapPin,
@@ -24,10 +23,11 @@ import {
   ClipboardList,
   Calendar,
   Search,
-  CheckCircle2,
-  AlertTriangle,
   Loader2,
   Eye,
+  ArrowRightCircle,
+  XCircle,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,8 +36,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -128,147 +126,321 @@ interface OrdersTableProps {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Confirm Complete Dialog
+// Transition config (mirrors ADMIN_TRANSITIONS in detail-view)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ConfirmCompleteDialog({
-  orderId,
-  open,
-  onOpenChange,
-}: {
-  orderId: string | null;
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}) {
-  const completeMutation = useCompleteOrderMutation();
-
-  const handleConfirm = () => {
-    if (!orderId) return;
-    completeMutation.mutate(orderId, {
-      onSuccess: () => {
-        onOpenChange(false);
-      },
-    });
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>Xác nhận hoàn tất đơn thuê</DialogTitle>
-          <DialogDescription>
-            Bạn có chắc chắn muốn hoàn tất đơn thuê này? Thao tác không thể hoàn
-            tác.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose
-            render={<Button variant='outline' />}
-            disabled={completeMutation.isPending}
-          >
-            Hủy
-          </DialogClose>
-          <Button
-            onClick={handleConfirm}
-            disabled={completeMutation.isPending}
-            className='bg-green-600 hover:bg-green-700 text-white'
-          >
-            {completeMutation.isPending && (
-              <Loader2 className='w-4 h-4 animate-spin mr-1.5' />
-            )}
-            Xác nhận hoàn tất
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+interface StatusTransitionOption {
+  to: RentalOrderStatus;
+  label: string;
+  description?: string;
+  requiresIssueNote?: boolean;
+  isCancellation?: boolean;
+  apiNote?: string;
 }
 
+const ADMIN_TRANSITIONS: Partial<
+  Record<RentalOrderStatus, StatusTransitionOption[]>
+> = {
+  PENDING_PAYMENT: [
+    {
+      to: 'PAID',
+      label: 'Xác nhận đã thanh toán',
+      description: 'Hợp lệ khi tổng giao dịch SUCCESS đủ tổng thanh toán',
+    },
+    {
+      to: 'CANCELLED',
+      label: 'Hủy đơn',
+      isCancellation: true,
+      description: 'Hoàn kho RESERVED → AVAILABLE',
+    },
+  ],
+  PAID: [
+    {
+      to: 'PREPARING',
+      label: 'Bắt đầu chuẩn bị',
+      description: 'Yêu cầu đơn phải có hợp đồng thuê',
+    },
+  ],
+  PREPARING: [
+    {
+      to: 'DELIVERING',
+      label: 'Bắt đầu giao hàng',
+      description: 'Yêu cầu có hợp đồng và nhân viên giao hàng',
+    },
+    { to: 'CANCELLED', label: 'Hủy đơn', isCancellation: true },
+  ],
+  DELIVERING: [
+    {
+      to: 'DELIVERED',
+      label: 'Xác nhận đã giao hàng',
+      apiNote: 'Nên dùng API record-delivery để ghi nhận thời gian & tọa độ',
+    },
+  ],
+  DELIVERED: [
+    {
+      to: 'IN_USE',
+      label: 'Xác nhận đang sử dụng',
+      description: 'Đơn phải có dữ liệu giao hàng thực tế',
+    },
+    {
+      to: 'PENDING_PICKUP',
+      label: 'Thu hồi sớm do sự cố',
+      requiresIssueNote: true,
+      description: 'Chỉ ADMIN — bắt buộc nhập ghi chú sự cố',
+    },
+  ],
+  IN_USE: [
+    {
+      to: 'PENDING_PICKUP',
+      label: 'Yêu cầu thu hồi',
+      description: 'Phải gán nhân viên thu hồi trước khi chuyển PICKING_UP',
+    },
+  ],
+  PENDING_PICKUP: [
+    {
+      to: 'PICKING_UP',
+      label: 'Bắt đầu thu hồi',
+      description: 'Phải có nhân viên thu hồi được gán',
+    },
+  ],
+  PICKING_UP: [
+    {
+      to: 'PICKED_UP',
+      label: 'Xác nhận đã thu hồi',
+      apiNote: 'Nên dùng API record-pickup để ghi nhận thời gian & tọa độ',
+    },
+  ],
+  PICKED_UP: [
+    {
+      to: 'COMPLETED',
+      label: 'Hoàn tất đơn thuê',
+      description:
+        'depositRefundAmount > 0 → bắt buộc có DEPOSIT_REFUND SUCCESS trước',
+    },
+  ],
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Report Issue Dialog
+// Update Status Dialog
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ReportIssueDialog({
-  orderId,
+function UpdateStatusDialog({
+  order,
   open,
   onOpenChange,
 }: {
-  orderId: string | null;
+  order: RentalOrderResponse | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const [selected, setSelected] = useState<StatusTransitionOption | null>(null);
   const [issueNote, setIssueNote] = useState('');
-  const reportIssueMutation = useReportIssueMutation();
+  const updateMutation = useUpdateOrderStatusMutation();
 
-  const handleConfirm = () => {
-    if (!orderId) return;
-    if (!issueNote.trim()) {
+  const transitions = order ? (ADMIN_TRANSITIONS[order.status] ?? []) : [];
+
+  const handleClose = () => {
+    setSelected(null);
+    setIssueNote('');
+    onOpenChange(false);
+  };
+
+  const handleConfirm = async () => {
+    if (!order || !selected) return;
+    if (selected.requiresIssueNote && !issueNote.trim()) {
       toast.warning('Vui lòng nhập ghi chú sự cố.');
       return;
     }
-    reportIssueMutation.mutate(
-      {
-        rentalOrderId: orderId,
-        payload: { status: 'PENDING_PICKUP', issueNote: issueNote.trim() },
-      },
-      {
-        onSuccess: () => {
-          setIssueNote('');
-          onOpenChange(false);
+    try {
+      await updateMutation.mutateAsync({
+        rentalOrderId: order.rentalOrderId,
+        payload: {
+          status: selected.to,
+          ...(selected.requiresIssueNote && issueNote.trim()
+            ? { issueNote: issueNote.trim() }
+            : {}),
         },
-      },
-    );
+      });
+      handleClose();
+    } catch {
+      // handled in mutation onError
+    }
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) setIssueNote('');
-        onOpenChange(v);
-      }}
-    >
-      <DialogContent showCloseButton={false}>
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+      <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>Thu hồi sớm do sự cố</DialogTitle>
-          <DialogDescription>
-            Ghi chú sự cố để chuyển đơn sang trạng thái chờ thu hồi.
-          </DialogDescription>
+          <DialogTitle className='flex items-center gap-2'>
+            <ArrowRightCircle className='w-4 h-4 text-theme-primary-start' />
+            Cập nhật trạng thái đơn thuê
+          </DialogTitle>
+          {order && (
+            <DialogDescription>
+              Đơn{' '}
+              <span className='font-mono font-semibold'>
+                #{order.rentalOrderId.slice(0, 8).toUpperCase()}
+              </span>{' '}
+              · Hiện tại:{' '}
+              <span className='font-semibold text-foreground'>
+                {STATUS_LABELS[order.status]}
+              </span>
+            </DialogDescription>
+          )}
         </DialogHeader>
-        <div className='py-2'>
-          <label
-            htmlFor='issue-note'
-            className='block text-sm font-medium text-foreground mb-1.5'
-          >
-            Ghi chú sự cố <span className='text-red-500'>*</span>
-          </label>
-          <textarea
-            id='issue-note'
-            value={issueNote}
-            onChange={(e) => setIssueNote(e.target.value)}
-            placeholder='Mô tả sự cố cần thu hồi...'
-            rows={3}
-            className='w-full rounded-lg border border-gray-200 dark:border-white/12 bg-white dark:bg-surface-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition resize-none'
-          />
-        </div>
-        <DialogFooter>
-          <DialogClose
-            render={<Button variant='outline' />}
-            disabled={reportIssueMutation.isPending}
-          >
-            Hủy
-          </DialogClose>
-          <Button
-            onClick={handleConfirm}
-            disabled={reportIssueMutation.isPending || !issueNote.trim()}
-            className='bg-amber-600 hover:bg-amber-700 text-white'
-          >
-            {reportIssueMutation.isPending && (
-              <Loader2 className='w-4 h-4 animate-spin mr-1.5' />
+
+        {transitions.length === 0 ? (
+          <div className='flex items-center gap-2.5 rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3 my-2'>
+            <Info className='w-4 h-4 text-text-sub shrink-0' />
+            <p className='text-sm text-text-sub'>
+              Không có bước chuyển trạng thái khả dụng.
+            </p>
+          </div>
+        ) : !selected ? (
+          /* Step 1: chọn transition */
+          <div className='space-y-2 py-2'>
+            {transitions.map((opt) => (
+              <button
+                key={opt.to}
+                type='button'
+                onClick={() => setSelected(opt)}
+                className={cn(
+                  'w-full flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all hover:shadow-sm',
+                  opt.isCancellation
+                    ? 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20'
+                    : opt.requiresIssueNote
+                      ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20'
+                      : 'border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/3 hover:bg-gray-100 dark:hover:bg-white/5',
+                )}
+              >
+                <div className='mt-0.5 shrink-0'>
+                  {opt.isCancellation ? (
+                    <XCircle className='w-4 h-4 text-red-500' />
+                  ) : (
+                    <ArrowRightCircle
+                      className={cn(
+                        'w-4 h-4',
+                        opt.requiresIssueNote
+                          ? 'text-amber-500'
+                          : 'text-theme-primary-start',
+                      )}
+                    />
+                  )}
+                </div>
+                <div className='flex-1 min-w-0'>
+                  <div className='flex items-center gap-2 flex-wrap'>
+                    <span
+                      className={cn(
+                        'text-sm font-semibold',
+                        opt.isCancellation
+                          ? 'text-red-700 dark:text-red-400'
+                          : opt.requiresIssueNote
+                            ? 'text-amber-700 dark:text-amber-400'
+                            : 'text-text-main',
+                      )}
+                    >
+                      {opt.label}
+                    </span>
+                    <span className='text-[11px] font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-text-sub'>
+                      → {opt.to}
+                    </span>
+                  </div>
+                  {opt.description && (
+                    <p className='text-xs text-text-sub mt-0.5'>
+                      {opt.description}
+                    </p>
+                  )}
+                  {opt.apiNote && (
+                    <p className='text-xs text-blue-500 dark:text-blue-400 mt-0.5 flex items-center gap-1'>
+                      <Info className='w-3 h-3 shrink-0' />
+                      {opt.apiNote}
+                    </p>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          /* Step 2: xác nhận */
+          <div className='space-y-3 py-2'>
+            <div
+              className={cn(
+                'rounded-xl border px-4 py-3',
+                selected.isCancellation
+                  ? 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/10'
+                  : selected.requiresIssueNote
+                    ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/10'
+                    : 'border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-900/10',
+              )}
+            >
+              <p className='text-sm font-semibold text-text-main'>
+                Xác nhận:{' '}
+                <span className='font-mono text-xs'>
+                  {order?.status} → {selected.to}
+                </span>
+              </p>
+              {selected.description && (
+                <p className='text-xs text-text-sub mt-1'>
+                  {selected.description}
+                </p>
+              )}
+            </div>
+
+            {selected.requiresIssueNote && (
+              <div className='space-y-1.5'>
+                <label className='text-xs font-semibold text-text-main'>
+                  Ghi chú sự cố <span className='text-red-500'>*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={issueNote}
+                  onChange={(e) => setIssueNote(e.target.value)}
+                  placeholder='Mô tả sự cố xảy ra sau khi giao hàng...'
+                  className='w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main placeholder:text-text-sub resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400'
+                />
+              </div>
             )}
-            Xác nhận thu hồi
-          </Button>
-        </DialogFooter>
+
+            <div className='flex items-center gap-2 pt-1'>
+              <button
+                type='button'
+                onClick={handleConfirm}
+                disabled={
+                  updateMutation.isPending ||
+                  (selected.requiresIssueNote ? !issueNote.trim() : false)
+                }
+                className={cn(
+                  'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                  selected.isCancellation
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : selected.requiresIssueNote
+                      ? 'bg-amber-500 hover:bg-amber-600'
+                      : 'bg-theme-primary-start hover:brightness-110',
+                )}
+              >
+                {updateMutation.isPending ? (
+                  <Loader2 className='w-3.5 h-3.5 animate-spin' />
+                ) : selected.isCancellation ? (
+                  <XCircle className='w-3.5 h-3.5' />
+                ) : (
+                  <ArrowRightCircle className='w-3.5 h-3.5' />
+                )}
+                Xác nhận
+              </button>
+              <button
+                type='button'
+                onClick={() => {
+                  setSelected(null);
+                  setIssueNote('');
+                }}
+                disabled={updateMutation.isPending}
+                className='px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 text-text-sub hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-40'
+              >
+                ← Quay lại
+              </button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -285,9 +457,11 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Dialog state
-  const [completeOrderId, setCompleteOrderId] = useState<string | null>(null);
-  const [reportIssueOrderId, setReportIssueOrderId] = useState<string | null>(
+  // Dialog state — update status
+  const [updateStatusOrder, setUpdateStatusOrder] =
+    useState<RentalOrderResponse | null>(null);
+  // Dialog state — view detail
+  const [detailOrder, setDetailOrder] = useState<RentalOrderResponse | null>(
     null,
   );
 
@@ -494,54 +668,86 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
             status === 'PAID' ||
             status === 'PREPARING' ||
             status === 'PENDING_PICKUP';
-          const canComplete = status === 'PICKED_UP';
-          const canReportIssue = status === 'DELIVERED' || status === 'IN_USE';
+          const hasTransitions = !!ADMIN_TRANSITIONS[status]?.length;
 
           return (
-            <Button
-              size='sm'
-              variant={canAssign ? 'default' : 'ghost'}
-              onClick={() => onAssign(row.original)}
-              className={cn(
-                'flex items-center gap-1.5 text-xs h-8 px-3 whitespace-nowrap',
-                !canAssign &&
-                  'text-text-sub border border-gray-200 dark:border-white/8',
+            <div className='flex items-center gap-1.5'>
+              <button
+                type='button'
+                onClick={() => setDetailOrder(row.original)}
+                className='inline-flex items-center gap-1.5 text-xs h-8 px-3 rounded-md border border-gray-200 dark:border-white/8 text-text-sub hover:bg-gray-100 dark:hover:bg-white/10 transition-colors whitespace-nowrap'
+              >
+                <Eye className='w-3.5 h-3.5' />
+                Chi tiết
+              </button>
+              {canAssign && (
+                <Button
+                  size='sm'
+                  variant='default'
+                  onClick={() => onAssign(row.original)}
+                  className='flex items-center gap-1.5 text-xs h-8 px-3 whitespace-nowrap'
+                >
+                  <Truck className='w-3.5 h-3.5' />
+                  Gán đơn
+                </Button>
               )}
-            >
-              <Truck className='w-3.5 h-3.5' />
-              {canAssign ? 'Gán đơn' : 'Xem'}
-            </Button>
+              {hasTransitions && (
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setUpdateStatusOrder(row.original)}
+                  className='flex items-center gap-1.5 text-xs h-8 px-3 whitespace-nowrap text-theme-primary-start border-theme-primary-start/30 hover:bg-theme-primary-start/5'
+                >
+                  <ArrowRightCircle className='w-3.5 h-3.5' />
+                  Trạng thái
+                </Button>
+              )}
+            </div>
           );
         },
       },
     ],
-    [onAssign, setCompleteOrderId, setReportIssueOrderId],
+    [onAssign, setUpdateStatusOrder, setDetailOrder],
   );
 
   return (
-    <DataTable
-      columns={columns}
-      data={orders}
-      isLoading={isLoading}
-      isError={isError}
-      errorMessage='Không thể tải danh sách đơn thuê. Vui lòng thử lại.'
-      emptyMessage='Chưa có đơn thuê nào.'
-      totalLabel='đơn thuê'
-      manualPagination
-      pageIndex={page}
-      pageCount={totalPages}
-      onPageChange={(p) => setPage(p)}
-      pageSize={size}
-      totalRows={data?.meta?.totalElements}
-      toolbarLeft={
-        <SearchInput search={search} onSearchChange={handleSearchChange} />
-      }
-      toolbarRight={
-        <StatusFilter
-          statusFilter={statusFilter}
-          onStatusChange={handleStatusChange}
-        />
-      }
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={orders}
+        isLoading={isLoading}
+        isError={isError}
+        errorMessage='Không thể tải danh sách đơn thuê. Vui lòng thử lại.'
+        emptyMessage='Chưa có đơn thuê nào.'
+        totalLabel='đơn thuê'
+        manualPagination
+        pageIndex={page}
+        pageCount={totalPages}
+        onPageChange={(p) => setPage(p)}
+        pageSize={size}
+        totalRows={data?.meta?.totalElements}
+        toolbarLeft={
+          <SearchInput search={search} onSearchChange={handleSearchChange} />
+        }
+        toolbarRight={
+          <StatusFilter
+            statusFilter={statusFilter}
+            onStatusChange={handleStatusChange}
+          />
+        }
+      />
+
+      <UpdateStatusDialog
+        order={updateStatusOrder}
+        open={!!updateStatusOrder}
+        onOpenChange={(v) => !v && setUpdateStatusOrder(null)}
+      />
+
+      <RentalOrderDetailDialog
+        order={detailOrder}
+        open={!!detailOrder}
+        onOpenChange={(v) => !v && setDetailOrder(null)}
+      />
+    </>
   );
 }

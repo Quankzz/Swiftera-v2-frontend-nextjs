@@ -261,7 +261,7 @@ function CartLineRow({
           >
             <span
               className={cn(
-                'flex size-[22px] rounded-full border-2 transition-all duration-150',
+                'flex items-center justify-center size-5.5 rounded-full border-2 transition-all duration-150',
                 isSelected
                   ? 'border-blue-500 bg-blue-500 shadow-sm shadow-blue-200 dark:shadow-blue-900/40'
                   : 'border-muted-foreground/30 hover:border-blue-400',
