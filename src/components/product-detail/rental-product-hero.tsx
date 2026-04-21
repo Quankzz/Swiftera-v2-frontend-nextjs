@@ -716,7 +716,6 @@ interface RentalProductSummaryProps {
     discount?: number;
     rating?: number;
     reviews?: number;
-    rentedCount?: number;
     colors?: ProductColorOption[];
     variants?: ProductVariant[];
     durations: RentalDuration[];
@@ -752,7 +751,6 @@ export function RentalProductSummary({
     discount = 0,
     rating = 0,
     reviews = 0,
-    rentedCount = 0,
     colors = [],
     variants = [],
     durations,
@@ -793,13 +791,6 @@ export function RentalProductSummary({
         <span className='hidden text-sm text-muted-foreground/50 sm:inline'>
           |
         </span>
-        <div className='text-xs text-muted-foreground sm:text-sm'>
-          Đã cho thuê{' '}
-          <span className='font-semibold text-foreground'>
-            {rentedCount.toLocaleString()}
-          </span>{' '}
-          lần
-        </div>
       </div>
 
       <div className='rounded-xl border border-border/60 bg-muted/40 p-3 dark:bg-muted/20 sm:p-4'>

@@ -351,6 +351,17 @@ function StatusBadge({ status }: { status: string }) {
 /** Union item type - InventoryCard works with both embedded and standalone types */
 type InventoryItem = InventoryItemResponse | InventoryItemInProduct;
 
+/** Resolve hub name/id from either flat (InventoryItemResponse) or nested hub (InventoryItemInProduct) */
+function getHubDisplay(item: InventoryItem): string {
+  if ('hub' in item && item.hub) return item.hub.name ?? item.hub.hubId;
+  if ('hubName' in item)
+    return (
+      (item as InventoryItemResponse).hubName ??
+      (item as InventoryItemResponse).hubId
+    );
+  return '';
+}
+
 function InventoryCard({ item }: { item: InventoryItem }) {
   return (
     <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-white/3 p-4 flex flex-col gap-2'>
@@ -366,7 +377,7 @@ function InventoryCard({ item }: { item: InventoryItem }) {
         <span>
           📦{' '}
           <span className='font-medium text-text-main'>
-            {item.hubName ?? item.hubId}
+            {getHubDisplay(item)}
           </span>
         </span>
         {item.conditionGrade && (

@@ -43,6 +43,8 @@ const PolicyConsentDialog = dynamic(
 
 const PAGE_SIZE = 5;
 const MAX_VISIBLE_PAGES = 5;
+// Fetch a large batch per BE-page so client-side status filter has enough data
+const FETCH_SIZE = 100;
 
 const SORT_OPTIONS = [
   { label: 'Mới nhất', value: 'placedAt,desc' },
@@ -363,24 +365,37 @@ export default function RentalOrdersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [sort, statusFilter, deferredSearch]);
-
-  const filterQuery = statusFilter ? `status:'${statusFilter}'` : undefined;
+  }, [sort, deferredSearch, statusFilter]);
 
   const { data, isLoading, isError } = useMyOrdersQuery({
-    page,
-    size: PAGE_SIZE,
+    page: 1,
+    size: FETCH_SIZE,
     sort,
-    filter: filterQuery,
   });
 
   const orders = data?.items ?? [];
 
+  // Filter by status client-side (BE /my-orders does not support filter param)
+  const statusFiltered = statusFilter
+    ? orders.filter((o) => o.status === statusFilter)
+    : orders;
+
   const filteredOrders = deferredSearch
-    ? orders.filter((o) =>
+    ? statusFiltered.filter((o) =>
         o.rentalOrderId.toLowerCase().includes(deferredSearch.toLowerCase()),
       )
-    : orders;
+    : statusFiltered;
+
+  // Client-side pagination over filtered results
+  const totalFilteredItems = filteredOrders.length;
+  const totalClientPages = Math.max(
+    1,
+    Math.ceil(totalFilteredItems / PAGE_SIZE),
+  );
+  const pagedOrders = filteredOrders.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
+  );
 
   const hasActiveFilters = statusFilter !== '' || deferredSearch !== '';
 
@@ -511,7 +526,7 @@ export default function RentalOrdersPage() {
           )}
 
           {/* Empty */}
-          {!isLoading && !isError && filteredOrders.length === 0 && (
+          {!isLoading && !isError && pagedOrders.length === 0 && (
             <div className='px-5 py-16 text-center'>
               <div className='mx-auto flex size-16 items-center justify-center rounded-2xl bg-muted/60'>
                 <Package className='size-8 text-muted-foreground/50' />
@@ -548,9 +563,9 @@ export default function RentalOrdersPage() {
           )}
 
           {/* Orders list */}
-          {!isLoading && !isError && filteredOrders.length > 0 && (
+          {!isLoading && !isError && pagedOrders.length > 0 && (
             <ul className='divide-y divide-border/60'>
-              {filteredOrders.map((order) => {
+              {pagedOrders.map((order) => {
                 const status = order.status as RentalOrderStatus;
                 const isPending = status === 'PENDING_PAYMENT';
                 const isPaying = payingId === order.rentalOrderId;
@@ -714,11 +729,11 @@ export default function RentalOrdersPage() {
           )}
 
           {/* Pagination */}
-          {!isLoading && !isError && data && data.totalPages > 0 && (
+          {!isLoading && !isError && totalClientPages > 0 && (
             <PaginationControls
-              page={data.page}
-              totalPages={data.totalPages}
-              totalItems={data.totalItems}
+              page={page}
+              totalPages={totalClientPages}
+              totalItems={totalFilteredItems}
               onPageChange={setPage}
             />
           )}

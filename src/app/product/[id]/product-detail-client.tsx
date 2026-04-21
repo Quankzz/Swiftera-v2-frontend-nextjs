@@ -320,7 +320,6 @@ export default function ProductDetailClient({
                   discount,
                   rating: product.averageRating ?? 0,
                   reviews: reviewsCount,
-                  rentedCount: 0,
                   colors,
                   durations,
                 }}

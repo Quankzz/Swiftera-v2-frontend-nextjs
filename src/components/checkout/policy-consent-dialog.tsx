@@ -1,8 +1,6 @@
 'use client';
 
-import { useState, useRef, forwardRef } from 'react';
-import HTMLFlipBook from 'react-pageflip';
-import { Document, Page as PdfPage, pdfjs } from 'react-pdf';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,13 +13,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
   ScrollText,
-  ExternalLink,
   ShieldCheck,
-  Loader2,
-  AlertCircle,
   BookOpen,
-  ChevronLeft,
-  ChevronRight,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -31,183 +26,7 @@ import {
 } from '@/hooks/api/use-policies';
 import type { PolicyDocumentResponse } from '@/api/policies';
 import { toast } from 'sonner';
-
-/* ─── PDF.js worker ──────────────────────────────────────────────────────────── */
-
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString();
-
-/* ─── Constants ─────────────────────────────────────────────────────────────── */
-
-const PAGE_W = 300;
-const PAGE_H = 424; // ~A4 ratio at this width
-
-/* ─── Flip page wrapper (forwardRef required by react-pageflip) ─────────────── */
-
-const FlipPage = forwardRef<HTMLDivElement, { pageNumber: number }>(
-  ({ pageNumber }, ref) => (
-    <div
-      ref={ref}
-      className='overflow-hidden bg-white'
-      style={{ width: PAGE_W, height: PAGE_H }}
-    >
-      <PdfPage
-        pageNumber={pageNumber}
-        width={PAGE_W}
-        renderAnnotationLayer={false}
-        renderTextLayer={false}
-      />
-    </div>
-  ),
-);
-FlipPage.displayName = 'FlipPage';
-
-/* ─── PDF flip viewer ────────────────────────────────────────────────────────── */
-
-function PdfFlipViewer({ url }: { url: string }) {
-  const [numPages, setNumPages] = useState(0);
-  const [pdfLoading, setPdfLoading] = useState(true);
-  const [pdfError, setPdfError] = useState(false);
-  const [pageIndex, setPageIndex] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const bookRef = useRef<any>(null);
-
-  const isLandscape = numPages > 1;
-  const displayStart = isLandscape ? pageIndex * 2 + 1 : pageIndex + 1;
-  const displayEnd = isLandscape
-    ? Math.min(pageIndex * 2 + 2, numPages)
-    : pageIndex + 1;
-  const atFirst = pageIndex === 0;
-  const atLast = isLandscape
-    ? pageIndex * 2 + 2 >= numPages
-    : pageIndex >= numPages - 1;
-
-  return (
-    <div className='flex flex-col items-center gap-5'>
-      <Document
-        file={url}
-        onLoadSuccess={({ numPages }) => {
-          setNumPages(numPages);
-          setPdfLoading(false);
-        }}
-        onLoadError={() => {
-          setPdfError(true);
-          setPdfLoading(false);
-        }}
-        loading={null}
-      >
-        {/* Loading state */}
-        {pdfLoading && (
-          <div
-            className='flex items-center justify-center rounded-xl bg-muted/40'
-            style={{ width: PAGE_W * 2, height: PAGE_H }}
-          >
-            <div className='flex flex-col items-center gap-3'>
-              <Loader2 className='size-8 animate-spin text-blue-500' />
-              <p className='text-sm text-muted-foreground'>
-                Đang tải tài liệu…
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Error state */}
-        {pdfError && (
-          <div
-            className='flex flex-col items-center justify-center gap-3 rounded-xl bg-muted/40'
-            style={{ width: PAGE_W * 2, height: PAGE_H }}
-          >
-            <AlertCircle className='size-8 text-destructive' />
-            <p className='text-sm text-muted-foreground'>
-              Không thể tải tài liệu PDF.
-            </p>
-          </div>
-        )}
-
-        {/* Flip book */}
-        {!pdfLoading && !pdfError && numPages > 0 && (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <HTMLFlipBook
-            ref={bookRef}
-            width={PAGE_W}
-            height={PAGE_H}
-            style={{}}
-            startPage={0}
-            size='fixed'
-            minWidth={PAGE_W}
-            maxWidth={PAGE_W}
-            minHeight={PAGE_H}
-            maxHeight={PAGE_H}
-            drawShadow
-            flippingTime={700}
-            usePortrait={false}
-            startZIndex={0}
-            autoSize={false}
-            maxShadowOpacity={0.35}
-            showCover={false}
-            mobileScrollSupport
-            clickEventForward={false}
-            useMouseEvents
-            swipeDistance={30}
-            showPageCorners
-            disableFlipByClick={false}
-            onFlip={(e: { data: number }) => setPageIndex(e.data)}
-            className='rounded-sm shadow-2xl'
-          >
-            {Array.from({ length: numPages }, (_, i) => (
-              <FlipPage key={i} pageNumber={i + 1} />
-            ))}
-          </HTMLFlipBook>
-        )}
-      </Document>
-
-      {/* Page navigation */}
-      {!pdfLoading && !pdfError && numPages > 0 && (
-        <div className='flex items-center gap-3'>
-          <button
-            type='button'
-            onClick={() => bookRef.current?.pageFlip().flipPrev()}
-            disabled={atFirst}
-            className='flex size-9 items-center justify-center rounded-full border border-border/60 bg-background text-foreground transition-colors hover:bg-muted disabled:opacity-40'
-            aria-label='Trang trước'
-          >
-            <ChevronLeft className='size-4' />
-          </button>
-
-          <span className='min-w-24 text-center text-sm tabular-nums text-muted-foreground'>
-            {displayStart === displayEnd
-              ? `Trang ${displayStart}`
-              : `Trang ${displayStart}–${displayEnd}`}
-            <span className='ml-1 text-muted-foreground/60'>/ {numPages}</span>
-          </span>
-
-          <button
-            type='button'
-            onClick={() => bookRef.current?.pageFlip().flipNext()}
-            disabled={atLast}
-            className='flex size-9 items-center justify-center rounded-full border border-border/60 bg-background text-foreground transition-colors hover:bg-muted disabled:opacity-40'
-            aria-label='Trang kế'
-          >
-            <ChevronRight className='size-4' />
-          </button>
-        </div>
-      )}
-
-      {/* Download link */}
-      <a
-        href={url}
-        target='_blank'
-        rel='noopener noreferrer'
-        className='flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline'
-      >
-        <ExternalLink className='size-3' />
-        Tải xuống bản PDF
-      </a>
-    </div>
-  );
-}
+import { PolicyPdfPreview } from '@/features/policies/components/policy-pdf-preview';
 
 /* ─── PDF viewer dialog ──────────────────────────────────────────────────────── */
 
@@ -224,15 +43,15 @@ function PdfViewerDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-170 gap-4'>
+      <DialogContent className='sm:max-w-6xl w-full gap-4'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2 text-base'>
             <BookOpen className='size-4 text-blue-500' />
             {title}
           </DialogTitle>
         </DialogHeader>
-        <div className='flex justify-center overflow-hidden rounded-xl bg-muted/20 p-4'>
-          <PdfFlipViewer url={url} />
+        <div className='max-h-[80vh] overflow-y-auto rounded-xl bg-muted/20 p-4'>
+          <PolicyPdfPreview pdfUrl={url} />
         </div>
       </DialogContent>
     </Dialog>

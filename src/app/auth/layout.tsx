@@ -15,12 +15,12 @@ export default function AuthLayout({
 }) {
   return (
     <div
-      className={`${montserrat.className} relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-r from-[#fce4ec] to-[#f8bbd0] dark:from-[#0f0f11] dark:to-[#1a1018]`}
+      className={`${montserrat.className} relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc] dark:from-[#0c1929] dark:via-[#0c2d48] dark:to-[#0c1929]`}
     >
       <div className='absolute inset-0 flex items-center justify-center opacity-70 dark:opacity-45'>
         <Waves
-          lineColor='#ffffff'
-          backgroundColor='rgba(255, 255, 255, 0.2)'
+          lineColor='#0ea5e9'
+          backgroundColor='rgba(14, 165, 233, 0.08)'
           waveSpeedX={0.0125}
           waveSpeedY={0.01}
           waveAmpX={40}
