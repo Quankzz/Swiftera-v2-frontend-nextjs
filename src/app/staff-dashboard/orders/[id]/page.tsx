@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertCircle, Navigation, Loader2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import '@goongmaps/goong-js/dist/goong-js.css';
 import { cn } from '@/lib/utils';
@@ -21,11 +21,10 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
 import { Button } from '@/components/ui/button';
 
-import { STATUS_CFG, fmtDatetime } from './_components/utils';
+import { STATUS_CFG } from './_components/utils';
 import { WorkflowStepper } from './_components/WorkflowStepper';
-import { DeliveryMiniMap } from './_components/DeliveryMiniMap';
 import { ConfirmDeliveryWorkflow } from './_components/workflows/ConfirmDeliveryWorkflow';
-import { ConfirmedWorkflow } from './_components/workflows/ConfirmedWorkflow';
+import { RepairingWorkflow } from './_components/workflows/RepairingWorkflow';
 import { DeliveringWorkflow } from './_components/workflows/DeliveringWorkflow';
 import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
 import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
@@ -320,37 +319,6 @@ export default function OrderDetailPage({
         )
       : 0;
 
-  // Effective destination coords: prefer API-provided, fall back to geocoded
-  const destAddress = order.userAddress
-    ? [
-        order.userAddress.addressLine,
-        order.userAddress.district,
-        order.userAddress.city,
-      ]
-        .filter(Boolean)
-        .join(', ')
-    : (order.hubAddressLine ?? '');
-
-  const effectiveDestLat = order.deliveredLatitude ?? geocodedDestLat;
-  const effectiveDestLng = order.deliveredLongitude ?? geocodedDestLng;
-
-  // Map shown only while staff is physically moving: delivering or collecting returns
-  const hasMapPanel =
-    order.status === 'DELIVERING' || order.status === 'PICKING_UP';
-
-  const mapConfig = (() => {
-    if (!hasMapPanel) return null;
-    return {
-      title:
-        order.status === 'DELIVERING' ? 'Bản đồ giao hàng' : 'Đến lấy hàng trả',
-      destLat: effectiveDestLat,
-      destLng: effectiveDestLng,
-      destAddress: destAddress,
-      destPinColor: 'red' as const,
-      destLabel: order.status === 'DELIVERING' ? 'Điểm giao' : 'Lấy hàng trả',
-    };
-  })();
-
   // Detect which workflow role the current staff has for this order
   const staffRole: 'delivery' | 'pickup' | 'both' = user?.userId
     ? order.deliveryStaffId === user.userId &&
@@ -417,83 +385,9 @@ export default function OrderDetailPage({
           />
 
           {/* Main content grid */}
-          <div
-            className={cn(
-              'mt-5 flex flex-col gap-5',
-              hasMapPanel &&
-                mapConfig &&
-                'lg:grid lg:grid-cols-[1fr_400px] lg:items-start lg:gap-5',
-            )}
-          >
-            {/* RIGHT column: Map panel (shown first on mobile) */}
-            {hasMapPanel && mapConfig && (
-              // 1. Set sticky, top offset (chừa chỗ cho thanh menu trên cùng), và giới hạn chiều cao tối đa của toàn bộ cột
-              // Giả sử Header web của bạn cao khoảng 4rem (h-16), ta set top-20 (5rem) để cách 1 đoạn, và h-[calc(100vh-6rem)] để cách đáy 1 đoạn
-              <div className="order-first lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] flex flex-col z-10 transition-all">
-                {/* 2. Thêm h-full để Card chiếm trọn chiều cao cột, và flex-col để chia layout bên trong */}
-                <div className="rounded-2xl border border-border bg-card shadow-md flex flex-col h-full overflow-hidden">
-                  {/* Header của Map (Thêm shrink-0 để không bị bóp méo khi màn hình nhỏ) */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30 shrink-0">
-                    <div className="flex items-center gap-2">
-                      <Navigation className="size-4 text-theme-primary-start" />
-                      <p className="text-sm font-bold text-foreground">
-                        {mapConfig.title}
-                      </p>
-                    </div>
-                    {localLocAt && (
-                      <p className="text-[11px] text-muted-foreground hidden lg:block">
-                        GPS: {fmtDatetime(localLocAt)}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Body của Map: flex-1 min-h-0 giúp nó tự động chiếm toàn bộ không gian còn lại giữa Header và Footer của Card */}
-                  <div className="p-2.5 flex-1 min-h-0">
-                    <DeliveryMiniMap
-                      destLat={mapConfig.destLat}
-                      destLng={mapConfig.destLng}
-                      destAddress={mapConfig.destAddress}
-                      staffLat={localLat}
-                      staffLng={localLng}
-                      destPinColor={mapConfig.destPinColor}
-                      destLabel={mapConfig.destLabel}
-                      // Trên mobile: vẫn giữ chiều cao cố định (vh). Trên Desktop: chiếm 100% thẻ cha (h-full)
-                      mapHeightClass="h-48 sm:h-[55vh] lg:h-full lg:min-h-0"
-                    />
-                  </div>
-
-                  {/* GPS live status footer (Thêm shrink-0) */}
-                  <div className="px-4 py-3 border-t border-border flex items-center gap-3 bg-card shrink-0">
-                    <div
-                      className={cn(
-                        'size-2.5 rounded-full shrink-0 transition-colors',
-                        localLocAt
-                          ? 'bg-success animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]'
-                          : 'bg-muted-foreground/40',
-                      )}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-foreground">
-                        {localLocAt
-                          ? 'GPS đang theo dõi'
-                          : 'Đang lấy vị trí...'}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                        {localLocAt
-                          ? `Cập nhật: ${fmtDatetime(localLocAt)}`
-                          : 'Vui lòng cho phép truy cập vị trí'}
-                      </p>
-                    </div>
-                    {!localLocAt && (
-                      <Loader2 className="size-4 text-muted-foreground animate-spin shrink-0" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
+          <div className="mt-5 flex flex-col gap-5">
             {/* LEFT column: Workflow + full details */}
-            <div className="flex flex-col gap-4 lg:order-1">
+            <div className="flex flex-col gap-4">
               {actionError && (
                 <div className="rounded-xl border border-destructive/25 bg-destructive/8 px-4 py-3 text-sm text-destructive font-medium">
                   {actionError}
@@ -513,7 +407,7 @@ export default function OrderDetailPage({
                 )}
 
               {order.status === 'PREPARING' && (
-                <ConfirmedWorkflow
+                <RepairingWorkflow
                   order={order}
                   onStartDelivery={() => handleStatusChange('DELIVERING')}
                   loading={statusLoading}
@@ -529,6 +423,9 @@ export default function OrderDetailPage({
                   onConfirmDelivery={() => handleStatusChange('DELIVERED')}
                   onCancel={handleCancelOrder}
                   loading={statusLoading}
+                  staffLat={localLat}
+                  staffLng={localLng}
+                  staffLocAt={localLocAt}
                 />
               )}
 
@@ -558,6 +455,8 @@ export default function OrderDetailPage({
                   }}
                   loading={statusLoading}
                   staffLat={localLat}
+                  staffLng={localLng}
+                  staffLocAt={localLocAt}
                 />
               )}
 

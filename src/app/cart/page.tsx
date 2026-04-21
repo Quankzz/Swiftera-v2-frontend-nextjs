@@ -1096,6 +1096,7 @@ export default function CartPage() {
   /** Bước 1: Validate input rồi mở dialog điều khoản */
   async function handleProceedToRent() {
     const selectedLineIds = Array.from(selectedIds);
+    console.log('[DEBUG handleProceedToRent] selectedLineIds:', selectedLineIds);
     if (selectedLineIds.length === 0) {
       toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
       return;
@@ -1166,6 +1167,7 @@ export default function CartPage() {
     }
 
     const selectedLineIds = Array.from(selectedIds);
+    console.log('[DEBUG handleCreateOrder] selectedLineIds:', selectedLineIds);
     if (selectedLineIds.length === 0) {
       toast.error('Vui lòng chọn ít nhất một sản phẩm để thuê.');
       return;
@@ -1228,6 +1230,7 @@ export default function CartPage() {
       }
 
       const orderLines = latestSelectedLines.map(buildOrderLinePayload);
+      console.log('[DEBUG handleCreateOrder] orderLines payload:', JSON.stringify(orderLines));
       if (orderLines.length === 0) {
         toast.error('Không tạo được đơn thuê.');
         return;

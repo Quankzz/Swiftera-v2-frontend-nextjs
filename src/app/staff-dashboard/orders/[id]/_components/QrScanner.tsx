@@ -18,34 +18,21 @@ import {
   Banknote,
   Hash,
   CheckCircle2,
-  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import type { RentalOrderResponse } from '@/types/api.types';
 import { fmt, fmtDate, fmtPhone } from './utils';
-
-const CONDITION_COLOR: Record<string, string> = {
-  EXCELLENT:
-    'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-800',
-  GOOD: 'text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800',
-  FAIR: 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800',
-  POOR: 'text-red-600 bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800',
-};
 
 export function QrScanner({
   expectedCode,
   onSuccess,
   onCancel,
   order,
-  simulate,
 }: {
   expectedCode: string;
   onSuccess: () => void;
   onCancel: () => void;
   order?: RentalOrderResponse;
-  /** Pass 'confirmed' or 'failed' to bypass camera and jump to that state (dev/mock). */
-  simulate?: 'confirmed' | 'failed';
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -57,7 +44,6 @@ export function QrScanner({
   const [error, setError] = useState('');
   const [cameraFailed, setCameraFailed] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [lastDetected, setLastDetected] = useState('');
   const [scanConfirmed, setScanConfirmed] = useState(false);
 
   useEffect(() => {
@@ -80,6 +66,27 @@ export function QrScanner({
     }
   }, []);
 
+  /**
+   * Extract the Swiftera order ID from a QR code payload.
+   * Handles two formats:
+   *   - Swiftera URL: https://www.swiftera.io.vn/api/v1/rental-orders/{id}/qr-access?token=...
+   *   - Plain UUID:   5c2387b1-524f-412f-aae1-8a93d9c3a3d7
+   */
+  function extractSwifteraOrderId(raw: string): string | null {
+    const upper = raw.trim().toUpperCase();
+    // Pattern 1: Swiftera URL — capture UUID between /rental-orders/ and /qr-access
+    const urlMatch = upper.match(
+      /\/RENTAL-ORDERS\/([[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})\/QR-ACCESS/i,
+    );
+    if (urlMatch) return urlMatch[1].toUpperCase();
+    // Pattern 2: Plain UUID
+    const uuidMatch = upper.match(
+      /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/,
+    );
+    if (uuidMatch) return uuidMatch[0].toUpperCase();
+    return null;
+  }
+
   const scanFrame = useCallback(
     function tick() {
       const video = videoRef.current;
@@ -98,16 +105,26 @@ export function QrScanner({
         inversionAttempts: 'dontInvert',
       });
       if (code) {
-        const detected = code.data.trim().toUpperCase();
-        setLastDetected(detected);
-        if (detected === expectedCode.trim().toUpperCase()) {
+        const raw = code.data.trim();
+
+        // Normalize: try to extract order ID from Swiftera URL or plain UUID
+        const detectedId = extractSwifteraOrderId(raw);
+        const expectedId = extractSwifteraOrderId(expectedCode);
+
+        const matches =
+          detectedId !== null &&
+          expectedId !== null &&
+          detectedId === expectedId;
+
+        if (matches) {
           stopAll();
           setScanning(false);
           setScanConfirmed(true);
           return;
         } else {
+          const displayDetected = detectedId ?? raw;
           setError(
-            `QR không khớp (${code.data}) - yêu cầu khách mở đúng mã đơn.`,
+            `QR không khớp — Phát hiện: ${displayDetected} · Cần: ${expectedId ?? expectedCode.toUpperCase()}`,
           );
         }
       }
@@ -119,7 +136,6 @@ export function QrScanner({
   const startScanner = useCallback(async () => {
     intendedToBeOpenRef.current = true;
     setError('');
-    setLastDetected('');
     setCameraFailed(false);
     try {
       let stream: MediaStream;
@@ -158,20 +174,9 @@ export function QrScanner({
   }, [scanFrame]);
 
   useEffect(() => {
-    if (simulate === 'confirmed') {
-      setScanConfirmed(true);
-      return;
-    }
-    if (simulate === 'failed') {
-      setError(
-        'Giả lập thất bại: QR không khớp - mã QR không thuộc đơn hàng này.',
-      );
-      setLastDetected('WRONG-QR-MOCK');
-      return;
-    }
     startScanner();
     return () => stopAll();
-  }, [simulate, startScanner, stopAll]);
+  }, [startScanner, stopAll]);
 
   /* ── SUCCESS panel ──────────────────────────────────────────────────────── */
   if (scanConfirmed) {
@@ -183,9 +188,9 @@ export function QrScanner({
           order.userAddress.district,
           order.userAddress.city,
         ]
-            .filter(Boolean)
-            .join(', ')
-      : order?.hubAddressLine ?? '';
+          .filter(Boolean)
+          .join(', ')
+      : (order?.hubAddressLine ?? '');
 
     return (
       <div className="flex flex-col gap-4">
@@ -240,28 +245,7 @@ export function QrScanner({
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-2">
-                  <Mail className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground mb-0.5">
-                      Email
-                    </p>
-                    <p className="text-xs font-medium text-foreground break-all">
-                      {order.hubName ?? '—'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CreditCard className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground mb-0.5">
-                      CCCD
-                    </p>
-                    <p className="text-sm font-mono font-semibold text-foreground">
-                      —
-                    </p>
-                  </div>
-                </div>
+
                 <div className="sm:col-span-2 flex items-start gap-2">
                   <MapPin className="size-3.5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
@@ -475,16 +459,6 @@ export function QrScanner({
             <AlertCircle className="size-4 text-destructive shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-bold text-destructive">{error}</p>
-              {lastDetected && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Phát hiện:{' '}
-                  <span className="font-mono font-bold">{lastDetected}</span> ·
-                  Cần:{' '}
-                  <span className="font-mono font-bold">
-                    {expectedCode.toUpperCase()}
-                  </span>
-                </p>
-              )}
             </div>
           </div>
           <Button
@@ -493,7 +467,6 @@ export function QrScanner({
             onClick={() => {
               stopAll();
               setError('');
-              setLastDetected('');
               setScanning(false);
               startScanner();
             }}
@@ -503,38 +476,6 @@ export function QrScanner({
           </Button>
         </div>
       )}
-
-      {/* Mock / dev simulation buttons */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            stopAll();
-            setScanning(false);
-            setError('');
-            setScanConfirmed(true);
-          }}
-          className="flex-1 gap-1.5 text-xs h-9 border-success/50 text-success hover:bg-success/5"
-        >
-          <CheckCircle2 className="size-3.5" /> Giả lập thành công
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            stopAll();
-            setScanning(false);
-            setError(
-              'Giả lập thất bại: QR không khớp - mã không thuộc đơn hàng này.',
-            );
-            setLastDetected('WRONG-QR-MOCK');
-          }}
-          className="flex-1 gap-1.5 text-xs h-9 border-destructive/50 text-destructive hover:bg-destructive/5"
-        >
-          <XCircle className="size-3.5" /> Giả lập thất bại
-        </Button>
-      </div>
 
       <Button
         variant="outline"

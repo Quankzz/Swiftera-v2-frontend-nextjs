@@ -10,14 +10,17 @@ import {
   Circle,
   Info,
   XCircle,
+  Navigation2,
 } from 'lucide-react';
+import axios from 'axios';
+import '@goongmaps/goong-js/dist/goong-js.css';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type {
-  RentalOrderResponse,
-  RentalOrderLineResponse,
-} from '@/types/api.types';
+import type { RentalOrderResponse, RentalOrderLineResponse } from '@/types/api.types';
+import { apiKey } from '@/configs/goongmapKeys';
 import { WorkflowBanner } from '../WorkflowBanner';
+import { MiniMapPanel } from '../MiniMapPanel';
+import { DeliveryMiniMap } from '../DeliveryMiniMap';
 import {
   CustomerInfo,
   OrderMetaCard,
@@ -100,6 +103,9 @@ interface DeliveringWorkflowProps {
   onConfirmDelivery: () => void;
   onCancel: () => void;
   loading?: boolean;
+  staffLat?: number;
+  staffLng?: number;
+  staffLocAt?: string;
 }
 
 export function DeliveringWorkflow({
@@ -107,6 +113,9 @@ export function DeliveringWorkflow({
   onConfirmDelivery,
   onCancel,
   loading,
+  staffLat,
+  staffLng,
+  staffLocAt,
 }: DeliveringWorkflowProps) {
   const [qrVerified, setQrVerified] = useState(false);
   const [showQrScanner, setShowQrScanner] = useState(false);
@@ -123,6 +132,45 @@ export function DeliveringWorkflow({
   const total = order.rentalOrderLines.length;
   const allPhotographed = itemsDone === total;
   const allReady = qrVerified && allPhotographed;
+
+  // Build full customer address
+  const customerAddressFull = order.userAddress
+    ? [order.userAddress.addressLine, order.userAddress.district, order.userAddress.city]
+        .filter(Boolean)
+        .join(', ')
+    : null;
+
+  // Geocode customer address if coordinates not available
+  const [geocodedCustomerLat, setGeocodedCustomerLat] = useState<number | undefined>(
+    order.deliveredLatitude ?? undefined,
+  );
+  const [geocodedCustomerLng, setGeocodedCustomerLng] = useState<number | undefined>(
+    order.deliveredLongitude ?? undefined,
+  );
+
+  React.useEffect(() => {
+    if (order.deliveredLatitude != null || !customerAddressFull) return;
+    let cancelled = false;
+    axios
+      .get(
+        `https://rsapi.goong.io/geocode?address=${encodeURIComponent(customerAddressFull)}&api_key=${apiKey}`,
+      )
+      .then((res) => {
+        if (cancelled) return;
+        const loc = res.data?.results?.[0]?.geometry?.location;
+        if (loc) {
+          setGeocodedCustomerLat(loc.lat);
+          setGeocodedCustomerLng(loc.lng);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [customerAddressFull, order.deliveredLatitude]);
+
+  const effectiveCustomerLat = geocodedCustomerLat;
+  const effectiveCustomerLng = geocodedCustomerLng;
 
   const handleAdd = useCallback((lineId: string, url: string) => {
     setItemPhotos((prev) => ({
@@ -156,13 +204,39 @@ export function DeliveringWorkflow({
         />
       )}
 
-      {/* ── 2-column grid: left=info cards, right=items ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5">
-        {/* Left: Info cards */}
-        <div className="flex flex-col gap-4">
-          <OrderMetaCard order={order} />
+      {/* Mobile map - shown at top on mobile */}
+      {customerAddressFull && (
+        <div className="lg:hidden rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border bg-muted/30 flex items-center gap-2 shrink-0">
+            <Navigation2 className="size-4 text-red-500" />
+            <span className="text-[13px] font-bold text-foreground">
+              Bản đồ giao hàng
+            </span>
+          </div>
+          <div className="p-2">
+            <DeliveryMiniMap
+              destLat={effectiveCustomerLat}
+              destLng={effectiveCustomerLng}
+              destAddress={customerAddressFull}
+              destLabel="Điểm giao"
+              destPinColor="red"
+              staffLat={staffLat}
+              staffLng={staffLng}
+              mapHeightClass="h-48 sm:h-56 rounded-xl"
+            />
+          </div>
+        </div>
+      )}
 
-          <CustomerInfo order={order} mode="delivery" />
+      {/* ── 2-column grid: left=workflow content, right=minimap (desktop only) ── */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[1fr_420px] lg:gap-5">
+        {/* Left: Workflow content */}
+        <div className="flex flex-col gap-4 order-2 lg:order-1">
+          {/* Info cards - stacked vertically */}
+          <div className="flex flex-col gap-4">
+            <OrderMetaCard order={order} />
+            <CustomerInfo order={order} mode="delivery" />
+          </div>
 
           {/* QR verification */}
           <div
@@ -243,10 +317,7 @@ export function DeliveringWorkflow({
               )}
             </div>
           </div>
-        </div>
 
-        {/* Right: Photos + Items */}
-        <div className="flex flex-col gap-4">
           {/* Photo step */}
           <div
             className={cn(
@@ -337,60 +408,76 @@ export function DeliveringWorkflow({
 
           <OrderItemsList order={order} mode="confirm" />
         </div>
+
+        {/* Right: MiniMap Panel (desktop only) */}
+        <div className="order-1 lg:order-2 lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)] hidden lg:flex lg:flex-col">
+          <MiniMapPanel
+            title="Bản đồ giao hàng"
+            destLat={effectiveCustomerLat}
+            destLng={effectiveCustomerLng}
+            destAddress={customerAddressFull ?? undefined}
+            staffLat={staffLat}
+            staffLng={staffLng}
+            staffLocAt={staffLocAt}
+            destPinColor="red"
+            destLabel="Điểm giao"
+          />
+        </div>
       </div>
 
       {/* Sticky footer */}
       <div className="sticky bottom-0 left-0 right-0 z-10 bg-card/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-7xl mx-auto">
-          <p className="text-[12px] text-muted-foreground">
-            {allReady ? (
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
-                <CheckCircle2 className="size-3.5" />
-                Sẵn sàng xác nhận giao hàng thành công!
-              </span>
-            ) : !qrVerified ? (
-              <span className="flex items-center gap-1.5">
-                <QrCode className="size-3.5" />
-                Bước 1: Quét mã QR xác minh đơn hàng.
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5">
-                <Camera className="size-3.5" />
-                Bước 2: Còn {total - itemsDone} thiết bị chưa chụp ảnh.
-              </span>
-            )}
-          </p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
-            <Button
-              variant="outline"
-              onClick={() => setShowCancelDialog(true)}
-              disabled={loading}
-              className="h-10 rounded-lg px-4 text-[12px] font-medium border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 w-full sm:w-auto"
-            >
-              <XCircle className="size-4" />
-              <span className="hidden sm:inline">Hủy đơn</span>
-              <span className="sm:hidden">Hủy</span>
-            </Button>
-            <Button
-              onClick={onConfirmDelivery}
-              disabled={!allReady || loading}
-              className={cn(
-                'h-10 rounded-lg px-4 text-[13px] font-medium flex-1 sm:flex-none',
-                allReady
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed',
-              )}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" /> Đang xử lý…
-                </>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+            <p className="text-[12px] text-muted-foreground flex-1">
+              {allReady ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="size-3.5" />
+                  Sẵn sàng xác nhận giao hàng thành công!
+                </span>
+              ) : !qrVerified ? (
+                <span className="flex items-center gap-1.5">
+                  <QrCode className="size-3.5" />
+                  Bước 1: Quét mã QR xác minh đơn hàng.
+                </span>
               ) : (
-                <>
-                  <Truck className="size-4" /> Xác nhận giao
-                </>
+                <span className="flex items-center gap-1.5">
+                  <Camera className="size-3.5" />
+                  Còn {total - itemsDone} thiết bị chưa chụp ảnh.
+                </span>
               )}
-            </Button>
+            </p>
+            <div className="flex items-center gap-3 shrink-0">
+              <Button
+                variant="outline"
+                onClick={() => setShowCancelDialog(true)}
+                disabled={loading}
+                className="h-10 rounded-lg px-5 text-[13px] font-medium border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 min-w-[120px]"
+              >
+                <XCircle className="size-4" />
+                Hủy đơn
+              </Button>
+              <Button
+                onClick={onConfirmDelivery}
+                disabled={!allReady || loading}
+                className={cn(
+                  'h-10 rounded-lg px-5 text-[13px] font-medium min-w-[140px]',
+                  allReady
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed',
+                )}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> Đang xử lý…
+                  </>
+                ) : (
+                  <>
+                    <Truck className="size-4" /> Xác nhận giao
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -406,14 +493,18 @@ export function DeliveringWorkflow({
               Xác nhận hủy đơn hàng
             </DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập nhật trạng thái đơn hàng sang{' '}
+              Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập
+              nhật trạng thái đơn hàng sang{' '}
               <span className="font-medium text-foreground">Đã hủy</span>.
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-lg border border-border bg-muted/30 p-3">
             <p className="text-[13px] text-muted-foreground">
-              Mã đơn: <span className="font-mono font-medium text-foreground">{order.rentalOrderId}</span>
+              Mã đơn:{' '}
+              <span className="font-mono font-medium text-foreground">
+                {order.rentalOrderId}
+              </span>
             </p>
           </div>
 
@@ -434,7 +525,9 @@ export function DeliveringWorkflow({
               className="h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white"
             >
               {loading ? (
-                <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</>
+                <>
+                  <Loader2 className="size-4 animate-spin" /> Đang xử lý…
+                </>
               ) : (
                 <>Có, hủy đơn</>
               )}
