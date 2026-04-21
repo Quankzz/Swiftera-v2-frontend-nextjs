@@ -26,12 +26,16 @@ import {
   ChevronRight,
   BadgeCheck,
   Truck,
+  ArrowRightCircle,
+  XCircle,
+  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
   useRentalOrderQuery,
   useRentalOrderContractQuery,
+  useUpdateOrderStatusMutation,
 } from '../hooks/use-rental-order-management';
 import { useAssignStaffMutation } from '../hooks/use-rental-order-assignment';
 import { StaffPickerDialog } from './staff-picker-dialog';
@@ -431,15 +435,338 @@ function StaffAssignmentSection({ order }: { order: RentalOrderResponse }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Update Status Section (ADMIN action)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface StatusTransitionOption {
+  to: RentalOrderStatus;
+  label: string;
+  description?: string;
+  requiresIssueNote?: boolean;
+  isCancellation?: boolean;
+  apiNote?: string;
+}
+
+const ADMIN_TRANSITIONS: Partial<
+  Record<RentalOrderStatus, StatusTransitionOption[]>
+> = {
+  PENDING_PAYMENT: [
+    {
+      to: 'PAID',
+      label: 'Xác nhận đã thanh toán',
+      description: 'Hợp lệ khi tổng giao dịch SUCCESS đủ tổng thanh toán',
+    },
+    {
+      to: 'CANCELLED',
+      label: 'Hủy đơn',
+      isCancellation: true,
+      description: 'Hoàn kho hàng đã giữ (RESERVED → AVAILABLE)',
+    },
+  ],
+  PAID: [
+    {
+      to: 'PREPARING',
+      label: 'Bắt đầu chuẩn bị',
+      description: 'Yêu cầu đơn phải có hợp đồng thuê',
+    },
+  ],
+  PREPARING: [
+    {
+      to: 'DELIVERING',
+      label: 'Bắt đầu giao hàng',
+      description: 'Yêu cầu có hợp đồng và nhân viên giao hàng đã được gán',
+    },
+    {
+      to: 'CANCELLED',
+      label: 'Hủy đơn',
+      isCancellation: true,
+      description: 'Hoàn kho hàng đã giữ',
+    },
+  ],
+  DELIVERING: [
+    {
+      to: 'DELIVERED',
+      label: 'Xác nhận đã giao hàng',
+      apiNote: 'Nên dùng API record-delivery để ghi nhận thời gian & tọa độ',
+    },
+  ],
+  DELIVERED: [
+    {
+      to: 'IN_USE',
+      label: 'Xác nhận đang sử dụng',
+      description: 'Đơn phải có dữ liệu giao hàng thực tế',
+    },
+    {
+      to: 'PENDING_PICKUP',
+      label: 'Thu hồi sớm do sự cố',
+      requiresIssueNote: true,
+      description:
+        'Chỉ ADMIN — bắt buộc nhập ghi chú sự cố. Backend tự lưu issueReportedAt + issueReportNote.',
+    },
+  ],
+  IN_USE: [
+    {
+      to: 'PENDING_PICKUP',
+      label: 'Yêu cầu thu hồi',
+      description:
+        'Phải gán nhân viên thu hồi trước khi chuyển sang PICKING_UP',
+    },
+  ],
+  PENDING_PICKUP: [
+    {
+      to: 'PICKING_UP',
+      label: 'Bắt đầu thu hồi',
+      description: 'Phải có nhân viên thu hồi được gán',
+    },
+  ],
+  PICKING_UP: [
+    {
+      to: 'PICKED_UP',
+      label: 'Xác nhận đã thu hồi',
+      apiNote: 'Nên dùng API record-pickup để ghi nhận thời gian & tọa độ',
+    },
+  ],
+  PICKED_UP: [
+    {
+      to: 'COMPLETED',
+      label: 'Hoàn tất đơn thuê',
+      description:
+        'Nếu depositRefundAmount > 0, bắt buộc phải có giao dịch DEPOSIT_REFUND SUCCESS qua ngân hàng trước',
+    },
+  ],
+};
+
+function UpdateStatusSection({ order }: { order: RentalOrderResponse }) {
+  const transitions = ADMIN_TRANSITIONS[order.status] ?? [];
+  const updateMutation = useUpdateOrderStatusMutation();
+
+  const [selected, setSelected] = useState<StatusTransitionOption | null>(null);
+  const [issueNote, setIssueNote] = useState('');
+  const [confirming, setConfirming] = useState(false);
+
+  const handleSelect = (opt: StatusTransitionOption) => {
+    setSelected(opt);
+    setIssueNote('');
+    setConfirming(true);
+  };
+
+  const handleConfirm = async () => {
+    if (!selected) return;
+    if (selected.requiresIssueNote && !issueNote.trim()) {
+      toast.warning('Vui lòng nhập ghi chú sự cố.');
+      return;
+    }
+    try {
+      await updateMutation.mutateAsync({
+        rentalOrderId: order.rentalOrderId,
+        payload: {
+          status: selected.to,
+          ...(selected.requiresIssueNote && issueNote.trim()
+            ? { issueNote: issueNote.trim() }
+            : {}),
+        },
+      });
+      setConfirming(false);
+      setSelected(null);
+      setIssueNote('');
+    } catch {
+      // error handled in mutation onError
+    }
+  };
+
+  const handleCancel = () => {
+    setConfirming(false);
+    setSelected(null);
+    setIssueNote('');
+  };
+
+  if (
+    order.status === 'COMPLETED' ||
+    order.status === 'CANCELLED' ||
+    transitions.length === 0
+  ) {
+    return (
+      <SectionCard title='Cập nhật trạng thái' icon={ArrowRightCircle}>
+        <div className='flex items-center gap-2.5 rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/4 px-4 py-3'>
+          <Info className='w-4 h-4 text-text-sub shrink-0' />
+          <p className='text-sm text-text-sub'>
+            {order.status === 'COMPLETED' || order.status === 'CANCELLED'
+              ? 'Đơn hàng đã kết thúc, không thể cập nhật trạng thái.'
+              : 'Không có bước chuyển trạng thái khả dụng.'}
+          </p>
+        </div>
+      </SectionCard>
+    );
+  }
+
+  return (
+    <SectionCard title='Cập nhật trạng thái' icon={ArrowRightCircle}>
+      {!confirming ? (
+        <div className='space-y-2'>
+          <p className='text-xs text-text-sub mb-3'>
+            Trạng thái hiện tại:{' '}
+            <span className='font-semibold text-text-main'>
+              {STATUS_LABELS[order.status]}
+            </span>
+          </p>
+          {transitions.map((opt) => (
+            <button
+              key={opt.to}
+              type='button'
+              onClick={() => handleSelect(opt)}
+              className={cn(
+                'w-full flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all hover:shadow-sm',
+                opt.isCancellation
+                  ? 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20'
+                  : opt.requiresIssueNote
+                    ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20'
+                    : 'border-gray-100 dark:border-white/8 bg-gray-50 dark:bg-white/3 hover:bg-gray-100 dark:hover:bg-white/5',
+              )}
+            >
+              <div className='mt-0.5 shrink-0'>
+                {opt.isCancellation ? (
+                  <XCircle className='w-4 h-4 text-red-500' />
+                ) : (
+                  <ArrowRightCircle
+                    className={cn(
+                      'w-4 h-4',
+                      opt.requiresIssueNote
+                        ? 'text-amber-500'
+                        : 'text-theme-primary-start',
+                    )}
+                  />
+                )}
+              </div>
+              <div className='flex-1 min-w-0'>
+                <div className='flex items-center gap-2 flex-wrap'>
+                  <span
+                    className={cn(
+                      'text-sm font-semibold',
+                      opt.isCancellation
+                        ? 'text-red-700 dark:text-red-400'
+                        : opt.requiresIssueNote
+                          ? 'text-amber-700 dark:text-amber-400'
+                          : 'text-text-main',
+                    )}
+                  >
+                    {opt.label}
+                  </span>
+                  <span className='text-[11px] font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-text-sub'>
+                    → {opt.to}
+                  </span>
+                </div>
+                {opt.description && (
+                  <p className='text-xs text-text-sub mt-0.5'>
+                    {opt.description}
+                  </p>
+                )}
+                {opt.apiNote && (
+                  <p className='text-xs text-blue-500 dark:text-blue-400 mt-0.5 flex items-center gap-1'>
+                    <Info className='w-3 h-3 shrink-0' />
+                    {opt.apiNote}
+                  </p>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className='space-y-3'>
+          {/* Confirm header */}
+          <div
+            className={cn(
+              'rounded-xl border px-4 py-3',
+              selected?.isCancellation
+                ? 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/10'
+                : selected?.requiresIssueNote
+                  ? 'border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/10'
+                  : 'border-blue-100 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-900/10',
+            )}
+          >
+            <p className='text-sm font-semibold text-text-main'>
+              Xác nhận:{' '}
+              <span className='font-mono text-xs'>
+                {order.status} → {selected?.to}
+              </span>
+            </p>
+            {selected?.description && (
+              <p className='text-xs text-text-sub mt-1'>
+                {selected.description}
+              </p>
+            )}
+          </div>
+
+          {/* issueNote input (DELIVERED → PENDING_PICKUP) */}
+          {selected?.requiresIssueNote && (
+            <div className='space-y-1.5'>
+              <label className='text-xs font-semibold text-text-main'>
+                Ghi chú sự cố <span className='text-red-500'>*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={issueNote}
+                onChange={(e) => setIssueNote(e.target.value)}
+                placeholder='Mô tả sự cố xảy ra sau khi giao hàng...'
+                className='w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main placeholder:text-text-sub resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400'
+              />
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className='flex items-center gap-2 pt-1'>
+            <button
+              type='button'
+              onClick={handleConfirm}
+              disabled={
+                updateMutation.isPending ||
+                (selected?.requiresIssueNote ? !issueNote.trim() : false)
+              }
+              className={cn(
+                'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed',
+                selected?.isCancellation
+                  ? 'bg-red-500 hover:bg-red-600'
+                  : selected?.requiresIssueNote
+                    ? 'bg-amber-500 hover:bg-amber-600'
+                    : 'bg-theme-primary-start hover:brightness-110',
+              )}
+            >
+              {updateMutation.isPending ? (
+                <Loader2 className='w-3.5 h-3.5 animate-spin' />
+              ) : selected?.isCancellation ? (
+                <XCircle className='w-3.5 h-3.5' />
+              ) : (
+                <ArrowRightCircle className='w-3.5 h-3.5' />
+              )}
+              Xác nhận
+            </button>
+            <button
+              type='button'
+              onClick={handleCancel}
+              disabled={updateMutation.isPending}
+              className='px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 text-text-sub hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-40'
+            >
+              Huỷ
+            </button>
+          </div>
+        </div>
+      )}
+    </SectionCard>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface RentalOrderDetailViewProps {
   rentalOrderId: string;
+  /** Khi render trong dialog: ẩn back-button header, bỏ padding ngoài */
+  isDialog?: boolean;
 }
 
 export function RentalOrderDetailView({
   rentalOrderId,
+  isDialog = false,
 }: RentalOrderDetailViewProps) {
   const {
     data: order,
@@ -482,35 +809,42 @@ export function RentalOrderDetailView({
   const addr = order.userAddress;
 
   return (
-    <div className='flex flex-col gap-6 w-full max-w-6xl mx-auto p-6'>
+    <div
+      className={cn(
+        'flex flex-col gap-6 w-full lg:max-w-6xl mx-auto',
+        isDialog ? 'p-1' : 'p-6',
+      )}
+    >
       {/* ── Header ── */}
-      <div className='flex items-start justify-between gap-4'>
-        <div className='flex items-start gap-4'>
-          <Link
-            href='/dashboard/rental-orders'
-            className='mt-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'
-            title='Quay lại'
-          >
-            <ArrowLeft className='w-5 h-5 text-text-sub' />
-          </Link>
-          <div>
-            <div className='flex items-center gap-3 mb-1'>
-              <h1 className='text-2xl font-bold tracking-tight text-text-main'>
-                Chi tiết đơn thuê
-              </h1>
-              <StatusBadge status={order.status} />
+      {!isDialog && (
+        <div className='flex items-start justify-between gap-4'>
+          <div className='flex items-start gap-4'>
+            <Link
+              href='/dashboard/rental-orders'
+              className='mt-1 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'
+              title='Quay lại'
+            >
+              <ArrowLeft className='w-5 h-5 text-text-sub' />
+            </Link>
+            <div>
+              <div className='flex items-center gap-3 mb-1'>
+                <h1 className='text-2xl font-bold tracking-tight text-text-main'>
+                  Chi tiết đơn thuê
+                </h1>
+                <StatusBadge status={order.status} />
+              </div>
+              <p className='text-sm text-text-sub'>
+                <span className='font-mono font-semibold text-theme-primary-start'>
+                  #{order.rentalOrderId.slice(0, 8).toUpperCase()}
+                </span>
+                {' - '}
+                {addr?.recipientName ?? 'N/A'} · Đặt ngày{' '}
+                {formatDate(order.placedAt)}
+              </p>
             </div>
-            <p className='text-sm text-text-sub'>
-              <span className='font-mono font-semibold text-theme-primary-start'>
-                #{order.rentalOrderId.slice(0, 8).toUpperCase()}
-              </span>
-              {' - '}
-              {addr?.recipientName ?? 'N/A'} · Đặt ngày{' '}
-              {formatDate(order.placedAt)}
-            </p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── Body grid ── */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-5'>
@@ -748,6 +1082,9 @@ export function RentalOrderDetailView({
 
           {/* Staff assignment (interactive) */}
           <StaffAssignmentSection order={order} />
+
+          {/* Status update actions (ADMIN) */}
+          <UpdateStatusSection order={order} />
 
           {/* Issue tracking */}
           {order.issueReportNote && (

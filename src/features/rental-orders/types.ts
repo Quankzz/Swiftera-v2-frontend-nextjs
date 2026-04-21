@@ -289,9 +289,11 @@ export interface RentalOrderListParams {
 // Mutation Inputs
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** API-077: Cập nhật trạng thái đơn thuê */
+/** API-079: Cập nhật trạng thái đơn thuê */
 export interface UpdateOrderStatusInput {
   status: RentalOrderStatus;
+  /** Bắt buộc khi DELIVERED → PENDING_PICKUP do sự cố (ADMIN only) */
+  issueNote?: string;
 }
 
 /** API-078: Hủy đơn thuê - POST /rental-orders/{id}/cancel (no body) */
