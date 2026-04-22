@@ -275,9 +275,9 @@ export default function OrderDetailPage({
   const now = new Date().getTime();
   const today = new Date(now).setHours(0, 0, 0, 0);
 
-  // ── Delivery overdue: PAID only — expectedDeliveryDate passed today ─────────
+  // ── Delivery overdue: only when API says overdue AND status is PAID ──────────
   const deliveryOverdueDays =
-    !order.overdue &&
+    order.overdue &&
     order.status === 'PAID' &&
     order.expectedDeliveryDate &&
     new Date(order.expectedDeliveryDate).setHours(0, 0, 0, 0) < today
@@ -287,9 +287,9 @@ export default function OrderDetailPage({
         )
       : 0;
 
-  // ── Pickup overdue: PENDING_PICKUP only — expectedRentalEndDate passed today ──
+  // ── Pickup overdue: only when API says overdue AND status is PENDING_PICKUP ───
   const pickupOverdueDays =
-    !order.overdue &&
+    order.overdue &&
     order.status === 'PENDING_PICKUP' &&
     order.expectedRentalEndDate &&
     new Date(order.expectedRentalEndDate).setHours(0, 0, 0, 0) < today
@@ -320,7 +320,7 @@ export default function OrderDetailPage({
 
   return (
     <>
-      <div className="px-3 sm:px-5 lg:px-6 min-h-screen">
+      <div className="px-3 sm:px-5 lg:px-6 min-h-screen pb-3">
         <div className="mx-auto max-w-7xl">
           {/* ── Slim header ── */}
           <div className="flex items-center gap-3 mb-5">

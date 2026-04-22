@@ -1,17 +1,18 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { CheckCircle2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { RentalOrderResponse } from "@/types/api.types";
-import { WorkflowBanner } from "../WorkflowBanner";
+import React from 'react';
+import Link from 'next/link';
+import { CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { RentalOrderResponse } from '@/types/api.types';
+import { WorkflowBanner } from '../WorkflowBanner';
 import {
   CustomerInfo,
+  RentalDateTimeline,
   RentalSummary,
   OrderItemsList,
   OrderMetaCard,
-} from "../OrderInfo";
+} from '../OrderInfo';
 
 interface DeliveredWorkflowProps {
   order: RentalOrderResponse;
@@ -34,8 +35,8 @@ export function DeliveredWorkflow({ order }: DeliveredWorkflowProps) {
         {/* Left: Info cards */}
         <div className="flex flex-col gap-4">
           <OrderMetaCard order={order} />
-
           <CustomerInfo order={order} mode="delivery" />
+          <RentalDateTimeline order={order} mode="delivery" />
         </div>
 
         {/* Right: Items */}

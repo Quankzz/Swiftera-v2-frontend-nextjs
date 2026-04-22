@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { XCircle, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { RentalOrderResponse } from "@/types/api.types";
-import { fmt } from "../utils";
-import { WorkflowBanner } from "../WorkflowBanner";
-import { OrderItemsList, CustomerInfo, OrderMetaCard } from "../OrderInfo";
+import React from 'react';
+import Link from 'next/link';
+import { XCircle, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { RentalOrderResponse } from '@/types/api.types';
+import { fmt } from '../utils';
+import { WorkflowBanner } from '../WorkflowBanner';
+import { OrderItemsList, CustomerInfo, OrderMetaCard } from '../OrderInfo';
 
 interface CancelledWorkflowProps {
   order: RentalOrderResponse;

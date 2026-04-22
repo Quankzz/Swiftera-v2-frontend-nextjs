@@ -28,6 +28,7 @@ import {
   CustomerInfo,
   OrderMetaCard,
   OrderItemsList,
+  RentalDateTimeline,
   OverdueAlert,
 } from '../OrderInfo';
 import { CameraCapture } from '../CameraCapture';
@@ -252,6 +253,7 @@ export function DeliveringWorkflow({
           <div className="flex flex-col gap-4">
             <OrderMetaCard order={order} />
             <CustomerInfo order={order} mode="delivery" />
+            <RentalDateTimeline order={order} mode="delivery" />
           </div>
 
           {/* QR verification */}
