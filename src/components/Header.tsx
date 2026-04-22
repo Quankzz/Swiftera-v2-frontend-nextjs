@@ -194,7 +194,8 @@ export function Header({
 
   const avatarUrl = useMemo(() => {
     if (!user) return '';
-    return user.avatar ?? '';
+    if (user.avatar) return user.avatar;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName + user.lastName)}&background=random`;
   }, [user]);
 
   const userDisplayName = useMemo(() => {
