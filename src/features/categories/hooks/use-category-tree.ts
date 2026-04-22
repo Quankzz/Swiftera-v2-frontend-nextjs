@@ -10,10 +10,10 @@
  *   API-048: GET /api/v1/categories/tree
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { categoryKeys } from '../api/category.keys';
-import { getCategoriesTree } from '../api/category.service';
-import type { CategoryTreeNode } from '../types';
+import { useQuery } from "@tanstack/react-query";
+import { categoryKeys } from "../api/category.keys";
+import { getCategoriesTree } from "../api/category.service";
+import type { CategoryTreeNode } from "../types";
 
 /** Flat traversal helper: collect all nodes from a tree into a flat array. */
 export function flattenTree(nodes: CategoryTreeNode[]): CategoryTreeNode[] {

@@ -7,8 +7,8 @@
  * NOTE: Tất cả endpoints đều yêu cầu xác thực [AUTH]
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
@@ -18,10 +18,10 @@ const authOpts = { requireToken: true as const };
 export interface CartLineVoucherItem {
   voucherId: string;
   code: string;
-  type: 'ITEM_VOUCHER' | 'PRODUCT_DISCOUNT';
+  type: "ITEM_VOUCHER" | "PRODUCT_DISCOUNT";
   productId: string | null;
   productName: string | null;
-  discountType: 'PERCENTAGE' | 'FIXED';
+  discountType: "PERCENTAGE" | "FIXED";
   discountValue: number;
   maxDiscountAmount: number | null;
   minRentalDays: number | null;
@@ -106,7 +106,7 @@ export const cartApi = {
    * cartLines[].availableVouchers = danh sách voucher áp dụng được cho line đó
    */
   get(): Promise<AxiosResponse<CartSingleResponse>> {
-    return httpService.get<CartSingleResponse>('/cart', authOpts);
+    return httpService.get<CartSingleResponse>("/cart", authOpts);
   },
 
   /**
@@ -119,7 +119,7 @@ export const cartApi = {
    *       CART_RENTAL_MIN_DAYS, CART_QUANTITY_MIN_1
    */
   addLine(data: AddCartLineInput): Promise<AxiosResponse<CartSingleResponse>> {
-    return httpService.post<CartSingleResponse>('/cart/lines', data, authOpts);
+    return httpService.post<CartSingleResponse>("/cart/lines", data, authOpts);
   },
 
   /**
@@ -155,6 +155,6 @@ export const cartApi = {
    * API-066: Xóa toàn bộ giỏ [AUTH]
    */
   clear(): Promise<AxiosResponse<CartVoidResponse>> {
-    return httpService.delete<CartVoidResponse>('/cart', authOpts);
+    return httpService.delete<CartVoidResponse>("/cart", authOpts);
   },
 };

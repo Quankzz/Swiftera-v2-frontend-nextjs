@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Moon,
   Sun,
@@ -12,10 +12,10 @@ import {
   User,
   Settings,
   X,
-} from 'lucide-react';
-import { useTheme } from '@/context/theme-context';
-import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/stores/auth-store';
+} from "lucide-react";
+import { useTheme } from "@/context/theme-context";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/auth-store";
 
 function ThemeToggle() {
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -29,28 +29,28 @@ function ThemeToggle() {
 
   return (
     <Button
-      variant='ghost'
-      size='icon'
+      variant="ghost"
+      size="icon"
       onClick={toggleTheme}
-      className='h-8 w-8 text-text-sub hover:text-text-main'
+      className="h-8 w-8 text-text-sub hover:text-text-main"
       title={
         mounted
-          ? resolvedTheme === 'dark'
-            ? 'Chuyển sang sáng'
-            : 'Chuyển sang tối'
-          : ''
+          ? resolvedTheme === "dark"
+            ? "Chuyển sang sáng"
+            : "Chuyển sang tối"
+          : ""
       }
     >
       {mounted &&
-        (resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />)}
+        (resolvedTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />)}
     </Button>
   );
 }
 
 const NOTIFICATIONS = [
-  { text: 'Người dùng mới đăng ký', time: '2 phút trước' },
-  { text: 'Yêu cầu phê duyệt vai trò', time: '15 phút trước' },
-  { text: 'Hệ thống cập nhật thành công', time: '1 giờ trước' },
+  { text: "Người dùng mới đăng ký", time: "2 phút trước" },
+  { text: "Yêu cầu phê duyệt vai trò", time: "15 phút trước" },
+  { text: "Hệ thống cập nhật thành công", time: "1 giờ trước" },
 ];
 
 function useOutsideClick(
@@ -62,8 +62,8 @@ function useOutsideClick(
       if (!ref.current || ref.current.contains(e.target as Node)) return;
       handler();
     };
-    document.addEventListener('mousedown', listener);
-    return () => document.removeEventListener('mousedown', listener);
+    document.addEventListener("mousedown", listener);
+    return () => document.removeEventListener("mousedown", listener);
   }, [ref, handler]);
 }
 
@@ -79,20 +79,20 @@ export function DashboardHeader() {
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   const displayName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
-    : 'Admin';
-  const displayEmail = user?.email ?? '';
+    ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+    : "Admin";
+  const displayEmail = user?.email ?? "";
   const initials = displayName.slice(0, 2).toUpperCase();
 
   const handleLogout = useCallback(async () => {
     try {
-      const { logout } = await import('@/api/auth/index');
+      const { logout } = await import("@/api/auth/index");
       await logout();
     } catch {
       // clear local session even if server logout fails
     } finally {
       clearAuth();
-      router.push('/auth/login');
+      router.push("/auth/login");
     }
   }, [clearAuth, router]);
 
@@ -106,7 +106,7 @@ export function DashboardHeader() {
   );
 
   return (
-    <header className='sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 dark:border-white/8 bg-white/90 dark:bg-surface-base/95 px-4 backdrop-blur shrink-0'>
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 dark:border-white/8 bg-white/90 dark:bg-surface-base/95 px-4 backdrop-blur shrink-0">
       {/* Left - page title */}
       {/* <div className='hidden sm:flex flex-col min-w-0'>
         <h1 className='text-sm font-semibold text-text-main leading-none truncate'>
@@ -120,7 +120,7 @@ export function DashboardHeader() {
       </div> */}
 
       {/* Right - actions */}
-      <div className='flex items-center gap-1 ml-auto'>
+      <div className="flex items-center gap-1 ml-auto">
         {/* Theme toggle */}
         <ThemeToggle />
 
@@ -170,60 +170,60 @@ export function DashboardHeader() {
         </div> */}
 
         {/* Profile dropdown */}
-        <div ref={profileRef} className='relative'>
+        <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen((v) => !v)}
-            className='flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors'
+            className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
           >
-            <div className='h-7 w-7 rounded-full bg-theme-primary-start/15 flex items-center justify-center overflow-hidden shrink-0'>
+            <div className="h-7 w-7 rounded-full bg-theme-primary-start/15 flex items-center justify-center overflow-hidden shrink-0">
               {user?.avatarUrl ? (
                 <Image
                   src={user.avatarUrl}
                   alt={displayName}
                   width={28}
                   height={28}
-                  className='object-cover w-full h-full'
+                  className="object-cover w-full h-full"
                   unoptimized
                 />
               ) : (
-                <span className='text-xs font-bold text-theme-primary-start'>
+                <span className="text-xs font-bold text-theme-primary-start">
                   {initials}
                 </span>
               )}
             </div>
-            <div className='hidden sm:flex flex-col items-start'>
-              <span className='text-xs font-semibold text-text-main leading-none'>
+            <div className="hidden sm:flex flex-col items-start">
+              <span className="text-xs font-semibold text-text-main leading-none">
                 {displayName}
               </span>
-              <span className='text-[10px] text-text-sub leading-none mt-0.5'>
+              <span className="text-[10px] text-text-sub leading-none mt-0.5">
                 {displayEmail}
               </span>
             </div>
-            <ChevronDown size={14} className='text-text-sub' />
+            <ChevronDown size={14} className="text-text-sub" />
           </button>
 
           {profileOpen && (
-            <div className='absolute right-0 top-10 w-52 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-lg dark:shadow-black/30 overflow-hidden z-50'>
-              <div className='px-4 py-3 border-b border-gray-100 dark:border-white/8'>
-                <p className='text-sm font-semibold text-text-main'>
+            <div className="absolute right-0 top-10 w-52 rounded-xl border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-lg dark:shadow-black/30 overflow-hidden z-50">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-white/8">
+                <p className="text-sm font-semibold text-text-main">
                   {displayName}
                 </p>
-                <p className='text-xs text-text-sub'>{displayEmail}</p>
+                <p className="text-xs text-text-sub">{displayEmail}</p>
               </div>
-              <div className='p-1'>
+              <div className="p-1">
                 <button
                   onClick={() => {
                     setProfileOpen(false);
-                    router.push('/profile');
+                    router.push("/profile");
                   }}
-                  className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors"
                 >
-                  <User size={14} className='text-text-sub' /> Hồ sơ cá nhân
+                  <User size={14} className="text-text-sub" /> Hồ sơ cá nhân
                 </button>
-                <div className='my-1 h-px bg-gray-100 dark:bg-white/8' />
+                <div className="my-1 h-px bg-gray-100 dark:bg-white/8" />
                 <button
                   onClick={handleLogout}
-                  className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-theme-primary-start hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 >
                   <LogOut size={14} /> Đăng xuất
                 </button>

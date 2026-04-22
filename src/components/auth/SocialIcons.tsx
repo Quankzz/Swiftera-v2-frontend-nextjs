@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
 function GoogleIcon() {
   return (
@@ -56,7 +56,12 @@ function LinkedInIcon() {
   );
 }
 
-const socialIconComponents = [GoogleIcon, FacebookIcon, GithubIcon, LinkedInIcon];
+const socialIconComponents = [
+  GoogleIcon,
+  FacebookIcon,
+  GithubIcon,
+  LinkedInIcon,
+];
 
 export function SocialIcons() {
   return (

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * TicketListTable - Admin table for contact tickets
@@ -7,7 +7,7 @@
  *   onView(ticket) - open detail modal
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Eye,
   ChevronLeft,
@@ -15,12 +15,12 @@ import {
   Loader2,
   AlertCircle,
   Search,
-} from 'lucide-react';
-import { useTickets } from '../hooks/useTickets';
-import { TICKET_STATUS_LABELS, TICKET_STATUS_STYLES } from '../types';
-import type { ContactTicketResponse, ContactTicketStatus } from '../types';
-import { cn } from '@/lib/utils';
-import { fmtBackendDate } from '@/lib/formatters';
+} from "lucide-react";
+import { useTickets } from "../hooks/useTickets";
+import { TICKET_STATUS_LABELS, TICKET_STATUS_STYLES } from "../types";
+import type { ContactTicketResponse, ContactTicketStatus } from "../types";
+import { cn } from "@/lib/utils";
+import { fmtBackendDate } from "@/lib/formatters";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status badge
@@ -31,11 +31,11 @@ function StatusBadge({ status }: { status: ContactTicketStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium',
+        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium",
         s.badge,
       )}
     >
-      <span className={cn('w-1.5 h-1.5 rounded-full', s.dot)} />
+      <span className={cn("w-1.5 h-1.5 rounded-full", s.dot)} />
       {TICKET_STATUS_LABELS[status]}
     </span>
   );
@@ -45,11 +45,11 @@ function StatusBadge({ status }: { status: ContactTicketStatus }) {
 // Filter tabs
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FILTER_TABS: { label: string; value: ContactTicketStatus | 'ALL' }[] = [
-  { label: 'Tất cả', value: 'ALL' },
-  { label: 'Đang xử lý', value: 'IN_PROGRESS' },
-  { label: 'Đã giải quyết', value: 'RESOLVED' },
-  { label: 'Đã đóng', value: 'CLOSED' },
+const FILTER_TABS: { label: string; value: ContactTicketStatus | "ALL" }[] = [
+  { label: "Tất cả", value: "ALL" },
+  { label: "Đang xử lý", value: "IN_PROGRESS" },
+  { label: "Đã giải quyết", value: "RESOLVED" },
+  { label: "Đã đóng", value: "CLOSED" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,12 +63,12 @@ interface TicketListTableProps {
 const PAGE_SIZE = 15;
 
 export function TicketListTable({ onView }: TicketListTableProps) {
-  const [activeStatus, setActiveStatus] = useState<ContactTicketStatus | 'ALL'>(
-    'ALL',
+  const [activeStatus, setActiveStatus] = useState<ContactTicketStatus | "ALL">(
+    "ALL",
   );
   const [page, setPage] = useState(1); // backend one-indexed
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Debounce 400ms
   useEffect(() => {
@@ -82,18 +82,18 @@ export function TicketListTable({ onView }: TicketListTableProps) {
   // Build filter - combine status + search
   const filter = (() => {
     const parts: string[] = [];
-    if (activeStatus !== 'ALL') parts.push(`status:'${activeStatus}'`);
+    if (activeStatus !== "ALL") parts.push(`status:'${activeStatus}'`);
     if (debouncedSearch.trim()) {
       const term = debouncedSearch.trim();
       parts.push(`(subject~~'*${term}*' or fullName~~'*${term}*')`);
     }
-    return parts.length ? parts.join(' and ') : undefined;
+    return parts.length ? parts.join(" and ") : undefined;
   })();
 
   const { data, isLoading, isError } = useTickets({
     page,
     size: PAGE_SIZE,
-    sort: 'createdAt,desc',
+    sort: "createdAt,desc",
     ...(filter ? { filter } : {}),
   });
 
@@ -102,7 +102,7 @@ export function TicketListTable({ onView }: TicketListTableProps) {
   const totalPages = meta?.totalPages ?? 0;
 
   // Reset về trang 1 khi đổi filter
-  const handleStatusChange = (s: ContactTicketStatus | 'ALL') => {
+  const handleStatusChange = (s: ContactTicketStatus | "ALL") => {
     setActiveStatus(s);
     setPage(1);
   };
@@ -110,34 +110,34 @@ export function TicketListTable({ onView }: TicketListTableProps) {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className='flex flex-col gap-0 rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-black/20 overflow-hidden'>
+    <div className="flex flex-col gap-0 rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-black/20 overflow-hidden">
       {/* Search + Filter tabs */}
-      <div className='flex flex-col gap-2 px-4 pt-4 pb-2 border-b border-gray-100 dark:border-white/8'>
+      <div className="flex flex-col gap-2 px-4 pt-4 pb-2 border-b border-gray-100 dark:border-white/8">
         {/* Search input */}
-        <div className='relative max-w-xs'>
+        <div className="relative max-w-xs">
           <Search
             size={14}
-            className='absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none'
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none"
           />
           <input
-            type='text'
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder='Tìm tiêu đề, khách hàng...'
-            className='h-9 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+            placeholder="Tìm tiêu đề, khách hàng..."
+            className="h-9 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition"
           />
         </div>
         {/* Status filter tabs */}
-        <div className='flex items-center gap-1 overflow-x-auto'>
+        <div className="flex items-center gap-1 overflow-x-auto">
           {FILTER_TABS.map((tab) => (
             <button
               key={tab.value}
               onClick={() => handleStatusChange(tab.value)}
               className={cn(
-                'shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                "shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors",
                 activeStatus === tab.value
-                  ? 'bg-theme-primary-start text-white'
-                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8',
+                  ? "bg-theme-primary-start text-white"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/8",
               )}
             >
               {tab.label}
@@ -147,44 +147,44 @@ export function TicketListTable({ onView }: TicketListTableProps) {
       </div>
 
       {/* Table wrapper */}
-      <div className='overflow-x-auto'>
-        <table className='w-full text-sm text-left'>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
           <thead>
-            <tr className='border-b border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3'>
-              <th className='px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap'>
+            <tr className="border-b border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3">
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
                 Mã ticket
               </th>
-              <th className='px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide'>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Tiêu đề
               </th>
-              <th className='px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap'>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
                 Khách hàng
               </th>
-              <th className='px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap'>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
                 Trạng thái
               </th>
-              <th className='px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap'>
+              <th className="px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
                 Ngày tạo
               </th>
-              <th className='px-4 py-3' />
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className='px-4 py-12 text-center'>
+                <td colSpan={6} className="px-4 py-12 text-center">
                   <Loader2
                     size={20}
-                    className='animate-spin text-gray-400 mx-auto'
+                    className="animate-spin text-gray-400 mx-auto"
                   />
                 </td>
               </tr>
             ) : isError ? (
               <tr>
-                <td colSpan={6} className='px-4 py-12 text-center'>
-                  <div className='flex flex-col items-center gap-2 text-gray-400'>
+                <td colSpan={6} className="px-4 py-12 text-center">
+                  <div className="flex flex-col items-center gap-2 text-gray-400">
                     <AlertCircle size={20} />
-                    <p className='text-sm'>Không thể tải dữ liệu</p>
+                    <p className="text-sm">Không thể tải dữ liệu</p>
                   </div>
                 </td>
               </tr>
@@ -192,7 +192,7 @@ export function TicketListTable({ onView }: TicketListTableProps) {
               <tr>
                 <td
                   colSpan={6}
-                  className='px-4 py-12 text-center text-sm text-gray-400'
+                  className="px-4 py-12 text-center text-sm text-gray-400"
                 >
                   Không có ticket nào
                 </td>
@@ -212,30 +212,30 @@ export function TicketListTable({ onView }: TicketListTableProps) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className='flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-white/8'>
-          <p className='text-xs text-gray-500 dark:text-gray-400'>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-white/8">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Trang {page} / {totalPages}
             {meta && <> &middot; {meta.totalElements} ticket</>}
           </p>
-          <div className='flex items-center gap-1'>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed'
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronLeft
                 size={16}
-                className='text-gray-600 dark:text-gray-400'
+                className="text-gray-600 dark:text-gray-400"
               />
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed'
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ChevronRight
                 size={16}
-                className='text-gray-600 dark:text-gray-400'
+                className="text-gray-600 dark:text-gray-400"
               />
             </button>
           </div>
@@ -260,46 +260,46 @@ function TicketRow({
   const date = fmtBackendDate(ticket.createdAt);
 
   return (
-    <tr className='border-b border-gray-50 dark:border-white/5 hover:bg-gray-50/60 dark:hover:bg-white/3 transition-colors'>
+    <tr className="border-b border-gray-50 dark:border-white/5 hover:bg-gray-50/60 dark:hover:bg-white/3 transition-colors">
       {/* Ticket ID */}
-      <td className='px-4 py-3 whitespace-nowrap'>
-        <span className='font-mono text-xs text-gray-500 dark:text-gray-400'>
+      <td className="px-4 py-3 whitespace-nowrap">
+        <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
           #{shortId}
         </span>
       </td>
 
       {/* Subject */}
-      <td className='px-4 py-3 max-w-xs'>
-        <p className='truncate text-sm font-medium text-gray-900 dark:text-white'>
+      <td className="px-4 py-3 max-w-xs">
+        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
           {ticket.subject}
         </p>
       </td>
 
       {/* Customer */}
-      <td className='px-4 py-3 whitespace-nowrap'>
-        <p className='text-sm text-gray-700 dark:text-gray-300'>
-          {ticket.fullName ?? '-'}
+      <td className="px-4 py-3 whitespace-nowrap">
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          {ticket.fullName ?? "-"}
         </p>
-        <p className='text-xs text-gray-400 truncate max-w-40'>
-          {ticket.email ?? ''}
+        <p className="text-xs text-gray-400 truncate max-w-40">
+          {ticket.email ?? ""}
         </p>
       </td>
 
       {/* Status */}
-      <td className='px-4 py-3 whitespace-nowrap'>
+      <td className="px-4 py-3 whitespace-nowrap">
         <StatusBadge status={ticket.status} />
       </td>
 
       {/* Date */}
-      <td className='px-4 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400'>
+      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
         {date}
       </td>
 
       {/* Action */}
-      <td className='px-4 py-3'>
+      <td className="px-4 py-3">
         <button
           onClick={() => onView(ticket)}
-          className='flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-theme-primary-start hover:bg-theme-primary-start/8 dark:hover:bg-theme-primary-start/15 transition-colors'
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-theme-primary-start hover:bg-theme-primary-start/8 dark:hover:bg-theme-primary-start/15 transition-colors"
         >
           <Eye size={13} />
           Xem

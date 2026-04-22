@@ -11,22 +11,22 @@
  *   Module 7: CATEGORIES (API-045 → API-050)
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { categoryKeys } from '../api/category.keys';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { categoryKeys } from "../api/category.keys";
 import {
   createCategory,
   deleteCategory,
   getCategoriesList,
   getCategoryById,
   updateCategory,
-} from '../api/category.service';
+} from "../api/category.service";
 import type {
   CategoryListParams,
   CategoryResponse,
   CreateCategoryInput,
   PaginatedCategoriesResponse,
   UpdateCategoryInput,
-} from '../types';
+} from "../types";
 
 // ── API-047: flat paginated list ─────────────────────────────────────────────
 

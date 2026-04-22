@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * ⚠️ LEGACY FILE - đã được thay thế bởi rental-order-table.tsx.
@@ -10,4 +10,4 @@
  * Re-export component mới để tránh lỗi nếu ai đó import nhầm.
  */
 
-export { RentalOrdersTable } from './rental-order-table';
+export { RentalOrdersTable } from "./rental-order-table";

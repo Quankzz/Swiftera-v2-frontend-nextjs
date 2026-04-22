@@ -3,14 +3,14 @@
  * Module 11: VOUCHERS (API-070)
  */
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getVouchersList,
   validateVoucher,
   type VoucherValidateResponse,
-} from '../api/voucher.service';
-import type { VoucherResponse } from '../types';
+} from "../api/voucher.service";
+import type { VoucherResponse } from "../types";
 
 /* ─── Normalized response ──────────────────────────────────────────────────── */
 
@@ -28,9 +28,9 @@ export interface CustomerVouchersData {
  */
 export function useCustomerVouchersQuery() {
   return useQuery({
-    queryKey: ['vouchers', 'customer'],
+    queryKey: ["vouchers", "customer"],
     queryFn: async () => {
-      const res = await getVouchersList({ size: 50, filter: 'isActive:true' });
+      const res = await getVouchersList({ size: 50, filter: "isActive:true" });
       return {
         items: res.content ?? [],
         totalItems: res.meta?.totalElements ?? 0,
@@ -56,7 +56,7 @@ export function useValidateVoucherMutation() {
       productId?: string;
     }) => validateVoucher(params),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['vouchers', 'customer'] });
+      void qc.invalidateQueries({ queryKey: ["vouchers", "customer"] });
     },
   });
 }
@@ -69,8 +69,8 @@ export function useValidateVoucherMutation() {
  */
 export function useVoucherApply() {
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
-  const [inputCode, setInputCode] = useState('');
-  const [inputError, setInputError] = useState('');
+  const [inputCode, setInputCode] = useState("");
+  const [inputError, setInputError] = useState("");
 
   const validate = useValidateVoucherMutation();
 
@@ -83,7 +83,7 @@ export function useVoucherApply() {
     /** productId để check scope ITEM_VOUCHER / PRODUCT_DISCOUNT */
     productId?: string,
   ) {
-    setInputError('');
+    setInputError("");
     try {
       const result = await validate.mutateAsync({
         code: code.trim().toUpperCase(),
@@ -95,11 +95,11 @@ export function useVoucherApply() {
         setSelectedCode(code.trim().toUpperCase());
         onSuccess(result);
       } else {
-        setInputError('Voucher không hợp lệ hoặc chưa đủ điều kiện.');
-        onError('Voucher không hợp lệ hoặc chưa đủ điều kiện.');
+        setInputError("Voucher không hợp lệ hoặc chưa đủ điều kiện.");
+        onError("Voucher không hợp lệ hoặc chưa đủ điều kiện.");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Mã voucher không đúng.';
+      const msg = err instanceof Error ? err.message : "Mã voucher không đúng.";
       setInputError(msg);
       onError(msg);
     }
@@ -107,8 +107,8 @@ export function useVoucherApply() {
 
   function clearVoucher() {
     setSelectedCode(null);
-    setInputCode('');
-    setInputError('');
+    setInputCode("");
+    setInputError("");
     validate.reset();
   }
 

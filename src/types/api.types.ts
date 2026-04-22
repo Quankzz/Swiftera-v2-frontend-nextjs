@@ -105,33 +105,33 @@ export interface HubStaffResponse {
 // ─── Rental Orders ────────────────────────────────────────────────────────────
 
 export type RentalOrderApiStatus =
-  | 'PENDING_PAYMENT'
-  | 'PAID'
-  | 'PREPARING'
-  | 'DELIVERING'
-  | 'DELIVERED'
-  | 'IN_USE'
-  | 'PENDING_PICKUP'
-  | 'PICKING_UP'
-  | 'PICKED_UP'
-  | 'COMPLETED'
-  | 'CANCELLED';
+  | "PENDING_PAYMENT"
+  | "PAID"
+  | "PREPARING"
+  | "DELIVERING"
+  | "DELIVERED"
+  | "IN_USE"
+  | "PENDING_PICKUP"
+  | "PICKING_UP"
+  | "PICKED_UP"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export type OrderStatus = RentalOrderApiStatus;
 
-export type PaymentStatus = 'PAID' | 'PENDING' | 'PARTIAL' | 'REFUNDED';
+export type PaymentStatus = "PAID" | "PENDING" | "PARTIAL" | "REFUNDED";
 
 export type DepositRefundStatus =
-  | 'NOT_REFUNDED'
-  | 'REFUNDED'
-  | 'PARTIAL_REFUNDED';
+  | "NOT_REFUNDED"
+  | "REFUNDED"
+  | "PARTIAL_REFUNDED";
 
 // ─── Nested / embedded types ─────────────────────────────────────────────────
 
 /** QR code photo taken at a specific rental phase. */
 export interface RentalOrderLinePhotoResponse {
   rentalOrderLinePhotoId: string;
-  photoPhase: 'CHECKOUT' | 'CHECKIN';
+  photoPhase: "CHECKOUT" | "CHECKIN";
   photoUrl: string;
   sortOrder: number | null;
 }

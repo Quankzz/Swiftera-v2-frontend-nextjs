@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { parseErrorForForm } from '@/api/apiService';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { normalizeRedirectPath } from '@/lib/auth-redirect';
-import { toast } from 'sonner';
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { parseErrorForForm } from "@/api/apiService";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { normalizeRedirectPath } from "@/lib/auth-redirect";
+import { toast } from "sonner";
 
 const inputClassName =
-  'my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[var(--auth-focus-ring,#0ea5e9)/30] dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[var(--auth-focus-ring-dark,#38bdf8)/40]';
+  "my-2 h-auto border-none bg-zinc-100 px-4 py-2.5 text-[13px] text-zinc-800 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[var(--auth-focus-ring,#0ea5e9)/30] dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-[var(--auth-focus-ring-dark,#38bdf8)/40]";
 
-type SignInField = 'email' | 'password';
+type SignInField = "email" | "password";
 
 function PasswordInput({
   value,
@@ -34,7 +34,7 @@ function PasswordInput({
   return (
     <div className="relative my-2 w-full">
       <Input
-        type={showPassword ? 'text' : 'password'}
+        type={showPassword ? "text" : "password"}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -61,9 +61,9 @@ export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isLoading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<SignInField, string>>
   >({});
@@ -72,26 +72,27 @@ export function SignInForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    setError('');
+    setError("");
     setFieldErrors({});
 
     try {
       setIsSubmitting(true);
       const result = await login({ email, password });
       const roles = result?.data?.userSecured?.rolesSecured ?? [];
-      const isStaff = roles.some((r) => r.name === 'STAFF');
+      const isStaff = roles.some((r) => r.name === "STAFF");
 
       const requestedRedirect = normalizeRedirectPath(
-        searchParams.get('redirect'),
+        searchParams.get("redirect"),
       );
-      const destination = requestedRedirect ?? (isStaff ? '/staff-dashboard' : '/');
+      const destination =
+        requestedRedirect ?? (isStaff ? "/staff-dashboard" : "/");
 
       router.push(destination);
       router.refresh();
     } catch (err) {
       const { fieldErrors: mappedFieldErrors, formMessage } = parseErrorForForm(
         err,
-        'Đăng nhập thất bại',
+        "Đăng nhập thất bại",
       );
 
       setFieldErrors({
@@ -126,10 +127,12 @@ export function SignInForm() {
         }}
         required
         className={`${inputClassName}${
-          fieldErrors.email ? ' ring-1 ring-red-400' : ''
+          fieldErrors.email ? " ring-1 ring-red-400" : ""
         }`}
       />
-      {fieldErrors.email && <p className="mt-0.5 text-xs text-red-500">{fieldErrors.email}</p>}
+      {fieldErrors.email && (
+        <p className="mt-0.5 text-xs text-red-500">{fieldErrors.email}</p>
+      )}
       <PasswordInput
         value={password}
         onChange={(value) => {
@@ -139,7 +142,7 @@ export function SignInForm() {
         placeholder="Mật khẩu"
         required
         className={`${inputClassName}${
-          fieldErrors.password ? ' ring-1 ring-red-400' : ''
+          fieldErrors.password ? " ring-1 ring-red-400" : ""
         }`}
       />
       {fieldErrors.password && (
@@ -152,7 +155,7 @@ export function SignInForm() {
         Quên mật khẩu?
       </Link>
       <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400">
-        Chưa xác thực email?{' '}
+        Chưa xác thực email?{" "}
         <Link
           href="/auth/resend-verification"
           className="text-theme-primary-start hover:underline"
@@ -172,7 +175,7 @@ export function SignInForm() {
             Đang đăng nhập
           </>
         ) : (
-          'Đăng nhập'
+          "Đăng nhập"
         )}
       </Button>
     </form>

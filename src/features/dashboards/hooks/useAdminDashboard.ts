@@ -8,10 +8,10 @@
  * Tự động refetch khi hubId thay đổi (queryKey phụ thuộc hubId).
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { dashboardKeys } from '../api/dashboard.keys';
-import { getAdminDashboard } from '../api/dashboard.service';
-import type { AdminDashboardData, AdminDashboardParams } from '../types';
+import { useQuery } from "@tanstack/react-query";
+import { dashboardKeys } from "../api/dashboard.keys";
+import { getAdminDashboard } from "../api/dashboard.service";
+import type { AdminDashboardData, AdminDashboardParams } from "../types";
 
 export function useAdminDashboard(params: AdminDashboardParams = {}) {
   return useQuery<AdminDashboardData, Error>({

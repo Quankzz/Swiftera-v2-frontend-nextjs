@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { useState, useMemo } from 'react';
+import type React from "react";
+import { useState, useMemo } from "react";
 import {
   Search,
   Navigation,
@@ -10,10 +10,10 @@ import {
   RadioTower,
   X,
   SlidersHorizontal,
-} from 'lucide-react';
-import { useMapStore } from '@/stores/use-map-store';
+} from "lucide-react";
+import { useMapStore } from "@/stores/use-map-store";
 // import { MOCK_HUBS } from '@/data/mockHubs';
-import type { Hub } from '@/types/map.types';
+import type { Hub } from "@/types/map.types";
 
 interface SearchTabProps {
   onFlyToHub: (hub: Hub) => void;
@@ -65,7 +65,7 @@ const SearchTab: React.FC<SearchTabProps> = ({
     return filtered;
   }, [searchQuery, showNearbyOnly, nearbyRadius, nearbyHubs, hubs]);
 
-  const handleClearQuery = () => setSearchQuery('');
+  const handleClearQuery = () => setSearchQuery("");
 
   return (
     <div className="flex flex-col h-full">
@@ -104,14 +104,14 @@ const SearchTab: React.FC<SearchTabProps> = ({
           {hasLocation && (
             <button
               onClick={() => setShowNearbyOnly((v) => !v)}
-              title={showNearbyOnly ? 'Hiện tất cả hub' : 'Lọc hub gần đây'}
+              title={showNearbyOnly ? "Hiện tất cả hub" : "Lọc hub gần đây"}
               className={`
                 shrink-0 flex items-center justify-center w-12 h-12 rounded-2xl border
                 transition-all duration-300 active:scale-90
                 ${
                   showNearbyOnly
-                    ? 'bg-theme-primary-start border-theme-primary-start text-white shadow-[0_4px_12px_rgb(0,0,0,0.15)]'
-                    : 'bg-card border-border/50 text-muted-foreground hover:border-theme-primary-start/50 hover:text-theme-primary-start shadow-[0_2px_10px_rgb(0,0,0,0.02)]'
+                    ? "bg-theme-primary-start border-theme-primary-start text-white shadow-[0_4px_12px_rgb(0,0,0,0.15)]"
+                    : "bg-card border-border/50 text-muted-foreground hover:border-theme-primary-start/50 hover:text-theme-primary-start shadow-[0_2px_10px_rgb(0,0,0,0.02)]"
                 }
               `}
             >
@@ -168,8 +168,8 @@ const SearchTab: React.FC<SearchTabProps> = ({
                   onClick={() => setNearbyRadius(mark)}
                   className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all ${
                     nearbyRadius === mark
-                      ? 'bg-theme-primary-start text-white'
-                      : 'text-muted-foreground hover:text-theme-primary-start'
+                      ? "bg-theme-primary-start text-white"
+                      : "text-muted-foreground hover:text-theme-primary-start"
                   }`}
                 >
                   {mark}km

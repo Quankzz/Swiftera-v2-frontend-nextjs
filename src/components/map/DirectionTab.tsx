@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   MapPin,
   ArrowUpDown,
@@ -9,10 +9,10 @@ import {
   Loader2,
   X,
   Search,
-} from 'lucide-react';
-import axios from 'axios';
-import { useMapStore } from '@/stores/use-map-store';
-import { apiKey } from '@/configs/goongmapKeys';
+} from "lucide-react";
+import axios from "axios";
+import { useMapStore } from "@/stores/use-map-store";
+import { apiKey } from "@/configs/goongmapKeys";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface GoongPrediction {
@@ -20,7 +20,7 @@ interface GoongPrediction {
   place_id: string;
 }
 
-type FieldType = 'start' | 'end';
+type FieldType = "start" | "end";
 
 const MIN_QUERY_LEN = 2;
 const MAX_SUGGESTIONS = 5;
@@ -155,16 +155,16 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
       if (!containerRef.current?.contains(e.target as Node)) closeSuggestions();
     };
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         closeSuggestions();
         (document.activeElement as HTMLElement)?.blur();
       }
     };
-    document.addEventListener('mousedown', handleOutside);
-    window.addEventListener('keydown', handleEsc);
+    document.addEventListener("mousedown", handleOutside);
+    window.addEventListener("keydown", handleEsc);
     return () => {
-      document.removeEventListener('mousedown', handleOutside);
-      window.removeEventListener('keydown', handleEsc);
+      document.removeEventListener("mousedown", handleOutside);
+      window.removeEventListener("keydown", handleEsc);
     };
   }, [closeSuggestions]);
 
@@ -178,7 +178,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
 
   const fetchSugs = useCallback(async (query: string, field: FieldType) => {
     const normalized = query.trim();
-    const setter = field === 'start' ? setStartSugs : setEndSugs;
+    const setter = field === "start" ? setStartSugs : setEndSugs;
 
     if (normalized.length < MIN_QUERY_LEN) {
       setter([]);
@@ -211,12 +211,12 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
   }, []);
 
   const handleInputChange = (field: FieldType, val: string) => {
-    if (field === 'start') {
+    if (field === "start") {
       setStartAddress(val);
-      if (currentLocationUsage === 'start') setCurrentLocationUsage(null);
+      if (currentLocationUsage === "start") setCurrentLocationUsage(null);
     } else {
       setEndAddress(val);
-      if (currentLocationUsage === 'end') setCurrentLocationUsage(null);
+      if (currentLocationUsage === "end") setCurrentLocationUsage(null);
     }
     if (timers.current[field]) clearTimeout(timers.current[field]!);
     timers.current[field] = setTimeout(
@@ -227,29 +227,29 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
 
   const handleFocus = (field: FieldType) => {
     setActiveField(field);
-    const val = field === 'start' ? startAddress : endAddress;
+    const val = field === "start" ? startAddress : endAddress;
     if (val.trim().length >= MIN_QUERY_LEN) fetchSugs(val, field);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, field: FieldType) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       closeSuggestions();
       if (startAddress.trim() && endAddress.trim()) {
         onRouteSearch();
-      } else if (field === 'start') {
+      } else if (field === "start") {
         endInputRef.current?.focus();
       } else {
         startInputRef.current?.focus();
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       closeSuggestions();
       (e.target as HTMLElement).blur();
     }
   };
 
   const handleSelectSuggestion = (field: FieldType, desc: string) => {
-    if (field === 'start') setStartAddress(desc);
+    if (field === "start") setStartAddress(desc);
     else setEndAddress(desc);
     setCurrentLocationUsage(null);
     closeSuggestions();
@@ -257,17 +257,17 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
   };
 
   const handleCurrentLocationSelect = (field: FieldType) => {
-    onGetCurrentLocation(field === 'start');
+    onGetCurrentLocation(field === "start");
     closeSuggestions();
     pendingSearchRef.current = true;
   };
 
   const handleClearField = (field: FieldType, e: React.MouseEvent) => {
     e.preventDefault();
-    const setter = field === 'start' ? setStartAddress : setEndAddress;
-    const sugs = field === 'start' ? setStartSugs : setEndSugs;
-    const ref = field === 'start' ? startInputRef : endInputRef;
-    setter('');
+    const setter = field === "start" ? setStartAddress : setEndAddress;
+    const sugs = field === "start" ? setStartSugs : setEndSugs;
+    const ref = field === "start" ? startInputRef : endInputRef;
+    setter("");
     setCurrentLocationUsage(null);
     sugs([]);
     setActiveField(field);
@@ -284,9 +284,9 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
 
   const renderSuggestions = (field: FieldType) => {
     if (activeField !== field) return null;
-    const sugs = field === 'start' ? startSugs : endSugs;
+    const sugs = field === "start" ? startSugs : endSugs;
     const isLoading = loadingField === field;
-    const query = field === 'start' ? startAddress : endAddress;
+    const query = field === "start" ? startAddress : endAddress;
     const showEmpty =
       !isLoading && sugs.length === 0 && query.trim().length >= MIN_QUERY_LEN;
 
@@ -316,7 +316,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
 
         {!isLoading &&
           sugs.map((s) => {
-            const commaIdx = s.description.indexOf(',');
+            const commaIdx = s.description.indexOf(",");
             const primary =
               commaIdx !== -1
                 ? s.description.slice(0, commaIdx)
@@ -353,18 +353,18 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
     dotColor: string;
   }> = [
     {
-      type: 'start',
+      type: "start",
       ref: startInputRef,
       value: startAddress,
-      placeholder: 'Điểm xuất phát',
-      dotColor: 'bg-theme-primary-start',
+      placeholder: "Điểm xuất phát",
+      dotColor: "bg-theme-primary-start",
     },
     {
-      type: 'end',
+      type: "end",
       ref: endInputRef,
       value: endAddress,
-      placeholder: 'Điểm đến',
-      dotColor: 'bg-destructive',
+      placeholder: "Điểm đến",
+      dotColor: "bg-destructive",
     },
   ];
 
@@ -379,8 +379,8 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
                   group flex items-center gap-3 rounded-2xl px-3.5 py-3 transition-all duration-300
                   ${
                     activeField === field.type
-                      ? 'bg-card shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.4)] border border-transparent ring-2 ring-theme-primary-start/20'
-                      : 'bg-muted/40 border border-border/50 hover:border-border'
+                      ? "bg-card shadow-[0_4px_20px_rgb(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.4)] border border-transparent ring-2 ring-theme-primary-start/20"
+                      : "bg-muted/40 border border-border/50 hover:border-border"
                   }
                 `}
               >
@@ -409,7 +409,7 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
                       shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-muted-foreground 
                       hover:bg-accent hover:text-foreground 
                       transition-all active:scale-90 opacity-0 group-hover:opacity-100
-                      ${activeField === field.type ? 'opacity-100 bg-muted' : ''}
+                      ${activeField === field.type ? "opacity-100 bg-muted" : ""}
                     `}
                     aria-label="Xoá"
                   >
@@ -447,13 +447,13 @@ const DirectionTab: React.FC<DirectionTabProps> = ({
       </div>
 
       {/* Suggestion panels */}
-      {renderSuggestions('start')}
-      {renderSuggestions('end')}
+      {renderSuggestions("start")}
+      {renderSuggestions("end")}
 
       {/* Route-search loading bar */}
       <div
         className={`h-0.5 overflow-hidden transition-opacity duration-300 ${
-          isRouteLoading ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          isRouteLoading ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         <div className="relative h-full bg-muted">

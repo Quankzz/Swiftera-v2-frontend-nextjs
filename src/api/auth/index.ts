@@ -14,11 +14,11 @@
  * can read `.message` for user-facing feedback.
  */
 
-import { API_BASE, apiGet, apiPost } from '@/api/apiService';
+import { API_BASE, apiGet, apiPost } from "@/api/apiService";
 import type {
   AuthenticationResponse,
   UserSecuredResponse,
-} from '@/types/api.types';
+} from "@/types/api.types";
 
 // ─── Request types (kept here for co-location, auth owner can extend) ────────
 
@@ -65,7 +65,7 @@ export interface ResetPasswordRequest {
 export async function login(
   req: LoginRequest,
 ): Promise<AuthenticationResponse> {
-  return apiPost<AuthenticationResponse>('/auth/login', req);
+  return apiPost<AuthenticationResponse>("/auth/login", req);
 }
 
 /**
@@ -73,7 +73,7 @@ export async function login(
  * Invalidates the access token and clears the refresh_token cookie.
  */
 export async function logout(): Promise<void> {
-  await apiPost<void>('/auth/logout');
+  await apiPost<void>("/auth/logout");
 }
 
 /**
@@ -82,7 +82,7 @@ export async function logout(): Promise<void> {
  * Call this on app bootstrap to hydrate the session.
  */
 export async function getAccount(): Promise<UserSecuredResponse> {
-  return apiGet<UserSecuredResponse>('/auth/account');
+  return apiGet<UserSecuredResponse>("/auth/account");
 }
 
 /**
@@ -98,10 +98,10 @@ export async function getAccount(): Promise<UserSecuredResponse> {
 export async function refreshAuthToken(): Promise<AuthenticationResponse | null> {
   try {
     const res = await fetch(`${API_BASE}/auth/refresh`, {
-      method: 'GET',
-      credentials: 'include', // sends the HttpOnly refresh_token cookie
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
+      method: "GET",
+      credentials: "include", // sends the HttpOnly refresh_token cookie
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
     });
     if (!res.ok) return null;
     const body: { data: AuthenticationResponse } = await res.json();
@@ -116,7 +116,7 @@ export async function refreshAuthToken(): Promise<AuthenticationResponse | null>
  * Sends registration form. On success, user receives a verification email.
  */
 export async function register(req: RegisterRequest): Promise<void> {
-  await apiPost<void>('/auth/register', req);
+  await apiPost<void>("/auth/register", req);
 }
 
 /**
@@ -127,7 +127,7 @@ export async function register(req: RegisterRequest): Promise<void> {
 export async function verifyActiveAccount(
   token: string,
 ): Promise<AuthenticationResponse> {
-  return apiPost<AuthenticationResponse>('/auth/verify-active-account', {
+  return apiPost<AuthenticationResponse>("/auth/verify-active-account", {
     token,
   } satisfies VerifyEmailRequest);
 }
@@ -137,7 +137,7 @@ export async function verifyActiveAccount(
  * Re-sends the verification email for an unverified account.
  */
 export async function resendVerify(email: string): Promise<void> {
-  await apiPost<void>('/auth/resend-verify', {
+  await apiPost<void>("/auth/resend-verify", {
     email,
   } satisfies ResendVerifyRequest);
 }
@@ -147,7 +147,7 @@ export async function resendVerify(email: string): Promise<void> {
  * Sends a password-reset link to the given email address.
  */
 export async function forgotPassword(email: string): Promise<void> {
-  await apiPost<void>('/auth/forgot-password', {
+  await apiPost<void>("/auth/forgot-password", {
     email,
   } satisfies ForgotPasswordRequest);
 }
@@ -157,5 +157,5 @@ export async function forgotPassword(email: string): Promise<void> {
  * Sets a new password using the JWT token from the reset email.
  */
 export async function resetPassword(req: ResetPasswordRequest): Promise<void> {
-  await apiPost<void>('/auth/reset-password', req);
+  await apiPost<void>("/auth/reset-password", req);
 }

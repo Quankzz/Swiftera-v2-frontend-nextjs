@@ -4,7 +4,7 @@
  * This is only for SSR/SSG - client components should use the regular service.
  */
 
-const API_URL = 'https://swiftera.azurewebsites.net/api/v1';
+const API_URL = "https://swiftera.azurewebsites.net/api/v1";
 
 interface ProductApiResponse<T> {
   success: boolean;
@@ -18,7 +18,7 @@ export async function getProductByIdServer(
 ): Promise<unknown> {
   const res = await fetch(`${API_URL}/products/${productId}`, {
     next: { revalidate: 60 },
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 
   if (!res.ok) {
@@ -37,16 +37,16 @@ export async function getReviewsByProductServer(
   items: unknown[];
 }> {
   const searchParams = new URLSearchParams();
-  if (params?.page) searchParams.set('page', String(params.page));
-  if (params?.size) searchParams.set('size', String(params.size));
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.size) searchParams.set("size", String(params.size));
 
   const url = `${API_URL}/reviews/product/${productId}${
-    searchParams.toString() ? `?${searchParams.toString()}` : ''
+    searchParams.toString() ? `?${searchParams.toString()}` : ""
   }`;
 
   const res = await fetch(url, {
     next: { revalidate: 60 },
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 
   if (!res.ok) {

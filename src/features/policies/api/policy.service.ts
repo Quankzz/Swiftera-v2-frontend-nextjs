@@ -5,15 +5,15 @@
  * HTTP layer: httpService (axios) - dùng http.ts.
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 import type {
   PolicyDocumentResponse,
   PaginatedPoliciesResponse,
   CreatePolicyInput,
   UpdatePolicyInput,
   PolicyListParams,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -29,7 +29,7 @@ export async function getPoliciesList(
   params?: PolicyListParams,
 ): Promise<PaginatedPoliciesResponse> {
   const res = await httpService.get<ApiResponse<PaginatedPoliciesResponse>>(
-    '/policies',
+    "/policies",
     { params },
   );
   return res.data.data!;
@@ -59,7 +59,7 @@ export async function createPolicy(
   payload: CreatePolicyInput,
 ): Promise<PolicyDocumentResponse> {
   const res = await httpService.post<ApiResponse<PolicyDocumentResponse>>(
-    '/policies',
+    "/policies",
     payload,
     authOpts,
   );

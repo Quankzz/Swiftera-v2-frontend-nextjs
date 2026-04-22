@@ -7,15 +7,15 @@
  * NOTE: Tất cả endpoints đều yêu cầu xác thực [AUTH]
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type VoucherType = 'ITEM_VOUCHER' | 'PRODUCT_DISCOUNT';
-export type VoucherDiscountType = 'PERCENTAGE' | 'FIXED';
+export type VoucherType = "ITEM_VOUCHER" | "PRODUCT_DISCOUNT";
+export type VoucherDiscountType = "PERCENTAGE" | "FIXED";
 
 export interface VoucherResponse {
   voucherId: string;
@@ -131,7 +131,7 @@ export const vouchersApi = {
   create(
     data: CreateVoucherInput,
   ): Promise<AxiosResponse<VoucherSingleResponse>> {
-    return httpService.post<VoucherSingleResponse>('/vouchers', data, authOpts);
+    return httpService.post<VoucherSingleResponse>("/vouchers", data, authOpts);
   },
 
   /**
@@ -179,7 +179,7 @@ export const vouchersApi = {
       rentalDurationDays: String(rentalDurationDays),
       rentalSubtotalAmount: String(rentalSubtotalAmount),
     };
-    if (productId) searchParams['productId'] = productId;
+    if (productId) searchParams["productId"] = productId;
     return httpService.get<VoucherValidateSingleResponse>(
       `/vouchers/validate?${new URLSearchParams(searchParams).toString()}`,
       authOpts,
@@ -198,7 +198,7 @@ export const vouchersApi = {
     size?: number;
     filter?: string;
   }): Promise<AxiosResponse<VoucherListResponse>> {
-    return httpService.get<VoucherListResponse>('/vouchers', {
+    return httpService.get<VoucherListResponse>("/vouchers", {
       ...authOpts,
       params: {
         page: params?.page ?? 1,

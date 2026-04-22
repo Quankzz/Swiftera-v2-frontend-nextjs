@@ -22,39 +22,44 @@ export function ProductJsonLd({
   description,
   imageUrl,
   price,
-  currency = 'VND',
+  currency = "VND",
   brand,
   category,
   rating,
   reviewCount,
 }: ProductJsonLdProps) {
-  const siteUrl = 'https://swiftera.vn';
+  const siteUrl = "https://swiftera.vn";
   const productUrl = `${siteUrl}/product/${productId}`;
 
-  const aggregateRating = rating && reviewCount ? {
-    '@type': 'AggregateRating',
-    ratingValue: rating.toFixed(1),
-    reviewCount: reviewCount,
-    bestRating: '5',
-    worstRating: '1',
-  } : null;
+  const aggregateRating =
+    rating && reviewCount
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: rating.toFixed(1),
+          reviewCount: reviewCount,
+          bestRating: "5",
+          worstRating: "1",
+        }
+      : null;
 
-  const offers = price ? {
-    '@type': 'Offer',
-    price: price.toString(),
-    priceCurrency: currency,
-    availability: 'https://schema.org/InStock',
-    url: productUrl,
-    seller: {
-      '@type': 'Organization',
-      name: 'Swiftera',
-    },
-  } : null;
+  const offers = price
+    ? {
+        "@type": "Offer",
+        price: price.toString(),
+        priceCurrency: currency,
+        availability: "https://schema.org/InStock",
+        url: productUrl,
+        seller: {
+          "@type": "Organization",
+          name: "Swiftera",
+        },
+      }
+    : null;
 
   const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    '@id': productUrl,
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "@id": productUrl,
     name,
     description,
     url: productUrl,
@@ -63,7 +68,7 @@ export function ProductJsonLd({
     }),
     ...(brand && {
       brand: {
-        '@type': 'Brand',
+        "@type": "Brand",
         name: brand,
       },
     }),
@@ -72,23 +77,24 @@ export function ProductJsonLd({
     }),
     ...(aggregateRating && { aggregateRating }),
     ...(offers && { offers }),
-    ...(reviewCount !== undefined && reviewCount > 0 && {
-      review: {
-        '@type': 'Review',
-        reviewRating: {
-          '@type': 'Rating',
-          ratingValue: rating?.toFixed(1) ?? '0',
-          bestRating: '5',
-          worstRating: '1',
+    ...(reviewCount !== undefined &&
+      reviewCount > 0 && {
+        review: {
+          "@type": "Review",
+          reviewRating: {
+            "@type": "Rating",
+            ratingValue: rating?.toFixed(1) ?? "0",
+            bestRating: "5",
+            worstRating: "1",
+          },
+          reviewBody: `Sản phẩm ${name} trên Swiftera`,
         },
-        reviewBody: `Sản phẩm ${name} trên Swiftera`,
-      },
-    }),
+      }),
   };
 
   return (
     <script
-      type='application/ld+json'
+      type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
   );
@@ -106,19 +112,19 @@ export function ProductBreadcrumbJsonLd({
   productName: string;
   categoryName?: string;
 }) {
-  const siteUrl = 'https://swiftera.vn';
+  const siteUrl = "https://swiftera.vn";
 
   const itemListElement = [
     {
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: 1,
-      name: 'Trang chủ',
+      name: "Trang chủ",
       item: siteUrl,
     },
     ...(categoryName
       ? [
           {
-            '@type': 'ListItem' as const,
+            "@type": "ListItem" as const,
             position: 2,
             name: categoryName,
             item: `${siteUrl}/catalog`,
@@ -126,7 +132,7 @@ export function ProductBreadcrumbJsonLd({
         ]
       : []),
     {
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: categoryName ? 3 : 2,
       name: productName,
       item: `${siteUrl}/product/${productId}`,
@@ -134,14 +140,14 @@ export function ProductBreadcrumbJsonLd({
   ];
 
   const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement,
   };
 
   return (
     <script
-      type='application/ld+json'
+      type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
     />
   );

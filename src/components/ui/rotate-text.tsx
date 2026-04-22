@@ -44,7 +44,7 @@ const RotatingText = React.forwardRef<HTMLSpanElement, RotatingTextProps>(
         </AnimatePresence>
       </span>
     );
-  }
+  },
 );
 RotatingText.displayName = "RotatingText";
 

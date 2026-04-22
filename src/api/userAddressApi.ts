@@ -3,8 +3,8 @@
  * Base: /api/v1
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
@@ -64,7 +64,7 @@ export function createUserAddress(
   input: CreateUserAddressInput,
 ): Promise<AxiosResponse<UserAddressSingleEnvelope>> {
   return httpService.post<UserAddressSingleEnvelope>(
-    '/user-addresses',
+    "/user-addresses",
     input,
     authOpts,
   );
@@ -73,7 +73,7 @@ export function createUserAddress(
 export function getUserAddresses(): Promise<
   AxiosResponse<UserAddressListEnvelope>
 > {
-  return httpService.get<UserAddressListEnvelope>('/user-addresses', authOpts);
+  return httpService.get<UserAddressListEnvelope>("/user-addresses", authOpts);
 }
 
 export function getUserAddressById(

@@ -1,5 +1,5 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
 export function InfoRow({
   icon: Icon,
@@ -21,7 +21,7 @@ export function InfoRow({
         <p className="text-sm text-muted-foreground font-medium mb-1">
           {label}
         </p>
-        <p className={cn('text-lg text-foreground leading-snug font-medium')}>
+        <p className={cn("text-lg text-foreground leading-snug font-medium")}>
           {value}
         </p>
       </div>

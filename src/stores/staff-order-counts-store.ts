@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import type { OrderStatus } from '@/types/api.types';
+import { create } from "zustand";
+import type { OrderStatus } from "@/types/api.types";
 
 export type { OrderStatus };
 
@@ -57,7 +57,7 @@ export function selectCount(
 export function selectUrgentTotal(
   counts: Partial<Record<OrderStatus, number>>,
 ): number {
-  return (counts['PAID'] ?? 0) + (counts['PENDING_PICKUP'] ?? 0);
+  return (counts["PAID"] ?? 0) + (counts["PENDING_PICKUP"] ?? 0);
 }
 
 /** Total of all assigned orders across every status. */

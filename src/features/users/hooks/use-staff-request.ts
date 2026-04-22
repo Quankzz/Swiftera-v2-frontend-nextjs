@@ -6,10 +6,10 @@
  * Dùng TanStack Query + user.service.ts + user.keys.ts.
  */
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { userKeys } from '../api/user.keys';
-import { requestStaffUpgrade } from '../api/user.service';
-import type { UserSecureResponse } from '../types';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { userKeys } from "../api/user.keys";
+import { requestStaffUpgrade } from "../api/user.service";
+import type { UserSecureResponse } from "../types";
 
 /**
  * Yêu cầu nâng cấp lên STAFF

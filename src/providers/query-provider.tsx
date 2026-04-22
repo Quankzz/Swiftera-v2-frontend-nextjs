@@ -15,7 +15,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             retry: 1,
           },
         },
-      })
+      }),
   );
 
   return (
@@ -26,15 +26,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function QueryClientScript({
-  queryClient,
-}: {
-  queryClient: QueryClient;
-}) {
+function QueryClientScript({ queryClient }: { queryClient: QueryClient }) {
   if (typeof window !== "undefined") {
-    (window as Window & { __swifteraQueryClient?: QueryClient }).__swifteraQueryClient =
-      queryClient;
+    (
+      window as Window & { __swifteraQueryClient?: QueryClient }
+    ).__swifteraQueryClient = queryClient;
   }
   return null;
 }
-

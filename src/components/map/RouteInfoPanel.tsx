@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import type React from 'react';
+import type React from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -8,8 +8,8 @@ import {
   MapPin,
   RotateCcw,
   Route,
-} from 'lucide-react';
-import { useMapStore } from '@/stores/use-map-store';
+} from "lucide-react";
+import { useMapStore } from "@/stores/use-map-store";
 
 interface RouteInfoPanelProps {
   onSelectRoute: (index: number) => void;
@@ -46,7 +46,7 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ onClear }) => {
               <div className="w-7 h-7 rounded-full bg-muted shrink-0" />
               <div className="flex-1 space-y-1.5 pt-0.5">
                 <div
-                  className={`h-3.5 bg-muted rounded ${i === 1 ? 'w-4/5' : 'w-full'}`}
+                  className={`h-3.5 bg-muted rounded ${i === 1 ? "w-4/5" : "w-full"}`}
                 />
                 <div className="h-3 bg-muted/60 rounded w-2/5" />
               </div>
@@ -113,7 +113,7 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ onClear }) => {
               </button>
               <button
                 onClick={() => setIsRouteInfoVisible(!isRouteInfoVisible)}
-                title={isRouteInfoVisible ? 'Thu gọn' : 'Xem chi tiết'}
+                title={isRouteInfoVisible ? "Thu gọn" : "Xem chi tiết"}
                 className="
                   p-2.5 rounded-xl
                   bg-card
@@ -175,7 +175,7 @@ const RouteInfoPanel: React.FC<RouteInfoPanelProps> = ({ onClear }) => {
                           <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-muted/80 text-[11px] font-semibold text-muted-foreground tracking-wide">
                             {[step.distance, step.duration]
                               .filter(Boolean)
-                              .join(' · ')}
+                              .join(" · ")}
                           </span>
                         </div>
                       )}

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
-const SESSION_KEY = 'swiftera_delivery_info';
+const SESSION_KEY = "swiftera_delivery_info";
 
 interface DeliveryInfo {
   recipientName: string;
@@ -12,16 +12,16 @@ interface DeliveryInfo {
 }
 
 const EMPTY: DeliveryInfo = {
-  recipientName: '',
-  phone: '',
-  addressLine: '',
-  ward: '',
-  district: '',
-  city: '',
+  recipientName: "",
+  phone: "",
+  addressLine: "",
+  ward: "",
+  district: "",
+  city: "",
 };
 
 function readFromSession(): DeliveryInfo {
-  if (typeof window === 'undefined') return EMPTY;
+  if (typeof window === "undefined") return EMPTY;
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return EMPTY;

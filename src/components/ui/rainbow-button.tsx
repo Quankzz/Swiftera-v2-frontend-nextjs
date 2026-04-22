@@ -4,8 +4,7 @@ import { motion } from "motion/react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-interface RainbowButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface RainbowButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   colors?: string[];
   duration?: number;
@@ -27,7 +26,7 @@ const RainbowButton = React.forwardRef<HTMLButtonElement, RainbowButtonProps>(
       type = "button",
       ...props
     },
-    ref
+    ref,
   ) => {
     const gradientColors = colors.join(", ");
 
@@ -39,7 +38,7 @@ const RainbowButton = React.forwardRef<HTMLButtonElement, RainbowButtonProps>(
         disabled={disabled}
         className={cn(
           "relative inline-flex items-center justify-center overflow-hidden rounded-lg font-medium transition-transform hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50",
-          className
+          className,
         )}
         style={{ padding: borderWidth }}
         {...props}
@@ -76,7 +75,7 @@ const RainbowButton = React.forwardRef<HTMLButtonElement, RainbowButtonProps>(
         </span>
       </button>
     );
-  }
+  },
 );
 RainbowButton.displayName = "RainbowButton";
 

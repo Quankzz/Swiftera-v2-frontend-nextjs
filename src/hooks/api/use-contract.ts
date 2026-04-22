@@ -1,13 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { contractKeys } from '@/hooks/api/contract.keys';
-import { getContractByRentalOrderId } from '@/api/contractApi';
-import type { RentalContractResponse } from '@/api/contractApi';
+import { useQuery } from "@tanstack/react-query";
+import { contractKeys } from "@/hooks/api/contract.keys";
+import { getContractByRentalOrderId } from "@/api/contractApi";
+import type { RentalContractResponse } from "@/api/contractApi";
 
 /** Mã lỗi backend: CONTRACT_NOT_FOUND (doc) */
 const CONTRACT_NOT_FOUND = 2401;
 
 function isContractNotFoundError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
+  if (!error || typeof error !== "object") return false;
   const e = error as {
     errors?: Array<{ code?: number }>;
     code?: number;

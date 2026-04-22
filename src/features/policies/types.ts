@@ -3,7 +3,7 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md - Module 17: POLICIES
  */
 
-import type { PaginationResponse } from '@/types/api.types';
+import type { PaginationResponse } from "@/types/api.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Policy Document Response (API-106 → API-110)

@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Layout } from '@/components/Layout';
+import { useState } from "react";
+import Link from "next/link";
+import { Layout } from "@/components/Layout";
 import {
   ChevronDown,
   ChevronUp,
   ArrowRight,
   FileText,
   HelpCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 type Stat = { label: string; value: string };
 type FaqItem = { question: string; answer: string };
@@ -41,7 +41,6 @@ export function InfoPageShell({
     <Layout stickyHeader>
       <main className="bg-background pb-16 pt-10">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
-
           {/* ── Hero Header Card ── */}
           <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10">
             {/* Ambient glow */}

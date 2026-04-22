@@ -6,7 +6,7 @@ export interface User {
   avatarUrl: string | null;
   isVerified: boolean;
   lastLoginAt: string | null; // ISO datetime string
-  roles: Pick<Role, 'roleId' | 'name'>[];
+  roles: Pick<Role, "roleId" | "name">[];
 }
 
 export interface UserListParams {
@@ -95,10 +95,10 @@ export interface PaginatedResponse<T> {
 // ─── Contact Tickets ───────────────────────────────────────────────
 
 export type ContactTicketStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'resolved'
-  | 'closed';
+  | "pending"
+  | "in_progress"
+  | "resolved"
+  | "closed";
 
 export interface ContactTicket {
   contactTicketId: string;
@@ -119,7 +119,7 @@ export interface ContactTicketListParams {
   page?: number;
   limit?: number;
   search?: string;
-  status?: ContactTicketStatus | '';
+  status?: ContactTicketStatus | "";
 }
 
 export interface UpdateContactTicketStatusInput {
@@ -130,13 +130,13 @@ export interface UpdateContactTicketStatusInput {
 // ─── Rental Orders ────────────────────────────────────────────────
 
 export type RentalOrderStatus =
-  | 'PENDING'
-  | 'CONFIRMED'
-  | 'DELIVERING'
-  | 'ACTIVE'
-  | 'RETURNING'
-  | 'COMPLETED'
-  | 'CANCELLED';
+  | "PENDING"
+  | "CONFIRMED"
+  | "DELIVERING"
+  | "ACTIVE"
+  | "RETURNING"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export interface RentalOrderItem {
   rentalOrderItemId: string;
@@ -195,7 +195,7 @@ export interface RentalOrderListParams {
   page?: number;
   limit?: number;
   search?: string;
-  status?: RentalOrderStatus | '';
+  status?: RentalOrderStatus | "";
 }
 
 export interface AssignOrderInput {

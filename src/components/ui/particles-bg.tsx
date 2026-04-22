@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 // Adapted from React Bits - Particles (ts-tailwind version)
 // https://github.com/DavidHDev/react-bits
 // Dependency: ogl (already in package.json)
 
-import React, { useEffect, useRef } from 'react';
-import { Renderer, Camera, Geometry, Program, Mesh } from 'ogl';
+import React, { useEffect, useRef } from "react";
+import { Renderer, Camera, Geometry, Program, Mesh } from "ogl";
 
 interface ParticlesBgProps {
   particleCount?: number;
@@ -23,15 +23,15 @@ interface ParticlesBgProps {
   className?: string;
 }
 
-const defaultColors: string[] = ['#ffffff', '#c8d6e5', '#dfe6e9'];
+const defaultColors: string[] = ["#ffffff", "#c8d6e5", "#dfe6e9"];
 
 function hexToRgb(hex: string): [number, number, number] {
-  hex = hex.replace(/^#/, '');
+  hex = hex.replace(/^#/, "");
   if (hex.length === 3) {
     hex = hex
-      .split('')
+      .split("")
       .map((c) => c + c)
-      .join('');
+      .join("");
   }
   const int = parseInt(hex, 16);
   const r = ((int >> 16) & 255) / 255;
@@ -145,7 +145,7 @@ const ParticlesBg: React.FC<ParticlesBgProps> = ({
       renderer.setSize(width, height);
       camera.perspective({ aspect: gl.canvas.width / gl.canvas.height });
     };
-    window.addEventListener('resize', resize, false);
+    window.addEventListener("resize", resize, false);
     resize();
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -156,7 +156,7 @@ const ParticlesBg: React.FC<ParticlesBgProps> = ({
     };
 
     if (moveParticlesOnHover) {
-      container.addEventListener('mousemove', handleMouseMove);
+      container.addEventListener("mousemove", handleMouseMove);
     }
 
     const count = particleCount;
@@ -240,9 +240,9 @@ const ParticlesBg: React.FC<ParticlesBgProps> = ({
     animationFrameId = requestAnimationFrame(update);
 
     return () => {
-      window.removeEventListener('resize', resize);
+      window.removeEventListener("resize", resize);
       if (moveParticlesOnHover) {
-        container.removeEventListener('mousemove', handleMouseMove);
+        container.removeEventListener("mousemove", handleMouseMove);
       }
       cancelAnimationFrame(animationFrameId);
       if (container.contains(gl.canvas)) {
@@ -267,7 +267,7 @@ const ParticlesBg: React.FC<ParticlesBgProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full ${className ?? ''}`}
+      className={`relative w-full h-full ${className ?? ""}`}
     />
   );
 };

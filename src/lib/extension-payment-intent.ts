@@ -1,5 +1,4 @@
-export const EXTENSION_PAYMENT_INTENT_KEY =
-  'swiftera:extension-payment-intent';
+export const EXTENSION_PAYMENT_INTENT_KEY = "swiftera:extension-payment-intent";
 
 export interface ExtensionPaymentIntent {
   rentalOrderId: string;
@@ -9,7 +8,7 @@ export interface ExtensionPaymentIntent {
 }
 
 export function saveExtensionPaymentIntent(intent: ExtensionPaymentIntent) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   window.localStorage.setItem(
     EXTENSION_PAYMENT_INTENT_KEY,
@@ -18,7 +17,7 @@ export function saveExtensionPaymentIntent(intent: ExtensionPaymentIntent) {
 }
 
 export function readExtensionPaymentIntent(): ExtensionPaymentIntent | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
 
   const raw = window.localStorage.getItem(EXTENSION_PAYMENT_INTENT_KEY);
   if (!raw) return null;
@@ -28,12 +27,12 @@ export function readExtensionPaymentIntent(): ExtensionPaymentIntent | null {
 
     if (
       !parsed ||
-      typeof parsed.rentalOrderId !== 'string' ||
+      typeof parsed.rentalOrderId !== "string" ||
       !parsed.rentalOrderId ||
-      typeof parsed.additionalRentalDays !== 'number' ||
+      typeof parsed.additionalRentalDays !== "number" ||
       parsed.additionalRentalDays < 1 ||
-      typeof parsed.txnRef !== 'string' ||
-      typeof parsed.createdAt !== 'number'
+      typeof parsed.txnRef !== "string" ||
+      typeof parsed.createdAt !== "number"
     ) {
       return null;
     }
@@ -50,15 +49,15 @@ export function readExtensionPaymentIntent(): ExtensionPaymentIntent | null {
 }
 
 export function clearExtensionPaymentIntent() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   window.localStorage.removeItem(EXTENSION_PAYMENT_INTENT_KEY);
 }
 
 export function extractTxnRefFromPaymentUrl(paymentUrl: string): string {
   try {
     const url = new URL(paymentUrl);
-    return url.searchParams.get('vnp_TxnRef') ?? '';
+    return url.searchParams.get("vnp_TxnRef") ?? "";
   } catch {
-    return '';
+    return "";
   }
 }

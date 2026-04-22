@@ -1,4 +1,4 @@
-import { httpService } from './http';
+import { httpService } from "./http";
 import {
   AppError,
   getApiErrorMessage as getApiErrorMessageInternal,
@@ -7,9 +7,9 @@ import {
   toAppError,
   type ApiErrorDetail,
   type AppErrorCode,
-} from '@/lib/error-handler';
+} from "@/lib/error-handler";
 
-const API_BASE_URL = 'https://swiftera.azurewebsites.net/api/v1';
+const API_BASE_URL = "https://swiftera.azurewebsites.net/api/v1";
 
 export const API_BASE = API_BASE_URL;
 
@@ -88,20 +88,20 @@ export interface PaginatedData<T> {
 function buildQueryString(
   params?: Record<string, string | number | boolean | undefined | null>,
 ): string {
-  if (!params) return '';
+  if (!params) return "";
   const entries = Object.entries(params).filter(
     ([, v]) => v !== undefined && v !== null,
   );
-  if (entries.length === 0) return '';
+  if (entries.length === 0) return "";
   const searchParams = new URLSearchParams();
   for (const [key, value] of entries) {
     searchParams.append(key, String(value));
   }
-  return `?${searchParams.toString().replace(/\+/g, '%20')}`;
+  return `?${searchParams.toString().replace(/\+/g, "%20")}`;
 }
 
 function mapAxiosError(error: unknown): AppError {
-  return toAppError(error, 'Request failed');
+  return toAppError(error, "Request failed");
 }
 
 async function request<T>(
@@ -132,7 +132,7 @@ async function request<T>(
 
     // BE luôn bọc trong { success, message, data, meta }
     // Trả thẳng `data` cho tiện sử dụng
-    if (json && typeof json === 'object' && 'success' in json) {
+    if (json && typeof json === "object" && "success" in json) {
       return (json as { success: boolean; data: T }).data;
     }
 
@@ -151,7 +151,7 @@ export function apiGet<T>(
   endpoint: string,
   options?: ApiRequestOptions,
 ): Promise<T> {
-  return request<T>('GET', endpoint, options);
+  return request<T>("GET", endpoint, options);
 }
 
 /** POST request */
@@ -160,7 +160,7 @@ export function apiPost<T>(
   body?: unknown,
   options?: ApiRequestOptions,
 ): Promise<T> {
-  return request<T>('POST', endpoint, { ...options, body });
+  return request<T>("POST", endpoint, { ...options, body });
 }
 
 /** PUT request */
@@ -169,7 +169,7 @@ export function apiPut<T>(
   body?: unknown,
   options?: ApiRequestOptions,
 ): Promise<T> {
-  return request<T>('PUT', endpoint, { ...options, body });
+  return request<T>("PUT", endpoint, { ...options, body });
 }
 
 /** PATCH request */
@@ -178,7 +178,7 @@ export function apiPatch<T>(
   body?: unknown,
   options?: ApiRequestOptions,
 ): Promise<T> {
-  return request<T>('PATCH', endpoint, { ...options, body });
+  return request<T>("PATCH", endpoint, { ...options, body });
 }
 
 /** DELETE request (hỗ trợ body nếu API cần, vd: xóa roles khỏi user) */
@@ -187,7 +187,7 @@ export function apiDelete<T>(
   body?: unknown,
   options?: ApiRequestOptions,
 ): Promise<T> {
-  return request<T>('DELETE', endpoint, { ...options, body });
+  return request<T>("DELETE", endpoint, { ...options, body });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ export function apiDelete<T>(
 export async function apiUpload<T>(
   endpoint: string,
   formData: FormData,
-  options: Omit<ApiRequestOptions, 'body'> = {},
+  options: Omit<ApiRequestOptions, "body"> = {},
 ): Promise<T> {
   const { params, headers: extraHeaders, signal, skipAuth } = options;
 
@@ -213,7 +213,7 @@ export async function apiUpload<T>(
     const response = await httpService.request<
       { success?: boolean; data?: T } | T
     >({
-      method: 'POST',
+      method: "POST",
       url,
       data: formData,
       headers: extraHeaders, // Không override Content-Type - Axios/browser tự xử lý boundary
@@ -224,7 +224,7 @@ export async function apiUpload<T>(
     if (response.status === 204) return undefined as T;
 
     const json = response.data;
-    if (json && typeof json === 'object' && 'success' in json) {
+    if (json && typeof json === "object" && "success" in json) {
       return (json as { success: boolean; data: T }).data;
     }
     return json as T;
@@ -247,7 +247,7 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(init?.headers || {}),
     },
     ...init,

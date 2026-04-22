@@ -1,8 +1,12 @@
-import { Layout } from '@/components/Layout';
-import SplashCursor from '@/components/common/SplashCursor';
-import { ChillBackground } from '@/components/common/chill-background';
+import { Layout } from "@/components/Layout";
+import SplashCursor from "@/components/common/SplashCursor";
+import { ChillBackground } from "@/components/common/chill-background";
 
-export default function CartLayout({ children }: { children: React.ReactNode }) {
+export default function CartLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <Layout>
       {/* <SplashCursor /> */}

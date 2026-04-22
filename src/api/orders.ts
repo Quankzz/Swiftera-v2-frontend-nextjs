@@ -1,5 +1,5 @@
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
@@ -122,7 +122,7 @@ export interface AssignedTickets {
 
 /** Response của API-114: GET /dashboards/staff */
 export interface StaffDashboardData {
-  hubInfo: Pick<HubSummary, 'hubId' | 'hubCode' | 'hubName'>;
+  hubInfo: Pick<HubSummary, "hubId" | "hubCode" | "hubName">;
   todayTasks: TodayTasks;
   urgentOverdue: {
     count: number;
@@ -152,7 +152,7 @@ export const dashboardApi = {
   getAdminDashboard(
     hubId?: string,
   ): Promise<AxiosResponse<AdminDashboardResponse>> {
-    return httpService.get<AdminDashboardResponse>('/dashboards/admin', {
+    return httpService.get<AdminDashboardResponse>("/dashboards/admin", {
       ...authOpts,
       params: hubId ? { hubId } : undefined,
     });
@@ -168,7 +168,7 @@ export const dashboardApi = {
   getStaffDashboard(
     hubId?: string,
   ): Promise<AxiosResponse<StaffDashboardResponse>> {
-    return httpService.get<StaffDashboardResponse>('/dashboards/staff', {
+    return httpService.get<StaffDashboardResponse>("/dashboards/staff", {
       ...authOpts,
       params: hubId ? { hubId } : undefined,
     });

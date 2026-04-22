@@ -20,10 +20,10 @@
  *   image                       → undefined (BE has no image field)
  */
 
-import { useMemo } from 'react';
-import { useCategoryTreeQuery } from './use-category-tree';
-import type { CategoryTreeNode } from '../types';
-import type { Category } from '@/types/catalog';
+import { useMemo } from "react";
+import { useCategoryTreeQuery } from "./use-category-tree";
+import type { CategoryTreeNode } from "../types";
+import type { Category } from "@/types/catalog";
 
 /** Map a single root-level CategoryTreeNode to the local Category shape. */
 function treeNodeToCategory(node: CategoryTreeNode): Category {

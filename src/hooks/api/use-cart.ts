@@ -3,25 +3,29 @@
  * Module 10: CART (API-061 → API-065)
  */
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 import {
   useQuery,
   useMutation,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { cartKeys } from './cart.keys';
+} from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { cartKeys } from "./cart.keys";
 import {
   getCart,
   addCartLine,
   updateCartLine,
   removeCartLine,
   clearCart,
-} from './cart.service';
-import type { AddCartLineInput, CartLineResponse, CartResponse } from '@/api/cart';
-import { useAuth } from '@/context/AuthContext';
-import { buildLoginHref, getCurrentPathWithSearch } from '@/lib/auth-redirect';
+} from "./cart.service";
+import type {
+  AddCartLineInput,
+  CartLineResponse,
+  CartResponse,
+} from "@/api/cart";
+import { useAuth } from "@/context/AuthContext";
+import { buildLoginHref, getCurrentPathWithSearch } from "@/lib/auth-redirect";
 
 function requireAuthForMutation(params: {
   isAuthenticated: boolean;
@@ -40,7 +44,7 @@ function requireAuthForMutation(params: {
 
   throw new Error(
     params.isAuthLoading
-      ? 'Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.'
+      ? "Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại."
       : params.errorMessage,
   );
 }
@@ -50,9 +54,12 @@ function patchLineTotals(
   quantity: number,
   rentalDurationDays: number,
 ): CartLineResponse {
-  const lineTotal = Math.max(line.dailyPrice, 0) * quantity * rentalDurationDays;
+  const lineTotal =
+    Math.max(line.dailyPrice, 0) * quantity * rentalDurationDays;
   const depositHoldAmount =
-    line.depositAmount != null ? line.depositAmount * quantity : line.depositHoldAmount;
+    line.depositAmount != null
+      ? line.depositAmount * quantity
+      : line.depositHoldAmount;
 
   return {
     ...line,
@@ -63,7 +70,7 @@ function patchLineTotals(
   };
 }
 
-export const CART_CACHE_KEY = 'swiftera:cart:cache:v1';
+export const CART_CACHE_KEY = "swiftera:cart:cache:v1";
 const CART_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type PersistedCartPayload = {
@@ -72,7 +79,7 @@ type PersistedCartPayload = {
 };
 
 function readPersistedCartPayload(): PersistedCartPayload | undefined {
-  if (typeof window === 'undefined') return undefined;
+  if (typeof window === "undefined") return undefined;
 
   try {
     const raw = window.localStorage.getItem(CART_CACHE_KEY);
@@ -104,7 +111,7 @@ function readPersistedCartUpdatedAt(): number | undefined {
 }
 
 function persistCart(cart: CartResponse | undefined): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   if (!cart) {
     window.localStorage.removeItem(CART_CACHE_KEY);
@@ -119,11 +126,13 @@ function persistCart(cart: CartResponse | undefined): void {
 }
 
 function clearPersistedCart(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   window.localStorage.removeItem(CART_CACHE_KEY);
 }
 
-function getCachedCartFromQueryClient(queryClient: QueryClient): CartResponse | undefined {
+function getCachedCartFromQueryClient(
+  queryClient: QueryClient,
+): CartResponse | undefined {
   const cachedEntries = queryClient.getQueriesData<CartResponse>({
     queryKey: cartKeys.all,
   });
@@ -137,14 +146,20 @@ function setCachedCartForAllKeys(
   queryClient: QueryClient,
   nextCart: CartResponse | undefined,
 ): void {
-  queryClient.setQueriesData<CartResponse>({ queryKey: cartKeys.all }, nextCart);
+  queryClient.setQueriesData<CartResponse>(
+    { queryKey: cartKeys.all },
+    nextCart,
+  );
 }
 
 function normalizeColorId(value: string | null | undefined): string | null {
   return value ?? null;
 }
 
-function hasMatchingCartLine(cart: CartResponse, input: AddCartLineInput): boolean {
+function hasMatchingCartLine(
+  cart: CartResponse,
+  input: AddCartLineInput,
+): boolean {
   return cart.cartLines.some((line) => {
     return (
       line.productId === input.productId &&
@@ -163,8 +178,8 @@ function applyOptimisticAdd(
   const quantity = Math.max(1, input.quantity ?? 1);
 
   const base: CartResponse = old ?? {
-    cartId: 'optimistic-cart',
-    userId: 'optimistic-user',
+    cartId: "optimistic-cart",
+    userId: "optimistic-user",
     cartLines: [],
     createdAt: now,
     updatedAt: now,
@@ -203,7 +218,7 @@ function applyOptimisticAdd(
         productColorId: input.productColorId ?? null,
         colorName: null,
         colorCode: null,
-        productName: 'Đang thêm sản phẩm...',
+        productName: "Đang thêm sản phẩm...",
         productImageUrl: null,
         dailyPrice: 0,
         rentalDurationDays: input.rentalDurationDays,
@@ -239,7 +254,8 @@ function getDefaultDeliveryDate(): string {
  */
 export function useCartQuery(options?: { deliveryDate?: string }) {
   const { isAuthenticated } = useAuth();
-  const effectiveDeliveryDate = options?.deliveryDate ?? getDefaultDeliveryDate();
+  const effectiveDeliveryDate =
+    options?.deliveryDate ?? getDefaultDeliveryDate();
 
   const query = useQuery({
     queryKey: cartKeys.cart(effectiveDeliveryDate),
@@ -252,7 +268,9 @@ export function useCartQuery(options?: { deliveryDate?: string }) {
     staleTime: 30_000,
     gcTime: 30 * 60_000,
     initialData: isAuthenticated ? readPersistedCart : undefined,
-    initialDataUpdatedAt: isAuthenticated ? readPersistedCartUpdatedAt : undefined,
+    initialDataUpdatedAt: isAuthenticated
+      ? readPersistedCartUpdatedAt
+      : undefined,
     placeholderData: (previousData) => previousData,
     retry: false,
   });
@@ -290,14 +308,12 @@ export function useAddToCart(options?: {
     mutationFn: async (input: AddCartLineInput) => {
       if (!isAuthenticated) {
         if (!isAuthLoading) {
-          router.push(
-            buildLoginHref(getCurrentPathWithSearch('/cart')),
-          );
+          router.push(buildLoginHref(getCurrentPathWithSearch("/cart")));
         }
         throw new Error(
           isAuthLoading
-            ? 'Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.'
-            : 'Vui lòng đăng nhập để thêm vào giỏ hàng.',
+            ? "Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại."
+            : "Vui lòng đăng nhập để thêm vào giỏ hàng.",
         );
       }
 
@@ -374,8 +390,8 @@ export function useUpdateCartLine(
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/cart',
-        errorMessage: 'Vui lòng đăng nhập để cập nhật giỏ hàng.',
+        fallbackPath: "/cart",
+        errorMessage: "Vui lòng đăng nhập để cập nhật giỏ hàng.",
       });
 
       return updateCartLine(cartLineId, input);
@@ -451,8 +467,8 @@ export function useRemoveCartLine(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/cart',
-        errorMessage: 'Vui lòng đăng nhập để chỉnh sửa giỏ hàng.',
+        fallbackPath: "/cart",
+        errorMessage: "Vui lòng đăng nhập để chỉnh sửa giỏ hàng.",
       });
 
       return removeCartLine(cartLineId);
@@ -519,8 +535,8 @@ export function useClearCart(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/cart',
-        errorMessage: 'Vui lòng đăng nhập để chỉnh sửa giỏ hàng.',
+        fallbackPath: "/cart",
+        errorMessage: "Vui lòng đăng nhập để chỉnh sửa giỏ hàng.",
       });
 
       return clearCart();
@@ -595,8 +611,8 @@ export function useUpdateCartLineQuantity(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/cart',
-        errorMessage: 'Vui lòng đăng nhập để cập nhật giỏ hàng.',
+        fallbackPath: "/cart",
+        errorMessage: "Vui lòng đăng nhập để cập nhật giỏ hàng.",
       });
 
       return updateCartLine(cartLineId, { quantity, rentalDurationDays });

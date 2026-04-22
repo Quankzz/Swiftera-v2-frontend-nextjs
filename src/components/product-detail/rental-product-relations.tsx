@@ -1,25 +1,23 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'motion/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "motion/react";
+import { Star, ThumbsUp, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
-  Star,
-  ThumbsUp,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { useProductReviewsQuery, useDeleteReview, useMarkHelpfulReview } from '@/hooks/api/use-reviews';
-import { useRelatedProductsQuery } from '@/features/products/hooks/use-related-products';
-import type { ProductReviewResponse } from '@/api/reviewsApi';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+  useProductReviewsQuery,
+  useDeleteReview,
+  useMarkHelpfulReview,
+} from "@/hooks/api/use-reviews";
+import { useRelatedProductsQuery } from "@/features/products/hooks/use-related-products";
+import type { ProductReviewResponse } from "@/api/reviewsApi";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    REUSABLE HELPERS
@@ -28,46 +26,53 @@ import { cn } from '@/lib/utils';
 function StarRating({
   value,
   onChange,
-  size = 'md',
+  size = "md",
 }: {
   value: number;
   onChange?: (v: number) => void;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
 }) {
-  const ids = useMemo(() => Array.from({ length: 5 }, (_, i) => `star-${i}`), []);
-  const map = { sm: 'size-4', md: 'size-5', lg: 'size-6' };
+  const ids = useMemo(
+    () => Array.from({ length: 5 }, (_, i) => `star-${i}`),
+    [],
+  );
+  const map = { sm: "size-4", md: "size-5", lg: "size-6" };
   return (
-    <div className='flex items-center gap-0.5' role='group' aria-label='Đánh giá sao'>
+    <div
+      className="flex items-center gap-0.5"
+      role="group"
+      aria-label="Đánh giá sao"
+    >
       {ids.map((id, i) => {
         const filled = i < value;
         return (
           <button
             key={id}
-            type='button'
+            type="button"
             onClick={() => onChange?.(i + 1)}
             className={cn(
-              'rounded transition-all duration-150',
+              "rounded transition-all duration-150",
               onChange
-                ? 'cursor-pointer hover:scale-110 active:scale-95'
-                : 'cursor-default',
+                ? "cursor-pointer hover:scale-110 active:scale-95"
+                : "cursor-default",
               map[size],
             )}
             aria-label={`${i + 1} sao`}
             disabled={!onChange}
           >
             <svg
-              viewBox='0 0 24 24'
-              fill={filled ? 'currentColor' : 'none'}
-              stroke='currentColor'
+              viewBox="0 0 24 24"
+              fill={filled ? "currentColor" : "none"}
+              stroke="currentColor"
               strokeWidth={1.5}
               className={cn(
                 map[size],
                 filled
-                  ? 'text-amber-400 drop-shadow-sm'
-                  : 'text-muted-foreground/40',
+                  ? "text-amber-400 drop-shadow-sm"
+                  : "text-muted-foreground/40",
               )}
             >
-              <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           </button>
         );
@@ -96,11 +101,11 @@ function parseBackendDateString(value: string): Date | null {
     const day = Number.parseInt(withMeridiem[3], 10);
     let hour = Number.parseInt(withMeridiem[4], 10);
     const minute = Number.parseInt(withMeridiem[5], 10);
-    const second = Number.parseInt(withMeridiem[6] ?? '0', 10);
+    const second = Number.parseInt(withMeridiem[6] ?? "0", 10);
     const token = withMeridiem[7].toUpperCase();
 
-    const isPm = token === 'PM' || token === 'CH';
-    const isAm = token === 'AM' || token === 'SA';
+    const isPm = token === "PM" || token === "CH";
+    const isAm = token === "AM" || token === "SA";
 
     if (isPm && hour < 12) hour += 12;
     if (isAm && hour === 12) hour = 0;
@@ -118,7 +123,7 @@ function parseBackendDateString(value: string): Date | null {
     const day = Number.parseInt(ymd[3], 10);
     const hour = Number.parseInt(ymd[4], 10);
     const minute = Number.parseInt(ymd[5], 10);
-    const second = Number.parseInt(ymd[6] ?? '0', 10);
+    const second = Number.parseInt(ymd[6] ?? "0", 10);
 
     const parsed = new Date(year, month, day, hour, minute, second);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -134,7 +139,7 @@ function parseDateCandidate(value: DateCandidate): Date | null {
     return Number.isNaN(value.getTime()) ? null : value;
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return null;
 
@@ -152,25 +157,23 @@ function parseDateCandidate(value: DateCandidate): Date | null {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
-  if (typeof value === 'number' && Number.isFinite(value)) {
+  if (typeof value === "number" && Number.isFinite(value)) {
     const millis = Math.abs(value) < 1e12 ? value * 1000 : value;
     const parsed = new Date(millis);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
-  if (typeof value === 'object' && value !== null) {
+  if (typeof value === "object" && value !== null) {
     const seconds =
-      typeof value.seconds === 'number'
-        ? value.seconds
-        : undefined;
+      typeof value.seconds === "number" ? value.seconds : undefined;
     const nanos =
-      typeof value.nanos === 'number'
+      typeof value.nanos === "number"
         ? value.nanos
-        : typeof value.nanoseconds === 'number'
+        : typeof value.nanoseconds === "number"
           ? value.nanoseconds
           : 0;
 
-    if (typeof seconds === 'number' && Number.isFinite(seconds)) {
+    if (typeof seconds === "number" && Number.isFinite(seconds)) {
       const millis = seconds * 1000 + Math.floor(nanos / 1_000_000);
       const parsed = new Date(millis);
       return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -182,7 +185,7 @@ function parseDateCandidate(value: DateCandidate): Date | null {
 
 function toIsoDateOrEmpty(value: unknown): string {
   const parsed = parseDateCandidate(value as DateCandidate);
-  return parsed ? parsed.toISOString() : '';
+  return parsed ? parsed.toISOString() : "";
 }
 
 /** Hiển thị thời gian tương đối từ createdAt, fallback updatedAt khi cần. */
@@ -193,7 +196,7 @@ function formatRelativeTime(
   const date =
     parseDateCandidate(primaryDate as DateCandidate) ??
     parseDateCandidate(fallbackDate as DateCandidate);
-  if (!date) return 'Không rõ';
+  if (!date) return "Không rõ";
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -202,31 +205,34 @@ function formatRelativeTime(
   const diffHr = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHr / 24);
 
-  const rtf = new Intl.RelativeTimeFormat('vi', { numeric: 'auto' });
+  const rtf = new Intl.RelativeTimeFormat("vi", { numeric: "auto" });
 
-  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
-  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
-  if (Math.abs(diffHr) < 24) return rtf.format(-diffHr, 'hour');
-  if (Math.abs(diffDay) < 30) return rtf.format(-diffDay, 'day');
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, "second");
+  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, "minute");
+  if (Math.abs(diffHr) < 24) return rtf.format(-diffHr, "hour");
+  if (Math.abs(diffDay) < 30) return rtf.format(-diffDay, "day");
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   }).format(date);
 }
 
-function formatTooltipTime(primaryDate?: unknown, fallbackDate?: unknown): string {
+function formatTooltipTime(
+  primaryDate?: unknown,
+  fallbackDate?: unknown,
+): string {
   const date =
     parseDateCandidate(primaryDate as DateCandidate) ??
     parseDateCandidate(fallbackDate as DateCandidate);
-  if (!date) return '';
+  if (!date) return "";
 
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 }
 
@@ -269,43 +275,45 @@ function ReviewCard({
         highlighted
           ? {
               boxShadow: [
-                '0 0 0 0 rgba(251, 191, 36, 0)',
-                '0 0 0 4px rgba(251, 191, 36, 0.3)',
-                '0 0 0 2px rgba(251, 191, 36, 0.2)',
+                "0 0 0 0 rgba(251, 191, 36, 0)",
+                "0 0 0 4px rgba(251, 191, 36, 0.3)",
+                "0 0 0 2px rgba(251, 191, 36, 0.2)",
               ],
             }
           : undefined
       }
       transition={{ duration: 0.5 }}
       className={cn(
-        'rounded-2xl border p-5 transition-all duration-500',
+        "rounded-2xl border p-5 transition-all duration-500",
         highlighted
-          ? 'border-amber-400/60 bg-amber-50/40 ring-2 ring-amber-300/50 dark:border-amber-600/50 dark:bg-amber-950/20 dark:ring-amber-700/40'
-          : 'border-border/60 bg-card dark:bg-card/80',
+          ? "border-amber-400/60 bg-amber-50/40 ring-2 ring-amber-300/50 dark:border-amber-600/50 dark:bg-amber-950/20 dark:ring-amber-700/40"
+          : "border-border/60 bg-card dark:bg-card/80",
       )}
     >
       {/* Header */}
-      <div className='flex items-start justify-between gap-3'>
-        <div className='flex items-center gap-3'>
-          <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br bg-blue-400 to-blue-600 text-sm font-bold text-white shadow-sm'>
-            {(review.userNickname ?? 'U').charAt(0).toUpperCase()}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br bg-blue-400 to-blue-600 text-sm font-bold text-white shadow-sm">
+            {(review.userNickname ?? "U").charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className='text-sm font-semibold text-foreground'>
-              {review.userNickname ?? 'Người dùng'}
+            <p className="text-sm font-semibold text-foreground">
+              {review.userNickname ?? "Người dùng"}
             </p>
-            <StarRating value={review.rating} size='sm' />
+            <StarRating value={review.rating} size="sm" />
           </div>
         </div>
-        <div className='flex flex-col items-end gap-1.5'>
+        <div className="flex flex-col items-end gap-1.5">
           <span
-            className='text-xs text-muted-foreground'
-            title={formatTooltipTime(review.createdAt, review.updatedAt) || undefined}
+            className="text-xs text-muted-foreground"
+            title={
+              formatTooltipTime(review.createdAt, review.updatedAt) || undefined
+            }
           >
             {formatRelativeTime(review.createdAt, review.updatedAt)}
           </span>
           {highlighted && (
-            <Badge className='bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'>
+            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
               Đang xem
             </Badge>
           )}
@@ -314,60 +322,64 @@ function ReviewCard({
 
       {/* Content */}
       {review.content && (
-        <p className='mt-4 text-sm leading-relaxed text-foreground'>
+        <p className="mt-4 text-sm leading-relaxed text-foreground">
           {review.content}
         </p>
       )}
 
       {/* Staff reply */}
       {review.sellerReply && (
-        <div className='mt-4 rounded-xl border border-emerald-200/60 bg-emerald-50/60 p-4 dark:border-emerald-800/50 dark:bg-emerald-950/20'>
-          <div className='mb-2 flex items-center gap-2'>
-            <div className='flex size-6 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/50'>
+        <div className="mt-4 rounded-xl border border-emerald-200/60 bg-emerald-50/60 p-4 dark:border-emerald-800/50 dark:bg-emerald-950/20">
+          <div className="mb-2 flex items-center gap-2">
+            <div className="flex size-6 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/50">
               <svg
-                viewBox='0 0 24 24'
-                className='size-3.5 text-emerald-600 dark:text-emerald-400'
-                fill='none'
-                stroke='currentColor'
+                viewBox="0 0 24 24"
+                className="size-3.5 text-emerald-600 dark:text-emerald-400"
+                fill="none"
+                stroke="currentColor"
                 strokeWidth={2}
-                strokeLinecap='round'
-                strokeLinejoin='round'
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' />
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
             </div>
-            <p className='text-xs font-semibold text-emerald-700 dark:text-emerald-400'>
+            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               Phản hồi từ Swiftera
             </p>
           </div>
-          <p className='text-sm leading-relaxed text-emerald-800 dark:text-emerald-200'>
+          <p className="text-sm leading-relaxed text-emerald-800 dark:text-emerald-200">
             {review.sellerReply}
           </p>
         </div>
       )}
 
       {/* Actions */}
-      <div className='mt-4 flex items-center gap-2 border-t border-border/40 pt-4'>
+      <div className="mt-4 flex items-center gap-2 border-t border-border/40 pt-4">
         {/* Helpful */}
         <button
-          type='button'
+          type="button"
           onClick={() => onMarkHelpful(review.productReviewId)}
           disabled={isHelpfulPending}
           className={cn(
-            'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all',
+            "flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
             isHelpfulPending
-              ? 'bg-blue-50 text-blue-400 dark:bg-blue-950/30'
-              : 'text-muted-foreground hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/30 dark:hover:text-blue-400',
+              ? "bg-blue-50 text-blue-400 dark:bg-blue-950/30"
+              : "text-muted-foreground hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/30 dark:hover:text-blue-400",
           )}
         >
           {isHelpfulPending ? (
-            <Loader2 className='size-3.5 animate-spin' />
+            <Loader2 className="size-3.5 animate-spin" />
           ) : (
-            <ThumbsUp className='size-3.5' />
+            <ThumbsUp className="size-3.5" />
           )}
           <span>Hữu ích</span>
           {helpfulCount > 0 && (
-            <span className={cn(isHelpfulPending ? 'text-blue-300' : 'text-blue-500')}>
+            <span
+              className={cn(
+                isHelpfulPending ? "text-blue-300" : "text-blue-500",
+              )}
+            >
               ({helpfulCount})
             </span>
           )}
@@ -378,9 +390,9 @@ function ReviewCard({
         {/* Delete (owner only) */}
         {isOwner && (
           <button
-            type='button'
+            type="button"
             onClick={() => onDelete(review.productReviewId)}
-            className='ml-auto flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400'
+            className="ml-auto flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-medium text-muted-foreground transition-all hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400"
           >
             Xóa
           </button>
@@ -408,7 +420,7 @@ type NormalizedReviewsData = {
 function normalizeReviewsData(
   data: unknown,
 ): NormalizedReviewsData | undefined {
-  if (!data || typeof data !== 'object') return undefined;
+  if (!data || typeof data !== "object") return undefined;
   const d = data as Record<string, unknown>;
 
   const normalizeItems = (items: unknown[]): NormalizedReview[] => {
@@ -417,17 +429,14 @@ function normalizeReviewsData(
       const raw = item as Record<string, unknown>;
 
       const createdAt = toIsoDateOrEmpty(
-        raw.createdAt ??
-        raw.created_at ??
-        raw.createdTime ??
-        raw.createdDate,
+        raw.createdAt ?? raw.created_at ?? raw.createdTime ?? raw.createdDate,
       );
       const updatedAt = toIsoDateOrEmpty(
         raw.updatedAt ??
-        raw.updated_at ??
-        raw.modifiedAt ??
-        raw.modifiedTime ??
-        raw.updatedDate,
+          raw.updated_at ??
+          raw.modifiedAt ??
+          raw.modifiedTime ??
+          raw.updatedDate,
       );
 
       return {
@@ -442,10 +451,8 @@ function normalizeReviewsData(
     return {
       items: normalizeItems(d.items),
       totalPages:
-        typeof d.totalPages === 'number' && d.totalPages > 0
-          ? d.totalPages
-          : 1,
-      totalItems: typeof d.totalItems === 'number' ? d.totalItems : 0,
+        typeof d.totalPages === "number" && d.totalPages > 0 ? d.totalPages : 1,
+      totalItems: typeof d.totalItems === "number" ? d.totalItems : 0,
     };
   }
 
@@ -454,9 +461,9 @@ function normalizeReviewsData(
   return {
     items: normalizeItems(content),
     totalPages:
-      typeof meta?.totalPages === 'number' ? (meta.totalPages as number) : 1,
+      typeof meta?.totalPages === "number" ? (meta.totalPages as number) : 1,
     totalItems:
-      typeof meta?.totalElements === 'number'
+      typeof meta?.totalElements === "number"
         ? (meta.totalElements as number)
         : 0,
   };
@@ -474,11 +481,11 @@ export function RentalReviewsSection({
   userCompletedOrderId: string | null;
 }) {
   const deleteReview = useDeleteReview({
-    onSuccess: () => toast.success('Đã xóa đánh giá.'),
-    onError: (err) => toast.error(err.message || 'Không xóa được đánh giá.'),
+    onSuccess: () => toast.success("Đã xóa đánh giá."),
+    onError: (err) => toast.error(err.message || "Không xóa được đánh giá."),
   });
   const markHelpful = useMarkHelpfulReview({
-    onSuccess: () => toast.success('Cảm ơn bạn đã đánh giá!'),
+    onSuccess: () => toast.success("Cảm ơn bạn đã đánh giá!"),
     onError: (err) => toast.error(err.message),
   });
 
@@ -488,7 +495,7 @@ export function RentalReviewsSection({
   const FILTER_FETCH_SIZE = 1000;
   const [helpfulPendingId, setHelpfulPendingId] = useState<string | null>(null);
   const searchParams = useSearchParams();
-  const deepLinkedReviewId = searchParams.get('review');
+  const deepLinkedReviewId = searchParams.get("review");
   const deepLinkScrolledIdRef = useRef<string | null>(null);
 
   const queryParams = useMemo(() => {
@@ -538,7 +545,7 @@ export function RentalReviewsSection({
   }, [effectivePage, filteredReviews]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     if (!deepLinkedReviewId) {
       deepLinkScrolledIdRef.current = null;
       return;
@@ -553,7 +560,7 @@ export function RentalReviewsSection({
     const frame = window.requestAnimationFrame(() => {
       const element = document.getElementById(`review-${deepLinkedReviewId}`);
       if (!element) return;
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
       deepLinkScrolledIdRef.current = deepLinkedReviewId;
     });
 
@@ -564,13 +571,13 @@ export function RentalReviewsSection({
   const isFetching = fetchReviews.isFetching;
 
   const clearDeepLinkParam = useCallback(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const currentUrl = new URL(window.location.href);
-    if (!currentUrl.searchParams.has('review')) return;
-    currentUrl.searchParams.delete('review');
+    if (!currentUrl.searchParams.has("review")) return;
+    currentUrl.searchParams.delete("review");
     window.history.replaceState(
       {},
-      '',
+      "",
       `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`,
     );
   }, []);
@@ -586,7 +593,7 @@ export function RentalReviewsSection({
 
   const handleDelete = useCallback(
     (reviewId: string) => {
-      if (!confirm('Xóa đánh giá này?')) return;
+      if (!confirm("Xóa đánh giá này?")) return;
       deleteReview.mutate(reviewId);
     },
     [deleteReview],
@@ -595,90 +602,91 @@ export function RentalReviewsSection({
   // Share functionality removed per request.
 
   const RATING_OPTIONS: { label: string; value: number | null }[] = [
-    { label: 'Tất cả', value: null },
-    { label: '5 sao', value: 5 },
-    { label: '4 sao', value: 4 },
-    { label: '3 sao', value: 3 },
-    { label: '2 sao', value: 2 },
-    { label: '1 sao', value: 1 },
+    { label: "Tất cả", value: null },
+    { label: "5 sao", value: 5 },
+    { label: "4 sao", value: 4 },
+    { label: "3 sao", value: 3 },
+    { label: "2 sao", value: 2 },
+    { label: "1 sao", value: 1 },
   ];
 
   return (
     <div>
       {/* Header */}
-      <div className='mb-5 flex flex-wrap items-start justify-between gap-4'>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className='text-xl font-bold text-foreground'>Đánh giá sản phẩm</h2>
-          <div className='mt-1.5 flex items-center gap-3'>
-            <StarRating value={Math.round(rating)} size='sm' />
-            <span className='text-sm font-medium text-foreground'>
-              {rating > 0 ? rating.toFixed(1) : 'Chưa có'}
+          <h2 className="text-xl font-bold text-foreground">
+            Đánh giá sản phẩm
+          </h2>
+          <div className="mt-1.5 flex items-center gap-3">
+            <StarRating value={Math.round(rating)} size="sm" />
+            <span className="text-sm font-medium text-foreground">
+              {rating > 0 ? rating.toFixed(1) : "Chưa có"}
             </span>
             {totalElements > 0 && (
-              <span className='text-sm text-muted-foreground'>
+              <span className="text-sm text-muted-foreground">
                 ({totalElements} đánh giá)
               </span>
             )}
           </div>
 
           {/* Rating filter */}
-          <div className='mt-3 flex flex-wrap gap-1.5'>
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {RATING_OPTIONS.map((opt) => (
               <button
                 key={String(opt.value)}
-                type='button'
+                type="button"
                 onClick={() => {
                   clearDeepLinkParam();
                   setPage(1);
                   setRatingFilter(opt.value);
                 }}
                 className={cn(
-                  'flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all',
+                  "flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-all",
                   ratingFilter === opt.value
-                    ? 'border-blue-400/60 bg-blue-50 text-blue-700 dark:border-blue-600/50 dark:bg-blue-950/30 dark:text-blue-300'
-                    : 'border-border/60 bg-muted/30 text-muted-foreground hover:border-blue-300/40 hover:bg-blue-50/40 hover:text-blue-600 dark:hover:bg-blue-950/20 dark:hover:text-blue-400',
+                    ? "border-blue-400/60 bg-blue-50 text-blue-700 dark:border-blue-600/50 dark:bg-blue-950/30 dark:text-blue-300"
+                    : "border-border/60 bg-muted/30 text-muted-foreground hover:border-blue-300/40 hover:bg-blue-50/40 hover:text-blue-600 dark:hover:bg-blue-950/20 dark:hover:text-blue-400",
                 )}
               >
                 {opt.value !== null && (
-                  <Star className='size-3 text-amber-400' fill='currentColor' />
+                  <Star className="size-3 text-amber-400" fill="currentColor" />
                 )}
                 {opt.label}
               </button>
             ))}
           </div>
         </div>
-
       </div>
 
       {/* Review list */}
-      <div className='mt-4 space-y-3'>
+      <div className="mt-4 space-y-3">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className='space-y-2 rounded-2xl border border-border/60 p-5'
+              className="space-y-2 rounded-2xl border border-border/60 p-5"
             >
-              <div className='flex items-center gap-3'>
-                <Skeleton className='size-10 rounded-full' />
-                <div className='space-y-1.5'>
-                  <Skeleton className='h-4 w-28' />
-                  <Skeleton className='h-3 w-20' />
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-10 rounded-full" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-20" />
                 </div>
               </div>
-              <Skeleton className='h-4 w-full' />
-              <Skeleton className='h-4 w-3/4' />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
             </div>
           ))
         ) : filteredReviews.length === 0 ? (
-          <div className='rounded-2xl border border-dashed border-border/80 bg-muted/20 py-12 text-center'>
-            <Star className='mx-auto size-10 text-muted-foreground/40' />
-            <p className='mt-3 font-medium text-muted-foreground'>
+          <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 py-12 text-center">
+            <Star className="mx-auto size-10 text-muted-foreground/40" />
+            <p className="mt-3 font-medium text-muted-foreground">
               {ratingFilter !== null
                 ? `Không có đánh giá ${ratingFilter} sao nào.`
-                : 'Chưa có đánh giá nào.'}
+                : "Chưa có đánh giá nào."}
             </p>
             {userCompletedOrderId && (
-              <p className='mt-1 text-sm text-muted-foreground'>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Hãy là người đầu tiên đánh giá sản phẩm này!
               </p>
             )}
@@ -702,33 +710,35 @@ export function RentalReviewsSection({
       {!isLoading && (
         <>
           {totalPages > 1 && (
-            <div className='mt-5 flex items-center justify-center gap-2'>
+            <div className="mt-5 flex items-center justify-center gap-2">
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   clearDeepLinkParam();
                   setPage((currentPage) => Math.max(1, currentPage - 1));
                 }}
                 disabled={effectivePage === 1 || isFetching}
-                className='rounded-xl'
+                className="rounded-xl"
               >
-                <ChevronUp className='size-4 rotate-90' />
+                <ChevronUp className="size-4 rotate-90" />
               </Button>
-              <span className='px-3 text-sm text-muted-foreground'>
+              <span className="px-3 text-sm text-muted-foreground">
                 {effectivePage} / {totalPages}
               </span>
               <Button
-                variant='outline'
-                size='sm'
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   clearDeepLinkParam();
-                  setPage((currentPage) => Math.min(totalPages, currentPage + 1));
+                  setPage((currentPage) =>
+                    Math.min(totalPages, currentPage + 1),
+                  );
                 }}
                 disabled={effectivePage >= totalPages || isFetching}
-                className='rounded-xl'
+                className="rounded-xl"
               >
-                <ChevronDown className='size-4 rotate-90' />
+                <ChevronDown className="size-4 rotate-90" />
               </Button>
             </div>
           )}
@@ -746,19 +756,19 @@ export function RentalReviewsSection({
 
 function RelatedProductSkeleton() {
   return (
-    <div className='overflow-hidden rounded-xl border border-border/60'>
-      <Skeleton className='aspect-square w-full' />
-      <div className='space-y-2 p-3'>
-        <Skeleton className='h-4 w-3/4' />
-        <Skeleton className='h-4 w-1/2' />
+    <div className="overflow-hidden rounded-xl border border-border/60">
+      <Skeleton className="aspect-square w-full" />
+      <div className="space-y-2 p-3">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
       </div>
     </div>
   );
 }
 
-const relatedPriceFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
+const relatedPriceFormatter = new Intl.NumberFormat("vi-VN", {
+  style: "currency",
+  currency: "VND",
   maximumFractionDigits: 0,
 });
 
@@ -782,10 +792,10 @@ export function RentalRelatedProducts({
 
   return (
     <div>
-      <h2 className='mb-4 text-xl font-bold text-foreground'>
+      <h2 className="mb-4 text-xl font-bold text-foreground">
         Sản phẩm liên quan
       </h2>
-      <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {isLoading
           ? Array.from({ length: 5 }).map((_, index) => (
               <RelatedProductSkeleton key={`related-skeleton-${index}`} />
@@ -794,45 +804,47 @@ export function RentalRelatedProducts({
               <Link
                 key={product.productId}
                 href={`/product/${product.productId}`}
-                className='group overflow-hidden rounded-xl border border-border/60 bg-card transition-shadow hover:shadow-md dark:bg-card/80'
+                className="group overflow-hidden rounded-xl border border-border/60 bg-card transition-shadow hover:shadow-md dark:bg-card/80"
               >
-                <div className='relative aspect-square bg-muted'>
+                <div className="relative aspect-square bg-muted">
                   {product.imageUrl ? (
                     <Image
                       src={product.imageUrl}
                       alt={product.name}
                       fill
-                      className='object-cover transition-transform duration-300 group-hover:scale-105'
-                      sizes='(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw'
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
                     />
                   ) : (
-                    <div className='flex h-full items-center justify-center text-xs text-muted-foreground'>
+                    <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
                       Chưa có ảnh
                     </div>
                   )}
-                  {typeof product.discountPercent === 'number' && product.discountPercent > 0 && (
-                    <span className='absolute left-2 top-2 rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white'>
-                      -{product.discountPercent}%
-                    </span>
-                  )}
-                </div>
-                <div className='space-y-1.5 p-3'>
-                  <p className='line-clamp-2 text-sm font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400'>
-                    {product.name}
-                  </p>
-                  <div className='flex items-center gap-1 text-xs text-amber-500'>
-                    <Star className='size-3 fill-current' />
-                    <span>{product.rating.toFixed(1)}</span>
-                  </div>
-                  <div className='flex flex-wrap items-center gap-1.5'>
-                    <span className='text-sm font-semibold text-foreground'>
-                      {relatedPriceFormatter.format(product.dailyPrice)}
-                    </span>
-                    {product.oldDailyPrice != null && product.oldDailyPrice > product.dailyPrice && (
-                      <span className='text-xs text-muted-foreground line-through'>
-                        {relatedPriceFormatter.format(product.oldDailyPrice)}
+                  {typeof product.discountPercent === "number" &&
+                    product.discountPercent > 0 && (
+                      <span className="absolute left-2 top-2 rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        -{product.discountPercent}%
                       </span>
                     )}
+                </div>
+                <div className="space-y-1.5 p-3">
+                  <p className="line-clamp-2 text-sm font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    {product.name}
+                  </p>
+                  <div className="flex items-center gap-1 text-xs text-amber-500">
+                    <Star className="size-3 fill-current" />
+                    <span>{product.rating.toFixed(1)}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-sm font-semibold text-foreground">
+                      {relatedPriceFormatter.format(product.dailyPrice)}
+                    </span>
+                    {product.oldDailyPrice != null &&
+                      product.oldDailyPrice > product.dailyPrice && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          {relatedPriceFormatter.format(product.oldDailyPrice)}
+                        </span>
+                      )}
                   </div>
                 </div>
               </Link>

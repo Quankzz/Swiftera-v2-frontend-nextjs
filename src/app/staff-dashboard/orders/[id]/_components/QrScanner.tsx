@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import Image from 'next/image';
-import jsQR from 'jsqr';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import Image from "next/image";
+import jsQR from "jsqr";
 import {
   AlertCircle,
   X,
@@ -18,10 +18,10 @@ import {
   Banknote,
   Hash,
   CheckCircle2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { RentalOrderResponse } from '@/types/api.types';
-import { fmt, fmtDate, fmtPhone } from './utils';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { RentalOrderResponse } from "@/types/api.types";
+import { fmt, fmtDate, fmtPhone } from "./utils";
 
 export function QrScanner({
   expectedCode,
@@ -41,7 +41,7 @@ export function QrScanner({
   const isMountedRef = useRef(true);
   const intendedToBeOpenRef = useRef(false);
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [cameraFailed, setCameraFailed] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanConfirmed, setScanConfirmed] = useState(false);
@@ -95,14 +95,14 @@ export function QrScanner({
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) return;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'dontInvert',
+        inversionAttempts: "dontInvert",
       });
       if (code) {
         const raw = code.data.trim();
@@ -135,14 +135,14 @@ export function QrScanner({
 
   const startScanner = useCallback(async () => {
     intendedToBeOpenRef.current = true;
-    setError('');
+    setError("");
     setCameraFailed(false);
     try {
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: { ideal: 'environment' },
+            facingMode: { ideal: "environment" },
             width: { ideal: 1280 },
           },
         });
@@ -189,8 +189,8 @@ export function QrScanner({
           order.userAddress.city,
         ]
           .filter(Boolean)
-          .join(', ')
-      : (order?.hubAddressLine ?? '');
+          .join(", ")
+      : (order?.hubAddressLine ?? "");
 
     return (
       <div className="flex flex-col gap-4">
@@ -204,7 +204,7 @@ export function QrScanner({
               Xác minh QR thành công!
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Mã khớp:{' '}
+              Mã khớp:{" "}
               <span className="font-mono font-bold">
                 {expectedCode.toUpperCase()}
               </span>
@@ -230,7 +230,7 @@ export function QrScanner({
                       Họ tên
                     </p>
                     <p className="text-sm font-bold text-foreground">
-                      {order.userAddress?.recipientName ?? order.hubName ?? '—'}
+                      {order.userAddress?.recipientName ?? order.hubName ?? "—"}
                     </p>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ export function QrScanner({
                       Địa chỉ giao hàng
                     </p>
                     <p className="text-sm font-medium text-foreground">
-                      {deliveryAddress || '—'}
+                      {deliveryAddress || "—"}
                     </p>
                   </div>
                 </div>
@@ -264,9 +264,9 @@ export function QrScanner({
                       Thời gian thuê
                     </p>
                     <p className="text-sm font-semibold text-foreground">
-                      {fmtDate(order.expectedDeliveryDate ?? '')}{' '}
-                      <span className="text-muted-foreground">→</span>{' '}
-                      {fmtDate(order.expectedRentalEndDate ?? '')}
+                      {fmtDate(order.expectedDeliveryDate ?? "")}{" "}
+                      <span className="text-muted-foreground">→</span>{" "}
+                      {fmtDate(order.expectedRentalEndDate ?? "")}
                     </p>
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export function QrScanner({
               <div className="divide-y divide-border">
                 {order.rentalOrderLines.map((line, idx) => {
                   const photos = line.photos ?? [];
-                  const photoUrl = photos[0]?.photoUrl ?? '';
+                  const photoUrl = photos[0]?.photoUrl ?? "";
                   return (
                     <div
                       key={line.rentalOrderLineId}
@@ -330,7 +330,7 @@ export function QrScanner({
                           <div className="col-span-2 flex items-center gap-1 text-xs text-muted-foreground">
                             <Hash className="size-2.5 shrink-0" />
                             <span className="font-mono truncate">
-                              {line.inventorySerialNumber || '—'}
+                              {line.inventorySerialNumber || "—"}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -406,7 +406,7 @@ export function QrScanner({
           variant="outline"
           onClick={() => {
             setCameraFailed(false);
-            setError('');
+            setError("");
             startScanner();
           }}
           className="gap-2 h-11 text-sm"
@@ -448,7 +448,7 @@ export function QrScanner({
           </div>
         )}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm text-white text-xs font-semibold px-4 py-1.5 rounded-full whitespace-nowrap">
-          {scanning ? '🔍 Đang quét mã QR...' : '⏳ Đang khởi động camera...'}
+          {scanning ? "🔍 Đang quét mã QR..." : "⏳ Đang khởi động camera..."}
         </div>
       </div>
 
@@ -466,7 +466,7 @@ export function QrScanner({
             size="sm"
             onClick={() => {
               stopAll();
-              setError('');
+              setError("");
               setScanning(false);
               startScanner();
             }}

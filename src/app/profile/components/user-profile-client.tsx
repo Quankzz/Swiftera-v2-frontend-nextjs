@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Mail, Lock, AlertCircle, MapPin } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-import { userApi, type UserSecure } from '@/api/userProfileApi';
-import { getApiErrorMessage } from '../utils';
-import { UserProfileForm } from './user-profile-form';
-import { UserEmailForm } from './user-email-form';
-import { UserPasswordForm } from './user-password-form';
-import { UserAddressesSection } from './user-addresses-section';
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Mail, Lock, AlertCircle, MapPin } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { userApi, type UserSecure } from "@/api/userProfileApi";
+import { getApiErrorMessage } from "../utils";
+import { UserProfileForm } from "./user-profile-form";
+import { UserEmailForm } from "./user-email-form";
+import { UserPasswordForm } from "./user-password-form";
+import { UserAddressesSection } from "./user-addresses-section";
 
 const tabVariants = {
   initial: { opacity: 0, x: -16 },
@@ -24,16 +24,16 @@ const tabVariants = {
 
 function ProfileSkeleton() {
   return (
-    <div className='space-y-6'>
-      <Skeleton className='h-12 w-full rounded-xl' />
-      <Skeleton className='h-64 w-full rounded-xl' />
+    <div className="space-y-6">
+      <Skeleton className="h-12 w-full rounded-xl" />
+      <Skeleton className="h-64 w-full rounded-xl" />
     </div>
   );
 }
 
 export function UserProfileClient() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState("profile");
   const [profile, setProfile] = useState<UserSecure | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export function UserProfileClient() {
       setProfile(res.data.data);
       setLoadError(null);
     } catch (err) {
-      setLoadError(getApiErrorMessage(err, 'Không tải được hồ sơ'));
+      setLoadError(getApiErrorMessage(err, "Không tải được hồ sơ"));
     } finally {
       setLoading(false);
     }
@@ -70,15 +70,15 @@ export function UserProfileClient() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className='rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 px-6 py-8 text-center space-y-4'>
-        <p className='text-text-main font-medium'>
+      <div className="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 px-6 py-8 text-center space-y-4">
+        <p className="text-text-main font-medium">
           Bạn cần đăng nhập để xem trang cá nhân.
         </p>
         <Link
-          href='/auth/login'
+          href="/auth/login"
           className={cn(
             buttonVariants(),
-            'bg-theme-primary-start hover:opacity-90 text-white',
+            "bg-theme-primary-start hover:opacity-90 text-white",
           )}
         >
           Đăng nhập
@@ -93,15 +93,15 @@ export function UserProfileClient() {
 
   if (loadError && !profile) {
     return (
-      <div className='rounded-xl border border-red-200 dark:border-red-500/25 bg-red-50/80 dark:bg-red-500/10 px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-red-800 dark:text-red-300'>
-        <AlertCircle className='h-5 w-5 shrink-0' />
-        <div className='flex-1 space-y-1'>
-          <p className='font-medium'>Không tải được dữ liệu</p>
-          <p className='opacity-90'>{loadError}</p>
+      <div className="rounded-xl border border-red-200 dark:border-red-500/25 bg-red-50/80 dark:bg-red-500/10 px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-red-800 dark:text-red-300">
+        <AlertCircle className="h-5 w-5 shrink-0" />
+        <div className="flex-1 space-y-1">
+          <p className="font-medium">Không tải được dữ liệu</p>
+          <p className="opacity-90">{loadError}</p>
         </div>
         <Button
-          type='button'
-          variant='outline'
+          type="button"
+          variant="outline"
           onClick={() => void loadProfile()}
         >
           Thử lại
@@ -115,62 +115,62 @@ export function UserProfileClient() {
   }
 
   return (
-    <AnimatePresence mode='wait'>
+    <AnimatePresence mode="wait">
       <motion.div
-        key='profile-client'
+        key="profile-client"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         {loadError && (
-          <div className='mb-4 rounded-lg border border-amber-200 dark:border-amber-500/25 bg-amber-50/80 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200 flex items-start gap-2'>
-            <AlertCircle className='h-4 w-4 shrink-0 mt-0.5' />
+          <div className="mb-4 rounded-lg border border-amber-200 dark:border-amber-500/25 bg-amber-50/80 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{loadError}</span>
           </div>
         )}
 
         <Tabs
-          defaultValue='profile'
+          defaultValue="profile"
           value={activeTab}
           onValueChange={setActiveTab}
-          className='w-full'
+          className="w-full"
         >
-          <TabsList className='grid w-full grid-cols-2 md:grid-cols-4 gap-1 mb-8 bg-white dark:bg-surface-card p-1 rounded-xl shadow-sm dark:shadow-black/30'>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 mb-8 bg-white dark:bg-surface-card p-1 rounded-xl shadow-sm dark:shadow-black/30">
             <TabsTrigger
-              value='profile'
-              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
+              value="profile"
+              className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm"
             >
-              <User className='h-4 w-4 shrink-0' />
-              <span className='truncate'>Thông tin</span>
+              <User className="h-4 w-4 shrink-0" />
+              <span className="truncate">Thông tin</span>
             </TabsTrigger>
             <TabsTrigger
-              value='email'
-              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
+              value="email"
+              className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm"
             >
-              <Mail className='h-4 w-4 shrink-0' />
+              <Mail className="h-4 w-4 shrink-0" />
               <span>Email</span>
             </TabsTrigger>
             <TabsTrigger
-              value='password'
-              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
+              value="password"
+              className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm"
             >
-              <Lock className='h-4 w-4 shrink-0' />
+              <Lock className="h-4 w-4 shrink-0" />
               <span>Mật khẩu</span>
             </TabsTrigger>
             <TabsTrigger
-              value='addresses'
-              className='flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm'
+              value="addresses"
+              className="flex items-center gap-2 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-lg py-2 text-xs sm:text-sm"
             >
-              <MapPin className='h-4 w-4 shrink-0' />
-              <span className='truncate'>Địa chỉ</span>
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="truncate">Địa chỉ</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value='profile'>
-            <AnimatePresence mode='wait'>
-              {activeTab === 'profile' && (
+          <TabsContent value="profile">
+            <AnimatePresence mode="wait">
+              {activeTab === "profile" && (
                 <motion.div
-                  key='profile'
+                  key="profile"
                   {...tabVariants}
                   transition={{ duration: 0.25 }}
                 >
@@ -183,11 +183,11 @@ export function UserProfileClient() {
             </AnimatePresence>
           </TabsContent>
 
-          <TabsContent value='email'>
-            <AnimatePresence mode='wait'>
-              {activeTab === 'email' && (
+          <TabsContent value="email">
+            <AnimatePresence mode="wait">
+              {activeTab === "email" && (
                 <motion.div
-                  key='email'
+                  key="email"
                   {...tabVariants}
                   transition={{ duration: 0.25 }}
                 >
@@ -197,11 +197,11 @@ export function UserProfileClient() {
             </AnimatePresence>
           </TabsContent>
 
-          <TabsContent value='password'>
-            <AnimatePresence mode='wait'>
-              {activeTab === 'password' && (
+          <TabsContent value="password">
+            <AnimatePresence mode="wait">
+              {activeTab === "password" && (
                 <motion.div
-                  key='password'
+                  key="password"
                   {...tabVariants}
                   transition={{ duration: 0.25 }}
                 >
@@ -211,11 +211,11 @@ export function UserProfileClient() {
             </AnimatePresence>
           </TabsContent>
 
-          <TabsContent value='addresses'>
-            <AnimatePresence mode='wait'>
-              {activeTab === 'addresses' && (
+          <TabsContent value="addresses">
+            <AnimatePresence mode="wait">
+              {activeTab === "addresses" && (
                 <motion.div
-                  key='addresses'
+                  key="addresses"
                   {...tabVariants}
                   transition={{ duration: 0.25 }}
                 >

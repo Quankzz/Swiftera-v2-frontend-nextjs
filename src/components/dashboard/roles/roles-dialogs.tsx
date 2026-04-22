@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { startTransition, useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,21 +8,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useCreateRoleMutation,
   useDeleteRoleMutation,
   useRoleDetailQuery,
   useUpdateRoleMutation,
-} from '@/features/roles/hooks/use-roles';
+} from "@/features/roles/hooks/use-roles";
 import type {
   CreateRoleInput,
   UpdateRoleInput,
   RoleResponse,
-} from '@/features/roles/types';
+} from "@/features/roles/types";
 
 interface RoleFormDialogProps {
   open: boolean;
@@ -41,8 +41,8 @@ export function RoleFormDialog({
   );
 
   const buildState = (role?: RoleResponse | null) => ({
-    name: role?.name || '',
-    description: role?.description || '',
+    name: role?.name || "",
+    description: role?.description || "",
     active: role?.active ?? true,
   });
 
@@ -73,7 +73,7 @@ export function RoleFormDialog({
       const trimmedDesc = formState.description
         ? formState.description.trim()
         : null;
-      if (trimmedName !== (source.name ?? '')) payload.name = trimmedName;
+      if (trimmedName !== (source.name ?? "")) payload.name = trimmedName;
       if (trimmedDesc !== (source.description ?? null))
         payload.description = trimmedDesc;
       if (formState.active !== (source.active ?? true))
@@ -101,41 +101,41 @@ export function RoleFormDialog({
 
   return (
     <Dialog
-      key={initialRole?.roleId ?? 'new-role'}
+      key={initialRole?.roleId ?? "new-role"}
       open={open}
       onOpenChange={(val) => !val && onClose()}
     >
-      <DialogContent className='max-w-lg'>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className='text-text-main'>
-            {isEdit ? 'Chỉnh sửa vai trò' : 'Thêm vai trò'}
+          <DialogTitle className="text-text-main">
+            {isEdit ? "Chỉnh sửa vai trò" : "Thêm vai trò"}
           </DialogTitle>
           <DialogDescription>
             Nhập thông tin vai trò. Các trường có dấu * là bắt buộc.
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4 py-2'>
+        <div className="space-y-4 py-2">
           {isEdit && isFetching && (
-            <div className='text-sm text-text-sub'>
+            <div className="text-sm text-text-sub">
               Đang tải thông tin chi tiết...
             </div>
           )}
-          <div className='space-y-2'>
-            <label className='block text-text-main text-sm font-medium mb-1'>
-              Tên vai trò <span className='text-theme-primary-start'> * </span>
+          <div className="space-y-2">
+            <label className="block text-text-main text-sm font-medium mb-1">
+              Tên vai trò <span className="text-theme-primary-start"> * </span>
             </label>
             <Input
               value={formState.name}
               onChange={(e) =>
                 setFormState((s) => ({ ...s, name: e.target.value }))
               }
-              placeholder='VD: Quản trị viên'
+              placeholder="VD: Quản trị viên"
             />
           </div>
 
-          <div className='space-y-2'>
-            <label className='block text-text-main text-sm font-medium mb-1'>
+          <div className="space-y-2">
+            <label className="block text-text-main text-sm font-medium mb-1">
               Mô tả
             </label>
             <Textarea
@@ -143,21 +143,21 @@ export function RoleFormDialog({
               onChange={(e) =>
                 setFormState((s) => ({ ...s, description: e.target.value }))
               }
-              placeholder='Mô tả ngắn về vai trò'
+              placeholder="Mô tả ngắn về vai trò"
               rows={3}
             />
           </div>
 
-          <div className='flex items-center justify-between rounded-md border border-gray-200 dark:border-white/8 px-3 py-2'>
+          <div className="flex items-center justify-between rounded-md border border-gray-200 dark:border-white/8 px-3 py-2">
             <div>
-              <p className='text-sm font-medium text-text-main'>Trạng thái</p>
-              <p className='text-xs text-text-sub'>
+              <p className="text-sm font-medium text-text-main">Trạng thái</p>
+              <p className="text-xs text-text-sub">
                 Bật nếu vai trò đang hoạt động
               </p>
             </div>
             <input
-              type='checkbox'
-              className='h-4 w-4'
+              type="checkbox"
+              className="h-4 w-4"
               checked={formState.active}
               onChange={(e) =>
                 setFormState((s) => ({ ...s, active: e.target.checked }))
@@ -168,19 +168,19 @@ export function RoleFormDialog({
 
         <DialogFooter>
           <Button
-            variant='ghost'
+            variant="ghost"
             onClick={onClose}
-            className='text-text-sub'
+            className="text-text-sub"
             disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
             onClick={handleSubmit}
-            className='bg-theme-primary-start hover:opacity-90'
+            className="bg-theme-primary-start hover:opacity-90"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo mới'}
+            {isSubmitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo mới"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -211,32 +211,32 @@ export function RoleDeleteDialog({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className='max-w-md'>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className='text-text-main'>Xóa vai trò</DialogTitle>
+          <DialogTitle className="text-text-main">Xóa vai trò</DialogTitle>
           <DialogDescription>
-            Bạn có chắc chắn muốn xóa vai trò{' '}
-            <span className='font-semibold text-text-main'>{role?.name}</span>?
+            Bạn có chắc chắn muốn xóa vai trò{" "}
+            <span className="font-semibold text-text-main">{role?.name}</span>?
             Hành động này không thể hoàn tác.
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
           <Button
-            variant='ghost'
+            variant="ghost"
             onClick={onClose}
-            className='text-text-sub'
+            className="text-text-sub"
             disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
-            variant='destructive'
+            variant="destructive"
             onClick={handleDelete}
             disabled={isSubmitting}
-            className='bg-theme-primary-start hover:bg-theme-primary-end text-white'
+            className="bg-theme-primary-start hover:bg-theme-primary-end text-white"
           >
-            {isSubmitting ? 'Đang xóa...' : 'Xóa'}
+            {isSubmitting ? "Đang xóa..." : "Xóa"}
           </Button>
         </DialogFooter>
       </DialogContent>

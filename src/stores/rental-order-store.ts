@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import type { RentalCartLine } from '@/stores/rental-cart-store';
-import { computeCartTotals } from '@/stores/rental-cart-store';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { RentalCartLine } from "@/stores/rental-cart-store";
+import { computeCartTotals } from "@/stores/rental-cart-store";
 
 export type RentalOrderTotals = ReturnType<typeof computeCartTotals>;
 
-export type RentalPaymentMethod = 'bank_transfer' | 'e_wallet';
+export type RentalPaymentMethod = "bank_transfer" | "e_wallet";
 
 export interface RentalOrder {
   id: string;
@@ -44,7 +44,7 @@ export const useRentalOrderStore = create<RentalOrderState>()(
 
       addOrder: ({ lines, paymentMethod, customerName, customerPhone }) => {
         const id =
-          typeof crypto !== 'undefined' && crypto.randomUUID
+          typeof crypto !== "undefined" && crypto.randomUUID
             ? crypto.randomUUID()
             : `ord-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
         const snapshot = JSON.parse(JSON.stringify(lines)) as RentalCartLine[];
@@ -65,9 +65,9 @@ export const useRentalOrderStore = create<RentalOrderState>()(
       getOrder: (id) => get().orders.find((o) => o.id === id),
     }),
     {
-      name: 'swiftera-rental-orders',
+      name: "swiftera-rental-orders",
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ orders: s.orders }),
-    }
-  )
+    },
+  ),
 );

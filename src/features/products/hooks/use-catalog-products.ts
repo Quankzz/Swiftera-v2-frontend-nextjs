@@ -15,10 +15,10 @@
  *   API-054: GET /api/v1/products
  */
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { getProducts } from '../api/product.service';
-import type { PaginatedProductsResponse, ProductResponse } from '../types';
-import type { Product } from '@/types/catalog';
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { getProducts } from "../api/product.service";
+import type { PaginatedProductsResponse, ProductResponse } from "../types";
+import type { Product } from "@/types/catalog";
 
 // ─── Catalog query params ─────────────────────────────────────────────────────
 
@@ -73,8 +73,8 @@ function toLocalProduct(p: ProductResponse): Product {
     dailyPrice: p.dailyPrice,
     oldDailyPrice: p.oldDailyPrice ?? undefined,
     depositAmount: p.depositAmount ?? undefined,
-    description: p.description ?? '',
-    shortDescription: p.shortDescription ?? '',
+    description: p.description ?? "",
+    shortDescription: p.shortDescription ?? "",
     minRentalDays: p.minRentalDays,
     productImages: (p.images ?? []).map((img) => ({
       productImageId: img.productImageId,
@@ -107,7 +107,7 @@ function selectCatalogResult(data: PaginatedProductsResponse): CatalogResult {
 // ─── RSQL filter builder ──────────────────────────────────────────────────────
 
 function buildFilter(params: CatalogQueryParams): string {
-  const parts: string[] = ['isActive:true'];
+  const parts: string[] = ["isActive:true"];
 
   // Free-text search: name contains query (SpringFilter `~` = like)
   if (params.searchQuery?.trim()) {
@@ -124,7 +124,7 @@ function buildFilter(params: CatalogQueryParams): string {
 
   // Brand filter: each brand produces an OR clause
   if (params.brands && params.brands.length > 0) {
-    const brandClause = params.brands.map((b) => `brand:'${b}'`).join(' or ');
+    const brandClause = params.brands.map((b) => `brand:'${b}'`).join(" or ");
     parts.push(`(${brandClause})`);
   }
 
@@ -136,15 +136,15 @@ function buildFilter(params: CatalogQueryParams): string {
     parts.push(`dailyPrice<='${params.maxPrice}'`);
   }
 
-  return parts.join(' and ');
+  return parts.join(" and ");
 }
 
 // ─── Query key ────────────────────────────────────────────────────────────────
 
 export const catalogKeys = {
-  all: ['catalog'] as const,
+  all: ["catalog"] as const,
   list: (params: CatalogQueryParams) =>
-    [...catalogKeys.all, 'list', params] as const,
+    [...catalogKeys.all, "list", params] as const,
 };
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────

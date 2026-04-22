@@ -11,9 +11,9 @@ import {
   useQueryClient,
   type QueryClient,
   type QueryKey,
-} from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { rentalOrderKeys } from './rental-order.keys';
+} from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { rentalOrderKeys } from "./rental-order.keys";
 import {
   getMyRentalOrders,
   getRentalOrderById,
@@ -27,25 +27,25 @@ import {
   requestCancellation,
   confirmCancellationRefund,
   type NormalizedPaginatedOrders,
-} from './rental-order.service';
+} from "./rental-order.service";
 import type {
   CreateRentalOrderInput,
   UpdateOrderStatusInput,
   ExtendOrderInput,
   CancellationRequestInput,
   ConfirmCancellationRefundInput,
-} from '@/api/rentalOrderApi';
+} from "@/api/rentalOrderApi";
 import type {
   AssignOrderInput,
   RentalOrder,
   RentalOrderStatus,
-} from '@/types/dashboard';
+} from "@/types/dashboard";
 import type {
   RentalOrderResponse,
   RentalOrderStatus as ApiRentalOrderStatus,
-} from '@/api/rentalOrderApi';
-import { useAuth } from '@/hooks/useAuth';
-import { buildLoginHref, getCurrentPathWithSearch } from '@/lib/auth-redirect';
+} from "@/api/rentalOrderApi";
+import { useAuth } from "@/hooks/useAuth";
+import { buildLoginHref, getCurrentPathWithSearch } from "@/lib/auth-redirect";
 
 // ─── Status mapping helpers ───────────────────────────────────────────────
 
@@ -53,24 +53,24 @@ function mapApiStatusToDashboard(
   status: ApiRentalOrderStatus,
 ): RentalOrderStatus {
   switch (status) {
-    case 'PENDING_PAYMENT':
-      return 'PENDING';
-    case 'PAID':
-    case 'PREPARING':
-      return 'CONFIRMED';
-    case 'DELIVERING':
-    case 'DELIVERED':
-      return 'DELIVERING';
-    case 'IN_USE':
-      return 'ACTIVE';
-    case 'PENDING_PICKUP':
-    case 'PICKING_UP':
-    case 'PICKED_UP':
-      return 'RETURNING';
-    case 'COMPLETED':
-      return 'COMPLETED';
-    case 'CANCELLED':
-      return 'CANCELLED';
+    case "PENDING_PAYMENT":
+      return "PENDING";
+    case "PAID":
+    case "PREPARING":
+      return "CONFIRMED";
+    case "DELIVERING":
+    case "DELIVERED":
+      return "DELIVERING";
+    case "IN_USE":
+      return "ACTIVE";
+    case "PENDING_PICKUP":
+    case "PICKING_UP":
+    case "PICKED_UP":
+      return "RETURNING";
+    case "COMPLETED":
+      return "COMPLETED";
+    case "CANCELLED":
+      return "CANCELLED";
   }
 }
 
@@ -133,7 +133,7 @@ function requireAuthForMutation(params: {
 
   throw new Error(
     params.isAuthLoading
-      ? 'Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại.'
+      ? "Đang kiểm tra trạng thái đăng nhập. Vui lòng thử lại."
       : params.errorMessage,
   );
 }
@@ -144,7 +144,7 @@ function patchMyOrdersCaches(
   updater: (order: RentalOrderResponse) => RentalOrderResponse,
 ): Array<[QueryKey, NormalizedPaginatedOrders | undefined]> {
   const snapshots = qc.getQueriesData<NormalizedPaginatedOrders>({
-    queryKey: [...rentalOrderKeys.all, 'my'],
+    queryKey: [...rentalOrderKeys.all, "my"],
   });
 
   snapshots.forEach(([key, data]) => {
@@ -182,7 +182,7 @@ function mergeOrderIntoMyOrdersCaches(
   nextOrder: RentalOrderResponse,
 ) {
   qc.setQueriesData<NormalizedPaginatedOrders>(
-    { queryKey: [...rentalOrderKeys.all, 'my'] },
+    { queryKey: [...rentalOrderKeys.all, "my"] },
     (data) => {
       if (!data) return data;
 
@@ -245,12 +245,15 @@ export function useRentalOrdersQuery(params?: {
  * Lấy danh sách đơn thuê của tôi [AUTH]
  * Dùng cho trang /rental-orders
  */
-export function useMyOrdersQuery(params?: {
-  page?: number;
-  size?: number;
-  filter?: string;
-  sort?: string;
-}, options?: { enabled?: boolean }) {
+export function useMyOrdersQuery(
+  params?: {
+    page?: number;
+    size?: number;
+    filter?: string;
+    sort?: string;
+  },
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: rentalOrderKeys.myList(params),
     queryFn: () => getMyRentalOrders(params),
@@ -312,8 +315,8 @@ export function useCreateRentalOrder(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/cart',
-        errorMessage: 'Vui lòng đăng nhập để tạo đơn thuê.',
+        fallbackPath: "/cart",
+        errorMessage: "Vui lòng đăng nhập để tạo đơn thuê.",
       });
 
       return createRentalOrder(input);
@@ -321,7 +324,7 @@ export function useCreateRentalOrder(options?: {
 
     onSuccess: (data) => {
       qc.setQueryData(rentalOrderKeys.detail(data.rentalOrderId), data);
-      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, "my"] });
       options?.onSuccess?.({ rentalOrderId: data.rentalOrderId });
     },
 
@@ -354,8 +357,8 @@ export function useUpdateOrderStatus(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/rental-orders',
-        errorMessage: 'Vui lòng đăng nhập để cập nhật trạng thái đơn thuê.',
+        fallbackPath: "/rental-orders",
+        errorMessage: "Vui lòng đăng nhập để cập nhật trạng thái đơn thuê.",
       });
 
       return updateRentalOrderStatus(rentalOrderId, input);
@@ -418,7 +421,7 @@ export function useUpdateOrderStatus(options?: {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.overdueSuggestion(variables.rentalOrderId),
       });
-      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, "my"] });
     },
   });
 }
@@ -440,29 +443,35 @@ export function useCancelOrder(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/rental-orders',
-        errorMessage: 'Vui lòng đăng nhập để hủy đơn thuê.',
+        fallbackPath: "/rental-orders",
+        errorMessage: "Vui lòng đăng nhập để hủy đơn thuê.",
       });
 
       await cancelRentalOrder(rentalOrderId);
     },
 
     onMutate: async (rentalOrderId) => {
-      await qc.cancelQueries({ queryKey: rentalOrderKeys.detail(rentalOrderId) });
+      await qc.cancelQueries({
+        queryKey: rentalOrderKeys.detail(rentalOrderId),
+      });
 
       const previousDetail = qc.getQueryData<RentalOrderResponse>(
         rentalOrderKeys.detail(rentalOrderId),
       );
-      const previousMyLists = patchMyOrdersCaches(qc, rentalOrderId, (order) => ({
-        ...order,
-        status: 'CANCELLED',
-      }));
+      const previousMyLists = patchMyOrdersCaches(
+        qc,
+        rentalOrderId,
+        (order) => ({
+          ...order,
+          status: "CANCELLED",
+        }),
+      );
 
       qc.setQueryData<RentalOrderResponse>(
         rentalOrderKeys.detail(rentalOrderId),
         (old) => {
           if (!old) return old;
-          return { ...old, status: 'CANCELLED' };
+          return { ...old, status: "CANCELLED" };
         },
       );
 
@@ -495,7 +504,7 @@ export function useCancelOrder(options?: {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(rentalOrderId),
       });
-      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, "my"] });
     },
   });
 }
@@ -524,7 +533,7 @@ export function useAssignOrderMutation(options?: {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.id),
       });
-      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, "my"] });
       options?.onSuccess?.();
     },
 
@@ -557,8 +566,8 @@ export function useExtendOrder(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/rental-orders',
-        errorMessage: 'Vui lòng đăng nhập để gia hạn đơn thuê.',
+        fallbackPath: "/rental-orders",
+        errorMessage: "Vui lòng đăng nhập để gia hạn đơn thuê.",
       });
 
       return extendRentalOrder(rentalOrderId, input);
@@ -634,7 +643,7 @@ export function useExtendOrder(options?: {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.overdueSuggestion(variables.rentalOrderId),
       });
-      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, "my"] });
     },
   });
 }
@@ -662,8 +671,8 @@ export function useRequestCancellation(options?: {
         isAuthenticated,
         isAuthLoading,
         router,
-        fallbackPath: '/rental-orders',
-        errorMessage: 'Vui lòng đăng nhập để gửi yêu cầu hủy đơn.',
+        fallbackPath: "/rental-orders",
+        errorMessage: "Vui lòng đăng nhập để gửi yêu cầu hủy đơn.",
       });
 
       return requestCancellation(rentalOrderId, input);
@@ -701,7 +710,7 @@ export function useRequestCancellation(options?: {
       void qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, 'my'] });
+      void qc.invalidateQueries({ queryKey: [...rentalOrderKeys.all, "my"] });
     },
   });
 }

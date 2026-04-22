@@ -1,4 +1,4 @@
-import { apiGet } from '@/api/apiService';
+import { apiGet } from "@/api/apiService";
 
 // ─── Response shapes ──────────────────────────────────────────────────────────
 
@@ -69,14 +69,14 @@ export async function getStaffDashboard(
   hubId?: string,
 ): Promise<StaffDashboardData> {
   try {
-    return await apiGet<StaffDashboardData>('/dashboards/staff', {
+    return await apiGet<StaffDashboardData>("/dashboards/staff", {
       params: hubId ? { hubId } : undefined,
     });
   } catch (err) {
     // If the hubId is out of scope for this staff, fall back to assigned hub
     const status = (err as { status?: number }).status;
     if (hubId && (status === 403 || status === 401)) {
-      return apiGet<StaffDashboardData>('/dashboards/staff');
+      return apiGet<StaffDashboardData>("/dashboards/staff");
     }
     throw err;
   }
