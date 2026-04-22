@@ -27,7 +27,7 @@ export function VercelTabs({ tabs, defaultTab, className }: VercelTabsProps) {
   useEffect(() => {
     if (hoveredIndex !== null) {
       const hoveredElement = document.querySelector<HTMLButtonElement>(
-        `[data-vercel-tabs-index="${hoveredIndex}"]`
+        `[data-vercel-tabs-index="${hoveredIndex}"]`,
       );
       if (hoveredElement) {
         const { offsetLeft, offsetWidth } = hoveredElement;
@@ -41,7 +41,7 @@ export function VercelTabs({ tabs, defaultTab, className }: VercelTabsProps) {
 
   useEffect(() => {
     const activeElement = document.querySelector<HTMLButtonElement>(
-      `[data-vercel-tabs-index="${activeIndex}"]`
+      `[data-vercel-tabs-index="${activeIndex}"]`,
     );
     if (activeElement) {
       const { offsetLeft, offsetWidth } = activeElement;
@@ -55,7 +55,7 @@ export function VercelTabs({ tabs, defaultTab, className }: VercelTabsProps) {
   useEffect(() => {
     requestAnimationFrame(() => {
       const activeElement = document.querySelector<HTMLButtonElement>(
-        `[data-vercel-tabs-index="${activeIndex}"]`
+        `[data-vercel-tabs-index="${activeIndex}"]`,
       );
       if (activeElement) {
         const { offsetLeft, offsetWidth } = activeElement;

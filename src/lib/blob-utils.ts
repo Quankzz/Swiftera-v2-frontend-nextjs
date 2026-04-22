@@ -10,10 +10,10 @@ export function extractBlobPathFromUrl(url: string): string | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);
-    const segments = parsed.pathname.split('/').filter(Boolean);
+    const segments = parsed.pathname.split("/").filter(Boolean);
     // First segment is the container name - skip it
     if (segments.length >= 2) {
-      return segments.slice(1).join('/');
+      return segments.slice(1).join("/");
     }
     return null;
   } catch {
@@ -28,7 +28,7 @@ export function isAzureBlobUrl(url: string): boolean {
   if (!url) return false;
   try {
     const parsed = new URL(url);
-    return parsed.hostname.includes('.blob.core.windows.net');
+    return parsed.hostname.includes(".blob.core.windows.net");
   } catch {
     return false;
   }

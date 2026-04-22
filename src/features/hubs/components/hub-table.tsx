@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useMemo, useState, useEffect } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/dashboard/ui/data-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useMemo, useState, useEffect } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/dashboard/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Pencil,
   Trash2,
@@ -13,9 +13,9 @@ import {
   Eye,
   Search,
   UserPlus,
-} from 'lucide-react';
-import type { HubResponse } from '@/features/hubs/types';
-import { useHubsQuery } from '@/features/hubs/hooks/use-hub-management';
+} from "lucide-react";
+import type { HubResponse } from "@/features/hubs/types";
+import { useHubsQuery } from "@/features/hubs/hooks/use-hub-management";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -29,10 +29,10 @@ function parseBEDate(dateStr: string): Date | null {
   if (ampmMatch) {
     const [, datePart, rawHour, min, sec, ampm] = ampmMatch;
     let hour = parseInt(rawHour, 10);
-    if (hour < 12 && ampm.toUpperCase() === 'PM') hour += 12;
-    if (hour === 12 && ampm.toUpperCase() === 'AM') hour = 0;
+    if (hour < 12 && ampm.toUpperCase() === "PM") hour += 12;
+    if (hour === 12 && ampm.toUpperCase() === "AM") hour = 0;
     const d = new Date(
-      `${datePart}T${String(hour).padStart(2, '0')}:${min}:${sec}`,
+      `${datePart}T${String(hour).padStart(2, "0")}:${min}:${sec}`,
     );
     return isNaN(d.getTime()) ? null : d;
   }
@@ -41,16 +41,16 @@ function parseBEDate(dateStr: string): Date | null {
 }
 
 function formatDateString(dateStr: string | null): string {
-  if (!dateStr) return '-';
+  if (!dateStr) return "-";
   try {
     const d = parseBEDate(dateStr);
     if (!d) return dateStr;
-    return d.toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return d.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: false,
     });
   } catch {
@@ -63,7 +63,7 @@ function formatAddress(hub: HubResponse): string {
   const parts = [hub.addressLine, hub.ward, hub.district, hub.city].filter(
     Boolean,
   );
-  return parts.length > 0 ? parts.join(', ') : '-';
+  return parts.length > 0 ? parts.join(", ") : "-";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,14 +73,14 @@ function formatAddress(hub: HubResponse): string {
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return (
     <Badge
-      variant='outline'
+      variant="outline"
       className={
         isActive
-          ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300'
-          : 'border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400'
+          ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300"
+          : "border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400"
       }
     >
-      {isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
+      {isActive ? "Hoạt động" : "Ngừng hoạt động"}
     </Badge>
   );
 }
@@ -90,8 +90,8 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface FilterBarProps {
-  activeFilter: 'all' | 'active' | 'inactive';
-  onActiveFilterChange: (v: 'all' | 'active' | 'inactive') => void;
+  activeFilter: "all" | "active" | "inactive";
+  onActiveFilterChange: (v: "all" | "active" | "inactive") => void;
   sort: string;
   onSortChange: (v: string) => void;
 }
@@ -103,30 +103,30 @@ function FilterBar({
   onSortChange,
 }: FilterBarProps) {
   return (
-    <div className='flex flex-wrap items-center gap-2'>
+    <div className="flex flex-wrap items-center gap-2">
       <select
         value={activeFilter}
         onChange={(e) =>
-          onActiveFilterChange(e.target.value as 'all' | 'active' | 'inactive')
+          onActiveFilterChange(e.target.value as "all" | "active" | "inactive")
         }
-        className='h-9 rounded-md border border-gray-200 dark:border-white/12 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30'
+        className="h-9 rounded-md border border-gray-200 dark:border-white/12 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30"
       >
-        <option value='all'>Tất cả trạng thái</option>
-        <option value='active'>Đang hoạt động</option>
-        <option value='inactive'>Ngừng hoạt động</option>
+        <option value="all">Tất cả trạng thái</option>
+        <option value="active">Đang hoạt động</option>
+        <option value="inactive">Ngừng hoạt động</option>
       </select>
 
       <select
         value={sort}
         onChange={(e) => onSortChange(e.target.value)}
-        className='h-9 rounded-md border border-gray-200 dark:border-white/12 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30'
+        className="h-9 rounded-md border border-gray-200 dark:border-white/12 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30"
       >
-        <option value=''>Mặc định</option>
-        <option value='name,asc'>Tên A → Z</option>
-        <option value='name,desc'>Tên Z → A</option>
-        <option value='code,asc'>Mã A → Z</option>
-        <option value='createdAt,desc'>Mới nhất</option>
-        <option value='createdAt,asc'>Cũ nhất</option>
+        <option value="">Mặc định</option>
+        <option value="name,asc">Tên A → Z</option>
+        <option value="name,desc">Tên Z → A</option>
+        <option value="code,asc">Mã A → Z</option>
+        <option value="createdAt,desc">Mới nhất</option>
+        <option value="createdAt,asc">Cũ nhất</option>
       </select>
     </div>
   );
@@ -167,11 +167,11 @@ export function HubTable({
 }: HubTableProps) {
   const [page, setPage] = useState(0); // 0-based for DataTable UI; send page+1 to API
   const [activeFilter, setActiveFilter] = useState<
-    'all' | 'active' | 'inactive'
-  >('all');
-  const [sort, setSort] = useState('');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+    "all" | "active" | "inactive"
+  >("all");
+  const [sort, setSort] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const pageSize = 10;
 
@@ -187,13 +187,13 @@ export function HubTable({
   // Build filter param theo SpringFilter DSL
   const filterParam = useMemo(() => {
     const parts: string[] = [];
-    if (activeFilter === 'active') parts.push('isActive:true');
-    if (activeFilter === 'inactive') parts.push('isActive:false');
+    if (activeFilter === "active") parts.push("isActive:true");
+    if (activeFilter === "inactive") parts.push("isActive:false");
     if (debouncedSearch.trim()) {
       const term = debouncedSearch.trim();
       parts.push(`(name~~'*${term}*' or code~~'*${term}*')`);
     }
-    return parts.length ? parts.join(' and ') : undefined;
+    return parts.length ? parts.join(" and ") : undefined;
   }, [activeFilter, debouncedSearch]);
 
   // Build sort param
@@ -219,7 +219,7 @@ export function HubTable({
   }, [data, hubs, totalElements, onMetaChange]);
 
   // Reset về trang 0 khi filter hoặc sort thay đổi
-  function handleActiveFilterChange(v: 'all' | 'active' | 'inactive') {
+  function handleActiveFilterChange(v: "all" | "active" | "inactive") {
     setActiveFilter(v);
     setPage(0);
   }
@@ -234,34 +234,34 @@ export function HubTable({
   const columns = useMemo<ColumnDef<HubResponse>[]>(
     () => [
       {
-        accessorKey: 'code',
-        header: 'Mã hub',
+        accessorKey: "code",
+        header: "Mã hub",
         cell: ({ row }) => (
-          <span className='font-mono text-xs font-semibold text-theme-primary-start bg-theme-primary-start/8 px-2 py-0.5 rounded'>
+          <span className="font-mono text-xs font-semibold text-theme-primary-start bg-theme-primary-start/8 px-2 py-0.5 rounded">
             {row.original.code}
           </span>
         ),
       },
       {
-        accessorKey: 'name',
-        header: 'Tên hub',
+        accessorKey: "name",
+        header: "Tên hub",
         cell: ({ row }) => (
-          <span className='font-medium text-text-main'>
+          <span className="font-medium text-text-main">
             {row.original.name}
           </span>
         ),
       },
       {
-        id: 'address',
-        header: 'Địa chỉ',
+        id: "address",
+        header: "Địa chỉ",
         cell: ({ row }) => {
           const addr = formatAddress(row.original);
           return (
-            <div className='flex items-start gap-1.5 max-w-xs'>
-              {addr !== '-' && (
-                <MapPin className='mt-0.5 size-3.5 shrink-0 text-text-sub' />
+            <div className="flex items-start gap-1.5 max-w-xs">
+              {addr !== "-" && (
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-text-sub" />
               )}
-              <span className='text-sm text-text-sub truncate' title={addr}>
+              <span className="text-sm text-text-sub truncate" title={addr}>
                 {addr}
               </span>
             </div>
@@ -269,82 +269,82 @@ export function HubTable({
         },
       },
       {
-        accessorKey: 'city',
-        header: 'Thành phố',
+        accessorKey: "city",
+        header: "Thành phố",
         cell: ({ row }) => (
-          <span className='text-sm text-text-main'>
-            {row.original.city ?? '-'}
+          <span className="text-sm text-text-main">
+            {row.original.city ?? "-"}
           </span>
         ),
       },
       {
-        accessorKey: 'phone',
-        header: 'Số điện thoại',
+        accessorKey: "phone",
+        header: "Số điện thoại",
         cell: ({ row }) => (
-          <div className='flex items-center gap-1.5'>
-            {row.original.phone && <Phone className='size-3.5 text-text-sub' />}
-            <span className='text-sm text-text-main'>
-              {row.original.phone ?? '-'}
+          <div className="flex items-center gap-1.5">
+            {row.original.phone && <Phone className="size-3.5 text-text-sub" />}
+            <span className="text-sm text-text-main">
+              {row.original.phone ?? "-"}
             </span>
           </div>
         ),
       },
       {
-        accessorKey: 'isActive',
-        header: 'Trạng thái',
+        accessorKey: "isActive",
+        header: "Trạng thái",
         cell: ({ row }) => <StatusBadge isActive={row.original.isActive} />,
       },
       {
-        accessorKey: 'createdAt',
-        header: 'Ngày tạo',
+        accessorKey: "createdAt",
+        header: "Ngày tạo",
         cell: ({ row }) => (
-          <span className='text-xs text-text-sub'>
+          <span className="text-xs text-text-sub">
             {formatDateString(row.original.createdAt)}
           </span>
         ),
       },
       {
-        id: 'actions',
-        header: '',
+        id: "actions",
+        header: "",
         cell: ({ row }) => (
-          <div className='flex items-center justify-end gap-1'>
+          <div className="flex items-center justify-end gap-1">
             {onView && (
               <Button
-                variant='ghost'
-                size='icon'
-                className='size-8 text-text-sub hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30'
+                variant="ghost"
+                size="icon"
+                className="size-8 text-text-sub hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/30"
                 onClick={() => onView(row.original)}
-                title='Xem chi tiết'
+                title="Xem chi tiết"
               >
                 <Eye size={14} />
               </Button>
             )}
             {onAssignStaff && (
               <Button
-                variant='ghost'
-                size='icon'
-                className='size-8 text-text-sub hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30'
+                variant="ghost"
+                size="icon"
+                className="size-8 text-text-sub hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
                 onClick={() => onAssignStaff(row.original)}
-                title='Gán nhân viên'
+                title="Gán nhân viên"
               >
                 <UserPlus size={14} />
               </Button>
             )}
             <Button
-              variant='ghost'
-              size='icon'
-              className='size-8 text-text-sub hover:text-theme-primary-start hover:bg-theme-primary-start/8'
+              variant="ghost"
+              size="icon"
+              className="size-8 text-text-sub hover:text-theme-primary-start hover:bg-theme-primary-start/8"
               onClick={() => onEdit(row.original)}
-              title='Chỉnh sửa'
+              title="Chỉnh sửa"
             >
               <Pencil size={14} />
             </Button>
             <Button
-              variant='ghost'
-              size='icon'
-              className='size-8 text-text-sub hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+              variant="ghost"
+              size="icon"
+              className="size-8 text-text-sub hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
               onClick={() => onDelete(row.original)}
-              title='Xóa'
+              title="Xóa"
             >
               <Trash2 size={14} />
             </Button>
@@ -362,11 +362,11 @@ export function HubTable({
     <DataTable
       columns={columns}
       data={hubs}
-      totalLabel='hub'
+      totalLabel="hub"
       isLoading={isLoading}
       isError={isError}
       errorMessage={errorMessage}
-      emptyMessage='Không có hub nào'
+      emptyMessage="Không có hub nào"
       manualPagination
       pageIndex={page}
       pageCount={totalPages}
@@ -374,17 +374,17 @@ export function HubTable({
       pageSize={pageSize}
       totalRows={totalElements}
       toolbarLeft={
-        <div className='relative'>
+        <div className="relative">
           <Search
             size={14}
-            className='absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none'
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none"
           />
           <input
-            type='text'
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder='Tìm tên, mã hub...'
-            className='h-9 w-48 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+            placeholder="Tìm tên, mã hub..."
+            className="h-9 w-48 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition"
           />
         </div>
       }

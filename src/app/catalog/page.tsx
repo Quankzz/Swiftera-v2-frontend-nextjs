@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import { Suspense } from 'react';
-import { Layout } from '@/components/Layout';
-import { CatalogView } from '@/components/catalog/catalog-view';
-import { ProductGridSkeleton } from '@/components/catalog/product-card-skeleton';
-import type { SortOption } from '@/components/catalog/catalog-header';
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { Layout } from "@/components/Layout";
+import { CatalogView } from "@/components/catalog/catalog-view";
+import { ProductGridSkeleton } from "@/components/catalog/product-card-skeleton";
+import type { SortOption } from "@/components/catalog/catalog-header";
 
 interface CatalogSearchParams {
   /** Legacy: category card links use ?category= */
@@ -22,19 +22,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const params = await searchParams;
   return {
-    title: 'Danh mục sản phẩm - Swiftera',
+    title: "Danh mục sản phẩm - Swiftera",
     description:
       params.categoryId || params.category
-        ? 'Xem sản phẩm theo danh mục trên Swiftera'
-        : 'Khám phá tất cả sản phẩm cho thuê trên Swiftera',
+        ? "Xem sản phẩm theo danh mục trên Swiftera"
+        : "Khám phá tất cả sản phẩm cho thuê trên Swiftera",
   };
 }
 
 const VALID_SORTS: SortOption[] = [
-  'relevance',
-  'price-asc',
-  'price-desc',
-  'newest',
+  "relevance",
+  "price-asc",
+  "price-desc",
+  "newest",
 ];
 
 export default async function CatalogPage({
@@ -49,12 +49,12 @@ export default async function CatalogPage({
   const subcategoryId = params.subcategoryId ?? undefined;
   const sort: SortOption = VALID_SORTS.includes(params.sort as SortOption)
     ? (params.sort as SortOption)
-    : 'relevance';
-  const page = parseInt(params.page ?? '1', 10) || 1;
+    : "relevance";
+  const page = parseInt(params.page ?? "1", 10) || 1;
 
   return (
     <Layout>
-      <div className='mx-auto w-full px-4 py-8 lg:px-18'>
+      <div className="mx-auto w-full px-4 py-8 lg:px-18">
         {/*
           CatalogView is a client component that uses useSearchParams.
           Wrap in Suspense so the server shell renders immediately.

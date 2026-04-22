@@ -16,8 +16,8 @@
  *   - code=99  → Checksum không khớp hoặc request bị sửa đổi
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
@@ -25,16 +25,16 @@ const authOpts = { requireToken: true as const };
 
 /** transactionType */
 export type TransactionType =
-  | 'RENTAL_FEE'
-  | 'DEPOSIT'
-  | 'DEPOSIT_REFUND'
-  | 'PENALTY';
+  | "RENTAL_FEE"
+  | "DEPOSIT"
+  | "DEPOSIT_REFUND"
+  | "PENALTY";
 
 /** payment status */
-export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+export type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
 
 /** VNPay transaction type (phân biệt hoàn toàn với internal TransactionType) */
-export type VnpTransactionType = '01' | '02' | '03' | '04';
+export type VnpTransactionType = "01" | "02" | "03" | "04";
 /** Mã loại giao dịch thanh toán:
  *  01: GD thường (rental fee)
  *  02: Hoàn tiền
@@ -48,7 +48,7 @@ export interface PaymentTransactionResponse {
   rentalOrderId: string;
   transactionType: TransactionType;
   amount: number;
-  paymentMethod: 'VNPAY';
+  paymentMethod: "VNPAY";
   status: PaymentStatus;
   vnpTxnRef: string;
   description: string;
@@ -127,20 +127,20 @@ export interface VnpayReturnParams {
 
 /** Parse VNPay response code thành message */
 export const VNPAY_RESPONSE_MESSAGES: Record<string, string> = {
-  '00': 'Giao dịch thành công',
-  '07': 'Giao dịch đã được xử lý, kết quả giao dịch không thay đổi',
-  '09': 'Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng chưa đăng ký Internet Banking',
-  '10': 'Giao dịch không thành công do: Khách hàng xác thực sai thông tin thẻ/Tài khoản',
-  '11': 'Giao dịch không thành công do: Đã hết hạn chờ thanh toán (quit)',
-  '12': 'Giao dịch không thành công do: Thẻ/Tài khoản bị khóa',
-  '13': 'Giao dịch không thành công do: Nhập sai mật khẩu thanh toán quá 3 lần',
-  '24': 'Giao dịch không thành công do: Khách hàng hủy giao dịch',
-  '51': 'Giao dịch không thành công do: Tài khoản không đủ số dư',
-  '65': 'Giao dịch không thành công do: Tài khoản không đủ số dư',
-  '75': 'Ngân hàng đang bảo trì',
-  '79': 'Giao dịch không thành công do: Nhập sai mật khẩu thanh toán',
-  '99': 'Giao dịch không thành công do: Checksum không hợp lệ',
-  '71': 'Website chưa được phê duyệt trên cổng thanh toán VNPay',
+  "00": "Giao dịch thành công",
+  "07": "Giao dịch đã được xử lý, kết quả giao dịch không thay đổi",
+  "09": "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng chưa đăng ký Internet Banking",
+  "10": "Giao dịch không thành công do: Khách hàng xác thực sai thông tin thẻ/Tài khoản",
+  "11": "Giao dịch không thành công do: Đã hết hạn chờ thanh toán (quit)",
+  "12": "Giao dịch không thành công do: Thẻ/Tài khoản bị khóa",
+  "13": "Giao dịch không thành công do: Nhập sai mật khẩu thanh toán quá 3 lần",
+  "24": "Giao dịch không thành công do: Khách hàng hủy giao dịch",
+  "51": "Giao dịch không thành công do: Tài khoản không đủ số dư",
+  "65": "Giao dịch không thành công do: Tài khoản không đủ số dư",
+  "75": "Ngân hàng đang bảo trì",
+  "79": "Giao dịch không thành công do: Nhập sai mật khẩu thanh toán",
+  "99": "Giao dịch không thành công do: Checksum không hợp lệ",
+  "71": "Website chưa được phê duyệt trên cổng thanh toán VNPay",
 };
 
 export function getVnpayMessage(code: string): string {
@@ -149,7 +149,7 @@ export function getVnpayMessage(code: string): string {
 
 /** Kiểm tra response code có phải thành công không */
 export function isVnpaySuccess(code: string): boolean {
-  return code === '00';
+  return code === "00";
 }
 
 // ─── API ─────────────────────────────────────────────────────────────────────
@@ -183,7 +183,7 @@ export const paymentApi = {
     filter?: string;
     sort?: string;
   }): Promise<AxiosResponse<PaymentTransactionListResponse>> {
-    return httpService.get<PaymentTransactionListResponse>('/payments', {
+    return httpService.get<PaymentTransactionListResponse>("/payments", {
       ...authOpts,
       params,
     });
@@ -226,7 +226,7 @@ export const paymentApi = {
       {
         ...authOpts,
         params:
-          typeof additionalRentalDays === 'number'
+          typeof additionalRentalDays === "number"
             ? { additionalRentalDays }
             : undefined,
       },
@@ -244,7 +244,7 @@ export const paymentApi = {
     orderIds: string[],
   ): Promise<AxiosResponse<PaymentInitiateResponse>> {
     return httpService.post<PaymentInitiateResponse>(
-      '/payments/initiate-batch',
+      "/payments/initiate-batch",
       { orderIds },
       authOpts,
     );
@@ -260,7 +260,7 @@ export const paymentApi = {
     input: CreateRefundTransactionRequest,
   ): Promise<AxiosResponse<CreateRefundTransactionResponse>> {
     return httpService.post<CreateRefundTransactionResponse>(
-      '/payments/refund',
+      "/payments/refund",
       input,
       authOpts,
     );

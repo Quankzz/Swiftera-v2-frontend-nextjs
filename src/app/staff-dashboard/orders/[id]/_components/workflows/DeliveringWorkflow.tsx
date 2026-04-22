@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from "react";
 import {
   Truck,
   QrCode,
@@ -11,24 +11,27 @@ import {
   Info,
   XCircle,
   Navigation2,
-} from 'lucide-react';
-import axios from 'axios';
-import '@goongmaps/goong-js/dist/goong-js.css';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import type { RentalOrderResponse, RentalOrderLineResponse } from '@/types/api.types';
-import { apiKey } from '@/configs/goongmapKeys';
-import { WorkflowBanner } from '../WorkflowBanner';
-import { MiniMapPanel } from '../MiniMapPanel';
-import { DeliveryMiniMap } from '../DeliveryMiniMap';
+} from "lucide-react";
+import axios from "axios";
+import "@goongmaps/goong-js/dist/goong-js.css";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type {
+  RentalOrderResponse,
+  RentalOrderLineResponse,
+} from "@/types/api.types";
+import { apiKey } from "@/configs/goongmapKeys";
+import { WorkflowBanner } from "../WorkflowBanner";
+import { MiniMapPanel } from "../MiniMapPanel";
+import { DeliveryMiniMap } from "../DeliveryMiniMap";
 import {
   CustomerInfo,
   OrderMetaCard,
   OrderItemsList,
   OverdueAlert,
-} from '../OrderInfo';
-import { CameraCapture } from '../CameraCapture';
-import { QrScanner } from '../QrScanner';
+} from "../OrderInfo";
+import { CameraCapture } from "../CameraCapture";
+import { QrScanner } from "../QrScanner";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +39,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
 function ItemDeliveryCard({
   line,
@@ -53,19 +56,19 @@ function ItemDeliveryCard({
   return (
     <div
       className={cn(
-        'rounded-xl border p-3 transition-all',
+        "rounded-xl border p-3 transition-all",
         hasPhoto
-          ? 'border-emerald-300/50 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-800/30'
-          : 'border-border bg-card',
+          ? "border-emerald-300/50 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-800/30"
+          : "border-border bg-card",
       )}
     >
       <div className="flex items-center gap-3 mb-3">
         <div
           className={cn(
-            'size-10 shrink-0 rounded-xl flex items-center justify-center transition-all shadow-sm',
+            "size-10 shrink-0 rounded-xl flex items-center justify-center transition-all shadow-sm",
             hasPhoto
-              ? 'bg-emerald-500 text-white'
-              : 'border-2 border-dashed border-border bg-muted',
+              ? "bg-emerald-500 text-white"
+              : "border-2 border-dashed border-border bg-muted",
           )}
         >
           {hasPhoto ? (
@@ -79,7 +82,7 @@ function ItemDeliveryCard({
             {line.productNameSnapshot}
           </p>
           <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-            {line.inventorySerialNumber || '—'}
+            {line.inventorySerialNumber || "—"}
           </p>
         </div>
         {hasPhoto && (
@@ -135,18 +138,22 @@ export function DeliveringWorkflow({
 
   // Build full customer address
   const customerAddressFull = order.userAddress
-    ? [order.userAddress.addressLine, order.userAddress.district, order.userAddress.city]
+    ? [
+        order.userAddress.addressLine,
+        order.userAddress.district,
+        order.userAddress.city,
+      ]
         .filter(Boolean)
-        .join(', ')
+        .join(", ")
     : null;
 
   // Geocode customer address if coordinates not available
-  const [geocodedCustomerLat, setGeocodedCustomerLat] = useState<number | undefined>(
-    order.deliveredLatitude ?? undefined,
-  );
-  const [geocodedCustomerLng, setGeocodedCustomerLng] = useState<number | undefined>(
-    order.deliveredLongitude ?? undefined,
-  );
+  const [geocodedCustomerLat, setGeocodedCustomerLat] = useState<
+    number | undefined
+  >(order.deliveredLatitude ?? undefined);
+  const [geocodedCustomerLng, setGeocodedCustomerLng] = useState<
+    number | undefined
+  >(order.deliveredLongitude ?? undefined);
 
   React.useEffect(() => {
     if (order.deliveredLatitude != null || !customerAddressFull) return;
@@ -193,7 +200,7 @@ export function DeliveringWorkflow({
         icon={Truck}
         title="Đang trên đường giao hàng"
         desc="Xác minh đơn hàng bằng mã QR, chụp ảnh bàn giao từng thiết bị, sau đó xác nhận hoàn tất."
-        variant={order.overdue ? 'danger' : 'primary'}
+        variant={order.overdue ? "danger" : "primary"}
       />
 
       {order.overdue && (
@@ -241,27 +248,27 @@ export function DeliveringWorkflow({
           {/* QR verification */}
           <div
             className={cn(
-              'rounded-2xl border bg-card overflow-hidden transition-colors shadow-sm',
-              qrVerified ? 'border-emerald-300/50' : 'border-border',
+              "rounded-2xl border bg-card overflow-hidden transition-colors shadow-sm",
+              qrVerified ? "border-emerald-300/50" : "border-border",
             )}
           >
             <div
               className={cn(
-                'px-4 py-3 border-b flex items-center gap-2.5',
+                "px-4 py-3 border-b flex items-center gap-2.5",
                 qrVerified
-                  ? 'border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/10'
-                  : 'border-border bg-muted/30',
+                  ? "border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/10"
+                  : "border-border bg-muted/30",
               )}
             >
               <div
                 className={cn(
-                  'size-8 rounded-full flex items-center justify-center shrink-0 text-[12px] font-black',
+                  "size-8 rounded-full flex items-center justify-center shrink-0 text-[12px] font-black",
                   qrVerified
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-blue-500 text-white',
+                    ? "bg-emerald-500 text-white"
+                    : "bg-blue-500 text-white",
                 )}
               >
-                {qrVerified ? <CheckCircle2 className="size-4" /> : '1'}
+                {qrVerified ? <CheckCircle2 className="size-4" /> : "1"}
               </div>
               <h3 className="text-[14px] font-bold text-foreground flex-1">
                 Xác minh mã QR đơn hàng
@@ -321,31 +328,31 @@ export function DeliveringWorkflow({
           {/* Photo step */}
           <div
             className={cn(
-              'rounded-2xl border bg-card overflow-hidden transition-colors shadow-sm',
-              allPhotographed ? 'border-emerald-300/50' : 'border-border',
+              "rounded-2xl border bg-card overflow-hidden transition-colors shadow-sm",
+              allPhotographed ? "border-emerald-300/50" : "border-border",
             )}
           >
             <div
               className={cn(
-                'px-4 py-3 border-b flex items-center gap-2.5',
+                "px-4 py-3 border-b flex items-center gap-2.5",
                 allPhotographed
-                  ? 'border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/10'
+                  ? "border-emerald-200/50 bg-emerald-50/50 dark:bg-emerald-950/10"
                   : qrVerified
-                    ? 'border-border bg-muted/30'
-                    : 'border-border bg-muted/20 opacity-60',
+                    ? "border-border bg-muted/30"
+                    : "border-border bg-muted/20 opacity-60",
               )}
             >
               <div
                 className={cn(
-                  'size-8 rounded-full flex items-center justify-center shrink-0 text-[12px] font-black',
+                  "size-8 rounded-full flex items-center justify-center shrink-0 text-[12px] font-black",
                   allPhotographed
-                    ? 'bg-emerald-500 text-white'
+                    ? "bg-emerald-500 text-white"
                     : qrVerified
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-muted text-muted-foreground',
+                      ? "bg-blue-500 text-white"
+                      : "bg-muted text-muted-foreground",
                 )}
               >
-                {allPhotographed ? <CheckCircle2 className="size-4" /> : '2'}
+                {allPhotographed ? <CheckCircle2 className="size-4" /> : "2"}
               </div>
               <h3 className="text-[14px] font-bold text-foreground flex-1">
                 Chụp ảnh bàn giao
@@ -366,8 +373,8 @@ export function DeliveringWorkflow({
                   <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
                     <div
                       className={cn(
-                        'h-full rounded-full transition-all duration-500',
-                        allPhotographed ? 'bg-emerald-500' : 'bg-blue-600',
+                        "h-full rounded-full transition-all duration-500",
+                        allPhotographed ? "bg-emerald-500" : "bg-blue-600",
                       )}
                       style={{
                         width: `${total > 0 ? (itemsDone / total) * 100 : 0}%`,
@@ -376,8 +383,8 @@ export function DeliveringWorkflow({
                   </div>
                   <span
                     className={cn(
-                      'text-[11px] font-bold shrink-0',
-                      allPhotographed ? 'text-emerald-600' : 'text-blue-600',
+                      "text-[11px] font-bold shrink-0",
+                      allPhotographed ? "text-emerald-600" : "text-blue-600",
                     )}
                   >
                     {itemsDone}/{total}
@@ -461,10 +468,10 @@ export function DeliveringWorkflow({
                 onClick={onConfirmDelivery}
                 disabled={!allReady || loading}
                 className={cn(
-                  'h-10 rounded-lg px-5 text-[13px] font-medium min-w-[140px]',
+                  "h-10 rounded-lg px-5 text-[13px] font-medium min-w-[140px]",
                   allReady
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                    : 'bg-muted text-muted-foreground cursor-not-allowed',
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-muted text-muted-foreground cursor-not-allowed",
                 )}
               >
                 {loading ? (
@@ -494,14 +501,14 @@ export function DeliveringWorkflow({
             </DialogTitle>
             <DialogDescription>
               Bạn có chắc chắn muốn hủy đơn hàng này không? Hành động này sẽ cập
-              nhật trạng thái đơn hàng sang{' '}
+              nhật trạng thái đơn hàng sang{" "}
               <span className="font-medium text-foreground">Đã hủy</span>.
             </DialogDescription>
           </DialogHeader>
 
           <div className="rounded-lg border border-border bg-muted/30 p-3">
             <p className="text-[13px] text-muted-foreground">
-              Mã đơn:{' '}
+              Mã đơn:{" "}
               <span className="font-mono font-medium text-foreground">
                 {order.rentalOrderId}
               </span>

@@ -5,8 +5,8 @@
  * Falls back to mock data when USE_MOCK=true.
  */
 
-import { apiGet } from '@/api/apiService';
-import type { HubResponse, PaginationResponse } from '@/types/api.types';
+import { apiGet } from "@/api/apiService";
+import type { HubResponse, PaginationResponse } from "@/types/api.types";
 
 export type { HubResponse };
 

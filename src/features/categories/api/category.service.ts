@@ -6,8 +6,8 @@
  *   Module 7: CATEGORIES (API-045 → API-050)
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 import type {
   CategoryListParams,
   CategoryResponse,
@@ -15,7 +15,7 @@ import type {
   CreateCategoryInput,
   PaginatedCategoriesResponse,
   UpdateCategoryInput,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -27,7 +27,7 @@ export async function getCategoriesList(
 ): Promise<PaginatedCategoriesResponse> {
   const { page = 0, size = 100, sort, filter } = params;
   const res = await httpService.get<ApiResponse<PaginatedCategoriesResponse>>(
-    '/categories',
+    "/categories",
     { params: { page, size, sort, filter } },
   );
   return res.data.data!;
@@ -38,7 +38,7 @@ export async function getCategoriesList(
 
 export async function getCategoriesTree(): Promise<CategoryTreeNode[]> {
   const res =
-    await httpService.get<ApiResponse<CategoryTreeNode[]>>('/categories/tree');
+    await httpService.get<ApiResponse<CategoryTreeNode[]>>("/categories/tree");
   return res.data.data!;
 }
 
@@ -61,7 +61,7 @@ export async function createCategory(
   payload: CreateCategoryInput,
 ): Promise<CategoryResponse> {
   const res = await httpService.post<ApiResponse<CategoryResponse>>(
-    '/categories',
+    "/categories",
     payload,
     authOpts,
   );

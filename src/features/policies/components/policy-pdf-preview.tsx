@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * PolicyPdfPreview
@@ -7,8 +7,8 @@
  * - Desktop (≥ 640px) : two-page HTMLFlipBook, CSS-scaled to fit container
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import HTMLFlipBook from 'react-pageflip';
+import { useEffect, useRef, useState, useCallback } from "react";
+import HTMLFlipBook from "react-pageflip";
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,8 +16,8 @@ import {
   AlertTriangle,
   BookOpen,
   ExternalLink,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -28,12 +28,12 @@ interface PolicyPdfPreviewProps {
 }
 
 const PDF_WORKER_SRC = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
+  "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
 
 // Flipbook requires forwardRef children
-import { forwardRef } from 'react';
+import { forwardRef } from "react";
 
 const PageImage = forwardRef<
   HTMLDivElement,
@@ -41,22 +41,22 @@ const PageImage = forwardRef<
 >(({ src, pageNumber }, ref) => (
   <div
     ref={ref}
-    className='relative overflow-hidden bg-white select-none'
-    style={{ width: '100%', height: '100%' }}
+    className="relative overflow-hidden bg-white select-none"
+    style={{ width: "100%", height: "100%" }}
   >
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img
       src={src}
       alt={`Trang ${pageNumber}`}
-      className='w-full h-full object-contain'
+      className="w-full h-full object-contain"
       draggable={false}
     />
-    <span className='absolute bottom-2 right-3 text-[10px] text-gray-400 font-mono select-none'>
+    <span className="absolute bottom-2 right-3 text-[10px] text-gray-400 font-mono select-none">
       {pageNumber}
     </span>
   </div>
 ));
-PageImage.displayName = 'PageImage';
+PageImage.displayName = "PageImage";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -100,10 +100,10 @@ export function PolicyPdfPreview({
     setPages([]);
     setCurrentPage(0);
     try {
-      const pdfjsLib = await import('pdfjs-dist');
+      const pdfjsLib = await import("pdfjs-dist");
       pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
       const pdf = await pdfjsLib.getDocument(
-        typeof src === 'string'
+        typeof src === "string"
           ? { url: src, withCredentials: false }
           : { data: src },
       ).promise;
@@ -111,23 +111,23 @@ export function PolicyPdfPreview({
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 1.8 });
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        const ctx = canvas.getContext('2d')!;
+        const ctx = canvas.getContext("2d")!;
         await page.render({ canvasContext: ctx, viewport, canvas }).promise;
-        dataUrls.push(canvas.toDataURL('image/jpeg', 0.88));
+        dataUrls.push(canvas.toDataURL("image/jpeg", 0.88));
       }
       setPages(dataUrls);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const isNetwork =
-        msg.includes('Failed to fetch') ||
-        msg.includes('NetworkError') ||
-        msg.includes('ERR_NAME_NOT_RESOLVED');
+        msg.includes("Failed to fetch") ||
+        msg.includes("NetworkError") ||
+        msg.includes("ERR_NAME_NOT_RESOLVED");
       setError(
         isNetwork
-          ? 'Không thể tải file PDF - URL không hợp lệ hoặc không truy cập được.'
+          ? "Không thể tải file PDF - URL không hợp lệ hoặc không truy cập được."
           : `Không thể đọc file PDF: ${msg}`,
       );
     } finally {
@@ -162,27 +162,27 @@ export function PolicyPdfPreview({
   return (
     <div
       ref={containerRef}
-      className={cn('flex w-full flex-col items-center gap-4', className)}
+      className={cn("flex w-full flex-col items-center gap-4", className)}
     >
       {isLoading ? (
-        <div className='flex w-full flex-col items-center justify-center gap-3 py-16 rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/4'>
-          <Loader2 className='w-7 h-7 animate-spin text-blue-500' />
-          <p className='text-sm text-muted-foreground'>Đang tải PDF...</p>
+        <div className="flex w-full flex-col items-center justify-center gap-3 py-16 rounded-2xl border border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-white/4">
+          <Loader2 className="w-7 h-7 animate-spin text-blue-500" />
+          <p className="text-sm text-muted-foreground">Đang tải PDF...</p>
         </div>
       ) : error ? (
-        <div className='flex w-full flex-col items-center justify-center gap-3 py-10 rounded-2xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/10'>
-          <AlertTriangle className='w-7 h-7 text-red-500' />
-          <p className='text-sm text-red-600 dark:text-red-400 text-center px-4'>
+        <div className="flex w-full flex-col items-center justify-center gap-3 py-10 rounded-2xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/10">
+          <AlertTriangle className="w-7 h-7 text-red-500" />
+          <p className="text-sm text-red-600 dark:text-red-400 text-center px-4">
             {error}
           </p>
           {pdfUrl && (
             <a
               href={pdfUrl}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-white/10 text-muted-foreground hover:bg-gray-100 dark:hover:bg-white/10 transition-colors'
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-white/10 text-muted-foreground hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
             >
-              <ExternalLink className='w-3.5 h-3.5' />
+              <ExternalLink className="w-3.5 h-3.5" />
               Thử mở trực tiếp
             </a>
           )}
@@ -190,25 +190,25 @@ export function PolicyPdfPreview({
       ) : pages.length > 0 ? (
         <>
           {/* Page indicator */}
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <BookOpen className='w-4 h-4' />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <BookOpen className="w-4 h-4" />
             <span>
-              Trang{' '}
-              <span className='font-semibold text-foreground'>
+              Trang{" "}
+              <span className="font-semibold text-foreground">
                 {currentPage + 1}
-              </span>{' '}
+              </span>{" "}
               / {totalPages}
             </span>
           </div>
 
           {isMobile ? (
             /* ── Mobile: plain image, full width, readable ─────────────────── */
-            <div className='w-full rounded-lg overflow-hidden border border-gray-100 dark:border-white/10 bg-white shadow-md'>
+            <div className="w-full rounded-lg overflow-hidden border border-gray-100 dark:border-white/10 bg-white shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={pages[currentPage]}
                 alt={`Trang ${currentPage + 1}`}
-                className='w-full h-auto block'
+                className="w-full h-auto block"
                 draggable={false}
               />
             </div>
@@ -216,17 +216,17 @@ export function PolicyPdfPreview({
             /* ── Desktop: two-page flipbook ─────────────────────────────────── */
             <div
               style={{
-                width: '100%',
+                width: "100%",
                 height: scaledH,
-                overflow: 'hidden',
-                display: 'flex',
-                justifyContent: 'center',
+                overflow: "hidden",
+                display: "flex",
+                justifyContent: "center",
               }}
             >
               <div
                 style={{
                   transform: `scale(${scale})`,
-                  transformOrigin: 'top center',
+                  transformOrigin: "top center",
                   width: BOOK_W * 2,
                   height: BOOK_H,
                   flexShrink: 0,
@@ -236,7 +236,7 @@ export function PolicyPdfPreview({
                   ref={flipBookRef}
                   width={BOOK_W}
                   height={BOOK_H}
-                  size='fixed'
+                  size="fixed"
                   minWidth={BOOK_W}
                   maxWidth={BOOK_W}
                   minHeight={BOOK_H}
@@ -250,7 +250,7 @@ export function PolicyPdfPreview({
                   showCover={false}
                   mobileScrollSupport
                   onFlip={(e: { data: number }) => setCurrentPage(e.data)}
-                  className='shadow-2xl rounded-sm'
+                  className="shadow-2xl rounded-sm"
                   style={{}}
                   startPage={0}
                   clickEventForward
@@ -268,21 +268,21 @@ export function PolicyPdfPreview({
           )}
 
           {/* Navigation */}
-          <div className='flex items-center gap-3'>
+          <div className="flex items-center gap-3">
             <button
-              type='button'
+              type="button"
               onClick={() => {
                 if (isMobile) setCurrentPage((p) => Math.max(0, p - 1));
-                else flipBookRef.current?.pageFlip()?.flipPrev('top');
+                else flipBookRef.current?.pageFlip()?.flipPrev("top");
               }}
               disabled={currentPage === 0}
-              className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              <ChevronLeft className='w-4 h-4' />
+              <ChevronLeft className="w-4 h-4" />
               Trước
             </button>
 
-            <div className='flex items-center gap-1'>
+            <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(totalPages, 7) }).map((_, i) => {
                 const pageIdx =
                   totalPages <= 7 ? i : Math.round((i / 6) * (totalPages - 1));
@@ -290,16 +290,16 @@ export function PolicyPdfPreview({
                 return (
                   <button
                     key={i}
-                    type='button'
+                    type="button"
                     onClick={() => {
                       if (isMobile) setCurrentPage(pageIdx);
                       else flipBookRef.current?.pageFlip()?.flip(pageIdx);
                     }}
                     className={cn(
-                      'rounded-full transition-all',
+                      "rounded-full transition-all",
                       isActive
-                        ? 'w-2.5 h-2.5 bg-blue-500'
-                        : 'w-1.5 h-1.5 bg-gray-300 dark:bg-white/20 hover:bg-gray-400',
+                        ? "w-2.5 h-2.5 bg-blue-500"
+                        : "w-1.5 h-1.5 bg-gray-300 dark:bg-white/20 hover:bg-gray-400",
                     )}
                   />
                 );
@@ -307,17 +307,17 @@ export function PolicyPdfPreview({
             </div>
 
             <button
-              type='button'
+              type="button"
               onClick={() => {
                 if (isMobile)
                   setCurrentPage((p) => Math.min(totalPages - 1, p + 1));
-                else flipBookRef.current?.pageFlip()?.flipNext('top');
+                else flipBookRef.current?.pageFlip()?.flipNext("top");
               }}
               disabled={currentPage >= totalPages - 1}
-              className='flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors'
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Sau
-              <ChevronRight className='w-4 h-4' />
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </>

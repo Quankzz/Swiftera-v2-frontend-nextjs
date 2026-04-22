@@ -10,8 +10,8 @@
  * API-105: PATCH  /contact-tickets/{id}/close  [AUTH]    closeTicket
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 import type {
   ContactTicketResponse,
   ContactTicketStatus,
@@ -19,7 +19,7 @@ import type {
   PaginatedTicketsResponse,
   ReplyTicketRequest,
   TicketListParams,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -51,7 +51,7 @@ export async function getTickets(
   params?: TicketListParams,
 ): Promise<PaginatedTicketsResponse> {
   const res = await httpService.get<ApiResponse<PaginatedTicketsResponse>>(
-    '/contact-tickets',
+    "/contact-tickets",
     { ...authOpts, params: buildParams(params) },
   );
   return res.data.data!;
@@ -79,7 +79,7 @@ export async function getMyTickets(
   params?: TicketListParams,
 ): Promise<PaginatedTicketsResponse> {
   const res = await httpService.get<ApiResponse<PaginatedTicketsResponse>>(
-    '/contact-tickets/my-tickets',
+    "/contact-tickets/my-tickets",
     { ...authOpts, params: buildParams(params) },
   );
   return res.data.data!;
@@ -97,7 +97,7 @@ export async function createTicket(
   body: CreateTicketRequest,
 ): Promise<ContactTicketResponse> {
   const res = await httpService.post<ApiResponse<ContactTicketResponse>>(
-    '/contact-tickets',
+    "/contact-tickets",
     body,
     authOpts,
   );

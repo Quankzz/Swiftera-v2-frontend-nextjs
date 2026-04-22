@@ -3,10 +3,10 @@
  */
 
 export const rentalOrderKeys = {
-  all: ['rental-orders'] as const,
+  all: ["rental-orders"] as const,
 
   list: (params?: object) =>
-    [...rentalOrderKeys.all, 'list', params ?? {}] as const,
+    [...rentalOrderKeys.all, "list", params ?? {}] as const,
 
   myList: (params?: {
     page?: number;
@@ -14,11 +14,11 @@ export const rentalOrderKeys = {
     filter?: string;
     sort?: string;
     search?: string;
-  }) => [...rentalOrderKeys.all, 'my', params ?? {}] as const,
+  }) => [...rentalOrderKeys.all, "my", params ?? {}] as const,
 
   detail: (rentalOrderId: string) =>
-    [...rentalOrderKeys.all, 'detail', rentalOrderId] as const,
+    [...rentalOrderKeys.all, "detail", rentalOrderId] as const,
 
   overdueSuggestion: (rentalOrderId: string) =>
-    [...rentalOrderKeys.all, 'overdue-suggestion', rentalOrderId] as const,
+    [...rentalOrderKeys.all, "overdue-suggestion", rentalOrderId] as const,
 };

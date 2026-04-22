@@ -6,5 +6,5 @@
  */
 
 export const fileKeys = {
-  all: ['files'] as const,
+  all: ["files"] as const,
 };

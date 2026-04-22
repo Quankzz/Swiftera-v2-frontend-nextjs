@@ -2,8 +2,8 @@
  * Contact Tickets - TanStack Query Hooks
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ticketKeys } from '../api/ticket.keys';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ticketKeys } from "../api/ticket.keys";
 import {
   closeTicket,
   createTicket,
@@ -11,13 +11,13 @@ import {
   getTicketById,
   getTickets,
   replyTicket,
-} from '../api/ticket.service';
+} from "../api/ticket.service";
 import type {
   ContactTicketResponse,
   CreateTicketRequest,
   ReplyTicketRequest,
   TicketListParams,
-} from '../types';
+} from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -42,7 +42,7 @@ export function useMyTickets(params?: TicketListParams) {
 /** API-101: Chi tiết một ticket */
 export function useTicketDetail(id: string | null) {
   return useQuery({
-    queryKey: ticketKeys.detail(id ?? ''),
+    queryKey: ticketKeys.detail(id ?? ""),
     queryFn: () => getTicketById(id!),
     enabled: !!id,
   });

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * useCartSync - Hướng B: Zustand làm local cart, sync lên API khi đăng nhập.
@@ -11,12 +11,12 @@
  * Mount hook này 1 lần duy nhất tại Layout để bao phủ toàn app.
  */
 
-import { useEffect, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/context/AuthContext';
-import { useRentalCartStore } from '@/stores/rental-cart-store';
-import { addCartLine } from '@/hooks/api/cart.service';
-import { cartKeys } from '@/hooks/api/cart.keys';
+import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
+import { useRentalCartStore } from "@/stores/rental-cart-store";
+import { addCartLine } from "@/hooks/api/cart.service";
+import { cartKeys } from "@/hooks/api/cart.keys";
 
 export function useCartSync() {
   const { isAuthenticated } = useAuth();

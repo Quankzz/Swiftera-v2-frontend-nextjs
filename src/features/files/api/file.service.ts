@@ -5,15 +5,15 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 5: FILES)
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 import type {
   UploadSingleResponse,
   UploadMultipleResponse,
   DeleteMultipleFilesInput,
   MoveSingleFileInput,
   MoveMultipleFilesInput,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -34,11 +34,11 @@ export async function uploadSingleFile(
   folder?: string,
 ): Promise<UploadSingleResponse> {
   const formData = new FormData();
-  formData.append('file', file);
-  if (folder) formData.append('folderName', folder);
+  formData.append("file", file);
+  if (folder) formData.append("folderName", folder);
 
   const res = await httpService.post<ApiResponse<UploadSingleResponse>>(
-    '/storage/azure-blob/upload/single',
+    "/storage/azure-blob/upload/single",
     formData,
     authOpts,
   );
@@ -56,12 +56,12 @@ export async function uploadMultipleFiles(
 ): Promise<UploadMultipleResponse> {
   const formData = new FormData();
   for (const file of files) {
-    formData.append('files', file);
+    formData.append("files", file);
   }
-  if (folder) formData.append('folderName', folder);
+  if (folder) formData.append("folderName", folder);
 
   const res = await httpService.post<ApiResponse<UploadMultipleResponse>>(
-    '/storage/azure-blob/upload/multiple',
+    "/storage/azure-blob/upload/multiple",
     formData,
     authOpts,
   );
@@ -77,7 +77,7 @@ export async function uploadMultipleFiles(
  * DELETE /storage/azure-blob/delete/single?filePath=... [AUTH]
  */
 export async function deleteSingleFile(filePath: string): Promise<null> {
-  await httpService.delete('/storage/azure-blob/delete/single', {
+  await httpService.delete("/storage/azure-blob/delete/single", {
     ...authOpts,
     params: { filePath },
   });
@@ -91,7 +91,7 @@ export async function deleteSingleFile(filePath: string): Promise<null> {
 export async function deleteMultipleFiles(
   payload: DeleteMultipleFilesInput,
 ): Promise<null> {
-  await httpService.delete('/storage/azure-blob/delete/multiple', {
+  await httpService.delete("/storage/azure-blob/delete/multiple", {
     ...authOpts,
     data: payload,
   });
@@ -110,7 +110,7 @@ export async function moveSingleFile(
   payload: MoveSingleFileInput,
 ): Promise<string> {
   const res = await httpService.put<ApiResponse<string>>(
-    '/storage/azure-blob/move/single',
+    "/storage/azure-blob/move/single",
     payload,
     authOpts,
   );
@@ -125,7 +125,7 @@ export async function moveMultipleFiles(
   payload: MoveMultipleFilesInput,
 ): Promise<string> {
   const res = await httpService.put<ApiResponse<string>>(
-    '/storage/azure-blob/move/multiple',
+    "/storage/azure-blob/move/multiple",
     payload,
     authOpts,
   );

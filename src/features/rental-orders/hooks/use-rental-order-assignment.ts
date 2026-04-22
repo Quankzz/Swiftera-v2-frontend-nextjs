@@ -10,8 +10,8 @@
  *  - useAdminEarlyPickup       → POST /rental-orders/{id}/admin-early-pickup [ADMIN]
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { rentalOrderKeys } from '../api/rental-order.keys';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { rentalOrderKeys } from "../api/rental-order.keys";
 import {
   assignHubToOrder,
   assignStaffToOrder,
@@ -19,21 +19,21 @@ import {
   confirmCancellationRefund,
   adminCancelFromPaid,
   adminEarlyPickupFromInUse,
-  type CancelOrderInput,
-} from '../api/rental-order.service';
-import { httpService } from '@/api/http';
-import type { ApiResponse, PaginationResponse } from '@/types/api.types';
-import { getHubStaff } from '@/features/hubs/api/hub.service';
-import { hubKeys } from '@/features/hubs/api/hub.keys';
-import { toast } from 'sonner';
+} from "../api/rental-order.service";
+import { httpService } from "@/api/http";
+import type { ApiResponse, PaginationResponse } from "@/types/api.types";
+import { getHubStaff } from "@/features/hubs/api/hub.service";
+import { hubKeys } from "@/features/hubs/api/hub.keys";
+import { toast } from "sonner";
 import type {
   RentalOrderResponse,
   AssignHubInput,
   AssignStaffInput,
   AssignStaffToHubInput,
   HubOption,
-} from '../types';
-import type { HubStaffResponse } from '@/features/hubs/types';
+  CancelOrderInput,
+} from "../types";
+import type { HubStaffResponse } from "@/features/hubs/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hub query for assignment dialog
@@ -52,11 +52,11 @@ interface HubListParams {
  */
 export function useHubsForAssignQuery(params?: HubListParams) {
   return useQuery<PaginationResponse<HubOption>>({
-    queryKey: ['hubs', 'assign', params ?? {}],
+    queryKey: ["hubs", "assign", params ?? {}],
     queryFn: async () => {
       const res = await httpService.get<
         ApiResponse<PaginationResponse<HubOption>>
-      >('/hubs', { params });
+      >("/hubs", { params });
       return res.data.data!;
     },
     staleTime: 5 * 60 * 1000,
@@ -79,7 +79,7 @@ export function useHubStaffForAssignQuery(
   activeOnly = true,
 ) {
   return useQuery<HubStaffResponse[]>({
-    queryKey: [...hubKeys.staff(hubId ?? ''), { activeOnly }],
+    queryKey: [...hubKeys.staff(hubId ?? ""), { activeOnly }],
     queryFn: () => getHubStaff(hubId!, activeOnly),
     enabled: !!hubId,
     staleTime: 2 * 60 * 1000,
@@ -108,10 +108,10 @@ export function useAssignHubMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Gán hub thành công');
+      toast.success("Gán hub thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Gán hub thất bại');
+      toast.error(error.message || "Gán hub thất bại");
     },
   });
 }
@@ -138,10 +138,10 @@ export function useAssignStaffMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Gán nhân viên thành công');
+      toast.success("Gán nhân viên thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Gán nhân viên thất bại');
+      toast.error(error.message || "Gán nhân viên thất bại");
     },
   });
 }
@@ -165,10 +165,10 @@ export function useAssignStaffToHubMutation() {
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: hubKeys.staff(variables.hubId) });
       qc.invalidateQueries({ queryKey: hubKeys.lists() });
-      toast.success('Gán nhân viên vào hub thành công');
+      toast.success("Gán nhân viên vào hub thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Gán nhân viên vào hub thất bại');
+      toast.error(error.message || "Gán nhân viên vào hub thất bại");
     },
   });
 }
@@ -195,10 +195,10 @@ export function useConfirmCancellationRefund() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Đã xác nhận hủy đơn và hoàn tiền thành công');
+      toast.success("Đã xác nhận hủy đơn và hoàn tiền thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Xác nhận hủy đơn thất bại');
+      toast.error(error.message || "Xác nhận hủy đơn thất bại");
     },
   });
 }
@@ -221,10 +221,10 @@ export function useAdminCancelFromPaid() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Đã hủy đơn PAID thành công');
+      toast.success("Đã hủy đơn PAID thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Hủy đơn thất bại');
+      toast.error(error.message || "Hủy đơn thất bại");
     },
   });
 }
@@ -240,10 +240,10 @@ export function useAdminEarlyPickup() {
     onSuccess: (_, rentalOrderId) => {
       qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
       qc.invalidateQueries({ queryKey: rentalOrderKeys.detail(rentalOrderId) });
-      toast.success('Đã kích hoạt thu hồi sớm thành công');
+      toast.success("Đã kích hoạt thu hồi sớm thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Kích hoạt thu hồi sớm thất bại');
+      toast.error(error.message || "Kích hoạt thu hồi sớm thất bại");
     },
   });
 }

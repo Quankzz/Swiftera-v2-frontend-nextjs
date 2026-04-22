@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { storageService } from '@/services/storage';
-import type { UserSecuredResponse } from '@/types/api.types';
+import { create } from "zustand";
+import { storageService } from "@/services/storage";
+import type { UserSecuredResponse } from "@/types/api.types";
 
 // ─── State shape ─────────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 export async function restoreSession(): Promise<void> {
   try {
-    const { refreshAuthToken } = await import('@/api/auth/index');
+    const { refreshAuthToken } = await import("@/api/auth/index");
     const res = await refreshAuthToken();
     if (res?.accessToken && res.userSecured) {
       storageService.setAccessToken(res.accessToken);

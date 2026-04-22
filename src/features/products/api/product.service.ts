@@ -8,8 +8,8 @@
  * Category service đã tách sang: src/features/categories/api/category.service.ts
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 import type {
   CreateInventoryItemInput,
   CreateProductInput,
@@ -17,11 +17,13 @@ import type {
   InventoryItemResponse,
   PaginatedInventoryItemsResponse,
   PaginatedProductsResponse,
+  ProductAvailabilityParams,
+  ProductAvailabilityResponse,
   ProductListParams,
   ProductResponse,
   UpdateInventoryItemInput,
   UpdateProductInput,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -39,9 +41,16 @@ const authOpts = { requireToken: true as const };
 export async function getProducts(
   params: ProductListParams = {},
 ): Promise<PaginatedProductsResponse> {
-  const { page = 1, size = 12, sort, filter, includeDescendants, onlyWithStock } = params;
+  const {
+    page = 1,
+    size = 12,
+    sort,
+    filter,
+    includeDescendants,
+    onlyWithStock,
+  } = params;
   const res = await httpService.get<ApiResponse<PaginatedProductsResponse>>(
-    '/products',
+    "/products",
     {
       params: {
         page,
@@ -68,8 +77,8 @@ export async function getProductsByHub(
   const {
     page = 1,
     size = 50,
-    sort = 'createdAt,desc',
-    filter = 'isActive:true',
+    sort = "createdAt,desc",
+    filter = "isActive:true",
     includeDescendants = false,
   } = params;
   const res = await httpService.get<ApiResponse<PaginatedProductsResponse>>(
@@ -101,6 +110,23 @@ export async function getProductById(
 }
 
 /**
+ * API-055-B: GET /api/v1/products/{productId}/availability
+ * Kiểm tra tình trạng khả dụng của sản phẩm theo ngày giao & thời hạn thuê cụ thể.
+ * Dùng khi user chọn ngày giao / số ngày thuê / màu sắc trên product detail.
+ * Params là all optional nhưng FE nên truyền deliveryDate + rentalDurationDays khi có.
+ */
+export async function getProductAvailability(
+  productId: string,
+  params?: ProductAvailabilityParams,
+): Promise<ProductAvailabilityResponse> {
+  const res = await httpService.get<ApiResponse<ProductAvailabilityResponse>>(
+    `/products/${productId}/availability`,
+    { params },
+  );
+  return res.data.data!;
+}
+
+/**
  * API-051: POST /api/v1/products
  * Create a new product.
  * Images should be uploaded first via useUploadFilesMutation,
@@ -110,7 +136,7 @@ export async function createProduct(
   payload: CreateProductInput,
 ): Promise<ProductResponse> {
   const res = await httpService.post<ApiResponse<ProductResponse>>(
-    '/products',
+    "/products",
     payload,
     authOpts,
   );
@@ -157,7 +183,7 @@ export async function getInventoryItems(
 ): Promise<PaginatedInventoryItemsResponse> {
   const res = await httpService.get<
     ApiResponse<PaginatedInventoryItemsResponse>
-  >('/inventory-items', { ...authOpts, params });
+  >("/inventory-items", { ...authOpts, params });
   return (
     res.data.data ?? {
       meta: {
@@ -195,7 +221,7 @@ export async function createInventoryItem(
   payload: CreateInventoryItemInput,
 ): Promise<InventoryItemResponse> {
   const res = await httpService.post<ApiResponse<InventoryItemResponse>>(
-    '/inventory-items',
+    "/inventory-items",
     payload,
     authOpts,
   );

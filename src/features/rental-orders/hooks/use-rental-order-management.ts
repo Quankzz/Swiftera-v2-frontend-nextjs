@@ -8,18 +8,18 @@
  * Dùng TanStack Query + rental-order.service.ts + rental-order.keys.ts
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { rentalOrderKeys } from '../api/rental-order.keys';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { rentalOrderKeys } from "../api/rental-order.keys";
 import {
   getRentalOrders,
   getRentalOrderById,
   updateRentalOrderStatus,
   cancelRentalOrder,
-  completeRentalOrder,
+  confirmCompletion,
   reportIssueRecall,
   getContractByOrder,
-} from '../api/rental-order.service';
-import { toast } from 'sonner';
+} from "../api/rental-order.service";
+import { toast } from "sonner";
 import type {
   RentalOrderResponse,
   PaginatedRentalOrdersResponse,
@@ -27,7 +27,8 @@ import type {
   UpdateOrderStatusInput,
   ReportIssueInput,
   RentalContractResponse,
-} from '../types';
+  ConfirmCompletionInput,
+} from "../types";
 
 /**
  * Lấy danh sách đơn thuê (API-075)
@@ -72,10 +73,10 @@ export function useUpdateOrderStatusMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Cập nhật trạng thái đơn thuê thành công');
+      toast.success("Cập nhật trạng thái đơn thuê thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Cập nhật trạng thái thất bại');
+      toast.error(error.message || "Cập nhật trạng thái thất bại");
     },
   });
 }
@@ -89,30 +90,37 @@ export function useCancelOrderMutation() {
     mutationFn: cancelRentalOrder,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
-      toast.success('Đã hủy đơn thuê');
+      toast.success("Đã hủy đơn thuê");
     },
     onError: (error) => {
-      toast.error(error.message || 'Hủy đơn thuê thất bại');
+      toast.error(error.message || "Hủy đơn thuê thất bại");
     },
   });
 }
 
 /**
- * Hoàn tất đơn thuê - PICKED_UP → COMPLETED (API-079)
+ * Hoàn tất đơn thuê - PICKED_UP → COMPLETED (POST /confirm-completion)
+ * Uses the proper confirm-completion endpoint which handles penalty settlement
+ * and deposit refund creation, not the generic status-change endpoint.
  */
 export function useCompleteOrderMutation() {
   const qc = useQueryClient();
-  return useMutation<RentalOrderResponse, Error, string>({
-    mutationFn: completeRentalOrder,
-    onSuccess: (_, rentalOrderId) => {
+  return useMutation<
+    RentalOrderResponse,
+    Error,
+    { rentalOrderId: string; input: ConfirmCompletionInput }
+  >({
+    mutationFn: ({ rentalOrderId, input }) =>
+      confirmCompletion(rentalOrderId, input),
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
       qc.invalidateQueries({
-        queryKey: rentalOrderKeys.detail(rentalOrderId),
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Đơn thuê đã hoàn tất');
+      toast.success("Đơn thuê đã hoàn tất");
     },
     onError: (error) => {
-      toast.error(error.message || 'Hoàn tất đơn thuê thất bại');
+      toast.error(error.message || "Hoàn tất đơn thuê thất bại");
     },
   });
 }
@@ -134,10 +142,10 @@ export function useReportIssueMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Đã ghi nhận sự cố và yêu cầu thu hồi');
+      toast.success("Đã ghi nhận sự cố và yêu cầu thu hồi");
     },
     onError: (error) => {
-      toast.error(error.message || 'Ghi nhận sự cố thất bại');
+      toast.error(error.message || "Ghi nhận sự cố thất bại");
     },
   });
 }

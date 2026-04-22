@@ -3,7 +3,7 @@
  * Module 12: RENTAL ORDERS (API-074 → API-085)
  */
 
-import { httpService } from '@/api/http';
+import { httpService } from "@/api/http";
 import type {
   CreateRentalOrderInput,
   UpdateOrderStatusInput,
@@ -17,8 +17,8 @@ import type {
   RentalOrderResponse,
   OverduePenaltySuggestionData,
   OverduePenaltySuggestionResponse,
-} from '@/api/rentalOrderApi';
-import type { AssignOrderInput } from '@/types/dashboard';
+} from "@/api/rentalOrderApi";
+import type { AssignOrderInput } from "@/types/dashboard";
 
 const authOpts = { requireToken: true as const };
 
@@ -37,7 +37,7 @@ export async function getMyRentalOrders(params?: {
   sort?: string;
 }): Promise<NormalizedPaginatedOrders> {
   const res = await httpService.get<PaginatedRentalOrdersResponse>(
-    '/rental-orders/my-orders',
+    "/rental-orders/my-orders",
     { ...authOpts, params },
   );
 
@@ -65,7 +65,7 @@ export async function createRentalOrder(
   input: CreateRentalOrderInput,
 ): Promise<RentalOrderResponse> {
   const res = await httpService.post<RentalOrderSingleResponse>(
-    '/rental-orders',
+    "/rental-orders",
     input,
     authOpts,
   );
@@ -132,7 +132,7 @@ export async function getRentalOrders(params?: {
   filter?: string;
 }): Promise<NormalizedPaginatedOrders> {
   const res = await httpService.get<PaginatedRentalOrdersResponse>(
-    '/rental-orders',
+    "/rental-orders",
     { ...authOpts, params },
   );
   const raw = res.data.data;
@@ -147,7 +147,7 @@ export async function getRentalOrders(params?: {
 
 export async function getRentalOrderStaffDetail(
   rentalOrderId: string,
-): Promise<RentalOrderStaffDetailResponse['data']> {
+): Promise<RentalOrderStaffDetailResponse["data"]> {
   const res = await httpService.get<RentalOrderStaffDetailResponse>(
     `/rental-orders/${rentalOrderId}/staff-detail`,
     authOpts,

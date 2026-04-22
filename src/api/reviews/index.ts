@@ -5,8 +5,8 @@
  * Tất cả endpoints yêu cầu xác thực [AUTH]
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 // ─── Response Types ─────────────────────────────────────────────────────────
 
@@ -78,7 +78,7 @@ const authOpts = { requireToken: true as const };
 export function createReview(
   input: CreateReviewInput,
 ): Promise<AxiosResponse<ReviewSingleResponse>> {
-  return httpService.post<ReviewSingleResponse>('/reviews', input, authOpts);
+  return httpService.post<ReviewSingleResponse>("/reviews", input, authOpts);
 }
 
 /**
@@ -104,7 +104,7 @@ export function getReviews(params?: {
   filter?: string;
   sort?: string;
 }): Promise<AxiosResponse<ReviewListResponse>> {
-  return httpService.get<ReviewListResponse>('/reviews', {
+  return httpService.get<ReviewListResponse>("/reviews", {
     ...authOpts,
     params,
   });

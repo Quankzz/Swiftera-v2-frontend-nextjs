@@ -30,11 +30,18 @@ const highlightVariants = cva("relative inline-block", {
   },
 });
 
-type HighlightColor = "primary" | "secondary" | "accent" | "destructive" | "teal";
+type HighlightColor =
+  | "primary"
+  | "secondary"
+  | "accent"
+  | "destructive"
+  | "teal";
 type HighlightVariant = "underline" | "box" | "circle" | "marker";
 
-export interface HighlightTextProps
-  extends Omit<React.HTMLAttributes<HTMLSpanElement>, "color"> {
+export interface HighlightTextProps extends Omit<
+  React.HTMLAttributes<HTMLSpanElement>,
+  "color"
+> {
   children: React.ReactNode;
   variant?: HighlightVariant;
   color?: HighlightColor;
@@ -57,7 +64,7 @@ const HighlightText = React.forwardRef<HTMLSpanElement, HighlightTextProps>(
       animate = true,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isVisible, setIsVisible] = React.useState(!animate);
     const [dimensions, setDimensions] = React.useState({ width: 0, height: 0 });
@@ -98,7 +105,7 @@ const HighlightText = React.forwardRef<HTMLSpanElement, HighlightTextProps>(
             observer.disconnect();
           }
         },
-        { threshold: 0.5, rootMargin: "0px 0px -50px 0px" }
+        { threshold: 0.5, rootMargin: "0px 0px -50px 0px" },
       );
 
       observer.observe(element);
@@ -252,7 +259,7 @@ const HighlightText = React.forwardRef<HTMLSpanElement, HighlightTextProps>(
         <span className="relative z-10">{children}</span>
       </span>
     );
-  }
+  },
 );
 
 HighlightText.displayName = "HighlightText";

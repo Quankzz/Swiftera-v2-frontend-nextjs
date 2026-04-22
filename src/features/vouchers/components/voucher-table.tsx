@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useMemo, useState, useEffect } from 'react';
-import { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/dashboard/ui/data-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Pencil, Trash2, Tag, Clock, Search } from 'lucide-react';
+import { useMemo, useState, useEffect } from "react";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/dashboard/ui/data-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2, Tag, Clock, Search } from "lucide-react";
 import type {
   VoucherResponse,
   DiscountType,
   VoucherType,
-} from '@/features/vouchers/types';
-import { useVouchersQuery } from '@/features/vouchers/hooks/use-voucher-management';
+} from "@/features/vouchers/types";
+import { useVouchersQuery } from "@/features/vouchers/hooks/use-voucher-management";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -22,7 +22,7 @@ function formatDiscountValue(
   discountValue: number,
   maxDiscountAmount: number | null,
 ): string {
-  if (discountType === 'PERCENTAGE') {
+  if (discountType === "PERCENTAGE") {
     const base = `${discountValue}%`;
     if (maxDiscountAmount != null) {
       return `${base} (tối đa ${formatCurrency(maxDiscountAmount)})`;
@@ -33,9 +33,9 @@ function formatDiscountValue(
 }
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -49,11 +49,11 @@ function parseBEDate(dateStr: string): Date | null {
   if (ampmMatch) {
     const [, datePart, rawHour, min, sec, ampm] = ampmMatch;
     let hour = parseInt(rawHour, 10);
-    if (hour < 12 && ampm.toUpperCase() === 'PM') hour += 12;
-    if (hour === 12 && ampm.toUpperCase() === 'AM') hour = 0;
+    if (hour < 12 && ampm.toUpperCase() === "PM") hour += 12;
+    if (hour === 12 && ampm.toUpperCase() === "AM") hour = 0;
     // Parse như local time (không thêm Z)
     const d = new Date(
-      `${datePart}T${String(hour).padStart(2, '0')}:${min}:${sec}`,
+      `${datePart}T${String(hour).padStart(2, "0")}:${min}:${sec}`,
     );
     return isNaN(d.getTime()) ? null : d;
   }
@@ -62,17 +62,17 @@ function parseBEDate(dateStr: string): Date | null {
 }
 
 function formatDateString(dateStr: string | null): string {
-  if (!dateStr) return '-';
+  if (!dateStr) return "-";
   try {
     const d = parseBEDate(dateStr);
     if (!d) return dateStr;
     // Luôn hiển thị cả ngày lẫn giờ - giờ hết hạn quan trọng
-    return d.toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return d.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: false,
     });
   } catch {
@@ -95,17 +95,17 @@ function isExpired(expiresAt: string | null): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function VoucherTypeBadge({ type }: { type: VoucherType }) {
-  return type === 'PRODUCT_DISCOUNT' ? (
+  return type === "PRODUCT_DISCOUNT" ? (
     <Badge
-      variant='outline'
-      className='border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300'
+      variant="outline"
+      className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300"
     >
       🏷 Sản phẩm
     </Badge>
   ) : (
     <Badge
-      variant='outline'
-      className='border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300'
+      variant="outline"
+      className="border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300"
     >
       🎫 Đơn hàng
     </Badge>
@@ -115,15 +115,15 @@ function VoucherTypeBadge({ type }: { type: VoucherType }) {
 function DiscountTypeBadge({ type }: { type: DiscountType }) {
   return (
     <Badge
-      variant='outline'
+      variant="outline"
       className={
-        type === 'PERCENTAGE'
-          ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300'
-          : 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900 dark:bg-purple-950/50 dark:text-purple-300'
+        type === "PERCENTAGE"
+          ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300"
+          : "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-900 dark:bg-purple-950/50 dark:text-purple-300"
       }
     >
-      {type === 'PERCENTAGE' ? '%' : '₫'}
-      &nbsp;{type === 'PERCENTAGE' ? 'Phần trăm' : 'Cố định'}
+      {type === "PERCENTAGE" ? "%" : "₫"}
+      &nbsp;{type === "PERCENTAGE" ? "Phần trăm" : "Cố định"}
     </Badge>
   );
 }
@@ -136,8 +136,8 @@ function StatusBadge({ voucher }: { voucher: VoucherResponse }) {
   if (!voucher.isActive) {
     return (
       <Badge
-        variant='outline'
-        className='border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-800 dark:bg-gray-950/50 dark:text-gray-400'
+        variant="outline"
+        className="border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-800 dark:bg-gray-950/50 dark:text-gray-400"
       >
         Tắt
       </Badge>
@@ -146,8 +146,8 @@ function StatusBadge({ voucher }: { voucher: VoucherResponse }) {
   if (expired) {
     return (
       <Badge
-        variant='outline'
-        className='border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400'
+        variant="outline"
+        className="border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400"
       >
         Hết hạn
       </Badge>
@@ -156,8 +156,8 @@ function StatusBadge({ voucher }: { voucher: VoucherResponse }) {
   if (limitReached) {
     return (
       <Badge
-        variant='outline'
-        className='border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300'
+        variant="outline"
+        className="border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300"
       >
         Hết lượt
       </Badge>
@@ -165,8 +165,8 @@ function StatusBadge({ voucher }: { voucher: VoucherResponse }) {
   }
   return (
     <Badge
-      variant='outline'
-      className='border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300'
+      variant="outline"
+      className="border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300"
     >
       Đang dùng
     </Badge>
@@ -177,12 +177,12 @@ function StatusBadge({ voucher }: { voucher: VoucherResponse }) {
 // Filter / Sort helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ActiveFilter = 'all' | 'active' | 'inactive';
+type ActiveFilter = "all" | "active" | "inactive";
 type SortOption =
-  | 'createdAt,desc'
-  | 'createdAt,asc'
-  | 'expiresAt,asc'
-  | 'expiresAt,desc';
+  | "createdAt,desc"
+  | "createdAt,asc"
+  | "expiresAt,asc"
+  | "expiresAt,desc";
 
 interface FilterBarProps {
   activeFilter: ActiveFilter;
@@ -198,28 +198,28 @@ function FilterBar({
   onSortChange,
 }: FilterBarProps) {
   return (
-    <div className='flex items-center gap-2 flex-wrap'>
+    <div className="flex items-center gap-2 flex-wrap">
       {/* Trạng thái */}
       <select
         value={activeFilter}
         onChange={(e) => onActiveFilterChange(e.target.value as ActiveFilter)}
-        className='h-9 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition cursor-pointer'
+        className="h-9 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition cursor-pointer"
       >
-        <option value='all'>Tất cả trạng thái</option>
-        <option value='active'>Đang hoạt động</option>
-        <option value='inactive'>Đã tắt</option>
+        <option value="all">Tất cả trạng thái</option>
+        <option value="active">Đang hoạt động</option>
+        <option value="inactive">Đã tắt</option>
       </select>
 
       {/* Sắp xếp */}
       <select
         value={sort}
         onChange={(e) => onSortChange(e.target.value as SortOption)}
-        className='h-9 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition cursor-pointer'
+        className="h-9 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition cursor-pointer"
       >
-        <option value='createdAt,desc'>Mới tạo nhất</option>
-        <option value='createdAt,asc'>Cũ nhất</option>
-        <option value='expiresAt,asc'>Hết hạn sớm nhất</option>
-        <option value='expiresAt,desc'>Hết hạn muộn nhất</option>
+        <option value="createdAt,desc">Mới tạo nhất</option>
+        <option value="createdAt,asc">Cũ nhất</option>
+        <option value="expiresAt,asc">Hết hạn sớm nhất</option>
+        <option value="expiresAt,desc">Hết hạn muộn nhất</option>
       </select>
     </div>
   );
@@ -249,10 +249,10 @@ export function VoucherTable({
 }: VoucherTableProps) {
   const [page, setPage] = useState(0);
   const [size] = useState(10);
-  const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
-  const [sort, setSort] = useState<SortOption>('createdAt,desc');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [activeFilter, setActiveFilter] = useState<ActiveFilter>("all");
+  const [sort, setSort] = useState<SortOption>("createdAt,desc");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Debounce 400ms
   useEffect(() => {
@@ -266,12 +266,12 @@ export function VoucherTable({
   // Build SpringFilter DSL param
   const filterParam = useMemo(() => {
     const parts: string[] = [];
-    if (activeFilter === 'active') parts.push('isActive:true');
-    if (activeFilter === 'inactive') parts.push('isActive:false');
+    if (activeFilter === "active") parts.push("isActive:true");
+    if (activeFilter === "inactive") parts.push("isActive:false");
     if (debouncedSearch.trim()) {
       parts.push(`code~~'*${debouncedSearch.trim()}*'`);
     }
-    return parts.length ? parts.join(' and ') : undefined;
+    return parts.length ? parts.join(" and ") : undefined;
   }, [activeFilter, debouncedSearch]);
 
   const { data, isLoading, isError } = useVouchersQuery({
@@ -319,36 +319,36 @@ export function VoucherTable({
   const columns = useMemo<ColumnDef<VoucherResponse>[]>(
     () => [
       {
-        accessorKey: 'code',
-        header: 'Mã voucher',
+        accessorKey: "code",
+        header: "Mã voucher",
         cell: ({ getValue }) => (
-          <div className='flex items-center gap-2'>
-            <Tag size={14} className='text-theme-primary-start shrink-0' />
-            <span className='font-mono font-semibold text-text-main text-sm'>
+          <div className="flex items-center gap-2">
+            <Tag size={14} className="text-theme-primary-start shrink-0" />
+            <span className="font-mono font-semibold text-text-main text-sm">
               {getValue() as string}
             </span>
           </div>
         ),
       },
       {
-        accessorKey: 'type',
-        header: 'Loại voucher',
+        accessorKey: "type",
+        header: "Loại voucher",
         cell: ({ getValue }) => (
           <VoucherTypeBadge type={getValue() as VoucherType} />
         ),
         enableSorting: false,
       },
       {
-        accessorKey: 'discountType',
-        header: 'Kiểu giảm',
+        accessorKey: "discountType",
+        header: "Kiểu giảm",
         cell: ({ getValue }) => (
           <DiscountTypeBadge type={getValue() as DiscountType} />
         ),
         enableSorting: false,
       },
       {
-        id: 'discountDisplay',
-        header: 'Giá trị giảm',
+        id: "discountDisplay",
+        header: "Giá trị giảm",
         accessorFn: (row) =>
           formatDiscountValue(
             row.discountType,
@@ -356,21 +356,21 @@ export function VoucherTable({
             row.maxDiscountAmount,
           ),
         cell: ({ getValue }) => (
-          <span className='text-sm text-text-main font-medium'>
+          <span className="text-sm text-text-main font-medium">
             {getValue() as string}
           </span>
         ),
         enableSorting: false,
       },
       {
-        accessorKey: 'minRentalDays',
-        header: 'Ngày thuê tối thiểu',
+        accessorKey: "minRentalDays",
+        header: "Ngày thuê tối thiểu",
         cell: ({ getValue }) => {
           const val = getValue() as number | null;
           return val != null ? (
-            <span className='text-sm text-text-sub'>{val} ngày</span>
+            <span className="text-sm text-text-sub">{val} ngày</span>
           ) : (
-            <span className='text-sm italic text-text-sub opacity-40'>
+            <span className="text-sm italic text-text-sub opacity-40">
               Không giới hạn
             </span>
           );
@@ -378,16 +378,16 @@ export function VoucherTable({
         enableSorting: false,
       },
       {
-        accessorKey: 'expiresAt',
-        header: 'Hết hạn',
+        accessorKey: "expiresAt",
+        header: "Hết hạn",
         cell: ({ getValue }) => {
           const val = getValue() as string | null;
           const expired = isExpired(val);
           return (
             <div
-              className={`flex items-center gap-1.5 text-sm ${expired ? 'text-red-500' : 'text-text-sub'}`}
+              className={`flex items-center gap-1.5 text-sm ${expired ? "text-red-500" : "text-text-sub"}`}
             >
-              <Clock size={13} className='shrink-0' />
+              <Clock size={13} className="shrink-0" />
               {formatDateString(val)}
             </div>
           );
@@ -395,8 +395,8 @@ export function VoucherTable({
         enableSorting: false,
       },
       {
-        id: 'status',
-        header: 'Trạng thái',
+        id: "status",
+        header: "Trạng thái",
         accessorFn: (row) => row,
         cell: ({ getValue }) => (
           <StatusBadge voucher={getValue() as VoucherResponse} />
@@ -404,29 +404,29 @@ export function VoucherTable({
         enableSorting: false,
       },
       {
-        id: 'actions',
-        header: '',
+        id: "actions",
+        header: "",
         enableSorting: false,
         cell: ({ row }) => (
-          <div className='flex items-center justify-end gap-1'>
+          <div className="flex items-center justify-end gap-1">
             {onEdit && (
               <Button
-                variant='ghost'
-                size='sm'
+                variant="ghost"
+                size="sm"
                 onClick={() => onEdit(row.original)}
-                className='h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/30 dark:hover:text-blue-400'
-                title='Chỉnh sửa'
+                className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                title="Chỉnh sửa"
               >
                 <Pencil size={14} />
               </Button>
             )}
             {onDelete && (
               <Button
-                variant='ghost'
-                size='sm'
+                variant="ghost"
+                size="sm"
                 onClick={() => onDelete(row.original)}
-                className='h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400'
-                title='Xóa'
+                className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                title="Xóa"
               >
                 <Trash2 size={14} />
               </Button>
@@ -444,21 +444,21 @@ export function VoucherTable({
       data={vouchers}
       isLoading={isLoading}
       isError={isError}
-      errorMessage='Không thể tải danh sách voucher. Vui lòng thử lại sau.'
-      emptyMessage='Chưa có voucher nào'
-      totalLabel='voucher'
+      errorMessage="Không thể tải danh sách voucher. Vui lòng thử lại sau."
+      emptyMessage="Chưa có voucher nào"
+      totalLabel="voucher"
       toolbarLeft={
-        <div className='relative'>
+        <div className="relative">
           <Search
             size={14}
-            className='absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none'
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-sub pointer-events-none"
           />
           <input
-            type='text'
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder='Tìm mã voucher...'
-            className='h-9 w-48 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition'
+            placeholder="Tìm mã voucher..."
+            className="h-9 w-48 rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-8 pr-3 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 focus:border-theme-primary-start transition"
           />
         </div>
       }

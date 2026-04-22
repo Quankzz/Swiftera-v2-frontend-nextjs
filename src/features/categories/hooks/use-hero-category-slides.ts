@@ -11,10 +11,10 @@
  *   orbitImages ← imageUrls of all children that have an imageUrl
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { categoryKeys } from '../api/category.keys';
-import { getCategoriesTree } from '../api/category.service';
-import type { CategoryTreeNode } from '../types';
+import { useQuery } from "@tanstack/react-query";
+import { categoryKeys } from "../api/category.keys";
+import { getCategoriesTree } from "../api/category.service";
+import type { CategoryTreeNode } from "../types";
 
 export interface HeroCategorySlide {
   title: string;
@@ -42,11 +42,11 @@ function toHeroSlide(node: CategoryTreeNode): HeroCategorySlide {
   const imgs = collectImages(node);
   return {
     title: node.name,
-    subtitle: 'Chọn Swiftera',
+    subtitle: "Chọn Swiftera",
     description:
-      'Thuê thiết bị linh hoạt, chi phí hợp lý, giao hàng nhanh và đổi trả dễ dàng.',
+      "Thuê thiết bị linh hoạt, chi phí hợp lý, giao hàng nhanh và đổi trả dễ dàng.",
     categoryId: node.categoryId,
-    image: node.imageUrl ?? imgs[0] ?? '',
+    image: node.imageUrl ?? imgs[0] ?? "",
     orbitImages: imgs.length > 0 ? imgs : [],
   };
 }

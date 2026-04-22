@@ -23,7 +23,7 @@
  * Error từ apiService/AppError đi xuyên suốt.
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   getRoles,
@@ -40,9 +40,9 @@ import {
   deletePermission,
   createPermissionModule,
   deletePermissionModule,
-} from '../api/role.service';
+} from "../api/role.service";
 
-import { roleKeys, permissionKeys } from '../api/role.keys';
+import { roleKeys, permissionKeys } from "../api/role.keys";
 
 import type {
   RoleResponse,
@@ -57,7 +57,7 @@ import type {
   UpdatePermissionInput,
   PermissionListParams,
   CreateModuleInput,
-} from '../types';
+} from "../types";
 
 // ═════════════════════════════════════════════════════════════════════════════
 // ROLES - Queries
@@ -80,7 +80,7 @@ export function useRolesListQuery(params?: RoleListParams) {
 export function useRoleDetailQuery(roleId: string | undefined) {
   return useQuery<RoleResponse>({
     enabled: !!roleId,
-    queryKey: roleId ? roleKeys.detail(roleId) : roleKeys.detail('__empty__'),
+    queryKey: roleId ? roleKeys.detail(roleId) : roleKeys.detail("__empty__"),
     queryFn: () => getRoleById(roleId!),
     staleTime: 60_000,
   });
@@ -170,7 +170,7 @@ export function usePermissionDetailQuery(permissionId: string | undefined) {
     enabled: !!permissionId,
     queryKey: permissionId
       ? permissionKeys.detail(permissionId)
-      : permissionKeys.detail('__empty__'),
+      : permissionKeys.detail("__empty__"),
     queryFn: () => getPermissionById(permissionId!),
     staleTime: 60_000,
   });

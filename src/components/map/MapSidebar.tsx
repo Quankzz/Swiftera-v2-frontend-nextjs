@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Search,
   Navigation2,
@@ -11,13 +11,13 @@ import {
   MapIcon,
   X,
   ArrowLeft,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useMapStore } from '@/stores/use-map-store';
-import type { Hub } from '@/types/map.types';
-import SearchTab from './SearchTab';
-import DirectionTab from './DirectionTab';
-import RouteInfoPanel from './RouteInfoPanel';
+} from "lucide-react";
+import Link from "next/link";
+import { useMapStore } from "@/stores/use-map-store";
+import type { Hub } from "@/types/map.types";
+import SearchTab from "./SearchTab";
+import DirectionTab from "./DirectionTab";
+import RouteInfoPanel from "./RouteInfoPanel";
 
 interface MapSidebarProps {
   onRouteSearch: () => void;
@@ -61,8 +61,8 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
   const snapToNearestPoint = useCallback((height: number, velocity = 0) => {
@@ -116,22 +116,22 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
           );
           return nearest;
         });
-        window.removeEventListener('pointermove', handlePointerMove);
-        window.removeEventListener('pointerup', handlePointerUp);
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointerup", handlePointerUp);
       };
 
-      window.addEventListener('pointermove', handlePointerMove);
-      window.addEventListener('pointerup', handlePointerUp);
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", handlePointerUp);
     },
     [mobileSheetHeight],
   );
 
   const tabBar = (
     <div className="flex shrink-0 bg-background/60 backdrop-blur-xl border-b border-border/50 p-1.5 gap-1.5 relative z-10">
-      {(['search', 'direction'] as const).map((tab) => {
+      {(["search", "direction"] as const).map((tab) => {
         const isActive = activeTab === tab;
-        const Icon = tab === 'search' ? Search : Navigation2;
-        const label = tab === 'search' ? 'Tra cứu' : 'Tìm đường';
+        const Icon = tab === "search" ? Search : Navigation2;
+        const label = tab === "search" ? "Tra cứu" : "Tìm đường";
         return (
           <button
             key={tab}
@@ -141,8 +141,8 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
               tracking-wide transition-all duration-300 rounded-xl overflow-hidden
               ${
                 isActive
-                  ? 'text-theme-primary-end dark:text-theme-primary-start bg-card shadow-[0_2px_10px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgb(0,0,0,0.2)]'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                  ? "text-theme-primary-end dark:text-theme-primary-start bg-card shadow-[0_2px_10px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgb(0,0,0,0.2)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
               }
             `}
           >
@@ -161,9 +161,9 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
     <div className="flex-1 overflow-hidden relative min-h-0">
       <div
         className={`absolute inset-0 flex flex-col transition-all duration-250 ease-out ${
-          activeTab === 'search'
-            ? 'opacity-100 translate-x-0 pointer-events-auto'
-            : 'opacity-0 -translate-x-3 pointer-events-none'
+          activeTab === "search"
+            ? "opacity-100 translate-x-0 pointer-events-auto"
+            : "opacity-0 -translate-x-3 pointer-events-none"
         }`}
       >
         <SearchTab onFlyToHub={onFlyToHub} onNavigateToHub={onNavigateToHub} />
@@ -171,9 +171,9 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
 
       <div
         className={`absolute inset-0 flex flex-col overflow-y-auto [scrollbar-width:none] transition-all duration-250 ease-out ${
-          activeTab === 'direction'
-            ? 'opacity-100 translate-x-0 pointer-events-auto'
-            : 'opacity-0 translate-x-3 pointer-events-none'
+          activeTab === "direction"
+            ? "opacity-100 translate-x-0 pointer-events-auto"
+            : "opacity-0 translate-x-3 pointer-events-none"
         }`}
       >
         <DirectionTab
@@ -203,12 +203,12 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
             shadow-[0_-8px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_40px_rgba(0,0,0,0.6)]
             will-change-transform
             transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-            ${isSidebarOpen ? 'translate-y-0' : 'translate-y-full'}
+            ${isSidebarOpen ? "translate-y-0" : "translate-y-full"}
           `}
           style={{
             height: `${mobileSheetHeight}dvh`,
-            minHeight: '200px',
-            paddingBottom: 'env(safe-area-inset-bottom)',
+            minHeight: "200px",
+            paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
           {/* Drag handle */}
@@ -264,7 +264,7 @@ const MapSidebar: React.FC<MapSidebarProps> = ({
         className={`
           fixed top-0 left-0 h-full z-20 flex
           transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
         style={{ width: `${SIDEBAR_W}px` }}
       >

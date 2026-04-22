@@ -9,14 +9,14 @@ export function buildVideoEmbed(url: string) {
     const u = new URL(url);
 
     const buildIframe = (src: string) => {
-      const iframe = document.createElement('iframe');
+      const iframe = document.createElement("iframe");
       iframe.src = src;
       iframe.allow =
-        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-      iframe.loading = 'lazy';
-      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+      iframe.loading = "lazy";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
       iframe.allowFullscreen = true;
-      iframe.className = 'rich-media aspect-video rounded-xl my-4';
+      iframe.className = "rich-media aspect-video rounded-xl my-4";
       return iframe;
     };
 
@@ -29,16 +29,25 @@ export function buildVideoEmbed(url: string) {
     const hostname = u.hostname.toLowerCase();
 
     // YouTube support
-    if (hostname.includes('youtube.com') || hostname.includes('youtube-nocookie.com')) {
+    if (
+      hostname.includes("youtube.com") ||
+      hostname.includes("youtube-nocookie.com")
+    ) {
       let id: string | null;
-      if (u.pathname.startsWith('/embed/')) {
-        id = normalizeYouTubeId(u.pathname.replace('/embed/', '').split('/')[0] ?? null);
-      } else if (u.pathname.startsWith('/shorts/')) {
-        id = normalizeYouTubeId(u.pathname.replace('/shorts/', '').split('/')[0] ?? null);
-      } else if (u.pathname.startsWith('/live/')) {
-        id = normalizeYouTubeId(u.pathname.replace('/live/', '').split('/')[0] ?? null);
+      if (u.pathname.startsWith("/embed/")) {
+        id = normalizeYouTubeId(
+          u.pathname.replace("/embed/", "").split("/")[0] ?? null,
+        );
+      } else if (u.pathname.startsWith("/shorts/")) {
+        id = normalizeYouTubeId(
+          u.pathname.replace("/shorts/", "").split("/")[0] ?? null,
+        );
+      } else if (u.pathname.startsWith("/live/")) {
+        id = normalizeYouTubeId(
+          u.pathname.replace("/live/", "").split("/")[0] ?? null,
+        );
       } else {
-        id = normalizeYouTubeId(u.searchParams.get('v'));
+        id = normalizeYouTubeId(u.searchParams.get("v"));
       }
 
       if (!id) return null;
@@ -46,15 +55,18 @@ export function buildVideoEmbed(url: string) {
     }
 
     // YouTube short URL support
-    if (hostname.includes('youtu.be')) {
-      const id = normalizeYouTubeId(u.pathname.split('/').filter(Boolean)[0] ?? null);
+    if (hostname.includes("youtu.be")) {
+      const id = normalizeYouTubeId(
+        u.pathname.split("/").filter(Boolean)[0] ?? null,
+      );
       if (!id) return null;
       return buildIframe(`https://www.youtube.com/embed/${id}`);
     }
 
     // Vimeo support
-    if (hostname.includes('vimeo.com')) {
-      const id = u.pathname.split('/').filter(Boolean).pop()?.split(/[?&#]/)[0] ?? null;
+    if (hostname.includes("vimeo.com")) {
+      const id =
+        u.pathname.split("/").filter(Boolean).pop()?.split(/[?&#]/)[0] ?? null;
       if (!id) return null;
       return buildIframe(`https://player.vimeo.com/video/${id}`);
     }

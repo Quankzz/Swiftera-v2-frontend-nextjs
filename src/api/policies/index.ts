@@ -9,8 +9,8 @@
  *   AUTH    - API-105 (create), API-109 (deactivate), API-110 (consent), API-111 (myConsents)
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
@@ -21,9 +21,9 @@ const authOpts = { requireToken: true as const };
  * Phiên bản mới nhất (isActive:true, version cao nhất) được dùng làm chuẩn.
  */
 export type PolicyCode =
-  | 'RENTAL_TERMS'
-  | 'PRIVACY_POLICY'
-  | 'RETURN_POLICY'
+  | "RENTAL_TERMS"
+  | "PRIVACY_POLICY"
+  | "RETURN_POLICY"
   | string;
 
 /**
@@ -32,7 +32,7 @@ export type PolicyCode =
  *   DECLINED  - từ chối (nếu BE cho phép)
  *   WITHDRAWN - thu hồi đồng ý
  */
-export type ConsentType = 'ACCEPTED' | 'DECLINED' | 'WITHDRAWN';
+export type ConsentType = "ACCEPTED" | "DECLINED" | "WITHDRAWN";
 
 /**
  * Ngữ cảnh ghi nhận đồng ý.
@@ -40,7 +40,7 @@ export type ConsentType = 'ACCEPTED' | 'DECLINED' | 'WITHDRAWN';
  *   CHECKOUT - khi thanh toán
  *   CONTRACT - khi ký hợp đồng
  */
-export type ConsentContext = 'ACCOUNT' | 'CHECKOUT' | 'CONTRACT';
+export type ConsentContext = "ACCOUNT" | "CHECKOUT" | "CONTRACT";
 
 // ─── Response Types ────────────────────────────────────────────────────────────
 
@@ -195,7 +195,7 @@ export const policiesApi = {
   create(
     data: CreatePolicyInput,
   ): Promise<AxiosResponse<PolicySingleResponse>> {
-    return httpService.post<PolicySingleResponse>('/policies', data, authOpts);
+    return httpService.post<PolicySingleResponse>("/policies", data, authOpts);
   },
 
   /**
@@ -233,7 +233,7 @@ export const policiesApi = {
    * @param params.sort   - VD: policyVersion,desc
    */
   list(params?: PolicyListParams): Promise<AxiosResponse<PolicyListResponse>> {
-    return httpService.get<PolicyListResponse>('/policies', { params });
+    return httpService.get<PolicyListResponse>("/policies", { params });
   },
 
   /**
@@ -285,7 +285,7 @@ export const policiesApi = {
    */
   myConsents(): Promise<AxiosResponse<MyConsentsResponse>> {
     return httpService.get<MyConsentsResponse>(
-      '/policies/my-consents',
+      "/policies/my-consents",
       authOpts,
     );
   },

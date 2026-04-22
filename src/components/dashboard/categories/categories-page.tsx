@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -10,11 +10,11 @@ import {
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+} from "@dnd-kit/sortable";
 import {
   Plus,
   Search,
@@ -23,16 +23,16 @@ import {
   Layers,
   GripVertical,
   Loader2,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   useCategoryTreeQuery,
   flattenTree,
-} from '@/features/categories/hooks/use-category-tree';
-import { useUpdateCategoryMutation } from '@/features/categories/hooks/use-category-management';
-import type { CategoryTreeNode } from '@/features/categories/types';
-import { CategoryTreeNode as CategoryTreeNodeComponent } from './category-tree-node';
-import { CategoryFormDialog } from './category-form-dialog';
-import { CategoryDeleteDialog } from './category-delete-dialog';
+} from "@/features/categories/hooks/use-category-tree";
+import { useUpdateCategoryMutation } from "@/features/categories/hooks/use-category-management";
+import type { CategoryTreeNode } from "@/features/categories/types";
+import { CategoryTreeNode as CategoryTreeNodeComponent } from "./category-tree-node";
+import { CategoryFormDialog } from "./category-form-dialog";
+import { CategoryDeleteDialog } from "./category-delete-dialog";
 
 // ─── Filter tree by search query ─────────────────────────────────────────────
 function filterTree(nodes: CategoryTreeNode[], q: string): CategoryTreeNode[] {
@@ -53,23 +53,23 @@ function filterTree(nodes: CategoryTreeNode[], q: string): CategoryTreeNode[] {
 // ─── Stats bar ───────────────────────────────────────────────────────────────
 function StatsBar({ total, roots }: { total: number; roots: number }) {
   return (
-    <div className='flex flex-wrap gap-4'>
-      <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
-        <Layers className='size-4 text-theme-primary-start' />
-        <span className='text-sm font-medium text-text-main'>{total}</span>
-        <span className='text-sm text-text-sub'>danh mục</span>
+    <div className="flex flex-wrap gap-4">
+      <div className="flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5">
+        <Layers className="size-4 text-theme-primary-start" />
+        <span className="text-sm font-medium text-text-main">{total}</span>
+        <span className="text-sm text-text-sub">danh mục</span>
       </div>
-      <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
-        <ChevronRight className='size-4 text-blue-400' />
-        <span className='text-sm font-medium text-text-main'>{roots}</span>
-        <span className='text-sm text-text-sub'>danh mục gốc</span>
+      <div className="flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5">
+        <ChevronRight className="size-4 text-blue-400" />
+        <span className="text-sm font-medium text-text-main">{roots}</span>
+        <span className="text-sm text-text-sub">danh mục gốc</span>
       </div>
-      <div className='flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5'>
-        <ChevronDown className='size-4 text-amber-400' />
-        <span className='text-sm font-medium text-text-main'>
+      <div className="flex items-center gap-2 rounded-lg border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card px-4 py-2.5">
+        <ChevronDown className="size-4 text-amber-400" />
+        <span className="text-sm font-medium text-text-main">
           {total - roots}
         </span>
-        <span className='text-sm text-text-sub'>danh mục con</span>
+        <span className="text-sm text-text-sub">danh mục con</span>
       </div>
     </div>
   );
@@ -85,13 +85,13 @@ export function CategoriesPage() {
 
   // Dialog state
   type DialogState =
-    | { type: 'idle' }
-    | { type: 'create'; defaultParentId?: string }
-    | { type: 'edit'; node: CategoryTreeNode }
-    | { type: 'delete'; node: CategoryTreeNode };
+    | { type: "idle" }
+    | { type: "create"; defaultParentId?: string }
+    | { type: "edit"; node: CategoryTreeNode }
+    | { type: "delete"; node: CategoryTreeNode };
 
-  const [dialog, setDialog] = useState<DialogState>({ type: 'idle' });
-  const [search, setSearch] = useState('');
+  const [dialog, setDialog] = useState<DialogState>({ type: "idle" });
+  const [search, setSearch] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Filtered tree for display
@@ -121,8 +121,8 @@ export function CategoriesPage() {
     const overId = String(over.id);
 
     // ── Case 1: drop-into zone → reparent dragged node ────────────────────
-    if (overId.startsWith('drop-into::')) {
-      const newParentId = overId.replace('drop-into::', '');
+    if (overId.startsWith("drop-into::")) {
+      const newParentId = overId.replace("drop-into::", "");
       if (newParentId === draggedId) return;
 
       // Optimistically persist reparent via PATCH (sortOrder stays, parentId changes)
@@ -169,16 +169,16 @@ export function CategoriesPage() {
   // ── Loading / error states ────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <Loader2 className='size-8 animate-spin text-theme-primary-start' />
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-theme-primary-start" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className='flex h-64 items-center justify-center'>
-        <p className='text-sm text-red-500'>
+      <div className="flex h-64 items-center justify-center">
+        <p className="text-sm text-red-500">
           Không thể tải danh mục. Vui lòng thử lại.
         </p>
       </div>
@@ -189,24 +189,24 @@ export function CategoriesPage() {
   const totalCount = allNodes.length;
 
   return (
-    <div className='flex flex-col gap-6 p-6 w-full'>
+    <div className="flex flex-col gap-6 p-6 w-full">
       {/* Page header */}
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className='text-2xl font-bold tracking-tight text-text-main'>
+          <h2 className="text-2xl font-bold tracking-tight text-text-main">
             Quản lý danh mục
           </h2>
-          <p className='mt-1 text-sm text-text-sub'>
+          <p className="mt-1 text-sm text-text-sub">
             Tổ chức danh mục dạng cây, kéo thả để sắp xếp thứ tự hoặc đổi danh
             mục cha
           </p>
         </div>
         <button
-          type='button'
-          onClick={() => setDialog({ type: 'create' })}
-          className='inline-flex shrink-0 items-center gap-2 rounded-lg bg-theme-primary-start px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition shadow-sm'
+          type="button"
+          onClick={() => setDialog({ type: "create" })}
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-theme-primary-start px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition shadow-sm"
         >
-          <Plus className='size-4' />
+          <Plus className="size-4" />
           Thêm danh mục gốc
         </button>
       </div>
@@ -215,33 +215,33 @@ export function CategoriesPage() {
       <StatsBar total={totalCount} roots={rootCount} />
 
       {/* Search bar */}
-      <div className='relative max-w-md'>
-        <Search className='absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-sub pointer-events-none' />
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-sub pointer-events-none" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder='Tìm kiếm danh mục...'
-          className='h-10 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-9 pr-4 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition'
+          placeholder="Tìm kiếm danh mục..."
+          className="h-10 w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card pl-9 pr-4 text-sm text-text-main focus:border-theme-primary-start focus:outline-none focus:ring-2 focus:ring-theme-primary-start/20 transition"
         />
       </div>
 
       {/* Tree */}
-      <div className='rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3 p-4 min-h-64'>
+      <div className="rounded-xl border border-gray-100 dark:border-white/8 bg-gray-50/60 dark:bg-white/3 p-4 min-h-64">
         {filtered.length === 0 ? (
-          <div className='flex flex-col items-center justify-center py-16 text-center gap-3'>
-            <Layers className='size-12 text-gray-200' />
-            <p className='text-sm font-medium text-text-sub'>
+          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <Layers className="size-12 text-gray-200" />
+            <p className="text-sm font-medium text-text-sub">
               {search
-                ? 'Không tìm thấy danh mục phù hợp'
-                : 'Chưa có danh mục nào'}
+                ? "Không tìm thấy danh mục phù hợp"
+                : "Chưa có danh mục nào"}
             </p>
             {!search && (
               <button
-                type='button'
-                onClick={() => setDialog({ type: 'create' })}
-                className='mt-1 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 dark:border-white/15 px-3 py-2 text-sm text-text-sub hover:border-gray-400 dark:hover:border-white/30 hover:text-text-main transition'
+                type="button"
+                onClick={() => setDialog({ type: "create" })}
+                className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 dark:border-white/15 px-3 py-2 text-sm text-text-sub hover:border-gray-400 dark:hover:border-white/30 hover:text-text-main transition"
               >
-                <Plus className='size-4' />
+                <Plus className="size-4" />
                 Tạo danh mục đầu tiên
               </button>
             )}
@@ -257,7 +257,7 @@ export function CategoriesPage() {
               items={rootIds}
               strategy={verticalListSortingStrategy}
             >
-              <div className='flex flex-col gap-1'>
+              <div className="flex flex-col gap-1">
                 {filtered.map((rootNode) => (
                   <CategoryTreeNodeComponent
                     key={rootNode.categoryId}
@@ -265,14 +265,14 @@ export function CategoriesPage() {
                     depth={0}
                     activeId={activeId}
                     searchQuery={search}
-                    onEdit={(n) => setDialog({ type: 'edit', node: n })}
+                    onEdit={(n) => setDialog({ type: "edit", node: n })}
                     onAddChild={(n) =>
                       setDialog({
-                        type: 'create',
+                        type: "create",
                         defaultParentId: n.categoryId,
                       })
                     }
-                    onDelete={(n) => setDialog({ type: 'delete', node: n })}
+                    onDelete={(n) => setDialog({ type: "delete", node: n })}
                   />
                 ))}
               </div>
@@ -281,9 +281,9 @@ export function CategoriesPage() {
             {/* Floating drag preview */}
             <DragOverlay dropAnimation={null}>
               {activeNode && (
-                <div className='flex min-h-11 items-center gap-2 rounded-md border border-theme-primary-start/40 bg-white dark:bg-surface-card px-3 shadow-lg ring-2 ring-theme-primary-start/20 opacity-90'>
-                  <GripVertical className='size-4 text-gray-400' />
-                  <span className='text-sm font-medium text-text-main'>
+                <div className="flex min-h-11 items-center gap-2 rounded-md border border-theme-primary-start/40 bg-white dark:bg-surface-card px-3 shadow-lg ring-2 ring-theme-primary-start/20 opacity-90">
+                  <GripVertical className="size-4 text-gray-400" />
+                  <span className="text-sm font-medium text-text-main">
                     {activeNode.name}
                   </span>
                 </div>
@@ -294,34 +294,34 @@ export function CategoriesPage() {
       </div>
 
       {/* Hint */}
-      <p className='text-xs text-text-sub'>
-        💡 Kéo icon <span className='font-medium'>⠿</span> để sắp xếp lại thứ tự
+      <p className="text-xs text-text-sub">
+        💡 Kéo icon <span className="font-medium">⠿</span> để sắp xếp lại thứ tự
         hoặc chuyển sang danh mục cha khác. Thả lên một node để trở thành con
         của node đó.
       </p>
 
       {/* Dialogs - use key prop so form state fully resets on each open */}
-      {dialog.type === 'create' && (
+      {dialog.type === "create" && (
         <CategoryFormDialog
-          key={`create-${dialog.defaultParentId ?? 'root'}`}
+          key={`create-${dialog.defaultParentId ?? "root"}`}
           target={null}
           defaultParentId={dialog.defaultParentId}
-          onClose={() => setDialog({ type: 'idle' })}
+          onClose={() => setDialog({ type: "idle" })}
         />
       )}
-      {dialog.type === 'edit' && (
+      {dialog.type === "edit" && (
         <CategoryFormDialog
           key={`edit-${dialog.node.categoryId}`}
           target={
-            dialog.node as unknown as import('@/features/categories/types').CategoryResponse
+            dialog.node as unknown as import("@/features/categories/types").CategoryResponse
           }
-          onClose={() => setDialog({ type: 'idle' })}
+          onClose={() => setDialog({ type: "idle" })}
         />
       )}
-      {dialog.type === 'delete' && (
+      {dialog.type === "delete" && (
         <CategoryDeleteDialog
           category={dialog.node}
-          onClose={() => setDialog({ type: 'idle' })}
+          onClose={() => setDialog({ type: "idle" })}
         />
       )}
     </div>

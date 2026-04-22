@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import {
   CheckCircle2,
   XCircle,
@@ -14,27 +14,27 @@ import {
   Clock,
   RefreshCw,
   Headphones,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useExtendOrder } from '@/hooks/api/use-rental-orders';
-import { cartKeys } from '@/hooks/api/cart.keys';
-import { CART_CACHE_KEY } from '@/hooks/api/use-cart';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useExtendOrder } from "@/hooks/api/use-rental-orders";
+import { cartKeys } from "@/hooks/api/cart.keys";
+import { CART_CACHE_KEY } from "@/hooks/api/use-cart";
 import {
   clearExtensionPaymentIntent,
   readExtensionPaymentIntent,
-} from '@/lib/extension-payment-intent';
+} from "@/lib/extension-payment-intent";
 
 /* ─── Confetti particle (CSS-only, no external lib) ─────────────────────── */
 
 const CONFETTI_COLORS = [
-  'bg-blue-400',
-  'bg-orange-400',
-  'bg-amber-400',
-  'bg-emerald-400',
-  'bg-sky-400',
-  'bg-violet-400',
-  'bg-cyan-400',
+  "bg-blue-400",
+  "bg-orange-400",
+  "bg-amber-400",
+  "bg-emerald-400",
+  "bg-sky-400",
+  "bg-violet-400",
+  "bg-cyan-400",
 ];
 
 type ConfettiParticle = {
@@ -54,8 +54,8 @@ function Confetti() {
         left: `${(i * 17) % 100}%`,
         delay: `${((i % 6) * 0.2).toFixed(2)}s`,
         duration: `${(1.8 + (i % 5) * 0.25).toFixed(2)}s`,
-        size: i % 2 === 0 ? 'size-2' : 'size-1.5',
-        rotate: i % 3 === 0 ? 'rotate-45' : 'rotate-12',
+        size: i % 2 === 0 ? "size-2" : "size-1.5",
+        rotate: i % 3 === 0 ? "rotate-45" : "rotate-12",
       })),
     [],
   );
@@ -63,23 +63,23 @@ function Confetti() {
   if (particles.length === 0) return null;
 
   return (
-    <div className='pointer-events-none fixed inset-0 z-50 overflow-hidden'>
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
       {particles.map((p, i) => (
         <span
           key={i}
           className={cn(
-            'absolute top-0 rounded-sm opacity-0',
+            "absolute top-0 rounded-sm opacity-0",
             p.color,
             p.size,
             p.rotate,
           )}
           style={{
             left: p.left,
-            animationName: 'confetti-fall',
+            animationName: "confetti-fall",
             animationDuration: p.duration,
             animationDelay: p.delay,
-            animationFillMode: 'forwards',
-            animationTimingFunction: 'ease-in',
+            animationFillMode: "forwards",
+            animationTimingFunction: "ease-in",
           }}
         />
       ))}
@@ -118,17 +118,17 @@ function CopyButton({ value }: { value: string }) {
   }
   return (
     <button
-      type='button'
+      type="button"
       onClick={handleCopy}
-      className='ml-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
-      aria-label='Sao chép mã giao dịch'
+      className="ml-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      aria-label="Sao chép mã giao dịch"
     >
       {copied ? (
-        <Check className='size-3 text-emerald-500' />
+        <Check className="size-3 text-emerald-500" />
       ) : (
-        <Copy className='size-3' />
+        <Copy className="size-3" />
       )}
-      {copied ? 'Đã sao chép' : 'Sao chép'}
+      {copied ? "Đã sao chép" : "Sao chép"}
     </button>
   );
 }
@@ -138,10 +138,10 @@ function CopyButton({ value }: { value: string }) {
 function PaymentResultContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const success = searchParams.get('success') === 'true';
-  const txnRef = searchParams.get('txnRef') ?? '';
-  const rentalOrderId = searchParams.get('rentalOrderId') ?? '';
-  const responseCode = searchParams.get('vnp_ResponseCode') ?? '';
+  const success = searchParams.get("success") === "true";
+  const txnRef = searchParams.get("txnRef") ?? "";
+  const rentalOrderId = searchParams.get("rentalOrderId") ?? "";
+  const responseCode = searchParams.get("vnp_ResponseCode") ?? "";
   const cancelRef = useRef(false);
   const extensionFinalizedRef = useRef(false);
 
@@ -158,7 +158,7 @@ function PaymentResultContent() {
     void queryClient.invalidateQueries({ queryKey: cartKeys.all });
     queryClient.removeQueries({ queryKey: cartKeys.all });
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.localStorage.removeItem(CART_CACHE_KEY);
     }
   }, [queryClient, success]);
@@ -176,7 +176,8 @@ function PaymentResultContent() {
       return;
     }
 
-    const matchesOrder = !!rentalOrderId && intent.rentalOrderId === rentalOrderId;
+    const matchesOrder =
+      !!rentalOrderId && intent.rentalOrderId === rentalOrderId;
     const matchesTxn = !intent.txnRef || !txnRef || intent.txnRef === txnRef;
     if (!matchesOrder || !matchesTxn) return;
 
@@ -215,87 +216,87 @@ function PaymentResultContent() {
     if (!success || countdown > 0 || shouldPauseRedirect) return;
     window.location.href = rentalOrderId
       ? `/rental-orders/${rentalOrderId}`
-      : '/rental-orders';
+      : "/rental-orders";
   }, [countdown, rentalOrderId, shouldPauseRedirect, success]);
 
   return (
     <>
       {success && showConfetti && <Confetti />}
 
-      <div className='relative min-h-screen overflow-x-hidden bg-white dark:bg-surface-base'>
+      <div className="relative min-h-screen overflow-x-hidden bg-white dark:bg-surface-base">
         {/* Background decoration */}
         <div
           className={cn(
-            'pointer-events-none absolute inset-0 opacity-30 dark:opacity-10',
+            "pointer-events-none absolute inset-0 opacity-30 dark:opacity-10",
             success
-              ? 'bg-[radial-gradient(ellipse_at_top,#93c5fd_0%,transparent_65%)]'
-              : 'bg-[radial-gradient(ellipse_at_top,#fecaca_0%,transparent_65%)]',
+              ? "bg-[radial-gradient(ellipse_at_top,#93c5fd_0%,transparent_65%)]"
+              : "bg-[radial-gradient(ellipse_at_top,#fecaca_0%,transparent_65%)]",
           )}
         />
 
-        <div className='relative mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-4 py-16'>
+        <div className="relative mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-4 py-16">
           {/* Card */}
-          <div className='w-full overflow-hidden rounded-3xl border border-border/60 bg-card/95 shadow-2xl shadow-black/5 backdrop-blur-sm dark:bg-card/80'>
+          <div className="w-full overflow-hidden rounded-3xl border border-border/60 bg-card/95 shadow-2xl shadow-black/5 backdrop-blur-sm dark:bg-card/80">
             {/* Status strip */}
             <div
               className={cn(
-                'h-1.5 w-full',
+                "h-1.5 w-full",
                 success
-                  ? 'bg-linear-to-r from-emerald-400 via-green-400 to-emerald-500'
-                  : 'bg-linear-to-r from-red-400 via-blue-400 to-red-500',
+                  ? "bg-linear-to-r from-emerald-400 via-green-400 to-emerald-500"
+                  : "bg-linear-to-r from-red-400 via-blue-400 to-red-500",
               )}
             />
 
-            <div className='px-6 py-8 sm:px-8'>
+            <div className="px-6 py-8 sm:px-8">
               {/* Icon */}
-              <div className='mb-6 flex flex-col items-center gap-4'>
+              <div className="mb-6 flex flex-col items-center gap-4">
                 <div
                   className={cn(
-                    'flex size-20 items-center justify-center rounded-full',
+                    "flex size-20 items-center justify-center rounded-full",
                     success
-                      ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400',
+                      ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      : "bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400",
                   )}
                   style={{
                     animation:
-                      'icon-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both',
+                      "icon-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both",
                   }}
                 >
                   {success ? (
-                    <CheckCircle2 className='size-10' strokeWidth={1.8} />
+                    <CheckCircle2 className="size-10" strokeWidth={1.8} />
                   ) : (
-                    <XCircle className='size-10' strokeWidth={1.8} />
+                    <XCircle className="size-10" strokeWidth={1.8} />
                   )}
                 </div>
 
-                <div className='text-center'>
-                  <h1 className='text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl'>
-                    {success ? 'Thanh toán thành công!' : 'Thanh toán thất bại'}
+                <div className="text-center">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+                    {success ? "Thanh toán thành công!" : "Thanh toán thất bại"}
                   </h1>
-                  <p className='mt-1.5 text-sm text-muted-foreground'>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
                     {success
-                      ? 'Đơn thuê của bạn đã được xác nhận và đang được xử lý.'
-                      : 'Giao dịch không được hoàn tất. Vui lòng thử lại hoặc liên hệ hỗ trợ.'}
+                      ? "Đơn thuê của bạn đã được xác nhận và đang được xử lý."
+                      : "Giao dịch không được hoàn tất. Vui lòng thử lại hoặc liên hệ hỗ trợ."}
                   </p>
                 </div>
               </div>
 
               {/* Transaction details */}
               {txnRef && (
-                <div className='mb-6 rounded-2xl border border-border/60 bg-muted/30 p-4 dark:bg-muted/20'>
-                  <div className='flex items-center justify-between gap-2'>
-                    <span className='text-xs font-medium uppercase tracking-wide text-muted-foreground'>
+                <div className="mb-6 rounded-2xl border border-border/60 bg-muted/30 p-4 dark:bg-muted/20">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Mã giao dịch
                     </span>
                     <CopyButton value={txnRef} />
                   </div>
-                  <p className='mt-1 font-mono text-base font-semibold tracking-wider text-foreground'>
+                  <p className="mt-1 font-mono text-base font-semibold tracking-wider text-foreground">
                     {txnRef}
                   </p>
 
                   {/* VNPay response code nếu thất bại */}
                   {!success && responseCode && (
-                    <p className='mt-2 text-xs text-red-500 dark:text-red-400'>
+                    <p className="mt-2 text-xs text-red-500 dark:text-red-400">
                       Mã lỗi VNPay: {responseCode}
                     </p>
                   )}
@@ -304,88 +305,88 @@ function PaymentResultContent() {
 
               {/* Success: countdown redirect */}
               {success && !shouldPauseRedirect && (
-                <div className='mb-5 flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300'>
-                  <Clock className='size-4 shrink-0' />
+                <div className="mb-5 flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
+                  <Clock className="size-4 shrink-0" />
                   <span>
-                    Tự động chuyển đến đơn hàng sau{' '}
-                    <span className='font-bold tabular-nums'>{countdown}s</span>
+                    Tự động chuyển đến đơn hàng sau{" "}
+                    <span className="font-bold tabular-nums">{countdown}s</span>
                   </span>
                 </div>
               )}
 
               {success && extendOrder.isPending && (
-                <div className='mb-5 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-2.5 text-sm text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-300'>
+                <div className="mb-5 rounded-xl border border-sky-200 bg-sky-50/80 px-4 py-2.5 text-sm text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-300">
                   Thanh toán đã thành công. Hệ thống đang hoàn tất gia hạn đơn
                   thuê của bạn...
                 </div>
               )}
 
               {success && extendOrder.isSuccess && (
-                <div className='mb-5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300'>
+                <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
                   Gia hạn đơn thuê đã được cập nhật thành công.
                 </div>
               )}
 
               {success && extendOrder.isError && (
-                <div className='mb-5 rounded-xl border border-amber-300 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300'>
+                <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50/80 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
                   {extendOrder.error instanceof Error
                     ? extendOrder.error.message
-                    : 'Thanh toán đã thành công nhưng chưa thể gia hạn tự động. Vui lòng liên hệ hỗ trợ để được xử lý ngay.'}
+                    : "Thanh toán đã thành công nhưng chưa thể gia hạn tự động. Vui lòng liên hệ hỗ trợ để được xử lý ngay."}
                 </div>
               )}
 
               {/* Actions */}
-              <div className='space-y-3'>
+              <div className="space-y-3">
                 {success ? (
                   <>
                     <Button
-                      className='h-12 w-full gap-2 rounded-xl bg-blue-600 text-base font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
+                      className="h-12 w-full gap-2 rounded-xl bg-blue-600 text-base font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                       render={
                         <Link
                           href={
                             rentalOrderId
                               ? `/rental-orders/${rentalOrderId}`
-                              : '/rental-orders'
+                              : "/rental-orders"
                           }
                         />
                       }
                     >
                       Xem đơn hàng của tôi
-                      <ArrowRight className='size-4' />
+                      <ArrowRight className="size-4" />
                     </Button>
                     <Button
-                      variant='outline'
-                      className='h-11 w-full gap-2 rounded-xl border-border/60'
-                      render={<Link href='/' />}
+                      variant="outline"
+                      className="h-11 w-full gap-2 rounded-xl border-border/60"
+                      render={<Link href="/" />}
                     >
-                      <ShoppingBag className='size-4' />
+                      <ShoppingBag className="size-4" />
                       Tiếp tục mua sắm
                     </Button>
                   </>
                 ) : (
                   <>
                     <Button
-                      variant='outline'
-                      className='h-12 w-full gap-2 rounded-xl border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30'
-                      render={<Link href='/rental-orders' />}
+                      variant="outline"
+                      className="h-12 w-full gap-2 rounded-xl border-blue-500/30 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30"
+                      render={<Link href="/rental-orders" />}
                     >
-                      <RefreshCw className='size-4' />
+                      <RefreshCw className="size-4" />
                       Xem lại đơn hàng &amp; thử thanh toán lại
                     </Button>
                     <Button
-                      variant='outline'
-                      className='h-11 w-full gap-2 rounded-xl border-border/60'
-                      render={<Link href='/cart' />}
+                      variant="outline"
+                      className="h-11 w-full gap-2 rounded-xl border-border/60"
+                      render={<Link href="/cart" />}
                     >
-                      <ShoppingBag className='size-4' />
+                      <ShoppingBag className="size-4" />
                       Quay lại giỏ hàng
                     </Button>
                     <Button
-                      variant='ghost'
-                      className='h-10 w-full gap-2 rounded-xl text-sm text-muted-foreground hover:text-foreground'
-                      render={<Link href='/feedback' />}
+                      variant="ghost"
+                      className="h-10 w-full gap-2 rounded-xl text-sm text-muted-foreground hover:text-foreground"
+                      render={<Link href="/feedback" />}
                     >
-                      <Headphones className='size-4' />
+                      <Headphones className="size-4" />
                       Liên hệ hỗ trợ
                     </Button>
                   </>
@@ -393,18 +394,18 @@ function PaymentResultContent() {
               </div>
 
               {/* Footer note */}
-              <p className='mt-5 text-center text-xs text-muted-foreground/70'>
+              <p className="mt-5 text-center text-xs text-muted-foreground/70">
                 {success
-                  ? 'Giữ mã giao dịch để tra cứu khi cần. Đơn hàng sẽ được xử lý trong vòng 24 giờ.'
-                  : 'Nếu tiền đã bị trừ nhưng thanh toán thất bại, vui lòng liên hệ hỗ trợ kèm mã giao dịch.'}
+                  ? "Giữ mã giao dịch để tra cứu khi cần. Đơn hàng sẽ được xử lý trong vòng 24 giờ."
+                  : "Nếu tiền đã bị trừ nhưng thanh toán thất bại, vui lòng liên hệ hỗ trợ kèm mã giao dịch."}
               </p>
             </div>
           </div>
 
           {/* Go home link */}
           <Link
-            href='/'
-            className='mt-6 text-sm text-muted-foreground transition-colors hover:text-foreground'
+            href="/"
+            className="mt-6 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             ← Về trang chủ
           </Link>
@@ -427,8 +428,8 @@ export default function PaymentResultPage() {
   return (
     <Suspense
       fallback={
-        <div className='flex min-h-screen items-center justify-center'>
-          <div className='size-8 animate-spin rounded-full border-4 border-blue-600/30 border-t-blue-600' />
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-4 border-blue-600/30 border-t-blue-600" />
         </div>
       }
     >

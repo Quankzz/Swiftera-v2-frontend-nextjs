@@ -3,8 +3,8 @@
  * Module 13: PAYMENTS (API-086 → API-091)
  */
 
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { paymentKeys } from './payment.keys';
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { paymentKeys } from "./payment.keys";
 import {
   getPaymentTransactionById,
   getPaymentsList,
@@ -12,7 +12,7 @@ import {
   initiatePayment,
   initiatePaymentBatch,
   type InitiatePaymentInput,
-} from './payment.service';
+} from "./payment.service";
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 

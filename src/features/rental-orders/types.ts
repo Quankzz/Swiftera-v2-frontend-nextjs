@@ -6,8 +6,8 @@
  * Không tự suy đoán field - chỉ model field có trong spec.
  */
 
-import type { PaginationResponse } from '@/types/api.types';
-import type { HubStaffResponse } from '@/features/hubs/types';
+import type { PaginationResponse } from "@/types/api.types";
+import type { HubStaffResponse } from "@/features/hubs/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status
@@ -19,59 +19,59 @@ import type { HubStaffResponse } from '@/features/hubs/types';
  * hoặc hủy: PENDING_PAYMENT / PREPARING → CANCELLED
  */
 export type RentalOrderStatus =
-  | 'PENDING_PAYMENT'
-  | 'PAID'
-  | 'PREPARING'
-  | 'DELIVERING'
-  | 'DELIVERED'
-  | 'IN_USE'
-  | 'PENDING_PICKUP'
-  | 'PICKING_UP'
-  | 'PICKED_UP'
-  | 'COMPLETED'
-  | 'CANCELLED';
+  | "PENDING_PAYMENT"
+  | "PAID"
+  | "PREPARING"
+  | "DELIVERING"
+  | "DELIVERED"
+  | "IN_USE"
+  | "PENDING_PICKUP"
+  | "PICKING_UP"
+  | "PICKED_UP"
+  | "COMPLETED"
+  | "CANCELLED";
 
 /** Chuyển đổi trạng thái được phép (theo API-078) */
 export const ALLOWED_STATUS_TRANSITIONS: Partial<
   Record<RentalOrderStatus, RentalOrderStatus>
 > = {
-  PENDING_PAYMENT: 'PAID',
-  PAID: 'PREPARING',
-  PREPARING: 'DELIVERING',
-  DELIVERING: 'DELIVERED',
-  DELIVERED: 'IN_USE',
-  IN_USE: 'PENDING_PICKUP',
-  PENDING_PICKUP: 'PICKING_UP',
-  PICKING_UP: 'PICKED_UP',
-  PICKED_UP: 'COMPLETED',
+  PENDING_PAYMENT: "PAID",
+  PAID: "PREPARING",
+  PREPARING: "DELIVERING",
+  DELIVERING: "DELIVERED",
+  DELIVERED: "IN_USE",
+  IN_USE: "PENDING_PICKUP",
+  PENDING_PICKUP: "PICKING_UP",
+  PICKING_UP: "PICKED_UP",
+  PICKED_UP: "COMPLETED",
 };
 
 export const STATUS_LABELS: Record<RentalOrderStatus, string> = {
-  PENDING_PAYMENT: 'Chờ thanh toán',
-  PAID: 'Đã thanh toán',
-  PREPARING: 'Đang chuẩn bị',
-  DELIVERING: 'Đang giao hàng',
-  DELIVERED: 'Đã giao hàng',
-  IN_USE: 'Đang thuê',
-  PENDING_PICKUP: 'Chờ thu hồi',
-  PICKING_UP: 'Đang thu hồi',
-  PICKED_UP: 'Đã thu hồi',
-  COMPLETED: 'Hoàn thành',
-  CANCELLED: 'Đã hủy',
+  PENDING_PAYMENT: "Chờ thanh toán",
+  PAID: "Đã thanh toán",
+  PREPARING: "Đang chuẩn bị",
+  DELIVERING: "Đang giao hàng",
+  DELIVERED: "Đã giao hàng",
+  IN_USE: "Đang thuê",
+  PENDING_PICKUP: "Chờ thu hồi",
+  PICKING_UP: "Đang thu hồi",
+  PICKED_UP: "Đã thu hồi",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
 };
 
 export const STATUS_ORDER: RentalOrderStatus[] = [
-  'PENDING_PAYMENT',
-  'PAID',
-  'PREPARING',
-  'DELIVERING',
-  'DELIVERED',
-  'IN_USE',
-  'PENDING_PICKUP',
-  'PICKING_UP',
-  'PICKED_UP',
-  'COMPLETED',
-  'CANCELLED',
+  "PENDING_PAYMENT",
+  "PAID",
+  "PREPARING",
+  "DELIVERING",
+  "DELIVERED",
+  "IN_USE",
+  "PENDING_PICKUP",
+  "PICKING_UP",
+  "PICKED_UP",
+  "COMPLETED",
+  "CANCELLED",
 ];
 
 export const STATUS_STYLES: Record<
@@ -79,48 +79,48 @@ export const STATUS_STYLES: Record<
   { dot: string; cls: string }
 > = {
   PENDING_PAYMENT: {
-    dot: 'bg-amber-400',
-    cls: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-900/20 dark:border-amber-500/30',
+    dot: "bg-amber-400",
+    cls: "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-900/20 dark:border-amber-500/30",
   },
   PAID: {
-    dot: 'bg-cyan-400',
-    cls: 'text-cyan-700 bg-cyan-50 border-cyan-200 dark:text-cyan-400 dark:bg-cyan-900/20 dark:border-cyan-500/30',
+    dot: "bg-cyan-400",
+    cls: "text-cyan-700 bg-cyan-50 border-cyan-200 dark:text-cyan-400 dark:bg-cyan-900/20 dark:border-cyan-500/30",
   },
   PREPARING: {
-    dot: 'bg-blue-400',
-    cls: 'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-500/30',
+    dot: "bg-blue-400",
+    cls: "text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-500/30",
   },
   DELIVERING: {
-    dot: 'bg-indigo-400',
-    cls: 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-400 dark:bg-indigo-900/20 dark:border-indigo-500/30',
+    dot: "bg-indigo-400",
+    cls: "text-indigo-700 bg-indigo-50 border-indigo-200 dark:text-indigo-400 dark:bg-indigo-900/20 dark:border-indigo-500/30",
   },
   DELIVERED: {
-    dot: 'bg-violet-400',
-    cls: 'text-violet-700 bg-violet-50 border-violet-200 dark:text-violet-400 dark:bg-violet-900/20 dark:border-violet-500/30',
+    dot: "bg-violet-400",
+    cls: "text-violet-700 bg-violet-50 border-violet-200 dark:text-violet-400 dark:bg-violet-900/20 dark:border-violet-500/30",
   },
   IN_USE: {
-    dot: 'bg-green-400',
-    cls: 'text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-900/20 dark:border-green-500/30',
+    dot: "bg-green-400",
+    cls: "text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-900/20 dark:border-green-500/30",
   },
   PENDING_PICKUP: {
-    dot: 'bg-yellow-400',
-    cls: 'text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-500/30',
+    dot: "bg-yellow-400",
+    cls: "text-yellow-700 bg-yellow-50 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-900/20 dark:border-yellow-500/30",
   },
   PICKING_UP: {
-    dot: 'bg-orange-400',
-    cls: 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-500/30',
+    dot: "bg-orange-400",
+    cls: "text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-500/30",
   },
   PICKED_UP: {
-    dot: 'bg-teal-400',
-    cls: 'text-teal-700 bg-teal-50 border-teal-200 dark:text-teal-400 dark:bg-teal-900/20 dark:border-teal-500/30',
+    dot: "bg-teal-400",
+    cls: "text-teal-700 bg-teal-50 border-teal-200 dark:text-teal-400 dark:bg-teal-900/20 dark:border-teal-500/30",
   },
   COMPLETED: {
-    dot: 'bg-gray-400',
-    cls: 'text-gray-600 bg-gray-100 border-gray-200 dark:text-gray-400 dark:bg-white/5 dark:border-white/10',
+    dot: "bg-gray-400",
+    cls: "text-gray-600 bg-gray-100 border-gray-200 dark:text-gray-400 dark:bg-white/5 dark:border-white/10",
   },
   CANCELLED: {
-    dot: 'bg-red-400',
-    cls: 'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-500/30',
+    dot: "bg-red-400",
+    cls: "text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-500/30",
   },
 };
 
@@ -348,13 +348,34 @@ export interface SetPenaltyInput {
 
 /** API-079: Report issue / Thu hồi sớm do sự cố (ADMIN only) */
 export interface ReportIssueInput {
-  status: 'PENDING_PICKUP';
+  status: "PENDING_PICKUP";
   issueNote: string;
 }
 
 /** API-120: Gán nhiều staff vào hub */
 export interface AssignStaffToHubInput {
   staffIds: string[];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Cancellation & Completion
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Input for admin confirming cancellation with refund */
+export interface CancelOrderInput {
+  reason?: string;
+}
+
+/**
+ * Input for admin confirming rental order completion (PICKED_UP → COMPLETED).
+ * Sends penalty amounts and triggers deposit refund.
+ */
+export interface ConfirmCompletionInput {
+  damagePenaltyAmount?: number;
+  overduePenaltyAmount?: number;
+  penaltyTotal?: number; // deprecated, use damagePenaltyAmount + overduePenaltyAmount
+  note?: string;
+  refundMethod?: "VNPAY" | "BANK_TRANSFER" | "CASH";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -400,7 +421,7 @@ export interface RentalContractResponse {
   policyDocumentId: string;
   contractNumber: string;
   contractVersion: string;
-  acceptMethod: 'CLICK' | 'SIGNATURE';
+  acceptMethod: "CLICK" | "SIGNATURE";
   acceptedAt: string;
   contractPdfUrl: string | null;
   createdAt: string;

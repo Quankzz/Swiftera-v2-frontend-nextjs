@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function ChecklistItem({ text }: { text: string }) {
   const [done, setDone] = useState(false);
@@ -12,18 +12,18 @@ export function ChecklistItem({ text }: { text: string }) {
     >
       <div
         className={cn(
-          'size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+          "size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
           done
-            ? 'bg-success border-success'
-            : 'border-border group-hover:border-theme-primary-start/60',
+            ? "bg-success border-success"
+            : "border-border group-hover:border-theme-primary-start/60",
         )}
       >
         {done && <CheckCircle2 className="size-3 text-white" />}
       </div>
       <span
         className={cn(
-          'text-sm font-medium transition-colors',
-          done ? 'text-muted-foreground line-through' : 'text-foreground',
+          "text-sm font-medium transition-colors",
+          done ? "text-muted-foreground line-through" : "text-foreground",
         )}
       >
         {text}

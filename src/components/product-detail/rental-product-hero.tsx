@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, {
   useCallback,
@@ -6,9 +6,9 @@ import React, {
   useMemo,
   useRef,
   useState,
-} from 'react';
-import { ShoppingCart, Minus, Plus, Info, TicketPercent } from 'lucide-react';
-import { ShieldCheck, Truck, Clock, Headphones } from 'lucide-react';
+} from "react";
+import { ShoppingCart, Minus, Plus, Info, TicketPercent } from "lucide-react";
+import { ShieldCheck, Truck, Clock, Headphones } from "lucide-react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,25 +16,23 @@ import {
   X as XIcon,
   ZoomIn,
   Play,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   computeVoucherDiscount,
   defaultRentalVouchers,
   type RentalVoucher,
-} from '@/lib/rental-voucher';
-import { useAddToCart } from '@/hooks/api/use-cart';
-import { useCartAnimationStore } from '@/stores/cart-animation-store';
-import { toast } from 'sonner';
-
-/* ---------- Video helpers ---------- */
+} from "@/lib/rental-voucher";
+import { useAddToCart } from "@/hooks/api/use-cart";
+import { useCartAnimationStore } from "@/stores/cart-animation-store";
+import { toast } from "sonner";
 
 function isEmbeddableVideoUrl(url: string): boolean {
   if (!url) return false;
@@ -42,12 +40,12 @@ function isEmbeddableVideoUrl(url: string): boolean {
     const u = new URL(url);
     const host = u.hostname.toLowerCase();
     if (
-      host.includes('youtube.com') ||
-      host.includes('youtube-nocookie.com') ||
-      host.includes('youtu.be')
+      host.includes("youtube.com") ||
+      host.includes("youtube-nocookie.com") ||
+      host.includes("youtu.be")
     )
       return true;
-    if (host.includes('vimeo.com')) return true;
+    if (host.includes("vimeo.com")) return true;
     return false;
   } catch {
     return false;
@@ -58,19 +56,19 @@ function extractYouTubeId(url: string): string | null {
   try {
     const u = new URL(url);
     const host = u.hostname.toLowerCase();
-    if (host.includes('youtube.com') || host.includes('youtube-nocookie.com')) {
-      if (u.pathname.startsWith('/embed/')) {
-        const id = u.pathname.replace('/embed/', '').split('/')[0];
+    if (host.includes("youtube.com") || host.includes("youtube-nocookie.com")) {
+      if (u.pathname.startsWith("/embed/")) {
+        const id = u.pathname.replace("/embed/", "").split("/")[0];
         if (/^[A-Za-z0-9_-]{6,20}$/.test(id)) return id;
       }
-      if (u.pathname.startsWith('/shorts/')) {
-        const id = u.pathname.replace('/shorts/', '').split('/')[0];
+      if (u.pathname.startsWith("/shorts/")) {
+        const id = u.pathname.replace("/shorts/", "").split("/")[0];
         if (/^[A-Za-z0-9_-]{6,20}$/.test(id)) return id;
       }
-      return u.searchParams.get('v');
+      return u.searchParams.get("v");
     }
-    if (host.includes('youtu.be')) {
-      const id = u.pathname.split('/').filter(Boolean)[0];
+    if (host.includes("youtu.be")) {
+      const id = u.pathname.split("/").filter(Boolean)[0];
       if (/^[A-Za-z0-9_-]{6,20}$/.test(id)) return id;
     }
     return null;
@@ -82,14 +80,12 @@ function extractYouTubeId(url: string): string | null {
 function extractVimeoId(url: string): string | null {
   try {
     const u = new URL(url);
-    if (!u.hostname.includes('vimeo.com')) return null;
-    return u.pathname.split('/').filter(Boolean).pop() ?? null;
+    if (!u.hostname.includes("vimeo.com")) return null;
+    return u.pathname.split("/").filter(Boolean).pop() ?? null;
   } catch {
     return null;
   }
 }
-
-/* ---------- Types ---------- */
 
 export interface RentalDuration {
   id: string;
@@ -110,8 +106,6 @@ export interface ProductColorOption {
   quantity: number;
   availableQuantity: number;
 }
-
-/* ---------- Gallery ---------- */
 
 interface RentalProductGalleryProps {
   images: string[];
@@ -146,39 +140,39 @@ function GalleryLightbox({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') prev();
-      else if (e.key === 'ArrowRight') next();
-      else if (e.key === 'Escape') onClose();
+      if (e.key === "ArrowLeft") prev();
+      else if (e.key === "ArrowRight") next();
+      else if (e.key === "Escape") onClose();
     }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [prev, next, onClose]);
 
   const isVideoSlide = hasVideo && idx === images.length;
 
   return (
     <div
-      className='fixed inset-0 z-9999 flex items-center justify-center bg-black/92 backdrop-blur-sm'
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/92 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Close */}
       <button
-        type='button'
+        type="button"
         onClick={onClose}
-        className='absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20'
-        aria-label='Đóng'
+        className="absolute right-4 top-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20"
+        aria-label="Đóng"
       >
-        <XIcon className='size-5' />
+        <XIcon className="size-5" />
       </button>
 
       {/* Counter */}
-      <span className='absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-semibold tabular-nums text-white/80 backdrop-blur-md'>
+      <span className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-semibold tabular-nums text-white/80 backdrop-blur-md">
         {idx + 1} / {totalSlides}
       </span>
 
       {/* Main content */}
       <div
-        className='relative mx-auto flex h-full max-h-[80dvh] w-full max-w-4xl items-center justify-center px-16'
+        className="relative mx-auto flex h-full max-h-[80dvh] w-full max-w-4xl items-center justify-center px-16"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={(e) => {
           touchX.current = e.touches[0].clientX;
@@ -194,18 +188,18 @@ function GalleryLightbox({
         {/* Prev */}
         {idx > 0 && (
           <button
-            type='button'
+            type="button"
             onClick={prev}
-            className='absolute left-2 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20'
-            aria-label='Ảnh trước'
+            className="absolute left-2 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20"
+            aria-label="Ảnh trước"
           >
-            <ChevronLeft className='size-5' />
+            <ChevronLeft className="size-5" />
           </button>
         )}
 
         {isVideoSlide ? (
           /* Video iframe in lightbox */
-          <div className='aspect-video w-full overflow-hidden rounded-xl'>
+          <div className="aspect-video w-full overflow-hidden rounded-xl">
             {(() => {
               const ytId = videoUrl ? extractYouTubeId(videoUrl) : null;
               const vmId = videoUrl ? extractVimeoId(videoUrl) : null;
@@ -214,9 +208,9 @@ function GalleryLightbox({
                   <iframe
                     key={videoUrl}
                     src={`https://www.youtube.com/embed/${ytId}?autoplay=1`}
-                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
-                    className='size-full rounded-xl'
+                    className="size-full rounded-xl"
                   />
                 );
               }
@@ -225,21 +219,21 @@ function GalleryLightbox({
                   <iframe
                     key={videoUrl}
                     src={`https://player.vimeo.com/video/${vmId}?autoplay=1`}
-                    allow='autoplay; fullscreen; picture-in-picture'
+                    allow="autoplay; fullscreen; picture-in-picture"
                     allowFullScreen
-                    className='size-full rounded-xl'
+                    className="size-full rounded-xl"
                   />
                 );
               }
               return (
                 <video
                   key={videoUrl}
-                  src={videoUrl ?? ''}
+                  src={videoUrl ?? ""}
                   controls
                   autoPlay
                   loop
                   playsInline
-                  className='size-full rounded-xl object-contain'
+                  className="size-full rounded-xl object-contain"
                 />
               );
             })()}
@@ -249,68 +243,68 @@ function GalleryLightbox({
             key={idx}
             src={images[idx]}
             alt={`Ảnh ${idx + 1}`}
-            className='max-h-[80dvh] w-full rounded-xl object-contain shadow-2xl'
-            style={{ animation: 'lb-fade .25s ease' }}
+            className="max-h-[80dvh] w-full rounded-xl object-contain shadow-2xl"
+            style={{ animation: "lb-fade .25s ease" }}
           />
         )}
 
         {/* Next */}
         {idx < totalSlides - 1 && (
           <button
-            type='button'
+            type="button"
             onClick={next}
-            className='absolute right-2 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20'
-            aria-label='Ảnh sau'
+            className="absolute right-2 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20"
+            aria-label="Ảnh sau"
           >
-            <ChevronRight className='size-5' />
+            <ChevronRight className="size-5" />
           </button>
         )}
       </div>
 
       {/* Filmstrip */}
       {totalSlides > 1 && (
-        <div className='absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 overflow-x-auto px-4 pb-1'>
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 overflow-x-auto px-4 pb-1">
           {images.map((img, i) => (
             <button
               key={i}
-              type='button'
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setIdx(i);
               }}
               className={`relative size-12 shrink-0 overflow-hidden rounded-md transition-all duration-200 ${
                 i === idx
-                  ? 'ring-2 ring-white ring-offset-1 ring-offset-black/60 opacity-100'
-                  : 'opacity-50 hover:opacity-80'
+                  ? "ring-2 ring-white ring-offset-1 ring-offset-black/60 opacity-100"
+                  : "opacity-50 hover:opacity-80"
               }`}
             >
-              <img src={img} alt='' className='size-full object-cover' />
+              <img src={img} alt="" className="size-full object-cover" />
             </button>
           ))}
           {hasVideo && (
             <button
-              type='button'
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setIdx(images.length);
               }}
               className={`relative size-12 shrink-0 overflow-hidden rounded-md transition-all duration-200 ${
                 idx === images.length
-                  ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-black/60 opacity-100'
-                  : 'opacity-50 hover:opacity-80'
+                  ? "ring-2 ring-blue-400 ring-offset-1 ring-offset-black/60 opacity-100"
+                  : "opacity-50 hover:opacity-80"
               }`}
             >
               <img
                 src={
                   images[0] ||
-                  'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'
+                  "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60"
                 }
-                alt='Video'
-                className='size-full object-cover'
+                alt="Video"
+                className="size-full object-cover"
               />
-              <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
-                <div className='flex size-6 items-center justify-center rounded-full bg-white/90'>
-                  <Play className='size-3 text-blue-600 fill-blue-600' />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                <div className="flex size-6 items-center justify-center rounded-full bg-white/90">
+                  <Play className="size-3 text-blue-600 fill-blue-600" />
                 </div>
               </div>
             </button>
@@ -342,11 +336,11 @@ export function RentalProductGallery({
   useEffect(() => {
     if (!isHovered) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') prev();
-      else if (e.key === 'ArrowRight') next();
+      if (e.key === "ArrowLeft") prev();
+      else if (e.key === "ArrowRight") next();
     }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHovered, currentImage, images.length]);
 
@@ -356,9 +350,9 @@ export function RentalProductGallery({
     if (!strip) return;
     const btn = strip.children[currentImage] as HTMLElement | undefined;
     btn?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center',
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
     });
   }, [currentImage]);
 
@@ -371,13 +365,13 @@ export function RentalProductGallery({
   return (
     <>
       <div
-        className='group/gallery select-none space-y-3'
+        className="group/gallery select-none space-y-3"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* ── Main image ── */}
         <div
-          className='relative aspect-square overflow-hidden rounded-2xl border border-border/60 bg-muted/30 shadow-md'
+          className="relative aspect-square overflow-hidden rounded-2xl border border-border/60 bg-muted/30 shadow-md"
           onTouchStart={(e) => {
             touchStartX.current = e.touches[0].clientX;
             touchStartY.current = e.touches[0].clientY;
@@ -405,8 +399,8 @@ export function RentalProductGallery({
               draggable={false}
               className={`absolute inset-0 size-full object-cover transition-all duration-500 ease-out ${
                 currentImage === idx
-                  ? 'z-10 opacity-100 scale-100'
-                  : 'z-0 opacity-0 scale-[1.02]'
+                  ? "z-10 opacity-100 scale-100"
+                  : "z-0 opacity-0 scale-[1.02]"
               }`}
             />
           ))}
@@ -415,13 +409,13 @@ export function RentalProductGallery({
             <div
               className={`absolute inset-0 transition-all duration-500 ease-out ${
                 currentImage === images.length
-                  ? 'z-10 opacity-100 scale-100'
-                  : 'z-0 opacity-0 scale-[1.02]'
+                  ? "z-10 opacity-100 scale-100"
+                  : "z-0 opacity-0 scale-[1.02]"
               }`}
             >
               {isEmbeddableVideoUrl(videoUrl) ? (
                 /* YouTube / Vimeo iframe */
-                <div className='absolute inset-0'>
+                <div className="absolute inset-0">
                   <iframe
                     key={videoUrl}
                     src={
@@ -431,9 +425,9 @@ export function RentalProductGallery({
                           ? `https://player.vimeo.com/video/${extractVimeoId(videoUrl)}`
                           : videoUrl
                     }
-                    allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
-                    className='size-full border-0'
+                    className="size-full border-0"
                   />
                 </div>
               ) : (
@@ -446,7 +440,7 @@ export function RentalProductGallery({
                   muted={currentImage !== images.length}
                   loop
                   playsInline
-                  className='size-full object-cover rounded-none'
+                  className="size-full object-cover rounded-none"
                 />
               )}
             </div>
@@ -455,64 +449,64 @@ export function RentalProductGallery({
           {/* Left arrow */}
           {hasManyImages && currentImage > 0 && (
             <button
-              type='button'
-              aria-label='Ảnh trước'
+              type="button"
+              aria-label="Ảnh trước"
               onClick={prev}
-              className='absolute left-3 top-1/2 z-20 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/30 text-white shadow-lg backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95'
+              className="absolute left-3 top-1/2 z-20 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/30 text-white shadow-lg backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95"
             >
-              <ChevronLeft className='size-5' />
+              <ChevronLeft className="size-5" />
             </button>
           )}
 
           {/* Right arrow */}
           {hasManyImages && currentImage < maxIndex && (
             <button
-              type='button'
-              aria-label='Ảnh sau'
+              type="button"
+              aria-label="Ảnh sau"
               onClick={next}
-              className='absolute right-3 top-1/2 z-20 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/30 text-white shadow-lg backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95'
+              className="absolute right-3 top-1/2 z-20 -translate-y-1/2 flex size-9 items-center justify-center rounded-full bg-black/30 text-white shadow-lg backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95"
             >
-              <ChevronRight className='size-5' />
+              <ChevronRight className="size-5" />
             </button>
           )}
 
           {/* Image counter */}
           {hasManyImages && (
-            <div className='absolute bottom-3 left-3 z-20 flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-md'>
-              <span className='text-xs font-semibold tabular-nums text-white/90'>
+            <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-md">
+              <span className="text-xs font-semibold tabular-nums text-white/90">
                 {currentImage + 1}
               </span>
-              <span className='text-white/40 text-xs'>/</span>
-              <span className='text-xs text-white/60'>{totalSlides}</span>
+              <span className="text-white/40 text-xs">/</span>
+              <span className="text-xs text-white/60">{totalSlides}</span>
             </div>
           )}
 
           {/* Dot indicators */}
           {hasManyImages && totalSlides <= 8 && (
-            <div className='absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5'>
+            <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5">
               {images.map((_, i) => (
                 <button
                   key={i}
-                  type='button'
+                  type="button"
                   aria-label={`Ảnh ${i + 1}`}
                   onClick={() => setCurrentImage(i)}
                   className={`rounded-full transition-all duration-300 ${
                     i === currentImage
-                      ? 'size-2 bg-white shadow'
-                      : 'size-1.5 bg-white/40 hover:bg-white/70'
+                      ? "size-2 bg-white shadow"
+                      : "size-1.5 bg-white/40 hover:bg-white/70"
                   }`}
                 />
               ))}
               {videoUrl && (
                 <button
-                  key='video'
-                  type='button'
-                  aria-label='Video sản phẩm'
+                  key="video"
+                  type="button"
+                  aria-label="Video sản phẩm"
                   onClick={() => setCurrentImage(images.length)}
                   className={`rounded-full transition-all duration-300 ${
                     currentImage === images.length
-                      ? 'size-2 bg-blue-400 shadow'
-                      : 'size-1.5 bg-blue-400/50 hover:bg-blue-400/80'
+                      ? "size-2 bg-blue-400 shadow"
+                      : "size-1.5 bg-blue-400/50 hover:bg-blue-400/80"
                   }`}
                 />
               )}
@@ -521,12 +515,12 @@ export function RentalProductGallery({
 
           {/* Expand button */}
           <button
-            type='button'
-            aria-label='Xem toàn màn hình'
+            type="button"
+            aria-label="Xem toàn màn hình"
             onClick={() => setLightbox(true)}
-            className='absolute right-3 top-3 z-20 flex size-8 items-center justify-center rounded-full bg-black/30 text-white shadow backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95'
+            className="absolute right-3 top-3 z-20 flex size-8 items-center justify-center rounded-full bg-black/30 text-white shadow backdrop-blur-md transition-all duration-200 opacity-0 group-hover/gallery:opacity-100 hover:scale-110 hover:bg-black/50 active:scale-95"
           >
-            <Expand className='size-3.5' />
+            <Expand className="size-3.5" />
           </button>
         </div>
 
@@ -534,63 +528,63 @@ export function RentalProductGallery({
         {(hasManyImages || videoUrl) && (
           <div
             ref={filmstripRef}
-            className='flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide'
-            style={{ scrollbarWidth: 'none' }}
+            className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide"
+            style={{ scrollbarWidth: "none" }}
           >
             {images.map((img, idx) => {
               const isActive = currentImage === idx;
               return (
                 <button
                   key={idx}
-                  type='button'
+                  type="button"
                   aria-label={`Xem ảnh ${idx + 1}`}
                   onClick={() => setCurrentImage(idx)}
                   className={`relative aspect-square w-[72px] shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 sm:w-20 ${
                     isActive
-                      ? 'border-blue-500 shadow-sm shadow-blue-500/20 dark:border-blue-400'
-                      : 'border-transparent opacity-55 hover:border-border hover:opacity-90'
+                      ? "border-blue-500 shadow-sm shadow-blue-500/20 dark:border-blue-400"
+                      : "border-transparent opacity-55 hover:border-border hover:opacity-90"
                   }`}
                 >
                   <img
                     src={img}
                     alt={`Thumbnail ${idx + 1}`}
                     draggable={false}
-                    className={`size-full object-cover transition-transform duration-300 ${isActive ? 'scale-105' : 'hover:scale-105'}`}
+                    className={`size-full object-cover transition-transform duration-300 ${isActive ? "scale-105" : "hover:scale-105"}`}
                   />
                   {/* Active overlay gradient */}
                   {isActive && (
-                    <span className='absolute inset-0 rounded-[10px] ring-1 ring-inset ring-blue-500/30' />
+                    <span className="absolute inset-0 rounded-[10px] ring-1 ring-inset ring-blue-500/30" />
                   )}
                 </button>
               );
             })}
             {videoUrl && (
               <button
-                key='video-thumb'
-                type='button'
-                aria-label='Xem video sản phẩm'
+                key="video-thumb"
+                type="button"
+                aria-label="Xem video sản phẩm"
                 onClick={() => setCurrentImage(images.length)}
                 className={`relative aspect-square w-[72px] shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 sm:w-20 ${
                   currentImage === images.length
-                    ? 'border-blue-500 shadow-sm shadow-blue-500/20 dark:border-blue-400'
-                    : 'border-transparent opacity-55 hover:border-border hover:opacity-90'
+                    ? "border-blue-500 shadow-sm shadow-blue-500/20 dark:border-blue-400"
+                    : "border-transparent opacity-55 hover:border-border hover:opacity-90"
                 }`}
               >
                 <img
                   src={
                     images[0] ||
-                    'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60'
+                    "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&w=200&q=60"
                   }
-                  alt='Video thumbnail'
+                  alt="Video thumbnail"
                   draggable={false}
-                  className='size-full object-cover'
+                  className="size-full object-cover"
                 />
-                <div className='absolute inset-0 flex items-center justify-center bg-black/40'>
-                  <div className='flex size-8 items-center justify-center rounded-full bg-white/90'>
-                    <Play className='size-4 text-blue-600 fill-blue-600' />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-white/90">
+                    <Play className="size-4 text-blue-600 fill-blue-600" />
                   </div>
                 </div>
-                <span className='absolute bottom-1 right-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-semibold text-white'>
+                <span className="absolute bottom-1 right-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-semibold text-white">
                   VIDEO
                 </span>
               </button>
@@ -600,8 +594,8 @@ export function RentalProductGallery({
 
         {/* ── Zoom hint (desktop) ── */}
         {images.length > 0 && (
-          <p className='hidden items-center gap-1 text-xs text-muted-foreground/60 sm:flex'>
-            <ZoomIn className='size-3' />
+          <p className="hidden items-center gap-1 text-xs text-muted-foreground/60 sm:flex">
+            <ZoomIn className="size-3" />
             Click để xem ảnh toàn màn hình · Dùng ← → để chuyển ảnh
           </p>
         )}
@@ -620,8 +614,6 @@ export function RentalProductGallery({
   );
 }
 
-/* ---------- Rating & badges (nội bộ) ---------- */
-
 function RentalStars({
   rating,
   reviews,
@@ -630,28 +622,28 @@ function RentalStars({
   reviews?: number;
 }) {
   return (
-    <div className='flex items-center gap-2'>
-      <span className='text-sm font-medium text-foreground'>
+    <div className="flex items-center gap-2">
+      <span className="text-sm font-medium text-foreground">
         {rating.toFixed(1)}
       </span>
-      <div className='flex items-center gap-1'>
+      <div className="flex items-center gap-1">
         {Array.from({ length: 5 }).map((_, index) => {
           const starFill = Math.min(10, Math.max(0, (rating - index) * 10));
           return (
             <div
               key={index}
-              className='relative inline-block w-4 h-4'
-              style={{ fontSize: '14px' }}
+              className="relative inline-block w-4 h-4"
+              style={{ fontSize: "14px" }}
             >
               <span
-                className='absolute top-0 left-0 w-full h-full text-muted-foreground/40'
-                style={{ display: 'inline-block' }}
+                className="absolute top-0 left-0 w-full h-full text-muted-foreground/40"
+                style={{ display: "inline-block" }}
               >
                 ★
               </span>
               <span
-                className='absolute top-0 left-0 h-full overflow-hidden text-yellow-400'
-                style={{ display: 'inline-block', width: `${starFill * 10}%` }}
+                className="absolute top-0 left-0 h-full overflow-hidden text-yellow-400"
+                style={{ display: "inline-block", width: `${starFill * 10}%` }}
               >
                 ★
               </span>
@@ -660,38 +652,38 @@ function RentalStars({
         })}
       </div>
       {reviews !== undefined && (
-        <span className='text-sm text-muted-foreground'>({reviews})</span>
+        <span className="text-sm text-muted-foreground">({reviews})</span>
       )}
     </div>
   );
 }
 
 const badgeStyles = {
-  green: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
-  blue: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300',
+  green: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  blue: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300",
   orange:
-    'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
+    "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
   purple:
-    'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
+    "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300",
 } as const;
 
 const badgeIcons = {
-  green: <ShieldCheck className='w-3.5 h-3.5' />,
-  blue: <Truck className='w-3.5 h-3.5' />,
-  orange: <Clock className='w-3.5 h-3.5' />,
-  purple: <Headphones className='w-3.5 h-3.5' />,
+  green: <ShieldCheck className="w-3.5 h-3.5" />,
+  blue: <Truck className="w-3.5 h-3.5" />,
+  orange: <Clock className="w-3.5 h-3.5" />,
+  purple: <Headphones className="w-3.5 h-3.5" />,
 } as const;
 
 const defaultBadges = [
-  { label: 'CHÍNH HÃNG', variant: 'green' as const },
-  { label: 'GIAO NHANH', variant: 'blue' as const },
-  { label: 'CÒN HÀNG', variant: 'orange' as const },
-  { label: 'HỖ TRỢ 24/7', variant: 'purple' as const },
+  { label: "CHÍNH HÃNG", variant: "green" as const },
+  { label: "GIAO NHANH", variant: "blue" as const },
+  { label: "CÒN HÀNG", variant: "orange" as const },
+  { label: "HỖ TRỢ 24/7", variant: "purple" as const },
 ];
 
 function RentalProductBadges() {
   return (
-    <div className='flex flex-wrap items-center gap-2 mb-2'>
+    <div className="flex flex-wrap items-center gap-2 mb-2">
       {defaultBadges.map((badge, index) => (
         <div
           key={index}
@@ -704,8 +696,6 @@ function RentalProductBadges() {
     </div>
   );
 }
-
-/* ---------- Summary ---------- */
 
 interface RentalProductSummaryProps {
   productData: {
@@ -757,59 +747,59 @@ export function RentalProductSummary({
   } = productData;
 
   const selectedRing =
-    'border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600 dark:border-blue-400 dark:bg-blue-950/50 dark:text-blue-100 dark:ring-blue-400';
+    "border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600 dark:border-blue-400 dark:bg-blue-950/50 dark:text-blue-100 dark:ring-blue-400";
   const idleOption =
-    'border-border bg-card text-foreground hover:border-blue-500/50 dark:hover:border-blue-400/40';
+    "border-border bg-card text-foreground hover:border-blue-500/50 dark:hover:border-blue-400/40";
 
   return (
-    <div className='space-y-4 font-sans sm:space-y-5'>
+    <div className="space-y-4 font-sans sm:space-y-5">
       <div>
         <RentalProductBadges />
-        <h1 className='text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl md:text-3xl'>
+        <h1 className="text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl md:text-3xl">
           {name}
         </h1>
       </div>
 
-      <div className='flex flex-col gap-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-1 sm:text-sm'>
-        <div className='text-muted-foreground'>
-          SKU: <span className='text-foreground font-medium'>{sku}</span>
+      <div className="flex flex-col gap-2 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-1 sm:text-sm">
+        <div className="text-muted-foreground">
+          SKU: <span className="text-foreground font-medium">{sku}</span>
         </div>
-        <div className='text-muted-foreground'>
-          Thương hiệu:{' '}
-          <span className='font-bold text-blue-600 dark:text-blue-400'>
+        <div className="text-muted-foreground">
+          Thương hiệu:{" "}
+          <span className="font-bold text-blue-600 dark:text-blue-400">
             {brand}
           </span>
         </div>
-        <div className='text-muted-foreground'>
-          Loại:{' '}
-          <span className='text-foreground font-medium'>{productType}</span>
+        <div className="text-muted-foreground">
+          Loại:{" "}
+          <span className="text-foreground font-medium">{productType}</span>
         </div>
       </div>
 
-      <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4'>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
         <RentalStars rating={rating} reviews={reviews} />
-        <span className='hidden text-sm text-muted-foreground/50 sm:inline'>
+        <span className="hidden text-sm text-muted-foreground/50 sm:inline">
           |
         </span>
       </div>
 
-      <div className='rounded-xl border border-border/60 bg-muted/40 p-3 dark:bg-muted/20 sm:p-4'>
-        <div className='flex flex-wrap items-baseline gap-2 sm:gap-3'>
-          <span className='text-2xl font-bold text-blue-600 sm:text-3xl dark:text-blue-400'>
+      <div className="rounded-xl border border-border/60 bg-muted/40 p-3 dark:bg-muted/20 sm:p-4">
+        <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+          <span className="text-2xl font-bold text-blue-600 sm:text-3xl dark:text-blue-400">
             {currentPrice.toLocaleString()}₫
           </span>
           {originalPrice && originalPrice > currentPrice && (
             <>
-              <span className='text-lg text-muted-foreground line-through'>
+              <span className="text-lg text-muted-foreground line-through">
                 {originalPrice.toLocaleString()}₫
               </span>
-              <span className='rounded bg-blue-600 px-2 py-0.5 text-xs font-bold text-white dark:bg-blue-500'>
+              <span className="rounded bg-blue-600 px-2 py-0.5 text-xs font-bold text-white dark:bg-blue-500">
                 -{discount}%
               </span>
             </>
           )}
         </div>
-        <p className='mt-1 text-xs leading-relaxed text-muted-foreground'>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           Giá chưa bao gồm phí vận chuyển và 8% VAT
         </p>
       </div>
@@ -817,72 +807,72 @@ export function RentalProductSummary({
       {/* Color picker */}
       {colors.length > 0 && (
         <div>
-          <div className='mb-2 flex items-center justify-between'>
-            <h3 className='text-sm font-bold text-foreground'>
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-foreground">
               Màu sắc
               {selectedColorId && (
-                <span className='ml-2 font-normal text-muted-foreground'>
-                  -{' '}
+                <span className="ml-2 font-normal text-muted-foreground">
+                  -{" "}
                   {colors.find((c) => c.productColorId === selectedColorId)
-                    ?.name ?? ''}
+                    ?.name ?? ""}
                 </span>
               )}
             </h3>
           </div>
-          <div className='flex flex-wrap gap-2'>
+          <div className="flex flex-wrap gap-2">
             {colors.map((color) => {
               const isSelected = selectedColorId === color.productColorId;
               const isUnavailable = color.availableQuantity === 0;
               return (
                 <button
                   key={color.productColorId}
-                  type='button'
+                  type="button"
                   disabled={isUnavailable}
                   onClick={() => onColorChange?.(color.productColorId)}
-                  title={`${color.name}${isUnavailable ? ' - Hết hàng' : ` - ${color.availableQuantity} sẵn sàng`}`}
+                  title={`${color.name}${isUnavailable ? " - Hết hàng" : ` - ${color.availableQuantity} sẵn sàng`}`}
                   className={[
-                    'relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-all',
+                    "relative flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition-all",
                     isUnavailable
-                      ? 'cursor-not-allowed border-border/40 bg-muted/30 opacity-50'
+                      ? "cursor-not-allowed border-border/40 bg-muted/30 opacity-50"
                       : isSelected
-                        ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600 dark:border-blue-400 dark:bg-blue-950/50 dark:ring-blue-400'
-                        : 'border-border bg-card text-foreground hover:border-blue-500/50 dark:hover:border-blue-400/40',
-                  ].join(' ')}
+                        ? "border-blue-600 bg-blue-50 ring-1 ring-blue-600 dark:border-blue-400 dark:bg-blue-950/50 dark:ring-blue-400"
+                        : "border-border bg-card text-foreground hover:border-blue-500/50 dark:hover:border-blue-400/40",
+                  ].join(" ")}
                 >
                   {/* Color swatch */}
                   <span
                     className={[
-                      'inline-block size-4 shrink-0 rounded-full border',
+                      "inline-block size-4 shrink-0 rounded-full border",
                       isSelected
-                        ? 'border-blue-600 dark:border-blue-400'
-                        : 'border-border/60',
-                    ].join(' ')}
+                        ? "border-blue-600 dark:border-blue-400"
+                        : "border-border/60",
+                    ].join(" ")}
                     style={{ backgroundColor: color.code }}
                   />
                   <span
                     className={
                       isSelected
-                        ? 'text-blue-900 dark:text-blue-100'
-                        : 'text-foreground'
+                        ? "text-blue-900 dark:text-blue-100"
+                        : "text-foreground"
                     }
                   >
                     {color.name}
                   </span>
                   <span
                     className={[
-                      'ml-0.5 tabular-nums',
+                      "ml-0.5 tabular-nums",
                       isUnavailable
-                        ? 'text-muted-foreground'
+                        ? "text-muted-foreground"
                         : isSelected
-                          ? 'text-blue-700 dark:text-blue-300'
-                          : 'text-muted-foreground',
-                    ].join(' ')}
+                          ? "text-blue-700 dark:text-blue-300"
+                          : "text-muted-foreground",
+                    ].join(" ")}
                   >
-                    ({isUnavailable ? 'Hết' : color.availableQuantity})
+                    ({isUnavailable ? "Hết" : color.availableQuantity})
                   </span>
                   {isUnavailable && (
-                    <span className='absolute inset-0 flex items-center justify-center rounded-xl'>
-                      <span className='h-px w-3/4 -rotate-12 bg-muted-foreground/40' />
+                    <span className="absolute inset-0 flex items-center justify-center rounded-xl">
+                      <span className="h-px w-3/4 -rotate-12 bg-muted-foreground/40" />
                     </span>
                   )}
                 </button>
@@ -890,7 +880,7 @@ export function RentalProductSummary({
             })}
           </div>
           {colors.length > 1 && !selectedColorId && (
-            <p className='mt-1.5 text-xs text-amber-600 dark:text-amber-400'>
+            <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
               Vui lòng chọn màu trước khi thêm vào giỏ hàng
             </p>
           )}
@@ -899,12 +889,12 @@ export function RentalProductSummary({
 
       {variants.length > 0 && (
         <div>
-          <h3 className='mb-2 text-sm font-bold text-foreground'>Kiểu dáng</h3>
-          <div className='flex flex-wrap gap-2'>
+          <h3 className="mb-2 text-sm font-bold text-foreground">Kiểu dáng</h3>
+          <div className="flex flex-wrap gap-2">
             {variants.map((variant) => (
               <button
                 key={variant.id}
-                type='button'
+                type="button"
                 onClick={() => onVariantChange(variant.id)}
                 className={`rounded-lg border px-3 py-2 text-xs font-medium transition-all sm:px-4 sm:text-sm ${
                   selectedVariant === variant.id ? selectedRing : idleOption
@@ -918,14 +908,14 @@ export function RentalProductSummary({
       )}
 
       <div>
-        <h3 className='mb-2 text-sm font-bold text-foreground'>
+        <h3 className="mb-2 text-sm font-bold text-foreground">
           Thời gian thuê
         </h3>
-        <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {durations.map((duration) => (
             <button
               key={duration.id}
-              type='button'
+              type="button"
               onClick={() => onDurationChange(duration.id)}
               className={`rounded-lg border px-2 py-2 text-xs transition-all sm:px-3 sm:py-2.5 sm:text-sm ${
                 selectedDuration === duration.id
@@ -933,12 +923,12 @@ export function RentalProductSummary({
                   : idleOption
               }`}
             >
-              <div className='font-medium leading-tight'>{duration.label}</div>
+              <div className="font-medium leading-tight">{duration.label}</div>
               <div
                 className={`mt-0.5 text-xs ${
                   selectedDuration === duration.id
-                    ? 'text-blue-800 dark:text-blue-300'
-                    : 'text-muted-foreground'
+                    ? "text-blue-800 dark:text-blue-300"
+                    : "text-muted-foreground"
                 }`}
               >
                 {duration.price.toLocaleString()}₫
@@ -951,13 +941,11 @@ export function RentalProductSummary({
   );
 }
 
-/* ---------- Checkout & voucher ---------- */
-
-export type { RentalVoucher } from '@/lib/rental-voucher';
+export type { RentalVoucher } from "@/lib/rental-voucher";
 export {
   defaultRentalVouchers,
   computeVoucherDiscount,
-} from '@/lib/rental-voucher';
+} from "@/lib/rental-voucher";
 
 interface RentalCheckoutCardProps {
   rentalPrice: number;
@@ -1036,12 +1024,12 @@ export function RentalCheckoutCard({
 
   const { mutate: addToCart, isPending: isAddingToCart } = useAddToCart({
     onSuccess: () => {
-      toast.success('Đã thêm vào giỏ hàng!');
+      toast.success("Đã thêm vào giỏ hàng!");
       onAddedToCart?.();
     },
     onError: (error: Error) => {
       toast.error(
-        error.message ?? 'Không thể thêm vào giỏ hàng. Vui lòng thử lại.',
+        error.message ?? "Không thể thêm vào giỏ hàng. Vui lòng thử lại.",
       );
     },
   });
@@ -1083,80 +1071,80 @@ export function RentalCheckoutCard({
   };
 
   return (
-    <div className='space-y-4 rounded-xl border border-border bg-card p-4 font-sans shadow-sm ambient-glow sm:space-y-5 sm:p-5'>
-      <div className='space-y-3 rounded-xl bg-muted/50 p-3 dark:bg-muted/30 sm:p-4'>
+    <div className="space-y-4 rounded-xl border border-border bg-card p-4 font-sans shadow-sm ambient-glow sm:space-y-5 sm:p-5">
+      <div className="space-y-3 rounded-xl bg-muted/50 p-3 dark:bg-muted/30 sm:p-4">
         {cartProduct?.colorName && (
-          <div className='flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
-            <span className='text-xs text-muted-foreground sm:text-sm'>
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+            <span className="text-xs text-muted-foreground sm:text-sm">
               Màu sắc
             </span>
-            <span className='text-sm font-semibold text-foreground sm:text-base'>
+            <span className="text-sm font-semibold text-foreground sm:text-base">
               {cartProduct.colorName}
             </span>
           </div>
         )}
-        <div className='flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
-          <span className='text-xs text-muted-foreground sm:text-sm'>
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+          <span className="text-xs text-muted-foreground sm:text-sm">
             Tiền thuê ({selectedDuration})
           </span>
-          <span className='text-sm font-semibold text-foreground sm:text-base'>
+          <span className="text-sm font-semibold text-foreground sm:text-base">
             {totalRental.toLocaleString()}₫
           </span>
         </div>
-        <div className='flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
-          <span className='flex items-center gap-1 text-xs text-muted-foreground sm:text-sm'>
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground sm:text-sm">
             Tiền cọc
-            <Info className='size-3.5 shrink-0 text-muted-foreground' />
+            <Info className="size-3.5 shrink-0 text-muted-foreground" />
           </span>
-          <span className='text-sm font-semibold text-foreground sm:text-base'>
+          <span className="text-sm font-semibold text-foreground sm:text-base">
             {deposit.toLocaleString()}₫
           </span>
         </div>
         {appliedVoucher && voucherDiscount > 0 && (
-          <div className='flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2'>
-            <span className='text-xs text-blue-700 dark:text-blue-300 sm:text-sm'>
+          <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+            <span className="text-xs text-blue-700 dark:text-blue-300 sm:text-sm">
               Giảm voucher ({appliedVoucher.code})
             </span>
-            <span className='text-sm font-semibold text-blue-600 dark:text-blue-400 sm:text-base'>
+            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 sm:text-base">
               −{voucherDiscount.toLocaleString()}₫
             </span>
           </div>
         )}
-        <div className='flex flex-col gap-1 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between'>
-          <span className='text-sm font-bold text-foreground'>
+        <div className="flex flex-col gap-1 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-sm font-bold text-foreground">
             Tổng thanh toán
           </span>
-          <span className='text-lg font-bold text-blue-600 sm:text-xl dark:text-blue-400'>
+          <span className="text-lg font-bold text-blue-600 sm:text-xl dark:text-blue-400">
             {totalPayment.toLocaleString()}₫
           </span>
         </div>
       </div>
 
-      <div className='rounded-lg border border-blue-200 bg-blue-50/80 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-100'>
-        Tiền cọc sẽ được <span className='font-bold'>hoàn trả trong 24h</span>{' '}
+      <div className="rounded-lg border border-blue-200 bg-blue-50/80 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-100">
+        Tiền cọc sẽ được <span className="font-bold">hoàn trả trong 24h</span>{" "}
         sau khi bạn trả thiết bị. Giá thuê chưa bao gồm phí vận chuyển và 8%
         VAT.
       </div>
 
-      <div className='flex flex-wrap items-stretch gap-2 sm:items-center sm:gap-3'>
+      <div className="flex flex-wrap items-stretch gap-2 sm:items-center sm:gap-3">
         <div
-          className='flex h-12 shrink-0 items-center gap-1 rounded-xl border border-input bg-background px-1.5 shadow-sm'
-          role='group'
-          aria-label='Số lượng'
+          className="flex h-12 shrink-0 items-center gap-1 rounded-xl border border-input bg-background px-1.5 shadow-sm"
+          role="group"
+          aria-label="Số lượng"
         >
           <Button
-            type='button'
-            variant='ghost'
-            className='size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11'
+            type="button"
+            variant="ghost"
+            className="size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11"
             onClick={() =>
               setQuantity(Math.max(1, Math.min(maxQuantity, quantity - 1)))
             }
-            aria-label='Giảm số lượng'
+            aria-label="Giảm số lượng"
           >
-            <Minus className='size-6' />
+            <Minus className="size-6" />
           </Button>
           <input
-            type='number'
+            type="number"
             min={1}
             value={quantity}
             onChange={(e) =>
@@ -1167,39 +1155,39 @@ export function RentalCheckoutCard({
                 ),
               )
             }
-            className='h-full w-12 border-0 bg-transparent text-center text-lg font-bold tabular-nums text-foreground outline-none sm:w-14 sm:text-xl'
+            className="h-full w-12 border-0 bg-transparent text-center text-lg font-bold tabular-nums text-foreground outline-none sm:w-14 sm:text-xl"
           />
           <Button
-            type='button'
-            variant='ghost'
-            className='size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11'
+            type="button"
+            variant="ghost"
+            className="size-10 shrink-0 rounded-lg p-0 hover:bg-muted sm:size-11"
             onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
             disabled={quantity >= maxQuantity}
-            aria-label='Tăng số lượng'
+            aria-label="Tăng số lượng"
           >
-            <Plus className='size-6' />
+            <Plus className="size-6" />
           </Button>
         </div>
         <Button
           ref={addToCartBtnRef}
-          type='button'
+          type="button"
           disabled={!cartProduct || isAddingToCart || requireColorSelection}
           onClick={handleAddToCart}
-          className='h-12 min-h-12 min-w-0 flex-1 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600 sm:text-base'
+          className="h-12 min-h-12 min-w-0 flex-1 rounded-xl bg-blue-600 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600 sm:text-base"
           title={
             requireColorSelection
-              ? 'Vui lòng chọn màu trước'
+              ? "Vui lòng chọn màu trước"
               : !cartProduct
-                ? 'Thiếu thông tin sản phẩm để thêm giỏ'
+                ? "Thiếu thông tin sản phẩm để thêm giỏ"
                 : undefined
           }
         >
           {isAddingToCart ? (
-            <span className='mr-2 inline-block size-5 animate-spin rounded-full border-2 border-white/40 border-t-white' />
+            <span className="mr-2 inline-block size-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
           ) : (
-            <ShoppingCart className='mr-2 size-5 shrink-0' />
+            <ShoppingCart className="mr-2 size-5 shrink-0" />
           )}
-          {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
+          {isAddingToCart ? "Đang thêm..." : "Thêm vào giỏ"}
         </Button>
         {/* <Button
           type='button'
@@ -1214,60 +1202,60 @@ export function RentalCheckoutCard({
       </div>
 
       <Dialog open={voucherOpen} onOpenChange={setVoucherOpen}>
-        <DialogContent className='max-h-[min(90dvh,560px)] gap-0 overflow-hidden p-0 sm:max-w-md'>
-          <DialogHeader className='border-b border-border px-4 py-4 sm:px-5'>
-            <DialogTitle className='text-lg font-bold text-foreground'>
+        <DialogContent className="max-h-[min(90dvh,560px)] gap-0 overflow-hidden p-0 sm:max-w-md">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-5">
+            <DialogTitle className="text-lg font-bold text-foreground">
               Mã giảm giá
             </DialogTitle>
-            <DialogDescription className='text-left text-sm'>
+            <DialogDescription className="text-left text-sm">
               Chọn một voucher để giảm trừ trên tiền thuê (không áp dụng tiền
               cọc).
             </DialogDescription>
           </DialogHeader>
-          <div className='max-h-[min(60dvh,420px)] space-y-2 overflow-y-auto px-4 py-3 sm:px-5'>
+          <div className="max-h-[min(60dvh,420px)] space-y-2 overflow-y-auto px-4 py-3 sm:px-5">
             {vouchers.map((v) => {
               const preview = computeVoucherDiscount(totalRental, v);
               const disabled = preview <= 0;
               return (
                 <div
                   key={v.id}
-                  className='rounded-xl border border-border/80 bg-muted/30 p-3 dark:bg-muted/20'
+                  className="rounded-xl border border-border/80 bg-muted/30 p-3 dark:bg-muted/20"
                 >
-                  <div className='flex items-start justify-between gap-2'>
-                    <div className='min-w-0'>
-                      <p className='font-mono text-xs font-bold text-blue-600 dark:text-blue-400'>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400">
                         {v.code}
                       </p>
-                      <p className='mt-0.5 text-sm font-semibold text-foreground'>
+                      <p className="mt-0.5 text-sm font-semibold text-foreground">
                         {v.title}
                       </p>
-                      <p className='mt-1 text-xs text-muted-foreground'>
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {v.description}
                       </p>
                       {v.minRental != null && (
-                        <p className='mt-1 text-[11px] text-muted-foreground'>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
                           Đơn tối thiểu: {v.minRental.toLocaleString()}₫ tiền
                           thuê
                         </p>
                       )}
                     </div>
                   </div>
-                  <div className='mt-3 flex flex-wrap items-center justify-between gap-2'>
-                    <span className='text-xs text-muted-foreground'>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
                       {disabled
-                        ? 'Chưa đủ điều kiện'
+                        ? "Chưa đủ điều kiện"
                         : `Giảm ~${preview.toLocaleString()}₫ cho đơn hiện tại`}
                     </span>
                     <Button
-                      type='button'
-                      size='sm'
+                      type="button"
+                      size="sm"
                       disabled={disabled || appliedVoucher?.id === v.id}
                       variant={
-                        appliedVoucher?.id === v.id ? 'secondary' : 'default'
+                        appliedVoucher?.id === v.id ? "secondary" : "default"
                       }
                       onClick={() => handleApplyVoucher(v)}
                     >
-                      {appliedVoucher?.id === v.id ? 'Đang dùng' : 'Áp dụng'}
+                      {appliedVoucher?.id === v.id ? "Đang dùng" : "Áp dụng"}
                     </Button>
                   </div>
                 </div>
@@ -1275,11 +1263,11 @@ export function RentalCheckoutCard({
             })}
           </div>
           {appliedVoucher && (
-            <div className='border-t border-border bg-muted/40 px-4 py-3 dark:bg-muted/20 sm:px-5'>
+            <div className="border-t border-border bg-muted/40 px-4 py-3 dark:bg-muted/20 sm:px-5">
               <Button
-                type='button'
-                variant='ghost'
-                className='w-full text-destructive hover:text-destructive'
+                type="button"
+                variant="ghost"
+                className="w-full text-destructive hover:text-destructive"
                 onClick={() => setAppliedVoucher(null)}
               >
                 Bỏ mã đang áp dụng

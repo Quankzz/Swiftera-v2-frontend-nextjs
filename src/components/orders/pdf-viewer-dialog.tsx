@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FileText,
   Download,
@@ -11,13 +11,13 @@ import {
   ZoomOut,
   RotateCcw,
   GripHorizontal,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import {
   generateContractPdf,
   type ContractPdfInput,
-} from '@/lib/generate-contract-pdf';
+} from "@/lib/generate-contract-pdf";
 
 const ZOOM_STEP = 0.15;
 const ZOOM_MIN = 0.4;
@@ -43,10 +43,12 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
     setLoading(true);
     try {
       const bytes = await generateContractPdf(input);
-      const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const blob = new Blob([bytes.buffer as ArrayBuffer], {
+        type: "application/pdf",
+      });
       setBlobUrl(URL.createObjectURL(blob));
     } catch (err) {
-      console.error('PDF generation failed:', err);
+      console.error("PDF generation failed:", err);
     } finally {
       setLoading(false);
     }
@@ -69,7 +71,7 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
 
   const handleDownload = () => {
     if (!blobUrl) return;
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = blobUrl;
     a.download = `Hop-dong-${input.orderCode}.pdf`;
     document.body.appendChild(a);
@@ -78,16 +80,16 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
   };
 
   const handleOpenTab = () => {
-    if (blobUrl) window.open(blobUrl, '_blank');
+    if (blobUrl) window.open(blobUrl, "_blank");
   };
 
-  const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, +z.toFixed(2)));
+  const clampZoom = (z: number) =>
+    Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, +z.toFixed(2)));
   const zoomIn = () => setZoom((z) => clampZoom(z + ZOOM_STEP));
   const zoomOut = () => setZoom((z) => clampZoom(z - ZOOM_STEP));
   const zoomReset = () => setZoom(1);
   const zoomPercent = Math.round(zoom * 100);
 
-  /* ---- Wheel zoom ---- */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -96,11 +98,10 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
       e.preventDefault();
       setZoom((z) => clampZoom(z - e.deltaY * WHEEL_SENSITIVITY));
     };
-    el.addEventListener('wheel', handler, { passive: false });
-    return () => el.removeEventListener('wheel', handler);
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
   }, [open]);
 
-  /* ---- Drag to pan ---- */
   const onMouseDown = (e: React.MouseEvent) => {
     const el = containerRef.current;
     if (!el) return;
@@ -111,7 +112,7 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
       scrollLeft: el.scrollLeft,
       scrollTop: el.scrollTop,
     };
-    el.style.cursor = 'grabbing';
+    el.style.cursor = "grabbing";
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
@@ -127,7 +128,7 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
   const onMouseUp = () => {
     isDragging.current = false;
     const el = containerRef.current;
-    if (el) el.style.cursor = 'grab';
+    if (el) el.style.cursor = "grab";
   };
 
   return (
@@ -143,13 +144,15 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
 
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="flex h-[96dvh] w-[96vw] max-w-[96vw] gap-0 overflow-hidden rounded-2xl p-0 sm:h-[95dvh] sm:w-[92vw] sm:max-w-7xl">
-          <DialogTitle className="sr-only">Hợp đồng {input.orderCode}</DialogTitle>
+          <DialogTitle className="sr-only">
+            Hợp đồng {input.orderCode}
+          </DialogTitle>
 
           {/* ---- PDF canvas area ---- */}
           <div
             ref={containerRef}
             className="relative flex-1 overflow-auto bg-zinc-200 dark:bg-zinc-900"
-            style={{ cursor: 'grab' }}
+            style={{ cursor: "grab" }}
             onMouseDown={onMouseDown}
             onMouseMove={onMouseMove}
             onMouseUp={onMouseUp}
@@ -165,7 +168,11 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
             )}
 
             {blobUrl && (
-              <PdfCanvasRenderer url={blobUrl} zoom={zoom} onNumPages={setNumPages} />
+              <PdfCanvasRenderer
+                url={blobUrl}
+                zoom={zoom}
+                onNumPages={setNumPages}
+              />
             )}
 
             {!loading && !blobUrl && (
@@ -191,7 +198,12 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
 
           {/* ---- Right sidebar toolbar ---- */}
           <div className="flex w-12 shrink-0 flex-col items-center gap-1 border-l border-border bg-card pt-14 pb-3 sm:w-14 sm:gap-1.5 sm:pt-16 sm:pb-4">
-            <ToolBtn icon={<ZoomIn className="size-4" />} label="Phóng to" onClick={zoomIn} disabled={zoom >= ZOOM_MAX} />
+            <ToolBtn
+              icon={<ZoomIn className="size-4" />}
+              label="Phóng to"
+              onClick={zoomIn}
+              disabled={zoom >= ZOOM_MAX}
+            />
             <button
               type="button"
               onClick={zoomReset}
@@ -200,19 +212,40 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
             >
               {zoomPercent}%
             </button>
-            <ToolBtn icon={<ZoomOut className="size-4" />} label="Thu nhỏ" onClick={zoomOut} disabled={zoom <= ZOOM_MIN} />
-            <ToolBtn icon={<RotateCcw className="size-3.5" />} label="Đặt lại zoom" onClick={zoomReset} />
+            <ToolBtn
+              icon={<ZoomOut className="size-4" />}
+              label="Thu nhỏ"
+              onClick={zoomOut}
+              disabled={zoom <= ZOOM_MIN}
+            />
+            <ToolBtn
+              icon={<RotateCcw className="size-3.5" />}
+              label="Đặt lại zoom"
+              onClick={zoomReset}
+            />
 
             <Sep />
 
             {numPages > 0 && (
-              <p className="text-[10px] text-muted-foreground sm:text-[11px]">{numPages} trang</p>
+              <p className="text-[10px] text-muted-foreground sm:text-[11px]">
+                {numPages} trang
+              </p>
             )}
 
             <Sep />
 
-            <ToolBtn icon={<Download className="size-4" />} label="Tải xuống PDF" onClick={handleDownload} disabled={!blobUrl} />
-            <ToolBtn icon={<ExternalLink className="size-4" />} label="Mở tab mới" onClick={handleOpenTab} disabled={!blobUrl} />
+            <ToolBtn
+              icon={<Download className="size-4" />}
+              label="Tải xuống PDF"
+              onClick={handleDownload}
+              disabled={!blobUrl}
+            />
+            <ToolBtn
+              icon={<ExternalLink className="size-4" />}
+              label="Mở tab mới"
+              onClick={handleOpenTab}
+              disabled={!blobUrl}
+            />
           </div>
         </DialogContent>
       </Dialog>
@@ -220,14 +253,12 @@ export function PdfViewerDialog({ input }: PdfViewerDialogProps) {
   );
 }
 
-/* ---- Canvas-based PDF renderer using react-pdf ---- */
-
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
+  "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
 
@@ -248,13 +279,18 @@ function PdfCanvasRenderer({
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 px-4 py-6" style={{ minWidth: 'fit-content' }}>
+    <div
+      className="flex flex-col items-center gap-4 px-4 py-6"
+      style={{ minWidth: "fit-content" }}
+    >
       <Document
         file={url}
         onLoadSuccess={onDocLoad}
         loading={null}
         error={
-          <p className="py-10 text-center text-sm text-destructive">Lỗi hiển thị PDF</p>
+          <p className="py-10 text-center text-sm text-destructive">
+            Lỗi hiển thị PDF
+          </p>
         }
       >
         {Array.from({ length: pages }, (_, i) => (
@@ -271,8 +307,6 @@ function PdfCanvasRenderer({
     </div>
   );
 }
-
-/* ---- Shared sidebar UI ---- */
 
 function ToolBtn({
   icon,

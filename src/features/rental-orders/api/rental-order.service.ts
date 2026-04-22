@@ -11,8 +11,8 @@
  *  4. Records & Penalty
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse, PaginationResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse, PaginationResponse } from "@/types/api.types";
 import type {
   RentalOrderResponse,
   PaginatedRentalOrdersResponse,
@@ -28,8 +28,10 @@ import type {
   ReportIssueInput,
   AssignStaffToHubInput,
   RentalContractResponse,
-} from '../types';
-import type { HubStaffResponse } from '@/features/hubs/types';
+  ConfirmCompletionInput,
+  CancelOrderInput,
+} from "../types";
+import type { HubStaffResponse } from "@/features/hubs/types";
 
 const authOpts = { requireToken: true as const };
 
@@ -45,7 +47,7 @@ export async function getRentalOrders(
   params?: RentalOrderListParams,
 ): Promise<PaginatedRentalOrdersResponse> {
   const res = await httpService.get<ApiResponse<PaginatedRentalOrdersResponse>>(
-    '/rental-orders',
+    "/rental-orders",
     { ...authOpts, params },
   );
   return res.data.data!;
@@ -59,7 +61,7 @@ export async function getMyRentalOrders(
   params?: RentalOrderListParams,
 ): Promise<PaginatedRentalOrdersResponse> {
   const res = await httpService.get<ApiResponse<PaginatedRentalOrdersResponse>>(
-    '/rental-orders/my-orders',
+    "/rental-orders/my-orders",
     { ...authOpts, params },
   );
   return res.data.data!;
@@ -95,7 +97,7 @@ export async function getStaffUsers(params?: {
 }): Promise<PaginationResponse<StaffOption>> {
   const res = await httpService.get<
     ApiResponse<PaginationResponse<StaffOption>>
-  >('/users', { ...authOpts, params });
+  >("/users", { ...authOpts, params });
   return res.data.data!;
 }
 
@@ -251,7 +253,7 @@ export async function completeRentalOrder(
 ): Promise<RentalOrderResponse> {
   const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/status`,
-    { status: 'COMPLETED' },
+    { status: "COMPLETED" },
     authOpts,
   );
   return res.data.data!;
@@ -330,14 +332,6 @@ export async function getContractByOrder(
 // 8. Admin Cancellation / Support Actions
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface CancelOrderInput {
-  reason?: string;
-}
-
-/**
- * Admin confirms cancellation with refund for PAID orders
- * POST /rental-orders/{rentalOrderId}/confirm-cancellation-refund [ADMIN]
- */
 export async function confirmCancellationRefund(
   rentalOrderId: string,
   input: CancelOrderInput,
@@ -376,6 +370,23 @@ export async function adminEarlyPickupFromInUse(
   const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/admin-early-pickup`,
     undefined,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * Admin confirms rental order completion (PICKED_UP → COMPLETED).
+ * Sets penalty amounts, calculates deposit refund, creates refund transaction.
+ * POST /rental-orders/{rentalOrderId}/confirm-completion [ADMIN]
+ */
+export async function confirmCompletion(
+  rentalOrderId: string,
+  input: ConfirmCompletionInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/confirm-completion`,
+    input,
     authOpts,
   );
   return res.data.data!;

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef, useEffect, use } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
-import axios from 'axios';
-import '@goongmaps/goong-js/dist/goong-js.css';
-import { cn } from '@/lib/utils';
-import { apiKey } from '@/configs/goongmapKeys';
-import type { RentalOrderResponse, OrderStatus } from '@/types/api.types';
+import { useState, useCallback, useRef, useEffect, use } from "react";
+import Link from "next/link";
+import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
+import axios from "axios";
+import "@goongmaps/goong-js/dist/goong-js.css";
+import { cn } from "@/lib/utils";
+import { apiKey } from "@/configs/goongmapKeys";
+import type { RentalOrderResponse, OrderStatus } from "@/types/api.types";
 import {
   getStaffOrderById,
   updateOrderStatus,
@@ -16,21 +16,21 @@ import {
   setPenalty,
   cancelOrder,
   type StaffTransitionTargetStatus,
-} from '@/api/staff-orders';
-import { useAuthStore } from '@/stores/auth-store';
-import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
-import { Button } from '@/components/ui/button';
+} from "@/api/staff-orders";
+import { useAuthStore } from "@/stores/auth-store";
+import { useStaffOrderCounts } from "@/stores/staff-order-counts-store";
+import { Button } from "@/components/ui/button";
 
-import { STATUS_CFG } from './_components/utils';
-import { WorkflowStepper } from './_components/WorkflowStepper';
-import { ConfirmDeliveryWorkflow } from './_components/workflows/ConfirmDeliveryWorkflow';
-import { RepairingWorkflow } from './_components/workflows/RepairingWorkflow';
-import { DeliveringWorkflow } from './_components/workflows/DeliveringWorkflow';
-import { DeliveredWorkflow } from './_components/workflows/DeliveredWorkflow';
-import { ReturningWorkflow } from './_components/workflows/ReturningWorkflow';
-import { PickedUpWorkflow } from './_components/workflows/PickedUpWorkflow';
-import { ConfirmReturnWorkflow } from './_components/workflows/ConfirmReturnWorkflow';
-import { CancelledWorkflow } from './_components/workflows/CancelledWorkflow';
+import { STATUS_CFG } from "./_components/utils";
+import { WorkflowStepper } from "./_components/WorkflowStepper";
+import { ConfirmDeliveryWorkflow } from "./_components/workflows/ConfirmDeliveryWorkflow";
+import { RepairingWorkflow } from "./_components/workflows/RepairingWorkflow";
+import { DeliveringWorkflow } from "./_components/workflows/DeliveringWorkflow";
+import { DeliveredWorkflow } from "./_components/workflows/DeliveredWorkflow";
+import { ReturningWorkflow } from "./_components/workflows/ReturningWorkflow";
+import { PickedUpWorkflow } from "./_components/workflows/PickedUpWorkflow";
+import { ConfirmReturnWorkflow } from "./_components/workflows/ConfirmReturnWorkflow";
+import { CancelledWorkflow } from "./_components/workflows/CancelledWorkflow";
 
 export default function OrderDetailPage({
   params,
@@ -49,7 +49,7 @@ export default function OrderDetailPage({
   useEffect(() => {
     if (!user?.userId) {
       setPageLoading(false);
-      setPageError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+      setPageError("Bạn chưa đăng nhập. Vui lòng đăng nhập lại.");
       return;
     }
 
@@ -63,7 +63,7 @@ export default function OrderDetailPage({
         }
       })
       .catch((err) => {
-        if (!cancelled) setPageError(err?.message ?? 'Không thể tải đơn hàng');
+        if (!cancelled) setPageError(err?.message ?? "Không thể tải đơn hàng");
       })
       .finally(() => {
         if (!cancelled) setPageLoading(false);
@@ -85,11 +85,11 @@ export default function OrderDetailPage({
           order.userAddress.city,
         ]
           .filter(Boolean)
-          .join(', ')
-      : (order.hubAddressLine ?? '');
+          .join(", ")
+      : (order.hubAddressLine ?? "");
     if (!addressToGeocode) return;
     const status = order.status;
-    if (status !== 'DELIVERING' && status !== 'PICKING_UP') return;
+    if (status !== "DELIVERING" && status !== "PICKING_UP") return;
     let cancelled = false;
     axios
       .get(
@@ -121,10 +121,10 @@ export default function OrderDetailPage({
   const gpsWatchRef = useRef<number | null>(null);
   useEffect(() => {
     const needsGps =
-      order?.status === 'PREPARING' ||
-      order?.status === 'DELIVERING' ||
-      order?.status === 'PICKING_UP';
-    if (!needsGps || typeof navigator === 'undefined' || !navigator.geolocation)
+      order?.status === "PREPARING" ||
+      order?.status === "DELIVERING" ||
+      order?.status === "PICKING_UP";
+    if (!needsGps || typeof navigator === "undefined" || !navigator.geolocation)
       return;
     const opts: PositionOptions = {
       enableHighAccuracy: true,
@@ -192,28 +192,28 @@ export default function OrderDetailPage({
 
         // Route to the correct status-update endpoint
         switch (newStatus) {
-          case 'DELIVERED':
+          case "DELIVERED":
             updated = await recordDelivery(order.rentalOrderId, {
               deliveredLatitude: localLat,
               deliveredLongitude: localLng,
             });
             break;
-          case 'PICKED_UP':
+          case "PICKED_UP":
             updated = await recordPickup(order.rentalOrderId, {
               pickedUpLatitude: localLat,
               pickedUpLongitude: localLng,
             });
             break;
-          case 'PREPARING':
-          case 'DELIVERING':
-          case 'PICKING_UP':
+          case "PREPARING":
+          case "DELIVERING":
+          case "PICKING_UP":
             updated = await updateOrderStatus(order.rentalOrderId, newStatus);
             break;
         }
 
         if (!updated) {
           throw new Error(
-            'API không trả về dữ liệu cập nhật trạng thái đơn hàng',
+            "API không trả về dữ liệu cập nhật trạng thái đơn hàng",
           );
         }
 
@@ -222,7 +222,7 @@ export default function OrderDetailPage({
         return updated;
       } catch (err) {
         setActionError(
-          err instanceof Error ? err.message : 'Không thể cập nhật trạng thái',
+          err instanceof Error ? err.message : "Không thể cập nhật trạng thái",
         );
         return null;
       } finally {
@@ -234,17 +234,17 @@ export default function OrderDetailPage({
 
   const handleCancelOrder = useCallback(async () => {
     if (!order) return;
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return;
+    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
     setStatusLoading(true);
     setActionError(null);
     try {
       await cancelOrder(order.rentalOrderId);
-      updateCount(order.status, 'CANCELLED');
+      updateCount(order.status, "CANCELLED");
       const updated = await getStaffOrderById(order.rentalOrderId);
       setOrder(updated);
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : 'Không thể hủy đơn hàng',
+        err instanceof Error ? err.message : "Không thể hủy đơn hàng",
       );
     } finally {
       setStatusLoading(false);
@@ -291,14 +291,14 @@ export default function OrderDetailPage({
   }
 
   const statusCfg = STATUS_CFG[order.status];
-  const orderCode = `SW-${(order.placedAt ?? '').slice(0, 10).replace(/-/g, '')}-${order.rentalOrderId.slice(0, 6).toUpperCase()}`;
+  const orderCode = `SW-${(order.placedAt ?? "").slice(0, 10).replace(/-/g, "")}-${order.rentalOrderId.slice(0, 6).toUpperCase()}`;
   const now = new Date().getTime();
   const today = new Date(now).setHours(0, 0, 0, 0);
 
   // ── Delivery overdue: PAID only — expectedDeliveryDate passed today ─────────
   const deliveryOverdueDays =
     !order.overdue &&
-    order.status === 'PAID' &&
+    order.status === "PAID" &&
     order.expectedDeliveryDate &&
     new Date(order.expectedDeliveryDate).setHours(0, 0, 0, 0) < today
       ? Math.floor(
@@ -310,7 +310,7 @@ export default function OrderDetailPage({
   // ── Pickup overdue: PENDING_PICKUP only — expectedRentalEndDate passed today ──
   const pickupOverdueDays =
     !order.overdue &&
-    order.status === 'PENDING_PICKUP' &&
+    order.status === "PENDING_PICKUP" &&
     order.expectedRentalEndDate &&
     new Date(order.expectedRentalEndDate).setHours(0, 0, 0, 0) < today
       ? Math.floor(
@@ -320,21 +320,21 @@ export default function OrderDetailPage({
       : 0;
 
   // Detect which workflow role the current staff has for this order
-  const staffRole: 'delivery' | 'pickup' | 'both' = user?.userId
+  const staffRole: "delivery" | "pickup" | "both" = user?.userId
     ? order.deliveryStaffId === user.userId &&
       order.pickupStaffId === user.userId
-      ? 'both'
+      ? "both"
       : order.deliveryStaffId === user.userId
-        ? 'delivery'
-        : 'pickup'
-    : 'pickup';
+        ? "delivery"
+        : "pickup"
+    : "pickup";
 
   // Helper to check if status is in the delivery or pickup half
   const DELIVERY_STATUSES: OrderStatus[] = [
-    'PAID',
-    'PREPARING',
-    'DELIVERING',
-    'DELIVERED',
+    "PAID",
+    "PREPARING",
+    "DELIVERING",
+    "DELIVERED",
   ];
   const isDeliveryStatus = DELIVERY_STATUSES.includes(order.status);
 
@@ -356,7 +356,7 @@ export default function OrderDetailPage({
                 </h1>
                 <span
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-sm font-bold shrink-0',
+                    "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1 text-sm font-bold shrink-0",
                     statusCfg.color,
                     statusCfg.bg,
                     statusCfg.border,
@@ -364,7 +364,7 @@ export default function OrderDetailPage({
                 >
                   <span
                     className={cn(
-                      'size-2 rounded-full shrink-0',
+                      "size-2 rounded-full shrink-0",
                       statusCfg.dot,
                     )}
                   />
@@ -395,21 +395,21 @@ export default function OrderDetailPage({
               )}
               {/* Status-specific workflow panel */}
               {/* ── Delivery staff workflows ─── */}
-              {(staffRole === 'delivery' ||
-                staffRole === 'both' ||
+              {(staffRole === "delivery" ||
+                staffRole === "both" ||
                 isDeliveryStatus) &&
-                order.status === 'PAID' && (
+                order.status === "PAID" && (
                   <ConfirmDeliveryWorkflow
                     order={order}
-                    onConfirm={() => handleStatusChange('PREPARING')}
+                    onConfirm={() => handleStatusChange("PREPARING")}
                     loading={statusLoading}
                   />
                 )}
 
-              {order.status === 'PREPARING' && (
+              {order.status === "PREPARING" && (
                 <RepairingWorkflow
                   order={order}
-                  onStartDelivery={() => handleStatusChange('DELIVERING')}
+                  onStartDelivery={() => handleStatusChange("DELIVERING")}
                   loading={statusLoading}
                   staffLat={localLat}
                   staffLng={localLng}
@@ -417,10 +417,10 @@ export default function OrderDetailPage({
                 />
               )}
 
-              {order.status === 'DELIVERING' && (
+              {order.status === "DELIVERING" && (
                 <DeliveringWorkflow
                   order={order}
-                  onConfirmDelivery={() => handleStatusChange('DELIVERED')}
+                  onConfirmDelivery={() => handleStatusChange("DELIVERED")}
                   onCancel={handleCancelOrder}
                   loading={statusLoading}
                   staffLat={localLat}
@@ -429,26 +429,26 @@ export default function OrderDetailPage({
                 />
               )}
 
-              {order.status === 'DELIVERED' && (
+              {order.status === "DELIVERED" && (
                 <DeliveredWorkflow order={order} loading={statusLoading} />
               )}
 
-              {order.status === 'PENDING_PICKUP' && (
+              {order.status === "PENDING_PICKUP" && (
                 <ConfirmReturnWorkflow
                   order={order}
-                  onConfirmPickup={() => handleStatusChange('PICKING_UP')}
+                  onConfirmPickup={() => handleStatusChange("PICKING_UP")}
                   loading={statusLoading}
                 />
               )}
 
-              {order.status === 'PICKING_UP' && (
+              {order.status === "PICKING_UP" && (
                 <ReturningWorkflow
                   order={order}
                   onCompleteReturn={async (
                     damagePenalty?: number,
                     overduePenalty?: number,
                   ) => {
-                    await handleStatusChange('PICKED_UP', {
+                    await handleStatusChange("PICKED_UP", {
                       damagePenaltyAmount: Math.max(0, damagePenalty ?? 0),
                       overduePenaltyAmount: Math.max(0, overduePenalty ?? 0),
                     });
@@ -460,12 +460,12 @@ export default function OrderDetailPage({
                 />
               )}
 
-              {(order.status === 'PICKED_UP' ||
-                order.status === 'COMPLETED') && (
+              {(order.status === "PICKED_UP" ||
+                order.status === "COMPLETED") && (
                 <PickedUpWorkflow order={order} />
               )}
 
-              {order.status === 'CANCELLED' && (
+              {order.status === "CANCELLED" && (
                 <CancelledWorkflow order={order} />
               )}
             </div>

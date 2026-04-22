@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { Layout } from '@/components/Layout';
+import Link from "next/link";
+import { Layout } from "@/components/Layout";
 import {
   Search,
   CreditCard,
@@ -7,80 +7,80 @@ import {
   Ticket,
   ArrowRight,
   CheckCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 const GUIDES = [
   {
     icon: Search,
-    title: 'Tự kiểm tra trạng thái đơn thuê',
+    title: "Tự kiểm tra trạng thái đơn thuê",
     content:
       'Truy cập mục "Đơn thuê của tôi" để xem trạng thái hiện tại. Các trạng thái: Chờ thanh toán → Đã thanh toán → Đang chuẩn bị → Đang giao → Đã giao → Đang thuê → Hoàn thành.',
     bullets: [
-      'Đơn chưa thanh toán sẽ bị huỷ sau 24 giờ',
-      'Trạng thái cập nhật trong vòng 15-30 phút sau thao tác',
-      'Bạn sẽ nhận thông báo qua email khi trạng thái thay đổi',
+      "Đơn chưa thanh toán sẽ bị huỷ sau 24 giờ",
+      "Trạng thái cập nhật trong vòng 15-30 phút sau thao tác",
+      "Bạn sẽ nhận thông báo qua email khi trạng thái thay đổi",
     ],
   },
   {
     icon: CreditCard,
-    title: 'Kiểm tra thanh toán',
+    title: "Kiểm tra thanh toán",
     content:
-      'Xem chi tiết thanh toán trong trang đơn thuê. Thông tin bao gồm: số tiền thuê, tiền cọc, mã giao dịch VNPay và trạng thái thanh toán.',
+      "Xem chi tiết thanh toán trong trang đơn thuê. Thông tin bao gồm: số tiền thuê, tiền cọc, mã giao dịch VNPay và trạng thái thanh toán.",
     bullets: [
       'Thanh toán thành công sẽ hiển thị trạng thái "Đã thanh toán"',
-      'Mã giao dịch dùng để đối chiếu với ngân hàng',
-      'Tiền cọc hoàn trả được xử lý trong 24h sau khi trả thiết bị',
+      "Mã giao dịch dùng để đối chiếu với ngân hàng",
+      "Tiền cọc hoàn trả được xử lý trong 24h sau khi trả thiết bị",
     ],
   },
   {
     icon: PackageSearch,
-    title: 'Theo dõi tình trạng giao hàng',
+    title: "Theo dõi tình trạng giao hàng",
     content:
       'Khi đơn chuyển sang "Đang giao", thông tin shipper và thời gian dự kiến sẽ được cập nhật. Bạn có thể chủ động liên hệ hotline để hỏi tiến độ.',
     bullets: [
-      'Nhân viên giao hàng sẽ liên hệ trước khi đến',
-      'Kiểm tra tình trạng thiết bị ngay khi nhận',
-      'Ký xác nhận bàn giao sau khi đã kiểm tra đầy đủ',
+      "Nhân viên giao hàng sẽ liên hệ trước khi đến",
+      "Kiểm tra tình trạng thiết bị ngay khi nhận",
+      "Ký xác nhận bàn giao sau khi đã kiểm tra đầy đủ",
     ],
   },
   {
     icon: Ticket,
-    title: 'Khi nào nên tạo ticket hỗ trợ?',
+    title: "Khi nào nên tạo ticket hỗ trợ?",
     content:
-      'Tạo ticket khi bạn cần hỗ trợ về: sự cố thiết bị trong quá trình sử dụng, yêu cầu thay đổi thông tin đơn, hoặc khiếu nại chưa được giải quyết qua các kênh khác.',
+      "Tạo ticket khi bạn cần hỗ trợ về: sự cố thiết bị trong quá trình sử dụng, yêu cầu thay đổi thông tin đơn, hoặc khiếu nại chưa được giải quyết qua các kênh khác.",
     bullets: [
-      'Ticket được phân loại và xử lý theo mức độ ưu tiên',
-      'Phản hồi ticket trong giờ hành chính',
-      'Kèm hình ảnh/video nếu có sự cố để đội xử lý chính xác hơn',
+      "Ticket được phân loại và xử lý theo mức độ ưu tiên",
+      "Phản hồi ticket trong giờ hành chính",
+      "Kèm hình ảnh/video nếu có sự cố để đội xử lý chính xác hơn",
     ],
   },
 ];
 
 const COMMON_SITUATIONS = [
   {
-    situation: 'Thiết bị giao đến bị hư hỏng',
+    situation: "Thiết bị giao đến bị hư hỏng",
     solution:
-      'Không nhận hàng và báo ngay qua hotline 1900 1234. Đội ngũ sẽ xử lý đổi thiết bị và điều phối giao lại trong thời gian sớm nhất.',
+      "Không nhận hàng và báo ngay qua hotline 1900 1234. Đội ngũ sẽ xử lý đổi thiết bị và điều phối giao lại trong thời gian sớm nhất.",
   },
   {
-    situation: 'Thiết bị hỏng trong quá trình sử dụng',
+    situation: "Thiết bị hỏng trong quá trình sử dụng",
     solution:
-      'Gửi ticket kèm mô tả sự cố và hình ảnh. Đội ngũ kỹ thuật sẽ phản hồi trong 2-4 giờ làm việc để hướng dẫn xử lý hoặc đổi thiết bị.',
+      "Gửi ticket kèm mô tả sự cố và hình ảnh. Đội ngũ kỹ thuật sẽ phản hồi trong 2-4 giờ làm việc để hướng dẫn xử lý hoặc đổi thiết bị.",
   },
   {
-    situation: 'Cần gia hạn đơn thuê',
+    situation: "Cần gia hạn đơn thuê",
     solution:
       'Vào chi tiết đơn thuê đang hoạt động và nhấn nút "Gia hạn". Thời gian gia hạn tối thiểu 1 ngày và phí được tính theo giá thuê hiện tại.',
   },
   {
-    situation: 'Muốn trả hàng sớm',
+    situation: "Muốn trả hàng sớm",
     solution:
       'Yêu cầu thu hồi sớm qua mục "Tôi muốn trả hàng" trong chi tiết đơn. Swiftera sẽ sắp xếp shipper thu hồi. Phí thuê được tính đến ngày thiết bị được bàn giao lại.',
   },
   {
-    situation: 'Quên thanh toán đơn',
+    situation: "Quên thanh toán đơn",
     solution:
-      'Đơn chưa thanh toán sẽ bị huỷ tự động sau 24 giờ. Bạn có thể đặt lại đơn mới nếu thiết bị vẫn còn sẵn sàng.',
+      "Đơn chưa thanh toán sẽ bị huỷ tự động sau 24 giờ. Bạn có thể đặt lại đơn mới nếu thiết bị vẫn còn sẵn sàng.",
   },
 ];
 
@@ -89,7 +89,6 @@ export default function QuestionAndAnswerPage() {
     <Layout stickyHeader>
       <main className="bg-background pb-16 pt-10">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
-
           {/* Hero Header */}
           <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10">
             {/* Ambient glow */}
@@ -104,8 +103,9 @@ export default function QuestionAndAnswerPage() {
                 Giải đáp nhanh cho mọi câu hỏi trong quá trình thuê
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Khi gặp vấn đề về đơn thuê, hợp đồng, thanh toán hoặc giao nhận, hãy
-                thử các bước hướng dẫn bên dưới trước khi gửi yêu cầu hỗ trợ.
+                Khi gặp vấn đề về đơn thuê, hợp đồng, thanh toán hoặc giao nhận,
+                hãy thử các bước hướng dẫn bên dưới trước khi gửi yêu cầu hỗ
+                trợ.
               </p>
             </div>
           </section>
@@ -123,14 +123,19 @@ export default function QuestionAndAnswerPage() {
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10">
                       <Icon className="size-5 text-blue-500" />
                     </div>
-                    <h2 className="text-base font-bold text-foreground">{guide.title}</h2>
+                    <h2 className="text-base font-bold text-foreground">
+                      {guide.title}
+                    </h2>
                   </div>
                   <p className="text-sm leading-relaxed text-muted-foreground">
                     {guide.content}
                   </p>
                   <ul className="mt-4 space-y-2">
                     {guide.bullets.map((b) => (
-                      <li key={b} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                      <li
+                        key={b}
+                        className="flex items-start gap-2.5 text-sm text-muted-foreground"
+                      >
                         <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-blue-500" />
                         {b}
                       </li>
@@ -155,7 +160,9 @@ export default function QuestionAndAnswerPage() {
                 >
                   <CheckCircle className="mt-0.5 size-5 shrink-0 text-blue-500" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{item.situation}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {item.situation}
+                    </p>
                     <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                       {item.solution}
                     </p>
@@ -199,7 +206,6 @@ export default function QuestionAndAnswerPage() {
               </div>
             </div>
           </section>
-
         </div>
       </main>
     </Layout>

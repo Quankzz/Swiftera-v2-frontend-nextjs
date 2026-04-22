@@ -1,4 +1,4 @@
-declare module '@goongmaps/goong-js' {
+declare module "@goongmaps/goong-js" {
   export interface LngLatLike {
     lng: number;
     lat: number;
@@ -58,11 +58,11 @@ declare module '@goongmaps/goong-js' {
   }
 
   export type AnySourceData =
-    | { type: 'geojson'; data: object }
-    | { type: 'vector'; url?: string; tiles?: string[] }
-    | { type: 'raster'; url?: string; tiles?: string[]; tileSize?: number }
+    | { type: "geojson"; data: object }
+    | { type: "vector"; url?: string; tiles?: string[] }
+    | { type: "raster"; url?: string; tiles?: string[]; tileSize?: number }
     | {
-        type: 'image';
+        type: "image";
         url: string;
         coordinates: [
           [number, number],
@@ -75,13 +75,13 @@ declare module '@goongmaps/goong-js' {
   export interface Layer {
     id: string;
     type:
-      | 'fill'
-      | 'line'
-      | 'symbol'
-      | 'circle'
-      | 'background'
-      | 'raster'
-      | 'fill-extrusion';
+      | "fill"
+      | "line"
+      | "symbol"
+      | "circle"
+      | "background"
+      | "raster"
+      | "fill-extrusion";
     source?: string;
     filter?: unknown[];
     layout?: Record<string, unknown>;

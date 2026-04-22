@@ -4,35 +4,35 @@ import {
   Role,
   RoleListParams,
   UpdateRoleInput,
-} from '@/types/dashboard';
-import { fetchApi } from '../apiService';
-type DataMode = 'mock' | 'api';
-const DATA_MODE = (process.env.NEXT_PUBLIC_DATA_MODE as DataMode) || 'mock';
-const USE_MOCK = DATA_MODE === 'mock';
+} from "@/types/dashboard";
+import { fetchApi } from "../apiService";
+type DataMode = "mock" | "api";
+const DATA_MODE = (process.env.NEXT_PUBLIC_DATA_MODE as DataMode) || "mock";
+const USE_MOCK = DATA_MODE === "mock";
 
 let mockRoles: Role[] = [
   {
-    roleId: '1',
-    name: 'Admin',
-    description: 'Quản trị viên toàn hệ thống, toàn quyền',
+    roleId: "1",
+    name: "Admin",
+    description: "Quản trị viên toàn hệ thống, toàn quyền",
     isActive: true,
   },
   {
-    roleId: '2',
-    name: 'Manager',
-    description: 'Quản lý cửa hàng, duyệt đơn hàng',
+    roleId: "2",
+    name: "Manager",
+    description: "Quản lý cửa hàng, duyệt đơn hàng",
     isActive: true,
   },
   {
-    roleId: '3',
-    name: 'User',
-    description: 'Người dùng mặc định',
+    roleId: "3",
+    name: "User",
+    description: "Người dùng mặc định",
     isActive: true,
   },
   {
-    roleId: '4',
-    name: 'Guest',
-    description: 'Tài khoản khách, bị khóa mặc định',
+    roleId: "4",
+    name: "Guest",
+    description: "Tài khoản khách, bị khóa mặc định",
     isActive: false,
   },
 ];
@@ -58,7 +58,7 @@ const mockRolesRepository: RolesRepository = {
       filtered = mockRoles.filter(
         (r) =>
           r.name.toLowerCase().includes(search) ||
-          (r.description || '').toLowerCase().includes(search),
+          (r.description || "").toLowerCase().includes(search),
       );
     }
 
@@ -72,7 +72,7 @@ const mockRolesRepository: RolesRepository = {
   async get(roleId) {
     await delay();
     const found = mockRoles.find((r) => r.roleId === roleId);
-    if (!found) throw new Error('Không tìm thấy vai trò');
+    if (!found) throw new Error("Không tìm thấy vai trò");
     return found;
   },
 
@@ -91,7 +91,7 @@ const mockRolesRepository: RolesRepository = {
   async update(roleId, payload) {
     await delay();
     const existing = mockRoles.find((r) => r.roleId === roleId);
-    if (!existing) throw new Error('Không tìm thấy vai trò');
+    if (!existing) throw new Error("Không tìm thấy vai trò");
 
     const updated: Role = {
       ...existing,
@@ -119,7 +119,7 @@ const apiRolesRepository: RolesRepository = {
     const limit = params.limit ?? 10;
     const search = params.search
       ? `&search=${encodeURIComponent(params.search)}`
-      : '';
+      : "";
     return fetchApi<PaginatedResponse<Role>>(
       `/roles?page=${page}&limit=${limit}${search}`,
     );
@@ -131,21 +131,21 @@ const apiRolesRepository: RolesRepository = {
 
   async create(payload) {
     return fetchApi<Role>(`/roles`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
   async update(roleId, payload) {
     return fetchApi<Role>(`/roles/${roleId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(payload),
     });
   },
 
   async remove(roleId) {
     return fetchApi<{ success: boolean }>(`/roles/${roleId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 };
@@ -167,10 +167,10 @@ export const rolesApi = {
 
 /** In-memory map: roleId → Set of permissionIds */
 const mockRolePermissions: Record<string, Set<string>> = {
-  '1': new Set(['p1', 'p2', 'p3', 'p4', 'p5', 'p6']),
-  '2': new Set(['p1', 'p4']),
-  '3': new Set(['p1']),
-  '4': new Set(),
+  "1": new Set(["p1", "p2", "p3", "p4", "p5", "p6"]),
+  "2": new Set(["p1", "p4"]),
+  "3": new Set(["p1"]),
+  "4": new Set(),
 };
 
 export const rolePermissionsRepository = {

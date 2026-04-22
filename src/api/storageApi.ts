@@ -1,6 +1,6 @@
-import type { AxiosResponse } from 'axios';
+import type { AxiosResponse } from "axios";
 
-import { httpService } from './http';
+import { httpService } from "./http";
 
 export interface UploadSingleFileResponse {
   success: boolean;
@@ -80,19 +80,21 @@ export const storageApi = {
   uploadSingleFile({
     file,
     folderName,
-  }: UploadSingleFileRequest): Promise<AxiosResponse<UploadSingleFileResponse>> {
+  }: UploadSingleFileRequest): Promise<
+    AxiosResponse<UploadSingleFileResponse>
+  > {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
     if (folderName) {
-      formData.append('folderName', folderName);
+      formData.append("folderName", folderName);
     }
 
     return httpService.post<UploadSingleFileResponse>(
-      '/storage/azure-blob/upload/single',
+      "/storage/azure-blob/upload/single",
       formData,
       {
         ...authOpts,
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       },
     );
   },
@@ -105,27 +107,29 @@ export const storageApi = {
   > {
     const formData = new FormData();
     files.forEach((file) => {
-      formData.append('files', file);
+      formData.append("files", file);
     });
     if (folderName) {
-      formData.append('folderName', folderName);
+      formData.append("folderName", folderName);
     }
 
     return httpService.post<UploadMultipleFilesResponse>(
-      '/storage/azure-blob/upload/multiple',
+      "/storage/azure-blob/upload/multiple",
       formData,
       {
         ...authOpts,
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       },
     );
   },
 
   deleteSingleFile({
     filePath,
-  }: DeleteSingleFileRequest): Promise<AxiosResponse<DeleteSingleFileResponse>> {
+  }: DeleteSingleFileRequest): Promise<
+    AxiosResponse<DeleteSingleFileResponse>
+  > {
     return httpService.delete<DeleteSingleFileResponse>(
-      '/storage/azure-blob/delete/single',
+      "/storage/azure-blob/delete/single",
       {
         ...authOpts,
         params: { filePath },
@@ -139,7 +143,7 @@ export const storageApi = {
     AxiosResponse<DeleteMultipleFilesResponse>
   > {
     return httpService.delete<DeleteMultipleFilesResponse>(
-      '/storage/azure-blob/delete/multiple',
+      "/storage/azure-blob/delete/multiple",
       {
         ...authOpts,
         data: { filePaths },
@@ -152,7 +156,7 @@ export const storageApi = {
     destinationFolder,
   }: MoveSingleFileRequest): Promise<AxiosResponse<MoveSingleFileResponse>> {
     return httpService.put<MoveSingleFileResponse>(
-      '/storage/azure-blob/move/single',
+      "/storage/azure-blob/move/single",
       { sourceKey, destinationFolder },
       authOpts,
     );
@@ -165,7 +169,7 @@ export const storageApi = {
     AxiosResponse<MoveMultipleFilesResponse>
   > {
     return httpService.put<MoveMultipleFilesResponse>(
-      '/storage/azure-blob/move/multiple',
+      "/storage/azure-blob/move/multiple",
       { sourceKeys, destinationFolder },
       authOpts,
     );

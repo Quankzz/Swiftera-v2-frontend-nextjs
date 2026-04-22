@@ -6,15 +6,15 @@
  * Service chỉ nhận payload đúng format API, không chứa UI logic.
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 import type {
   VoucherResponse,
   PaginatedVouchersResponse,
   CreateVoucherInput,
   UpdateVoucherInput,
   VoucherListParams,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -30,7 +30,7 @@ export async function getVouchersList(
   params?: VoucherListParams,
 ): Promise<PaginatedVouchersResponse> {
   const res = await httpService.get<ApiResponse<PaginatedVouchersResponse>>(
-    '/vouchers',
+    "/vouchers",
     { ...authOpts, params },
   );
   return res.data.data!;
@@ -96,7 +96,7 @@ export async function validateVoucher(params: {
 }): Promise<VoucherValidateResponse> {
   const { productId, ...rest } = params;
   const res = await httpService.get<ApiResponse<VoucherValidateResponse>>(
-    '/vouchers/validate',
+    "/vouchers/validate",
     {
       ...authOpts,
       params: {
@@ -120,7 +120,7 @@ export async function createVoucher(
   payload: CreateVoucherInput,
 ): Promise<VoucherResponse> {
   const res = await httpService.post<ApiResponse<VoucherResponse>>(
-    '/vouchers',
+    "/vouchers",
     payload,
     authOpts,
   );

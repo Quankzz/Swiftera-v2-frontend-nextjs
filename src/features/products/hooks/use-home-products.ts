@@ -19,11 +19,11 @@
  *   case with a reserved placeholder space.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { productKeys } from '../api/product.keys';
-import { getProducts } from '../api/product.service';
-import type { PaginatedProductsResponse, ProductResponse } from '../types';
-import type { Product } from '@/types/catalog';
+import { useQuery } from "@tanstack/react-query";
+import { productKeys } from "../api/product.keys";
+import { getProducts } from "../api/product.service";
+import type { PaginatedProductsResponse, ProductResponse } from "../types";
+import type { Product } from "@/types/catalog";
 
 // ─── Adapter ──────────────────────────────────────────────────────────────────
 
@@ -41,8 +41,8 @@ export function toLocalProduct(p: ProductResponse): Product {
     dailyPrice: p.dailyPrice,
     oldDailyPrice: p.oldDailyPrice ?? undefined,
     depositAmount: p.depositAmount ?? undefined,
-    description: p.description ?? '',
-    shortDescription: p.shortDescription ?? '',
+    description: p.description ?? "",
+    shortDescription: p.shortDescription ?? "",
     minRentalDays: p.minRentalDays,
     // BE field is `images`, local type expects `productImages`
     productImages: (p.images ?? []).map((img) => ({
@@ -56,7 +56,7 @@ export function toLocalProduct(p: ProductResponse): Product {
     colors: (p.colors ?? []).map((c) => ({
       colorId: c.productColorId,
       name: c.name,
-      value: c.code ?? '',
+      value: c.code ?? "",
     })),
   };
 }
@@ -74,8 +74,8 @@ const HOME_PRODUCTS_GC_TIME = 45 * 60 * 1000;
 const FEATURED_PARAMS = {
   page: 1,
   size: 8,
-  sort: 'dailyPrice,desc',
-  filter: 'isActive:true',
+  sort: "dailyPrice,desc",
+  filter: "isActive:true",
   onlyWithStock: true,
 } as const;
 
@@ -99,8 +99,8 @@ export function useHomeFeaturedProductsQuery() {
 const BUDGET_PARAMS = {
   page: 1,
   size: 8,
-  sort: 'dailyPrice,asc',
-  filter: 'isActive:true',
+  sort: "dailyPrice,asc",
+  filter: "isActive:true",
   onlyWithStock: true,
 } as const;
 

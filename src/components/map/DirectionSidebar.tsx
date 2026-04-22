@@ -1,11 +1,11 @@
-'use client';
+"use client";
 // NOTE: DirectionSidebar is a legacy overlay used on mobile maps outside the sidebar context.
 // Most direction logic has been consolidated into DirectionTab + MapSidebar.
 // This component is kept for backward compatibility.
 
-import type React from 'react';
-import { MapPin, Navigation } from 'lucide-react';
-import { useMapStore } from '@/stores/use-map-store';
+import type React from "react";
+import { MapPin, Navigation } from "lucide-react";
+import { useMapStore } from "@/stores/use-map-store";
 
 interface DirectionSidebarProps {
   onRouteSearch: () => void;
@@ -43,7 +43,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
               value={startAddress}
               onChange={(e) => {
                 setStartAddress(e.target.value);
-                if (currentLocationUsage === 'start')
+                if (currentLocationUsage === "start")
                   setCurrentLocationUsage(null);
               }}
               className="
@@ -57,7 +57,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
             <button
               title="Dùng vị trí hiện tại làm điểm xuất phát"
               onClick={() =>
-                useMapStore.setState({ currentLocationUsage: 'start' })
+                useMapStore.setState({ currentLocationUsage: "start" })
               }
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-theme-primary-start hover:text-theme-primary-start/80 transition-colors"
             >
@@ -86,7 +86,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
               value={endAddress}
               onChange={(e) => {
                 setEndAddress(e.target.value);
-                if (currentLocationUsage === 'end')
+                if (currentLocationUsage === "end")
                   setCurrentLocationUsage(null);
               }}
               className="
@@ -100,7 +100,7 @@ const DirectionSidebar: React.FC<DirectionSidebarProps> = ({
             <button
               title="Dùng vị trí hiện tại làm điểm đến"
               onClick={() =>
-                useMapStore.setState({ currentLocationUsage: 'end' })
+                useMapStore.setState({ currentLocationUsage: "end" })
               }
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-destructive hover:text-destructive/80 transition-colors"
             >

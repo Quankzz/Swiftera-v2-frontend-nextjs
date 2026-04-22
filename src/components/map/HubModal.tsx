@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   MapPin,
@@ -10,16 +10,16 @@ import {
   Package,
   Loader2,
   ShoppingCart,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useMapStore } from '@/stores/use-map-store';
-import type { Hub } from '@/types/map.types';
-import { useHubAvailableProducts } from '@/features/products/hooks/use-hub-products';
+} from "lucide-react";
+import Link from "next/link";
+import { useMapStore } from "@/stores/use-map-store";
+import type { Hub } from "@/types/map.types";
+import { useHubAvailableProducts } from "@/features/products/hooks/use-hub-products";
 
 function formatPrice(price: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
     maximumFractionDigits: 0,
   }).format(price);
 }
@@ -41,10 +41,10 @@ const HubModal = ({
   useEffect(() => {
     if (!isHubModalOpen) return;
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeHubModal();
+      if (e.key === "Escape") closeHubModal();
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [isHubModalOpen, closeHubModal]);
 
   if (!selectedHub) return null;
@@ -128,7 +128,7 @@ const HubModal = ({
                   className="text-theme-primary-start mt-0.5 shrink-0"
                 />
                 <span className="leading-snug">
-                  {selectedHub.address || '-'}
+                  {selectedHub.address || "-"}
                 </span>
               </div>
 
@@ -163,7 +163,7 @@ const HubModal = ({
                   <span className="ml-auto text-xs text-muted-foreground">
                     {totalAvailable > 0
                       ? `${totalAvailable} chiếc · ${hubProducts.length} loại`
-                      : 'Không có thiết bị'}
+                      : "Không có thiết bị"}
                   </span>
                 )}
               </div>
@@ -270,14 +270,14 @@ const HubModal = ({
                           {(() => {
                             const colorLabel =
                               product.colors.length > 0
-                                ? product.colors.map((c) => c.name).join(', ')
+                                ? product.colors.map((c) => c.name).join(", ")
                                 : product.color;
                             if (!colorLabel && !product.brand) return null;
                             return (
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 {[product.brand, colorLabel]
                                   .filter(Boolean)
-                                  .join(' · ')}
+                                  .join(" · ")}
                               </p>
                             );
                           })()}

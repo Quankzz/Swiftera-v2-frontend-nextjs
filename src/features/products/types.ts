@@ -142,6 +142,34 @@ export interface ProductResponse {
 
 export type PaginatedProductsResponse = PaginatedResponse<ProductResponse>;
 
+// ── Product availability context-aware response (API-055-B) ──────────────────
+// API-055-B: GET /api/v1/products/{productId}/availability
+// Dùng khi user chọn ngày giao / thời hạn thuê / màu sắc trên product detail.
+
+export interface ProductAvailabilityParams {
+  deliveryDate?: string; // ISO date YYYY-MM-DD
+  rentalDurationDays?: number;
+  productColorId?: string;
+  quantity?: number;
+}
+
+export interface ProductAvailabilityColor {
+  productColorId: string;
+  name: string;
+  code: string;
+  totalQuantity: number;
+  availableQuantity: number;
+}
+
+export interface ProductAvailabilityResponse {
+  availableStock: number;
+  depositAmount: number | null;
+  estimatedRentalCost: number | null;
+  isAvailable: boolean;
+  unavailableReason: string | null;
+  colors: ProductAvailabilityColor[];
+}
+
 // ── Create product input (API-051 POST /api/v1/products) ────────────────────
 
 export interface CreateProductInput {
@@ -198,14 +226,14 @@ export interface ProductListParams {
 // Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
 
 export type InventoryItemStatus =
-  | 'AVAILABLE'
-  | 'RESERVED'
-  | 'RENTED'
-  | 'MAINTENANCE'
-  | 'DAMAGED'
-  | 'RETIRED';
+  | "AVAILABLE"
+  | "RESERVED"
+  | "RENTED"
+  | "MAINTENANCE"
+  | "DAMAGED"
+  | "RETIRED";
 
-export type InventoryItemConditionGrade = 'NEW' | 'GOOD' | 'FAIR' | 'POOR';
+export type InventoryItemConditionGrade = "NEW" | "GOOD" | "FAIR" | "POOR";
 
 /** Response shape from API-057 / API-058 / API-059 / API-060 */
 export interface InventoryItemResponse {

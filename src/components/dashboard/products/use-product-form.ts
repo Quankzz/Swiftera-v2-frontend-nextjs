@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import type { ProductResponse } from '@/features/products/types';
-import type { Product } from '@/types/catalog';
+import { useState, useCallback } from "react";
+import type { ProductResponse } from "@/features/products/types";
+import type { Product } from "@/types/catalog";
 import type {
   InventoryItemConditionGrade,
   InventoryItemStatus,
   InventoryItemInProduct,
   ProductColorInput,
-} from '@/features/products/types';
+} from "@/features/products/types";
 /** Dạng draft của một ảnh trong form (chưa có productImageId từ BE) */
 export interface DraftImage {
   /** id tạm thời dùng trong UI */
@@ -57,22 +57,22 @@ export interface DraftInventoryItem {
 function inventoryItemToDraft(
   item: InventoryItemInProduct,
 ): DraftInventoryItem {
-  const colorId = item.productColorId ?? '';
+  const colorId = item.productColorId ?? "";
   return {
     draftId: item.inventoryItemId,
     inventoryItemId: item.inventoryItemId,
     serialNumber: item.serialNumber,
-    hubId: item.hub?.hubId ?? '',
-    hubName: item.hub?.name ?? '',
-    hubCode: item.hub?.code ?? '',
-    conditionGrade: item.conditionGrade ?? 'NEW',
-    staffNote: item.staffNote ?? '',
+    hubId: item.hub?.hubId ?? "",
+    hubName: item.hub?.name ?? "",
+    hubCode: item.hub?.code ?? "",
+    conditionGrade: item.conditionGrade ?? "NEW",
+    staffNote: item.staffNote ?? "",
     status: item.status,
     productColorId: colorId,
     _original: {
-      hubId: item.hub?.hubId ?? '',
-      conditionGrade: item.conditionGrade ?? 'NEW',
-      staffNote: item.staffNote ?? '',
+      hubId: item.hub?.hubId ?? "",
+      conditionGrade: item.conditionGrade ?? "NEW",
+      staffNote: item.staffNote ?? "",
       status: item.status,
       productColorId: colorId,
     },
@@ -106,51 +106,51 @@ export interface ProductFormData {
 }
 
 const EMPTY_FORM: ProductFormData = {
-  productId: '',
-  categoryId: '',
-  name: '',
-  description: '',
-  shortDescription: '',
-  brand: '',
+  productId: "",
+  categoryId: "",
+  name: "",
+  description: "",
+  shortDescription: "",
+  brand: "",
   colors: [],
-  dailyPrice: '',
-  oldDailyPrice: '',
-  depositAmount: '',
-  minRentalDays: '1',
-  voucherId: '',
+  dailyPrice: "",
+  oldDailyPrice: "",
+  depositAmount: "",
+  minRentalDays: "1",
+  voucherId: "",
   isActive: true,
-  videoUrl: '',
+  videoUrl: "",
 };
 
 /** Chuyển ProductResponse (từ BE) về ProductFormData để fill vào form edit */
 function productToForm(p: ProductResponse): ProductFormData {
   const videoUrl = p.images?.length
-    ? (p.images.find((img) => img.videoUrl)?.videoUrl ?? '')
-    : '';
+    ? (p.images.find((img) => img.videoUrl)?.videoUrl ?? "")
+    : "";
   return {
     productId: p.productId,
     categoryId: p.categoryId,
     name: p.name,
-    description: p.description ?? '',
-    shortDescription: p.shortDescription ?? '',
-    brand: p.brand ?? '',
+    description: p.description ?? "",
+    shortDescription: p.shortDescription ?? "",
+    brand: p.brand ?? "",
     colors: (p.colors ?? []).map((c) => ({
       productColorId: c.productColorId,
       name: c.name,
       code: c.code,
     })),
     dailyPrice: String(p.dailyPrice),
-    oldDailyPrice: p.oldDailyPrice != null ? String(p.oldDailyPrice) : '',
-    depositAmount: p.depositAmount != null ? String(p.depositAmount) : '',
+    oldDailyPrice: p.oldDailyPrice != null ? String(p.oldDailyPrice) : "",
+    depositAmount: p.depositAmount != null ? String(p.depositAmount) : "",
     minRentalDays: String(p.minRentalDays),
-    voucherId: p.voucherId ?? '',
+    voucherId: p.voucherId ?? "",
     isActive: p.isActive,
     videoUrl,
   };
 }
 
 /** Chuyển images array từ ProductResponse về DraftImage[] */
-function imagesToDrafts(images: ProductResponse['images']): DraftImage[] {
+function imagesToDrafts(images: ProductResponse["images"]): DraftImage[] {
   return images.map((img, i) => ({
     draftId: img.productImageId ?? `draft-${Date.now()}-${i}`,
     imageUrl: img.imageUrl,
@@ -168,10 +168,10 @@ export function draftToProductPreview(
   images: DraftImage[],
 ): Product {
   return {
-    productId: form.productId || 'preview',
+    productId: form.productId || "preview",
     categoryId: form.categoryId,
     name: form.name,
-    description: form.description || '',
+    description: form.description || "",
     shortDescription: form.shortDescription,
     dailyPrice: parseFloat(form.dailyPrice) || 0,
     oldDailyPrice: form.oldDailyPrice
@@ -183,7 +183,7 @@ export function draftToProductPreview(
     minRentalDays: parseInt(form.minRentalDays) || 1,
     productImages: images.map((img) => ({
       productImageId: img.draftId,
-      productId: form.productId || 'preview',
+      productId: form.productId || "preview",
       imageUrl: img.imageUrl,
       sortOrder: img.sortOrder,
       isPrimary: img.isPrimary,
@@ -272,19 +272,19 @@ export function useProductForm(initial?: ProductResponse) {
       ...prev,
       {
         draftId: `inv-draft-${Date.now()}`,
-        serialNumber: '',
-        hubId: '',
-        hubName: '',
-        conditionGrade: 'NEW' as InventoryItemConditionGrade,
-        staffNote: '',
-        status: 'AVAILABLE' as InventoryItemStatus,
-        productColorId: '',
+        serialNumber: "",
+        hubId: "",
+        hubName: "",
+        conditionGrade: "NEW" as InventoryItemConditionGrade,
+        staffNote: "",
+        status: "AVAILABLE" as InventoryItemStatus,
+        productColorId: "",
       },
     ]);
   }, []);
 
   const updateDraftInventoryItem = useCallback(
-    (draftId: string, patch: Partial<Omit<DraftInventoryItem, 'draftId'>>) => {
+    (draftId: string, patch: Partial<Omit<DraftInventoryItem, "draftId">>) => {
       setDraftInventoryItems((prev) =>
         prev.map((item) =>
           item.draftId === draftId ? { ...item, ...patch } : item,
@@ -302,30 +302,30 @@ export function useProductForm(initial?: ProductResponse) {
 
   /* ─── Validation ─── */
   const errors: Partial<Record<keyof ProductFormData, string>> = {};
-  if (!form.categoryId) errors.categoryId = 'Vui lòng chọn danh mục';
-  if (!form.name.trim()) errors.name = 'Vui lòng nhập tên sản phẩm';
+  if (!form.categoryId) errors.categoryId = "Vui lòng chọn danh mục";
+  if (!form.name.trim()) errors.name = "Vui lòng nhập tên sản phẩm";
   if (
     !form.dailyPrice ||
     isNaN(parseFloat(form.dailyPrice)) ||
     parseFloat(form.dailyPrice) <= 0
   ) {
-    errors.dailyPrice = 'Giá thuê phải lớn hơn 0';
+    errors.dailyPrice = "Giá thuê phải lớn hơn 0";
   }
   if (
     form.oldDailyPrice &&
     parseFloat(form.oldDailyPrice) < parseFloat(form.dailyPrice)
   ) {
-    errors.oldDailyPrice = 'Giá gốc phải >= giá thuê hiện tại';
+    errors.oldDailyPrice = "Giá gốc phải >= giá thuê hiện tại";
   }
   if (
-    form.depositAmount !== '' &&
+    form.depositAmount !== "" &&
     !isNaN(parseFloat(form.depositAmount)) &&
     parseFloat(form.depositAmount) < 0
   ) {
-    errors.depositAmount = 'Tiền đặt cọc phải >= 0';
+    errors.depositAmount = "Tiền đặt cọc phải >= 0";
   }
   if (!form.minRentalDays || parseInt(form.minRentalDays) < 1) {
-    errors.minRentalDays = 'Tối thiểu 1 ngày';
+    errors.minRentalDays = "Tối thiểu 1 ngày";
   }
 
   const isValid = Object.keys(errors).length === 0;

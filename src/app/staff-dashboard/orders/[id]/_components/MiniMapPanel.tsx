@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Navigation, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { DeliveryMiniMap } from './DeliveryMiniMap';
-import { fmtDatetime } from './utils';
+import React from "react";
+import { Navigation, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { DeliveryMiniMap } from "./DeliveryMiniMap";
+import { fmtDatetime } from "./utils";
 
 interface MiniMapPanelProps {
   title: string;
@@ -14,7 +14,7 @@ interface MiniMapPanelProps {
   staffLat?: number;
   staffLng?: number;
   staffLocAt?: string;
-  destPinColor?: 'red' | 'green';
+  destPinColor?: "red" | "green";
   destLabel?: string;
 }
 
@@ -26,7 +26,7 @@ export function MiniMapPanel({
   staffLat,
   staffLng,
   staffLocAt,
-  destPinColor = 'red',
+  destPinColor = "red",
   destLabel,
 }: MiniMapPanelProps) {
   return (
@@ -62,22 +62,22 @@ export function MiniMapPanel({
       <div className="px-4 py-3 border-t border-border flex items-center gap-3 bg-card shrink-0">
         <div
           className={cn(
-            'size-2.5 rounded-full shrink-0 transition-colors',
+            "size-2.5 rounded-full shrink-0 transition-colors",
             staffLocAt && staffLat != null && staffLng != null
-              ? 'bg-success animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]'
-              : 'bg-muted-foreground/40',
+              ? "bg-success animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"
+              : "bg-muted-foreground/40",
           )}
         />
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-foreground">
             {staffLocAt && staffLat != null && staffLng != null
-              ? 'GPS đang theo dõi'
-              : 'Đang lấy vị trí...'}
+              ? "GPS đang theo dõi"
+              : "Đang lấy vị trí..."}
           </p>
           <p className="text-[11px] text-muted-foreground truncate mt-0.5">
             {staffLocAt
               ? `Cập nhật: ${fmtDatetime(staffLocAt)}`
-              : 'Vui lòng cho phép truy cập vị trí'}
+              : "Vui lòng cho phép truy cập vị trí"}
           </p>
         </div>
         {(!staffLocAt || staffLat == null || staffLng == null) && (

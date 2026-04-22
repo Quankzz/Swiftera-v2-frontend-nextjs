@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * LocationPickerModal
@@ -10,16 +10,16 @@
  * - Confirm trả về { lat, lng, address }
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { X, MapPin, Loader2, CheckCircle2, Search } from 'lucide-react';
-import goongjs from '@goongmaps/goong-js';
+import { useEffect, useRef, useState, useCallback } from "react";
+import { X, MapPin, Loader2, CheckCircle2, Search } from "lucide-react";
+import goongjs from "@goongmaps/goong-js";
 import type {
   Map as GoongMapInstance,
   Marker as GoongMarker,
-} from '@goongmaps/goong-js';
-import axios from 'axios';
-import '@goongmaps/goong-js/dist/goong-js.css';
-import { maptilesKey, apiKey } from '@/configs/goongmapKeys';
+} from "@goongmaps/goong-js";
+import axios from "axios";
+import "@goongmaps/goong-js/dist/goong-js.css";
+import { maptilesKey, apiKey } from "@/configs/goongmapKeys";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,9 +49,9 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
     const res = await axios.get<{
       results?: { formatted_address?: string }[];
     }>(`https://rsapi.goong.io/Geocode?latlng=${lat},${lng}&api_key=${apiKey}`);
-    return res.data.results?.[0]?.formatted_address ?? '';
+    return res.data.results?.[0]?.formatted_address ?? "";
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -85,7 +85,7 @@ async function placeDetail(
 // ─── Tạo HTML element cho marker đỏ (pin) ────────────────────────────────────
 
 function createPinElement(): HTMLElement {
-  const el = document.createElement('div');
+  const el = document.createElement("div");
   const svg = encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24">` +
       `<path fill="#E53935" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>` +
@@ -134,7 +134,7 @@ export function LocationPickerModal({
   const [isMapReady, setIsMapReady] = useState(false);
 
   // Search state
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -158,7 +158,7 @@ export function LocationPickerModal({
         const marker = new goongjs.Marker({
           element: el,
           draggable: true,
-          anchor: 'bottom',
+          anchor: "bottom",
         })
           .setLngLat([lng, lat])
           .addTo(map);
@@ -169,8 +169,8 @@ export function LocationPickerModal({
           const lngLat = marker.getLngLat();
           void updatePickedLocation(lngLat.lat, lngLat.lng);
         };
-        el.addEventListener('mouseup', onDragEnd);
-        el.addEventListener('touchend', onDragEnd);
+        el.addEventListener("mouseup", onDragEnd);
+        el.addEventListener("touchend", onDragEnd);
       } else {
         markerRef.current.setLngLat([lng, lat]);
       }
@@ -194,14 +194,14 @@ export function LocationPickerModal({
 
     const map = new goongjs.Map({
       container,
-      style: 'https://tiles.goong.io/assets/goong_map_web.json',
+      style: "https://tiles.goong.io/assets/goong_map_web.json",
       center,
       zoom: initialLat != null ? 15 : DEFAULT_ZOOM,
     });
 
     mapRef.current = map;
 
-    map.on('load', () => {
+    map.on("load", () => {
       setIsMapReady(true);
 
       // Fix canvas bị 150px: resize sau khi layout settle, rồi observe thêm
@@ -217,7 +217,7 @@ export function LocationPickerModal({
     });
 
     // Click lên map → đặt marker + đóng suggestion
-    map.on('click', (e: unknown) => {
+    map.on("click", (e: unknown) => {
       const ev = e as { lngLat: { lat: number; lng: number } };
       setShowSuggestions(false);
       placeMarker(ev.lngLat.lat, ev.lngLat.lng);
@@ -279,10 +279,10 @@ export function LocationPickerModal({
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className='fixed inset-0 z-60 flex items-center justify-center p-4'>
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -291,61 +291,61 @@ export function LocationPickerModal({
         xác định ngay khi mount, min() làm browser tính lazy)
       */}
       <div
-        className='relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-surface-card shadow-2xl'
-        style={{ height: '620px', maxHeight: '90dvh' }}
+        className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-surface-card shadow-2xl"
+        style={{ height: "620px", maxHeight: "90dvh" }}
       >
         {/* ── Header ── */}
-        <div className='flex shrink-0 items-center justify-between border-b border-gray-100 dark:border-white/8 px-5 py-3.5'>
-          <div className='flex items-center gap-2.5'>
-            <MapPin size={18} className='text-theme-primary-start' />
-            <h3 className='text-sm font-semibold text-text-main'>
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 dark:border-white/8 px-5 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <MapPin size={18} className="text-theme-primary-start" />
+            <h3 className="text-sm font-semibold text-text-main">
               Chọn vị trí trên bản đồ
             </h3>
           </div>
           <button
-            type='button'
+            type="button"
             onClick={onClose}
-            className='flex size-7 items-center justify-center rounded-md text-text-sub transition hover:bg-gray-100 dark:hover:bg-white/8 hover:text-text-main'
+            className="flex size-7 items-center justify-center rounded-md text-text-sub transition hover:bg-gray-100 dark:hover:bg-white/8 hover:text-text-main"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* ── Search bar ── */}
-        <div className='relative shrink-0 px-4 py-2.5 border-b border-gray-100 dark:border-white/8'>
-          <div className='relative flex items-center'>
+        <div className="relative shrink-0 px-4 py-2.5 border-b border-gray-100 dark:border-white/8">
+          <div className="relative flex items-center">
             {isSuggesting ? (
               <Loader2
                 size={15}
-                className='absolute left-3 animate-spin text-text-sub pointer-events-none'
+                className="absolute left-3 animate-spin text-text-sub pointer-events-none"
               />
             ) : (
               <Search
                 size={15}
-                className='absolute left-3 text-text-sub pointer-events-none'
+                className="absolute left-3 text-text-sub pointer-events-none"
               />
             )}
             <input
               ref={searchInputRef}
-              type='text'
+              type="text"
               value={searchValue}
               onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              placeholder='Tìm địa điểm, đường, quận...'
-              className='w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-base pl-9 pr-8 py-2 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30'
+              placeholder="Tìm địa điểm, đường, quận..."
+              className="w-full rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-base pl-9 pr-8 py-2 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-theme-primary-start/30"
             />
             {searchValue && (
               <button
-                type='button'
+                type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  setSearchValue('');
+                  setSearchValue("");
                   setSuggestions([]);
                   setShowSuggestions(false);
                   searchInputRef.current?.focus();
                 }}
-                className='absolute right-2.5 flex size-5 items-center justify-center rounded text-text-sub hover:text-text-main transition'
+                className="absolute right-2.5 flex size-5 items-center justify-center rounded text-text-sub hover:text-text-main transition"
               >
                 <X size={13} />
               </button>
@@ -354,20 +354,20 @@ export function LocationPickerModal({
 
           {/* Suggestion dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className='absolute left-4 right-4 top-full mt-1 z-20 overflow-hidden rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-lg'>
+            <div className="absolute left-4 right-4 top-full mt-1 z-20 overflow-hidden rounded-lg border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card shadow-lg">
               {suggestions.map((s) => (
                 <button
                   key={s.place_id}
-                  type='button'
+                  type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => void handleSelectSuggestion(s)}
-                  className='flex w-full items-start gap-2.5 px-3 py-2.5 text-left text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/5 transition border-b border-gray-100 dark:border-white/5 last:border-0'
+                  className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/5 transition border-b border-gray-100 dark:border-white/5 last:border-0"
                 >
                   <MapPin
                     size={14}
-                    className='mt-0.5 shrink-0 text-theme-primary-start'
+                    className="mt-0.5 shrink-0 text-theme-primary-start"
                   />
-                  <span className='line-clamp-2 leading-snug'>
+                  <span className="line-clamp-2 leading-snug">
                     {s.description}
                   </span>
                 </button>
@@ -377,7 +377,7 @@ export function LocationPickerModal({
         </div>
 
         {/* ── Hint ── */}
-        <div className='shrink-0 bg-blue-50 dark:bg-blue-950/30 px-5 py-1.5 text-xs text-blue-700 dark:text-blue-300'>
+        <div className="shrink-0 bg-blue-50 dark:bg-blue-950/30 px-5 py-1.5 text-xs text-blue-700 dark:text-blue-300">
           Click lên bản đồ để đặt vị trí • Kéo marker để điều chỉnh chính xác
           hơn
         </div>
@@ -387,76 +387,76 @@ export function LocationPickerModal({
           dùng position:absolute inset:0 với width/height 100% rõ ràng để
           GoongMap đọc được clientWidth/clientHeight ngay khi init.
         ── */}
-        <div className='relative flex-1' style={{ minHeight: 0 }}>
+        <div className="relative flex-1" style={{ minHeight: 0 }}>
           <div
             ref={mapContainerRef}
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              width: '100%',
-              height: '100%',
+              width: "100%",
+              height: "100%",
             }}
           />
           {!isMapReady && (
-            <div className='absolute inset-0 z-10 flex items-center justify-center bg-gray-100 dark:bg-surface-base'>
-              <Loader2 className='size-6 animate-spin text-theme-primary-start' />
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100 dark:bg-surface-base">
+              <Loader2 className="size-6 animate-spin text-theme-primary-start" />
             </div>
           )}
         </div>
 
         {/* ── Footer ── */}
-        <div className='shrink-0 flex items-center justify-between gap-3 border-t border-gray-100 dark:border-white/8 px-5 py-3.5'>
-          <div className='min-w-0 flex-1'>
+        <div className="shrink-0 flex items-center justify-between gap-3 border-t border-gray-100 dark:border-white/8 px-5 py-3.5">
+          <div className="min-w-0 flex-1">
             {picked ? (
-              <div className='flex flex-col gap-0.5'>
-                <div className='flex items-center gap-1.5'>
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5">
                   {isGeocoding ? (
                     <Loader2
                       size={13}
-                      className='animate-spin text-text-sub shrink-0'
+                      className="animate-spin text-text-sub shrink-0"
                     />
                   ) : (
                     <CheckCircle2
                       size={13}
-                      className='text-green-500 shrink-0'
+                      className="text-green-500 shrink-0"
                     />
                   )}
-                  <span className='text-xs font-mono text-text-main'>
+                  <span className="text-xs font-mono text-text-main">
                     {picked.lat.toFixed(6)}, {picked.lng.toFixed(6)}
                   </span>
                 </div>
                 {!isGeocoding && picked.address && (
-                  <p className='truncate text-xs text-text-sub pl-5'>
+                  <p className="truncate text-xs text-text-sub pl-5">
                     {picked.address}
                   </p>
                 )}
                 {isGeocoding && (
-                  <p className='text-xs text-text-sub pl-5 italic'>
+                  <p className="text-xs text-text-sub pl-5 italic">
                     Đang tìm địa chỉ…
                   </p>
                 )}
               </div>
             ) : (
-              <p className='text-xs text-text-sub italic'>Chưa chọn vị trí</p>
+              <p className="text-xs text-text-sub italic">Chưa chọn vị trí</p>
             )}
           </div>
 
-          <div className='flex shrink-0 items-center gap-2'>
+          <div className="flex shrink-0 items-center gap-2">
             <button
-              type='button'
+              type="button"
               onClick={onClose}
-              className='rounded-lg border border-gray-200 dark:border-white/8 px-3 py-1.5 text-sm font-medium text-text-main transition hover:bg-gray-50 dark:hover:bg-white/5'
+              className="rounded-lg border border-gray-200 dark:border-white/8 px-3 py-1.5 text-sm font-medium text-text-main transition hover:bg-gray-50 dark:hover:bg-white/5"
             >
               Hủy
             </button>
             <button
-              type='button'
+              type="button"
               disabled={!picked || isGeocoding}
               onClick={handleConfirm}
-              className='inline-flex items-center gap-1.5 rounded-lg bg-theme-primary-start px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed'
+              className="inline-flex items-center gap-1.5 rounded-lg bg-theme-primary-start px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CheckCircle2 size={14} />
               Xác nhận

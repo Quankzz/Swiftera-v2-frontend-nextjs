@@ -8,8 +8,8 @@ import {
   useMutation,
   useQueryClient,
   keepPreviousData,
-} from '@tanstack/react-query';
-import { policyKeys } from '../api/policy.keys';
+} from "@tanstack/react-query";
+import { policyKeys } from "../api/policy.keys";
 import {
   getPoliciesList,
   getPolicyById,
@@ -17,12 +17,12 @@ import {
   deactivatePolicy,
   activatePolicy,
   updatePolicy,
-} from '../api/policy.service';
+} from "../api/policy.service";
 import type {
   PolicyListParams,
   CreatePolicyInput,
   UpdatePolicyInput,
-} from '../types';
+} from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -45,7 +45,7 @@ export function usePoliciesQuery(params?: PolicyListParams) {
  */
 export function usePolicyQuery(policyDocumentId?: string) {
   return useQuery({
-    queryKey: policyKeys.detail(policyDocumentId ?? ''),
+    queryKey: policyKeys.detail(policyDocumentId ?? ""),
     queryFn: () => getPolicyById(policyDocumentId!),
     enabled: !!policyDocumentId,
     staleTime: 30_000,
@@ -92,8 +92,7 @@ export function useDeactivatePolicyMutation() {
 export function useActivatePolicyMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (policyDocumentId: string) =>
-      activatePolicy(policyDocumentId),
+    mutationFn: (policyDocumentId: string) => activatePolicy(policyDocumentId),
     onSuccess: (_data, policyDocumentId) => {
       queryClient.invalidateQueries({ queryKey: policyKeys.lists() });
       queryClient.invalidateQueries({

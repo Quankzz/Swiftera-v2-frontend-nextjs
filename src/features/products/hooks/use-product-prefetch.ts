@@ -6,19 +6,20 @@
  * để khi họ bấm vào thì dữ liệu đã sẵn sàng trong cache.
  */
 
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { productKeys } from '@/features/products/api/product.keys';
-import { getProductById } from '@/features/products/api/product.service';
-import { reviewKeys } from '@/hooks/api/review.keys';
-import { getReviewsByProduct } from '@/hooks/api/review.service';
-import type { ProductResponse } from '@/features/products/types';
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { productKeys } from "@/features/products/api/product.keys";
+import { getProductById } from "@/features/products/api/product.service";
+import { reviewKeys } from "@/hooks/api/review.keys";
+import { getReviewsByProduct } from "@/hooks/api/review.service";
+import type { ProductResponse } from "@/features/products/types";
 
 /** Prefetch một sản phẩm vào cache, không block UI */
 export function prefetchProduct(productId: string): void {
-  if (typeof window === 'undefined' || !productId) return;
+  if (typeof window === "undefined" || !productId) return;
 
-  const queryClient =
-    (window as Window & { __swifteraQueryClient?: QueryClient }).__swifteraQueryClient;
+  const queryClient = (
+    window as Window & { __swifteraQueryClient?: QueryClient }
+  ).__swifteraQueryClient;
   if (!queryClient) return;
 
   queryClient.prefetchQuery({
@@ -34,10 +35,11 @@ export function prefetchProductReviews(
   productId: string,
   params?: { page?: number; size?: number },
 ): void {
-  if (typeof window === 'undefined' || !productId) return;
+  if (typeof window === "undefined" || !productId) return;
 
-  const queryClient =
-    (window as Window & { __swifteraQueryClient?: QueryClient }).__swifteraQueryClient;
+  const queryClient = (
+    window as Window & { __swifteraQueryClient?: QueryClient }
+  ).__swifteraQueryClient;
   if (!queryClient) return;
 
   queryClient.prefetchQuery({
@@ -88,8 +90,7 @@ export function useProductPrefetch() {
     prefetchReviews: (productId: string) => {
       queryClient.prefetchQuery({
         queryKey: reviewKeys.byProduct(productId, { page: 1, size: 5 }),
-        queryFn: () =>
-          getReviewsByProduct(productId, { page: 1, size: 5 }),
+        queryFn: () => getReviewsByProduct(productId, { page: 1, size: 5 }),
         staleTime: 5 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
       });

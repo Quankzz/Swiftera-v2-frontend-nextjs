@@ -1,20 +1,19 @@
-
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type InventoryItemStatus =
-  | 'AVAILABLE'
-  | 'RESERVED'
-  | 'RENTED'
-  | 'MAINTENANCE'
-  | 'DAMAGED'
-  | 'RETIRED';
+  | "AVAILABLE"
+  | "RESERVED"
+  | "RENTED"
+  | "MAINTENANCE"
+  | "DAMAGED"
+  | "RETIRED";
 
-export type ConditionGrade = 'NEW' | 'GOOD' | 'FAIR' | 'POOR';
+export type ConditionGrade = "NEW" | "GOOD" | "FAIR" | "POOR";
 
 export interface ProductColorResponse {
   productColorId: string;
@@ -187,7 +186,7 @@ export const productsApi = {
   create(
     data: CreateProductInput,
   ): Promise<AxiosResponse<ProductSingleResponse>> {
-    return httpService.post<ProductSingleResponse>('/products', data, authOpts);
+    return httpService.post<ProductSingleResponse>("/products", data, authOpts);
   },
 
   /**
@@ -215,7 +214,7 @@ export const productsApi = {
     filter?: string;
     includeDescendants?: boolean;
   }): Promise<AxiosResponse<ProductListResponse>> {
-    return httpService.get<ProductListResponse>('/products', { params });
+    return httpService.get<ProductListResponse>("/products", { params });
   },
 
   /**
@@ -257,7 +256,7 @@ export const inventoryApi = {
     data: CreateInventoryItemInput,
   ): Promise<AxiosResponse<InventoryItemSingleResponse>> {
     return httpService.post<InventoryItemSingleResponse>(
-      '/inventory-items',
+      "/inventory-items",
       data,
       authOpts,
     );
@@ -285,7 +284,7 @@ export const inventoryApi = {
     size?: number;
     filter?: string;
   }): Promise<AxiosResponse<InventoryItemListResponse>> {
-    return httpService.get<InventoryItemListResponse>('/inventory-items', {
+    return httpService.get<InventoryItemListResponse>("/inventory-items", {
       ...authOpts,
       params,
     });

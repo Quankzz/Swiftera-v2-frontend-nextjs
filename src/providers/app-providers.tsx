@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { QueryProvider } from './query-provider';
-import { ThemeProvider } from '@/context/theme-context';
-import { AppProvider } from '@/context/AppContext';
-import { AuthProvider } from '@/context/AuthContext';
-import { restoreSession } from '@/stores/auth-store';
-import { AppToaster } from '@/components/ui/app-toaster';
+import { useEffect } from "react";
+import { QueryProvider } from "./query-provider";
+import { ThemeProvider } from "@/context/theme-context";
+import { AppProvider } from "@/context/AppContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { restoreSession } from "@/stores/auth-store";
+import { AppToaster } from "@/components/ui/app-toaster";
 
 /**
  * On app mount, attempt a silent session restore from the HttpOnly

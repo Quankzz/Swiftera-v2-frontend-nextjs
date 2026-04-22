@@ -1,6 +1,6 @@
-import type { AxiosResponse } from 'axios';
+import type { AxiosResponse } from "axios";
 
-import { httpService } from './http';
+import { httpService } from "./http";
 
 export interface RoleSecured {
   roleId: string;
@@ -72,7 +72,7 @@ export const userApi = {
     data: UpdateProfileRequest,
   ): Promise<AxiosResponse<UserSecureResponse>> {
     return httpService.patch<UserSecureResponse>(
-      '/users/update-profile',
+      "/users/update-profile",
       data,
       authOpts,
     );
@@ -82,7 +82,7 @@ export const userApi = {
     data: UpdatePasswordRequest,
   ): Promise<AxiosResponse<UserSecureResponse>> {
     return httpService.put<UserSecureResponse>(
-      '/users/update-password',
+      "/users/update-password",
       data,
       authOpts,
     );
@@ -92,7 +92,7 @@ export const userApi = {
     data: UpdateEmailRequest,
   ): Promise<AxiosResponse<UpdateEmailResponse>> {
     return httpService.put<UpdateEmailResponse>(
-      '/users/update-email',
+      "/users/update-email",
       data,
       authOpts,
     );
@@ -102,7 +102,7 @@ export const userApi = {
     data: VerifyChangeEmailRequest,
   ): Promise<AxiosResponse<UserSecureResponse>> {
     return httpService.post<UserSecureResponse>(
-      '/users/verify-change-email',
+      "/users/verify-change-email",
       data,
       authOpts,
     );

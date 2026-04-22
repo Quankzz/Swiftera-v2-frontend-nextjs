@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { use } from 'react';
-import { RentalOrderDetailView } from '@/features/rental-orders/components/rental-order-detail-view';
+import { use } from "react";
+import { RentalOrderDetailView } from "@/features/rental-orders/components/rental-order-detail-view";
 
 interface Props {
   params: Promise<{ rentalOrderId: string }>;
