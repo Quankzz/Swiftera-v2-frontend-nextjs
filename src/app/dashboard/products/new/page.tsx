@@ -1,5 +1,5 @@
-import { ProductFormPage } from '@/components/dashboard/products/product-form-page';
+import { ProductFormPage } from "@/components/dashboard/products/product-form-page";
 
 export default function NewProductPage() {
-  return <ProductFormPage mode='new' />;
+  return <ProductFormPage mode="new" />;
 }

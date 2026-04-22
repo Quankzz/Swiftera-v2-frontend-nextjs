@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 type FavoriteProductsState = {
   byUserId: Record<string, string[]>;
@@ -76,7 +76,7 @@ export const useFavoriteProductsStore = create<FavoriteProductsState>()(
       },
     }),
     {
-      name: 'swiftera-favorite-products',
+      name: "swiftera-favorite-products",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ byUserId: state.byUserId }),
     },

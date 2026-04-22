@@ -6,7 +6,7 @@
  * Không đoán field - chỉ dùng field có trong spec.
  */
 
-import type { PaginationResponse } from '@/types/api.types';
+import type { PaginationResponse } from "@/types/api.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Response Types (API-040 response example)

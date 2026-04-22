@@ -8,8 +8,8 @@
  * Dùng TanStack Query + rental-order.service.ts + rental-order.keys.ts
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { rentalOrderKeys } from '../api/rental-order.keys';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { rentalOrderKeys } from "../api/rental-order.keys";
 import {
   getRentalOrders,
   getRentalOrderById,
@@ -18,8 +18,8 @@ import {
   confirmCompletion,
   reportIssueRecall,
   getContractByOrder,
-} from '../api/rental-order.service';
-import { toast } from 'sonner';
+} from "../api/rental-order.service";
+import { toast } from "sonner";
 import type {
   RentalOrderResponse,
   PaginatedRentalOrdersResponse,
@@ -28,7 +28,7 @@ import type {
   ReportIssueInput,
   RentalContractResponse,
   ConfirmCompletionInput,
-} from '../types';
+} from "../types";
 
 /**
  * Lấy danh sách đơn thuê (API-075)
@@ -73,10 +73,10 @@ export function useUpdateOrderStatusMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Cập nhật trạng thái đơn thuê thành công');
+      toast.success("Cập nhật trạng thái đơn thuê thành công");
     },
     onError: (error) => {
-      toast.error(error.message || 'Cập nhật trạng thái thất bại');
+      toast.error(error.message || "Cập nhật trạng thái thất bại");
     },
   });
 }
@@ -90,10 +90,10 @@ export function useCancelOrderMutation() {
     mutationFn: cancelRentalOrder,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
-      toast.success('Đã hủy đơn thuê');
+      toast.success("Đã hủy đơn thuê");
     },
     onError: (error) => {
-      toast.error(error.message || 'Hủy đơn thuê thất bại');
+      toast.error(error.message || "Hủy đơn thuê thất bại");
     },
   });
 }
@@ -117,10 +117,10 @@ export function useCompleteOrderMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Đơn thuê đã hoàn tất');
+      toast.success("Đơn thuê đã hoàn tất");
     },
     onError: (error) => {
-      toast.error(error.message || 'Hoàn tất đơn thuê thất bại');
+      toast.error(error.message || "Hoàn tất đơn thuê thất bại");
     },
   });
 }
@@ -142,10 +142,10 @@ export function useReportIssueMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
-      toast.success('Đã ghi nhận sự cố và yêu cầu thu hồi');
+      toast.success("Đã ghi nhận sự cố và yêu cầu thu hồi");
     },
     onError: (error) => {
-      toast.error(error.message || 'Ghi nhận sự cố thất bại');
+      toast.error(error.message || "Ghi nhận sự cố thất bại");
     },
   });
 }

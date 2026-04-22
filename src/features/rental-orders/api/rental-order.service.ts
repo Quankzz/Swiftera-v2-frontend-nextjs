@@ -11,8 +11,8 @@
  *  4. Records & Penalty
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse, PaginationResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse, PaginationResponse } from "@/types/api.types";
 import type {
   RentalOrderResponse,
   PaginatedRentalOrdersResponse,
@@ -30,8 +30,8 @@ import type {
   RentalContractResponse,
   ConfirmCompletionInput,
   CancelOrderInput,
-} from '../types';
-import type { HubStaffResponse } from '@/features/hubs/types';
+} from "../types";
+import type { HubStaffResponse } from "@/features/hubs/types";
 
 const authOpts = { requireToken: true as const };
 
@@ -47,7 +47,7 @@ export async function getRentalOrders(
   params?: RentalOrderListParams,
 ): Promise<PaginatedRentalOrdersResponse> {
   const res = await httpService.get<ApiResponse<PaginatedRentalOrdersResponse>>(
-    '/rental-orders',
+    "/rental-orders",
     { ...authOpts, params },
   );
   return res.data.data!;
@@ -61,7 +61,7 @@ export async function getMyRentalOrders(
   params?: RentalOrderListParams,
 ): Promise<PaginatedRentalOrdersResponse> {
   const res = await httpService.get<ApiResponse<PaginatedRentalOrdersResponse>>(
-    '/rental-orders/my-orders',
+    "/rental-orders/my-orders",
     { ...authOpts, params },
   );
   return res.data.data!;
@@ -97,7 +97,7 @@ export async function getStaffUsers(params?: {
 }): Promise<PaginationResponse<StaffOption>> {
   const res = await httpService.get<
     ApiResponse<PaginationResponse<StaffOption>>
-  >('/users', { ...authOpts, params });
+  >("/users", { ...authOpts, params });
   return res.data.data!;
 }
 
@@ -253,7 +253,7 @@ export async function completeRentalOrder(
 ): Promise<RentalOrderResponse> {
   const res = await httpService.patch<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/status`,
-    { status: 'COMPLETED' },
+    { status: "COMPLETED" },
     authOpts,
   );
   return res.data.data!;

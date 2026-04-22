@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,20 +11,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   ChevronsUpDownIcon,
   UserIcon,
   BellIcon,
   LogOutIcon,
   ShieldCheckIcon,
-} from 'lucide-react';
+} from "lucide-react";
 
 export function NavUser({
   user,
@@ -41,10 +41,10 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const initials = user.name
-    .split(' ')
+    .split(" ")
     .slice(-2)
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase();
 
   const handleLogout = async () => {
@@ -80,16 +80,16 @@ export function NavUser({
                 {user.name}
               </span>
               <span className="truncate text-[11px] text-sidebar-foreground/55">
-                {user.role === 'MANAGER'
-                  ? 'Quản lý Hub'
-                  : 'Nhân viên giao hàng'}
+                {user.role === "MANAGER"
+                  ? "Quản lý Hub"
+                  : "Nhân viên giao hàng"}
               </span>
             </div>
             <ChevronsUpDownIcon className="ml-auto size-4 text-sidebar-foreground/50" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="min-w-56 rounded-xl"
-            side={isMobile ? 'bottom' : 'right'}
+            side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
           >
@@ -133,7 +133,7 @@ export function NavUser({
               disabled={isLoggingOut}
             >
               <LogOutIcon className="size-4 text-theme-primary-start" />
-              {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+              {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

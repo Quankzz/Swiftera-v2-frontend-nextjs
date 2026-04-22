@@ -1,8 +1,8 @@
-'use client';
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import Image from 'next/image';
-import { Camera, X, SwitchCamera } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+"use client";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import Image from "next/image";
+import { Camera, X, SwitchCamera } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function CameraCapture({
   photos,
@@ -16,9 +16,9 @@ export function CameraCapture({
   label: string;
 }) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [errorLine, setErrorLine] = useState('');
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>(
-    'environment',
+  const [errorLine, setErrorLine] = useState("");
+  const [facingMode, setFacingMode] = useState<"environment" | "user">(
+    "environment",
   );
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -62,11 +62,11 @@ export function CameraCapture({
   }, []);
 
   const startCamera = useCallback(
-    async (requestedFacing?: 'environment' | 'user') => {
+    async (requestedFacing?: "environment" | "user") => {
       intendedToBeOpenRef.current = true;
       const facing = requestedFacing ?? facingMode;
       try {
-        setErrorLine('');
+        setErrorLine("");
         let stream: MediaStream;
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -93,10 +93,10 @@ export function CameraCapture({
           videoRef.current.play().catch(() => {});
         }
       } catch (err) {
-        console.error('Camera error:', err);
+        console.error("Camera error:", err);
         if (isMountedRef.current && intendedToBeOpenRef.current) {
           setErrorLine(
-            'Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.',
+            "Không thể mở camera. Vui lòng cấp quyền truy cập camera trong trình duyệt.",
           );
         }
       }
@@ -105,7 +105,7 @@ export function CameraCapture({
   );
 
   const flipCamera = async () => {
-    const nextFacing = facingMode === 'environment' ? 'user' : 'environment';
+    const nextFacing = facingMode === "environment" ? "user" : "environment";
     // Stop current stream before requesting the new one
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -119,10 +119,10 @@ export function CameraCapture({
 
   const capturePhoto = () => {
     if (!videoRef.current) return;
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(videoRef.current, 0, 0);
 
@@ -133,7 +133,7 @@ export function CameraCapture({
         onAdd(url);
         stopCamera();
       },
-      'image/jpeg',
+      "image/jpeg",
       0.8,
     );
   };

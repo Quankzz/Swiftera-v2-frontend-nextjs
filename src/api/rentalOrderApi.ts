@@ -7,58 +7,60 @@
  * Sử dụng httpService (axios) giống cart/index.ts
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 // ─── Trạng thái đơn thuê ────────────────────────────────────────────────────
 
 export type RentalOrderStatus =
-  | 'PENDING_PAYMENT'
-  | 'PAID'
-  | 'PREPARING'
-  | 'DELIVERING'
-  | 'DELIVERED'
-  | 'IN_USE'
-  | 'PENDING_PICKUP'
-  | 'PICKING_UP'
-  | 'PICKED_UP'
-  | 'COMPLETED'
-  | 'CANCELLED';
+  | "PENDING_PAYMENT"
+  | "PAID"
+  | "PREPARING"
+  | "DELIVERING"
+  | "DELIVERED"
+  | "IN_USE"
+  | "PENDING_PICKUP"
+  | "PICKING_UP"
+  | "PICKED_UP"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export const RENTAL_ORDER_STATUS_LABELS: Record<RentalOrderStatus, string> = {
-  PENDING_PAYMENT: 'Chờ thanh toán',
-  PAID: 'Đã thanh toán',
-  PREPARING: 'Đang chuẩn bị',
-  DELIVERING: 'Đang giao hàng',
-  DELIVERED: 'Đã giao hàng',
-  IN_USE: 'Đang sử dụng',
-  PENDING_PICKUP: 'Chờ thu hồi',
-  PICKING_UP: 'Đang thu hồi',
-  PICKED_UP: 'Đã thu hồi',
-  COMPLETED: 'Hoàn thành',
-  CANCELLED: 'Đã hủy',
+  PENDING_PAYMENT: "Chờ thanh toán",
+  PAID: "Đã thanh toán",
+  PREPARING: "Đang chuẩn bị",
+  DELIVERING: "Đang giao hàng",
+  DELIVERED: "Đã giao hàng",
+  IN_USE: "Đang sử dụng",
+  PENDING_PICKUP: "Chờ thu hồi",
+  PICKING_UP: "Đang thu hồi",
+  PICKED_UP: "Đã thu hồi",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
 };
 
 export const RENTAL_ORDER_STATUS_COLORS: Record<RentalOrderStatus, string> = {
   PENDING_PAYMENT:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-200 dark:border-amber-800',
-  PAID: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border border-blue-200 dark:border-blue-800',
+    "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 border border-amber-200 dark:border-amber-800",
+  PAID: "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border border-blue-200 dark:border-blue-800",
   PREPARING:
-    'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 border border-purple-200 dark:border-purple-800',
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 border border-purple-200 dark:border-purple-800",
   DELIVERING:
-    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800',
-  DELIVERED: 'bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200 border border-teal-200 dark:border-teal-800',
+    "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800",
+  DELIVERED:
+    "bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200 border border-teal-200 dark:border-teal-800",
   IN_USE:
-    'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 border border-green-200 dark:border-green-800',
+    "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 border border-green-200 dark:border-green-800",
   PENDING_PICKUP:
-    'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 border border-orange-200 dark:border-orange-800',
+    "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 border border-orange-200 dark:border-orange-800",
   PICKING_UP:
-    'bg-slate-100 text-slate-800 dark:bg-slate-900/50 dark:text-slate-200 border border-slate-200 dark:border-slate-800',
+    "bg-slate-100 text-slate-800 dark:bg-slate-900/50 dark:text-slate-200 border border-slate-200 dark:border-slate-800",
   PICKED_UP:
-    'bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200 border border-violet-200 dark:border-violet-800',
+    "bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200 border border-violet-200 dark:border-violet-800",
   COMPLETED:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800',
-  CANCELLED: 'bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
+    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800",
+  CANCELLED:
+    "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-300 border border-gray-200 dark:border-gray-700",
 };
 
 // ─── Response Types ─────────────────────────────────────────────────────────
@@ -270,7 +272,6 @@ export interface ConfirmCancellationRefundInput {
   reason: string;
 }
 
-
 // ─── Overdue Penalty Suggestion ─────────────────────────────────────────────
 
 export interface OverduePenaltySuggestionData {
@@ -287,7 +288,6 @@ export interface OverduePenaltySuggestionData {
   suggestedTotalPenaltyAmount: number;
   suggestedDepositRefundAmount: number;
 }
-
 
 export interface OverduePenaltySuggestionResponse {
   code: number;
@@ -341,7 +341,7 @@ export function createRentalOrder(
   input: CreateRentalOrderInput,
 ): Promise<AxiosResponse<RentalOrderSingleResponse>> {
   return httpService.post<RentalOrderSingleResponse>(
-    '/rental-orders',
+    "/rental-orders",
     input,
     authOpts,
   );
@@ -374,7 +374,7 @@ export function getRentalOrders(params?: {
   sort?: string;
   filter?: string;
 }): Promise<AxiosResponse<PaginatedRentalOrdersResponse>> {
-  return httpService.get<PaginatedRentalOrdersResponse>('/rental-orders', {
+  return httpService.get<PaginatedRentalOrdersResponse>("/rental-orders", {
     ...authOpts,
     params,
   });
@@ -391,7 +391,7 @@ export function getMyRentalOrders(params?: {
   sort?: string;
 }): Promise<AxiosResponse<PaginatedRentalOrdersResponse>> {
   return httpService.get<PaginatedRentalOrdersResponse>(
-    '/rental-orders/my-orders',
+    "/rental-orders/my-orders",
     { ...authOpts, params },
   );
 }

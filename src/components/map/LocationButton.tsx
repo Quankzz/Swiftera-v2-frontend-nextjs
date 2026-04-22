@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { LocateFixed } from 'lucide-react';
-import { useMapStore } from '@/stores/use-map-store';
+import type React from "react";
+import { LocateFixed } from "lucide-react";
+import { useMapStore } from "@/stores/use-map-store";
 
 interface LocationButtonProps {
   onGetLocation: () => void;
@@ -22,14 +22,14 @@ const LocationButton: React.FC<LocationButtonProps> = ({ onGetLocation }) => {
           active:scale-90 overflow-hidden
           ${
             isLocationOn
-              ? 'bg-card text-theme-primary-start border-theme-primary-start/20'
-              : 'bg-card text-muted-foreground border-border/80 hover:text-theme-primary-start'
+              ? "bg-card text-theme-primary-start border-theme-primary-start/20"
+              : "bg-card text-muted-foreground border-border/80 hover:text-theme-primary-start"
           }
         `}
         aria-label="Định vị của tôi"
       >
         <div
-          className={`absolute inset-0 bg-theme-primary-start/10 scale-0 transition-transform duration-300 rounded-2xl ${isLocationOn ? 'scale-100' : 'group-hover:scale-100'}`}
+          className={`absolute inset-0 bg-theme-primary-start/10 scale-0 transition-transform duration-300 rounded-2xl ${isLocationOn ? "scale-100" : "group-hover:scale-100"}`}
         />
         <LocateFixed
           size={20}

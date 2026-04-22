@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import type React from 'react';
-import { useEffect, useRef, useCallback, useState } from 'react';
-import goongjs from '@goongmaps/goong-js';
+import type React from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
+import goongjs from "@goongmaps/goong-js";
 import type {
   Map as GoongMapInstance,
   Marker as GoongMarker,
-} from '@goongmaps/goong-js';
-import axios from 'axios';
-import polyline from '@mapbox/polyline';
-import '@goongmaps/goong-js/dist/goong-js.css';
+} from "@goongmaps/goong-js";
+import axios from "axios";
+import polyline from "@mapbox/polyline";
+import "@goongmaps/goong-js/dist/goong-js.css";
 
-import { maptilesKey, apiKey } from '@/configs/goongmapKeys';
-import { useMapStore } from '@/stores/use-map-store';
-import { getActiveHubs } from '@/api/hubs';
-import type { HubResponse } from '@/api/hubs';
-import type { Hub, HubWithDistance, RouteInfo } from '@/types/map.types';
+import { maptilesKey, apiKey } from "@/configs/goongmapKeys";
+import { useMapStore } from "@/stores/use-map-store";
+import { getActiveHubs } from "@/api/hubs";
+import type { HubResponse } from "@/api/hubs";
+import type { Hub, HubWithDistance, RouteInfo } from "@/types/map.types";
 
-import MapSidebar from '@/components/map/MapSidebar';
-import LocationButton from '@/components/map/LocationButton';
-import HubModal from '@/components/map/HubModal';
-import { Header } from '@/components/Header';
-import { AlertCircle, CheckCircle2, X } from 'lucide-react';
+import MapSidebar from "@/components/map/MapSidebar";
+import LocationButton from "@/components/map/LocationButton";
+import HubModal from "@/components/map/HubModal";
+import { Header } from "@/components/Header";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
 
-const ROUTE_ACTIVE_COLOR = '#0EA5E9';
-const ROUTE_INACTIVE_COLOR = '#0EA5E4';
+const ROUTE_ACTIVE_COLOR = "#0EA5E9";
+const ROUTE_INACTIVE_COLOR = "#0EA5E4";
 const FIT_BOUNDS_PADDING = {
   top: 80,
   bottom: 80,
@@ -35,7 +35,7 @@ const FIT_BOUNDS_PADDING = {
 // ─── types ─────────────────────────────────────────────────────────────────────
 interface Notification {
   id: number;
-  type: 'error' | 'info' | 'success';
+  type: "error" | "info" | "success";
   message: string;
 }
 
@@ -77,8 +77,8 @@ function haversineDistance(
 
 function stripHtml(html: string): string {
   return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -90,7 +90,7 @@ function adaptHubForMap(h: HubResponse): Hub {
     name: h.name,
     address: [h.addressLine, h.ward, h.district, h.city]
       .filter(Boolean)
-      .join(', '),
+      .join(", "),
     latitude: h.latitude,
     longitude: h.longitude,
     phone: h.phone,
@@ -150,7 +150,7 @@ const MapView: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const showNotification = useCallback(
-    (type: Notification['type'], message: string) => {
+    (type: Notification["type"], message: string) => {
       const id = ++notifCounter;
       setNotifications((prev) => [...prev.slice(-2), { id, type, message }]); // max 3 at a time
       setTimeout(
@@ -173,8 +173,8 @@ const MapView: React.FC = () => {
       })
       .catch(() => {
         showNotification(
-          'error',
-          'Không thể tải danh sách hub. Vui lòng tải lại trang.',
+          "error",
+          "Không thể tải danh sách hub. Vui lòng tải lại trang.",
         );
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,12 +202,12 @@ const MapView: React.FC = () => {
       zoom: 13,
     });
 
-    map.addControl(new goongjs.NavigationControl(), 'bottom-right');
-    map.addControl(new goongjs.ScaleControl(), 'bottom-left');
+    map.addControl(new goongjs.NavigationControl(), "bottom-right");
+    map.addControl(new goongjs.ScaleControl(), "bottom-left");
 
     let resizeObserver: ResizeObserver | null = null;
 
-    map.on('load', () => {
+    map.on("load", () => {
       mapRef.current = map;
       setIsMapReady(true);
 
@@ -246,22 +246,22 @@ const MapView: React.FC = () => {
       if (hub.latitude == null || hub.longitude == null) return;
       const { latitude, longitude } = hub;
 
-      const el = document.createElement('div');
+      const el = document.createElement("div");
       el.title = hub.name;
       el.style.cssText =
-        'display:flex;flex-direction:column;align-items:center;cursor:pointer;width:38px;';
+        "display:flex;flex-direction:column;align-items:center;cursor:pointer;width:38px;";
 
-      const pin = document.createElement('div');
+      const pin = document.createElement("div");
       pin.style.cssText = [
-        'width:36px;height:36px;',
-        'background:linear-gradient(135deg,var(--theme-primary-start,#0ea5e9),var(--theme-primary-end,#0369a1));',
-        'border:2.5px solid white;',
-        'border-radius:50% 50% 50% 0;',
-        'transform:rotate(-45deg);',
-        'box-shadow:0 3px 12px rgba(14,165,233,0.4);',
-        'display:flex;align-items:center;justify-content:center;',
-        'transition:transform 0.2s ease,box-shadow 0.2s ease;',
-      ].join('');
+        "width:36px;height:36px;",
+        "background:linear-gradient(135deg,var(--theme-primary-start,#0ea5e9),var(--theme-primary-end,#0369a1));",
+        "border:2.5px solid white;",
+        "border-radius:50% 50% 50% 0;",
+        "transform:rotate(-45deg);",
+        "box-shadow:0 3px 12px rgba(14,165,233,0.4);",
+        "display:flex;align-items:center;justify-content:center;",
+        "transition:transform 0.2s ease,box-shadow 0.2s ease;",
+      ].join("");
 
       pin.innerHTML = `
         <svg style="transform:rotate(45deg)" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
@@ -273,15 +273,15 @@ const MapView: React.FC = () => {
 
       el.appendChild(pin);
 
-      el.addEventListener('mouseenter', () => {
-        pin.style.transform = 'rotate(-45deg) scale(1.2)';
-        pin.style.boxShadow = '0 6px 20px rgba(254,20,81,0.6)';
+      el.addEventListener("mouseenter", () => {
+        pin.style.transform = "rotate(-45deg) scale(1.2)";
+        pin.style.boxShadow = "0 6px 20px rgba(254,20,81,0.6)";
       });
-      el.addEventListener('mouseleave', () => {
-        pin.style.transform = 'rotate(-45deg)';
-        pin.style.boxShadow = '0 3px 12px rgba(254,20,81,0.45)';
+      el.addEventListener("mouseleave", () => {
+        pin.style.transform = "rotate(-45deg)";
+        pin.style.boxShadow = "0 3px 12px rgba(254,20,81,0.45)";
       });
-      el.addEventListener('click', () => {
+      el.addEventListener("click", () => {
         useMapStore.getState().openHubModal(hub);
         map.flyTo({
           center: [longitude, latitude],
@@ -303,8 +303,8 @@ const MapView: React.FC = () => {
     if (!map || !userLocation) return;
 
     if (!userMarkerRef.current) {
-      const el = document.createElement('div');
-      el.className = 'user-location-marker';
+      const el = document.createElement("div");
+      el.className = "user-location-marker";
       el.innerHTML = `
         <div style="position:relative;width:20px;height:20px;">
           <div style="
@@ -377,14 +377,14 @@ const MapView: React.FC = () => {
   }, [startAddress, endAddress, clearRouteResults, setIsRouteLoading]);
   // ── Marker helpers ─────────────────────────────────────────────────────────
   const createMarkerEl = (color: string, isDot?: boolean) => {
-    const el = document.createElement('div');
+    const el = document.createElement("div");
     el.innerHTML = `
       <div style="position:relative;width:28px;height:36px">
         <div style="
           width:26px;height:26px;
           background:${color};border:3px solid white;
-          border-radius:${isDot ? '50%' : '50% 50% 50% 0'};
-          transform:${isDot ? 'none' : 'rotate(-45deg)'};
+          border-radius:${isDot ? "50%" : "50% 50% 50% 0"};
+          transform:${isDot ? "none" : "rotate(-45deg)"};
           box-shadow:0 3px 10px rgba(0,0,0,0.28);
           position:absolute;top:0;left:0;
         ">
@@ -402,8 +402,8 @@ const MapView: React.FC = () => {
       const map = mapRef.current;
       if (!map) return null;
       return new goongjs.Marker({
-        element: createMarkerEl('#10B981'),
-        anchor: 'bottom',
+        element: createMarkerEl("#10B981"),
+        anchor: "bottom",
       })
         .setLngLat(lngLat)
         .addTo(map);
@@ -416,8 +416,8 @@ const MapView: React.FC = () => {
       const map = mapRef.current;
       if (!map) return null;
       return new goongjs.Marker({
-        element: createMarkerEl('#EF4444'),
-        anchor: 'bottom',
+        element: createMarkerEl("#EF4444"),
+        anchor: "bottom",
       })
         .setLngLat(lngLat)
         .addTo(map);
@@ -479,10 +479,10 @@ const MapView: React.FC = () => {
       const hitLayerId = `route-hit-${idx}`;
 
       map.addSource(sourceId, {
-        type: 'geojson',
+        type: "geojson",
         data: {
-          type: 'Feature',
-          geometry: { type: 'LineString', coordinates: info.coordinates },
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: info.coordinates },
           properties: {},
         },
       });
@@ -490,64 +490,64 @@ const MapView: React.FC = () => {
       // Visible dim line
       map.addLayer({
         id: layerId,
-        type: 'line',
+        type: "line",
         source: sourceId,
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          'line-color': ROUTE_INACTIVE_COLOR, // always gray regardless of index
-          'line-width': 4,
-          'line-opacity': 0.5,
+          "line-color": ROUTE_INACTIVE_COLOR, // always gray regardless of index
+          "line-width": 4,
+          "line-opacity": 0.5,
         },
       });
 
       // Wide transparent hit-area layer - makes it easy to click narrow lines
       map.addLayer({
         id: hitLayerId,
-        type: 'line',
+        type: "line",
         source: sourceId,
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: { 'line-width': 24, 'line-opacity': 0 },
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-width": 24, "line-opacity": 0 },
       });
 
       // Click → switch active route (effect on selectedRouteIndex will redraw)
       const clickHandler = () => {
         useMapStore.getState().setSelectedRouteIndex(idx);
       };
-      map.on('click', hitLayerId, clickHandler);
+      map.on("click", hitLayerId, clickHandler);
       routeClickHandlersRef.current.push({
         layerId: hitLayerId,
-        type: 'click',
+        type: "click",
         handler: clickHandler,
       });
 
       // Hover → pointer cursor + highlight the inactive route
       const enterHandler = () => {
-        map.getCanvas().style.cursor = 'pointer';
+        map.getCanvas().style.cursor = "pointer";
         if (map.getLayer(layerId)) {
-          map.setPaintProperty(layerId, 'line-opacity', 0.85);
-          map.setPaintProperty(layerId, 'line-width', 6);
-          map.setPaintProperty(layerId, 'line-color', ROUTE_ACTIVE_COLOR); // preview blue
+          map.setPaintProperty(layerId, "line-opacity", 0.85);
+          map.setPaintProperty(layerId, "line-width", 6);
+          map.setPaintProperty(layerId, "line-color", ROUTE_ACTIVE_COLOR); // preview blue
         }
       };
-      map.on('mouseenter', hitLayerId, enterHandler);
+      map.on("mouseenter", hitLayerId, enterHandler);
       routeClickHandlersRef.current.push({
         layerId: hitLayerId,
-        type: 'mouseenter',
+        type: "mouseenter",
         handler: enterHandler,
       });
 
       const leaveHandler = () => {
-        map.getCanvas().style.cursor = '';
+        map.getCanvas().style.cursor = "";
         if (map.getLayer(layerId)) {
-          map.setPaintProperty(layerId, 'line-opacity', 0.5);
-          map.setPaintProperty(layerId, 'line-width', 4);
-          map.setPaintProperty(layerId, 'line-color', ROUTE_INACTIVE_COLOR);
+          map.setPaintProperty(layerId, "line-opacity", 0.5);
+          map.setPaintProperty(layerId, "line-width", 4);
+          map.setPaintProperty(layerId, "line-color", ROUTE_INACTIVE_COLOR);
         }
       };
-      map.on('mouseleave', hitLayerId, leaveHandler);
+      map.on("mouseleave", hitLayerId, leaveHandler);
       routeClickHandlersRef.current.push({
         layerId: hitLayerId,
-        type: 'mouseleave',
+        type: "mouseleave",
         handler: leaveHandler,
       });
 
@@ -563,29 +563,29 @@ const MapView: React.FC = () => {
       // Casing (outline)
       const casingId = `${layerId}-casing`;
       map.addSource(sourceId, {
-        type: 'geojson',
+        type: "geojson",
         data: {
-          type: 'Feature',
-          geometry: { type: 'LineString', coordinates: activeInfo.coordinates },
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: activeInfo.coordinates },
           properties: {},
         },
       });
       map.addLayer({
         id: casingId,
-        type: 'line',
+        type: "line",
         source: sourceId,
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: { 'line-color': '#fff', 'line-width': 9, 'line-opacity': 0.8 },
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: { "line-color": "#fff", "line-width": 9, "line-opacity": 0.8 },
       });
       map.addLayer({
         id: layerId,
-        type: 'line',
+        type: "line",
         source: sourceId,
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          'line-color': ROUTE_ACTIVE_COLOR,
-          'line-width': 6,
-          'line-opacity': 1,
+          "line-color": ROUTE_ACTIVE_COLOR,
+          "line-width": 6,
+          "line-opacity": 1,
         },
       });
       routeSourceIdsRef.current.push(sourceId);
@@ -614,15 +614,15 @@ const MapView: React.FC = () => {
         if (exactEnd && coordinates.length > 0) coordinates.push(exactEnd);
 
         const steps = (leg.steps ?? []).map((s) => ({
-          instruction: stripHtml(s.html_instructions ?? ''),
-          distance: s.distance?.text ?? '',
-          duration: s.duration?.text ?? '',
+          instruction: stripHtml(s.html_instructions ?? ""),
+          distance: s.distance?.text ?? "",
+          duration: s.duration?.text ?? "",
         }));
         return {
           index: idx,
-          distance: leg.distance?.text ?? '',
+          distance: leg.distance?.text ?? "",
           distanceValue: leg.distance?.value ?? 0,
-          duration: leg.duration?.text ?? '',
+          duration: leg.duration?.text ?? "",
           durationValue: leg.duration?.value ?? 0,
           steps,
           summary: r.summary || `Tuyến ${idx + 1}`,
@@ -673,7 +673,7 @@ const MapView: React.FC = () => {
   // ── Location toggle ────────────────────────────────────────────────────────
   const handleLocationToggle = useCallback(() => {
     if (!navigator.geolocation) {
-      showNotification('error', 'Trình duyệt không hỗ trợ định vị.');
+      showNotification("error", "Trình duyệt không hỗ trợ định vị.");
       return;
     }
     if (isLocationOn) {
@@ -693,8 +693,8 @@ const MapView: React.FC = () => {
       },
       () =>
         showNotification(
-          'error',
-          'Không thể lấy vị trí. Vui lòng kiểm tra cài đặt trình duyệt.',
+          "error",
+          "Không thể lấy vị trí. Vui lòng kiểm tra cài đặt trình duyệt.",
         ),
     );
   }, [isLocationOn, setIsLocationOn, setUserLocation, showNotification]);
@@ -703,7 +703,7 @@ const MapView: React.FC = () => {
   const getCurrentLocation = useCallback(
     (isStart: boolean) => {
       if (!navigator.geolocation) {
-        showNotification('error', 'Trình duyệt không hỗ trợ định vị.');
+        showNotification("error", "Trình duyệt không hỗ trợ định vị.");
         return;
       }
       navigator.geolocation.getCurrentPosition(
@@ -717,17 +717,17 @@ const MapView: React.FC = () => {
           geocodeCacheRef.current.set(address.trim().toLowerCase(), loc);
           if (isStart) {
             setStartAddress(address);
-            setCurrentLocationUsage('start');
+            setCurrentLocationUsage("start");
             startMarkerRef.current?.remove();
             startMarkerRef.current = createStartMarker([loc.lng, loc.lat]);
           } else {
             setEndAddress(address);
-            setCurrentLocationUsage('end');
+            setCurrentLocationUsage("end");
             endMarkerRef.current?.remove();
             endMarkerRef.current = createEndMarker([loc.lng, loc.lat]);
           }
         },
-        () => showNotification('error', 'Không thể lấy vị trí hiện tại.'),
+        () => showNotification("error", "Không thể lấy vị trí hiện tại."),
       );
     },
     [
@@ -745,7 +745,7 @@ const MapView: React.FC = () => {
   // ── Route search ───────────────────────────────────────────────────────────
   const handleRouteSearch = useCallback(async () => {
     if (!startAddress.trim() || !endAddress.trim()) {
-      showNotification('error', 'Vui lòng nhập đầy đủ địa chỉ.');
+      showNotification("error", "Vui lòng nhập đầy đủ địa chỉ.");
       return;
     }
     // Token-based cancellation: only the latest search's results are applied
@@ -760,8 +760,8 @@ const MapView: React.FC = () => {
 
       if (!startLoc || !endLoc) {
         showNotification(
-          'error',
-          'Không tìm thấy địa chỉ, vui lòng kiểm tra lại.',
+          "error",
+          "Không tìm thấy địa chỉ, vui lòng kiểm tra lại.",
         );
         return;
       }
@@ -769,7 +769,7 @@ const MapView: React.FC = () => {
         Math.abs(startLoc.lat - endLoc.lat) < 0.0001 &&
         Math.abs(startLoc.lng - endLoc.lng) < 0.0001;
       if (isSameCoord) {
-        showNotification('error', 'Điểm đến phải khác với điểm xuất phát.');
+        showNotification("error", "Điểm đến phải khác với điểm xuất phát.");
         return;
       }
 
@@ -786,7 +786,7 @@ const MapView: React.FC = () => {
 
       const rawRoutes: GoongRoute[] = res.data.routes ?? [];
       if (!rawRoutes.length) {
-        showNotification('error', 'Không tìm thấy tuyến đường phù hợp.');
+        showNotification("error", "Không tìm thấy tuyến đường phù hợp.");
         return;
       }
 
@@ -810,7 +810,7 @@ const MapView: React.FC = () => {
     } catch (e) {
       if (token === searchTokenRef.current) {
         console.error(e);
-        showNotification('error', 'Có lỗi khi tìm đường, vui lòng thử lại.');
+        showNotification("error", "Có lỗi khi tìm đường, vui lòng thử lại.");
       }
     } finally {
       if (token === searchTokenRef.current) {
@@ -860,13 +860,13 @@ const MapView: React.FC = () => {
     async (hub: Hub) => {
       if (!userLocation) {
         showNotification(
-          'error',
-          'Vui lòng bật định vị để sử dụng tính năng này.',
+          "error",
+          "Vui lòng bật định vị để sử dụng tính năng này.",
         );
         return;
       }
       if (hub.latitude == null || hub.longitude == null) {
-        showNotification('error', 'Hub này chưa có tọa độ GPS.');
+        showNotification("error", "Hub này chưa có tọa độ GPS.");
         return;
       }
       clearAllRoutes();
@@ -878,8 +878,8 @@ const MapView: React.FC = () => {
         if (!currentAddress) return;
         setStartAddress(currentAddress);
         setEndAddress(hub.address);
-        setCurrentLocationUsage('start');
-        useMapStore.getState().setActiveTab('direction');
+        setCurrentLocationUsage("start");
+        useMapStore.getState().setActiveTab("direction");
 
         startMarkerRef.current = createStartMarker([
           userLocation.lng,
@@ -892,7 +892,7 @@ const MapView: React.FC = () => {
         );
         const rawRoutes: GoongRoute[] = res.data.routes ?? [];
         if (!rawRoutes.length) {
-          showNotification('error', 'Không tìm thấy tuyến đường đến hub.');
+          showNotification("error", "Không tìm thấy tuyến đường đến hub.");
           return;
         }
 
@@ -915,8 +915,8 @@ const MapView: React.FC = () => {
         );
       } catch {
         showNotification(
-          'error',
-          'Có lỗi khi tìm đường đến hub, vui lòng thử lại.',
+          "error",
+          "Có lỗi khi tìm đường đến hub, vui lòng thử lại.",
         );
       }
     },
@@ -985,15 +985,15 @@ const MapView: React.FC = () => {
               border max-w-xs w-full pointer-events-auto
               animate-in slide-in-from-right-4 fade-in duration-300
               ${
-                n.type === 'error'
-                  ? 'bg-card text-destructive border-destructive/20'
-                  : n.type === 'success'
-                    ? 'bg-card text-success border-success-border'
-                    : 'bg-card text-info border-info-border'
+                n.type === "error"
+                  ? "bg-card text-destructive border-destructive/20"
+                  : n.type === "success"
+                    ? "bg-card text-success border-success-border"
+                    : "bg-card text-info border-info-border"
               }
             `}
           >
-            {n.type === 'error' ? (
+            {n.type === "error" ? (
               <AlertCircle
                 size={16}
                 className="text-destructive shrink-0 mt-0.5"

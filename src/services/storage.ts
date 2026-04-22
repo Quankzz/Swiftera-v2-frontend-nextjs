@@ -2,13 +2,15 @@
  * Storage Service - Quản lý lưu trữ token và dữ liệu người dùng
  */
 
-import type { User } from '@/types/index';
+import type { User } from "@/types/index";
 
-const ACCESS_TOKEN_KEY = 'accessToken';
-const USER_KEY = 'user';
+const ACCESS_TOKEN_KEY = "accessToken";
+const USER_KEY = "user";
 
 function hasStorage(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  return (
+    typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+  );
 }
 
 export const storageService = {
@@ -46,7 +48,7 @@ export const storageService = {
       try {
         return JSON.parse(userStr) as User;
       } catch (error) {
-        console.error('Error parsing user data from localStorage:', error);
+        console.error("Error parsing user data from localStorage:", error);
         return null;
       }
     }

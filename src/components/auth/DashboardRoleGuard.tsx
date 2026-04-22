@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth-store';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/auth-store";
+import { Loader2 } from "lucide-react";
 
 interface DashboardRoleGuardProps {
   /** Roles được phép vào (e.g. ['ADMIN'] hoặc ['STAFF']) */
@@ -34,18 +34,18 @@ export function DashboardRoleGuard({
   // Nếu store chưa kịp hydrate → chờ 1 tick
   if (!hydrated) {
     return (
-      <div className='flex h-screen items-center justify-center bg-gray-50 dark:bg-surface-base'>
-        <Loader2 className='size-8 animate-spin text-theme-primary-start' />
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-surface-base">
+        <Loader2 className="size-8 animate-spin text-theme-primary-start" />
       </div>
     );
   }
 
   // Chưa đăng nhập
   if (!isAuthenticated || !user) {
-    router.replace('/auth/login');
+    router.replace("/auth/login");
     return (
-      <div className='flex h-screen items-center justify-center bg-gray-50 dark:bg-surface-base'>
-        <Loader2 className='size-8 animate-spin text-theme-primary-start' />
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-surface-base">
+        <Loader2 className="size-8 animate-spin text-theme-primary-start" />
       </div>
     );
   }
@@ -54,10 +54,10 @@ export function DashboardRoleGuard({
   const hasAccess = allowedRoles.some((role) => userRoles.includes(role));
 
   if (!hasAccess) {
-    router.replace('/403');
+    router.replace("/403");
     return (
-      <div className='flex h-screen items-center justify-center bg-gray-50 dark:bg-surface-base'>
-        <Loader2 className='size-8 animate-spin text-theme-primary-start' />
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-surface-base">
+        <Loader2 className="size-8 animate-spin text-theme-primary-start" />
       </div>
     );
   }

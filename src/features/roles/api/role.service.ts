@@ -8,8 +8,8 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 
 import type {
   RoleResponse,
@@ -24,7 +24,7 @@ import type {
   UpdatePermissionInput,
   PermissionListParams,
   CreateModuleInput,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -40,7 +40,7 @@ export async function createRole(
   payload: CreateRoleInput,
 ): Promise<RoleResponse> {
   const res = await httpService.post<ApiResponse<RoleResponse>>(
-    '/roles',
+    "/roles",
     payload,
     authOpts,
   );
@@ -67,7 +67,7 @@ export async function getRoles(
   params?: RoleListParams,
 ): Promise<PaginatedRolesResponse> {
   const res = await httpService.get<ApiResponse<PaginatedRolesResponse>>(
-    '/roles',
+    "/roles",
     { ...authOpts, params },
   );
   return res.data.data!;
@@ -125,7 +125,7 @@ export async function createPermissionModule(
   payload: CreateModuleInput,
 ): Promise<PermissionResponse[]> {
   const res = await httpService.post<ApiResponse<PermissionResponse[]>>(
-    '/permissions/module',
+    "/permissions/module",
     payload,
     authOpts,
   );
@@ -147,7 +147,7 @@ export async function deletePermissionModule(name: string): Promise<null> {
  */
 export async function getModules(): Promise<string[]> {
   const res = await httpService.get<ApiResponse<string[]>>(
-    '/permissions/modules',
+    "/permissions/modules",
     authOpts,
   );
   return res.data.data!;
@@ -161,7 +161,7 @@ export async function createPermission(
   payload: CreatePermissionInput,
 ): Promise<PermissionResponse> {
   const res = await httpService.post<ApiResponse<PermissionResponse>>(
-    '/permissions',
+    "/permissions",
     payload,
     authOpts,
   );
@@ -206,7 +206,7 @@ export async function getPermissions(
   params?: PermissionListParams,
 ): Promise<PaginatedPermissionsResponse> {
   const res = await httpService.get<ApiResponse<PaginatedPermissionsResponse>>(
-    '/permissions',
+    "/permissions",
     { ...authOpts, params },
   );
   return res.data.data!;

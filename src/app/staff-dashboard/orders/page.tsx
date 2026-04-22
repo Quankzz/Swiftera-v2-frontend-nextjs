@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useEffect, Suspense, useCallback } from 'react';
-import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect, Suspense, useCallback } from "react";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Search,
   Filter,
@@ -19,23 +19,23 @@ import {
   Check,
   ChevronDown,
   CalendarClock,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { STATUS_CFG } from '@/lib/order-status';
-import { fmt, fmtDate, fmtPhone } from '@/lib/formatters';
-import { getStaffOrders } from '@/api/staff-orders';
-import { useAuthStore } from '@/stores/auth-store';
-import { useStaffOrderCounts } from '@/stores/staff-order-counts-store';
-import type { RentalOrderResponse, OrderStatus } from '@/types/api.types';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { STATUS_CFG } from "@/lib/order-status";
+import { fmt, fmtDate, fmtPhone } from "@/lib/formatters";
+import { getStaffOrders } from "@/api/staff-orders";
+import { useAuthStore } from "@/stores/auth-store";
+import { useStaffOrderCounts } from "@/stores/staff-order-counts-store";
+import type { RentalOrderResponse, OrderStatus } from "@/types/api.types";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Pagination,
   PaginationContent,
@@ -44,32 +44,32 @@ import {
   PaginationPrevious,
   PaginationNext,
   PaginationEllipsis,
-} from '@/components/ui/pagination';
+} from "@/components/ui/pagination";
 
 const PAGE_SIZE = 5;
 
 // All staff workflow statuses
 const ALL_STATUSES: OrderStatus[] = [
-  'PAID',
-  'PREPARING',
-  'DELIVERING',
-  'DELIVERED',
-  'PENDING_PICKUP',
-  'PICKING_UP',
-  'PICKED_UP',
-  'COMPLETED',
+  "PAID",
+  "PREPARING",
+  "DELIVERING",
+  "DELIVERED",
+  "PENDING_PICKUP",
+  "PICKING_UP",
+  "PICKED_UP",
+  "COMPLETED",
 ];
 
-type QuickFilter = 'all' | 'overdue-pickup' | 'overdue-delivery' | 'today';
+type QuickFilter = "all" | "overdue-pickup" | "overdue-delivery" | "today";
 
 const QUICK_FILTERS: {
   id: QuickFilter;
   label: string;
   icon: typeof AlertTriangle;
 }[] = [
-  { id: 'overdue-pickup', label: 'Quá hạn thu hồi', icon: RotateCcw },
-  { id: 'overdue-delivery', label: 'Trễ giao', icon: AlertTriangle },
-  { id: 'today', label: 'Giao hôm nay', icon: CalendarClock },
+  { id: "overdue-pickup", label: "Quá hạn thu hồi", icon: RotateCcw },
+  { id: "overdue-delivery", label: "Trễ giao", icon: AlertTriangle },
+  { id: "today", label: "Giao hôm nay", icon: CalendarClock },
 ];
 
 export default function OrdersPage() {
@@ -90,8 +90,8 @@ function OrdersPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [now] = useState(() => Date.now());
-  const [search, setSearch] = useState('');
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+  const [search, setSearch] = useState("");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
 
   // ─── API data ────────────────────────────────────────────────────
   const [allOrders, setAllOrders] = useState<RentalOrderResponse[]>([]);
@@ -106,7 +106,7 @@ function OrdersPageInner() {
     if (!isAuthenticated && user === null) return;
     if (!staffId) {
       setIsLoading(false);
-      setLoadError('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+      setLoadError("Bạn chưa đăng nhập. Vui lòng đăng nhập lại.");
       return;
     }
 
@@ -126,7 +126,7 @@ function OrdersPageInner() {
       } catch (err) {
         if (cancelled) return;
         setLoadError(
-          err instanceof Error ? err.message : 'Không thể tải dữ liệu',
+          err instanceof Error ? err.message : "Không thể tải dữ liệu",
         );
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -143,10 +143,10 @@ function OrdersPageInner() {
   // Default to EMPTY array when no status param — empty means "no status filter = show all".
   // The status filter is only applied when activeStatuses.length > 0.
   const activeStatuses = useMemo<OrderStatus[]>(() => {
-    const s = searchParams.get('status');
+    const s = searchParams.get("status");
     if (!s) return [];
     const parsed = s
-      .split(',')
+      .split(",")
       .filter((v) => ALL_STATUSES.includes(v as OrderStatus)) as OrderStatus[];
     return parsed;
   }, [searchParams]);
@@ -170,7 +170,7 @@ function OrdersPageInner() {
         // All selected → clear URL param (same as empty = show all)
         router.replace(`/staff-dashboard/orders`, { scroll: false });
       } else {
-        router.replace(`/staff-dashboard/orders?status=${next.join(',')}`, {
+        router.replace(`/staff-dashboard/orders?status=${next.join(",")}`, {
           scroll: false,
         });
       }
@@ -202,20 +202,20 @@ function OrdersPageInner() {
       const isDeliveryOverdue =
         expDelivery !== null &&
         expDelivery < today &&
-        ['PAID', 'PREPARING', 'DELIVERING', 'PENDING_PICKUP'].includes(
+        ["PAID", "PREPARING", "DELIVERING", "PENDING_PICKUP"].includes(
           order.status,
         );
 
       const isPickupOverdue =
         expEnd !== null &&
         expEnd < today &&
-        ['PICKED_UP', 'PICKING_UP'].includes(order.status);
+        ["PICKED_UP", "PICKING_UP"].includes(order.status);
 
       const isTodayDelivery =
         expDelivery !== null &&
         expDelivery >= today &&
         expDelivery < tomorrow &&
-        ['PAID', 'PREPARING', 'DELIVERING', 'PENDING_PICKUP'].includes(
+        ["PAID", "PREPARING", "DELIVERING", "PENDING_PICKUP"].includes(
           order.status,
         );
 
@@ -257,20 +257,20 @@ function OrdersPageInner() {
           return false;
 
         // Quick filter
-        if (quickFilter === 'overdue-pickup' && !isPickupOverdue) return false;
-        if (quickFilter === 'overdue-delivery' && !isDeliveryOverdue)
+        if (quickFilter === "overdue-pickup" && !isPickupOverdue) return false;
+        if (quickFilter === "overdue-delivery" && !isDeliveryOverdue)
           return false;
-        if (quickFilter === 'today' && !isTodayDelivery) return false;
+        if (quickFilter === "today" && !isTodayDelivery) return false;
 
         // Text search
         if (q) {
           return (
             order.rentalOrderId.toLowerCase().includes(q) ||
-            (order.userAddress?.recipientName ?? '')
+            (order.userAddress?.recipientName ?? "")
               .toLowerCase()
               .includes(q) ||
-            (order.userAddress?.phoneNumber ?? '').includes(q) ||
-            (order.hubAddressLine ?? '').toLowerCase().includes(q) ||
+            (order.userAddress?.phoneNumber ?? "").includes(q) ||
+            (order.hubAddressLine ?? "").toLowerCase().includes(q) ||
             order.rentalOrderLines.some((i) =>
               i.productNameSnapshot.toLowerCase().includes(q),
             )
@@ -339,12 +339,12 @@ function OrdersPageInner() {
           <div className="h-0.5 w-14 rounded-full bg-linear-to-r from-theme-primary-start to-theme-primary-end" />
           <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
             <span>
-              Hiển thị{' '}
+              Hiển thị{" "}
               <strong className="text-foreground font-semibold">
                 {filtered.length === 0
                   ? 0
                   : `${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, filtered.length)}`}
-              </strong>{' '}
+              </strong>{" "}
               / {filtered.length} đơn
             </span>
             {urgentDelivery > 0 && (
@@ -385,7 +385,7 @@ function OrdersPageInner() {
               />
               {search && (
                 <button
-                  onClick={() => setSearch('')}
+                  onClick={() => setSearch("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="w-4 h-4" />
@@ -399,10 +399,10 @@ function OrdersPageInner() {
                 <Button
                   variant="outline"
                   className={cn(
-                    'gap-2 h-12 rounded-xl border-border/60 shadow-sm transition-all justify-start sm:w-48 shrink-0',
-                    'hover:bg-accent text-[14px] font-medium',
+                    "gap-2 h-12 rounded-xl border-border/60 shadow-sm transition-all justify-start sm:w-48 shrink-0",
+                    "hover:bg-accent text-[14px] font-medium",
                     hasStatusFilter &&
-                      'border-theme-primary-start/40 bg-theme-primary-start/5',
+                      "border-theme-primary-start/40 bg-theme-primary-start/5",
                   )}
                 >
                   <Filter className="w-4 h-4" />
@@ -430,10 +430,10 @@ function OrdersPageInner() {
                 >
                   <div
                     className={cn(
-                      'size-5 rounded border-2 flex items-center justify-center transition-all shrink-0',
+                      "size-5 rounded border-2 flex items-center justify-center transition-all shrink-0",
                       isAllSelected
-                        ? 'bg-primary border-primary'
-                        : 'border-border/60 bg-card',
+                        ? "bg-primary border-primary"
+                        : "border-border/60 bg-card",
                     )}
                   >
                     {isAllSelected && <Check className="size-3 text-white" />}
@@ -464,18 +464,18 @@ function OrdersPageInner() {
                     >
                       <div
                         className={cn(
-                          'size-5 rounded border-2 flex items-center justify-center transition-all shrink-0',
+                          "size-5 rounded border-2 flex items-center justify-center transition-all shrink-0",
                           isActive
-                            ? 'bg-primary border-primary'
-                            : 'border-border/60 bg-card',
+                            ? "bg-primary border-primary"
+                            : "border-border/60 bg-card",
                         )}
                       >
                         {isActive && <Check className="size-3 text-white" />}
                       </div>
                       <span
-                        className={cn('size-2 rounded-full shrink-0', cfg.dot)}
+                        className={cn("size-2 rounded-full shrink-0", cfg.dot)}
                       />
-                      <Icon className={cn('size-4 shrink-0', cfg.color)} />
+                      <Icon className={cn("size-4 shrink-0", cfg.color)} />
                       <span className="flex-1 text-[14px]">{cfg.label}</span>
                     </DropdownMenuItem>
                   );
@@ -491,49 +491,49 @@ function OrdersPageInner() {
               const Icon = f.icon;
               const isActive = quickFilter === f.id;
               const count =
-                f.id === 'overdue-pickup'
+                f.id === "overdue-pickup"
                   ? urgentPickup
-                  : f.id === 'overdue-delivery'
+                  : f.id === "overdue-delivery"
                     ? urgentDelivery
                     : todayCount;
               return (
                 <button
                   key={f.id}
-                  onClick={() => setQuickFilter(isActive ? 'all' : f.id)}
+                  onClick={() => setQuickFilter(isActive ? "all" : f.id)}
                   className={cn(
-                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all',
+                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all",
                     isActive
-                      ? f.id === 'overdue-pickup'
-                        ? 'bg-amber-50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600'
-                        : f.id === 'overdue-delivery'
-                          ? 'bg-destructive/10 text-destructive border-destructive/40'
-                          : 'bg-info/10 text-info border-info/40'
-                      : 'bg-muted/60 text-muted-foreground border-border/60 hover:border-muted hover:bg-muted',
+                      ? f.id === "overdue-pickup"
+                        ? "bg-amber-50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-600"
+                        : f.id === "overdue-delivery"
+                          ? "bg-destructive/10 text-destructive border-destructive/40"
+                          : "bg-info/10 text-info border-info/40"
+                      : "bg-muted/60 text-muted-foreground border-border/60 hover:border-muted hover:bg-muted",
                   )}
                 >
                   <Icon
                     className={cn(
-                      'size-3.5',
+                      "size-3.5",
                       isActive &&
-                        (f.id === 'overdue-pickup'
-                          ? 'text-amber-500'
-                          : f.id === 'overdue-delivery'
-                            ? 'text-destructive'
-                            : 'text-info'),
+                        (f.id === "overdue-pickup"
+                          ? "text-amber-500"
+                          : f.id === "overdue-delivery"
+                            ? "text-destructive"
+                            : "text-info"),
                     )}
                   />
                   {f.label}
                   {count > 0 && (
                     <span
                       className={cn(
-                        'inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black',
+                        "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-black",
                         isActive
-                          ? f.id === 'overdue-pickup'
-                            ? 'bg-amber-500 text-white'
-                            : f.id === 'overdue-delivery'
-                              ? 'bg-destructive text-white'
-                              : 'bg-info text-white'
-                          : 'bg-muted-foreground/30 text-muted-foreground',
+                          ? f.id === "overdue-pickup"
+                            ? "bg-amber-500 text-white"
+                            : f.id === "overdue-delivery"
+                              ? "bg-destructive text-white"
+                              : "bg-info text-white"
+                          : "bg-muted-foreground/30 text-muted-foreground",
                       )}
                     >
                       {count}
@@ -544,9 +544,9 @@ function OrdersPageInner() {
             })}
 
             {/* Clear quick filter when active */}
-            {quickFilter !== 'all' && (
+            {quickFilter !== "all" && (
               <button
-                onClick={() => setQuickFilter('all')}
+                onClick={() => setQuickFilter("all")}
                 className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="size-3" />
@@ -564,7 +564,7 @@ function OrdersPageInner() {
                       key={s}
                       onClick={() => toggleStatus(s)}
                       className={cn(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all',
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all",
                         cfg.bg,
                         cfg.color,
                         cfg.border,
@@ -608,8 +608,8 @@ function OrdersPageInner() {
             <button
               className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold transition-colors shadow-sm"
               onClick={() => {
-                setSearch('');
-                setQuickFilter('all');
+                setSearch("");
+                setQuickFilter("all");
                 toggleAll();
               }}
             >
@@ -650,7 +650,7 @@ function OrdersPageInner() {
                           setCurrentPage((p) => Math.max(1, p - 1))
                         }
                         className={cn(
-                          currentPage === 1 && 'pointer-events-none opacity-50',
+                          currentPage === 1 && "pointer-events-none opacity-50",
                         )}
                       />
                     </PaginationItem>
@@ -693,7 +693,7 @@ function OrdersPageInner() {
                         }
                         className={cn(
                           currentPage === totalPages &&
-                            'pointer-events-none opacity-50',
+                            "pointer-events-none opacity-50",
                         )}
                       />
                     </PaginationItem>
@@ -731,8 +731,8 @@ function OrderCard({
         order.userAddress.city,
       ]
         .filter(Boolean)
-        .join(', ')
-    : (order.hubAddressLine ?? '');
+        .join(", ")
+    : (order.hubAddressLine ?? "");
 
   return (
     <Link
@@ -741,25 +741,25 @@ function OrderCard({
     >
       <div
         className={cn(
-          'relative bg-card border rounded-xl transition-all duration-300 overflow-hidden',
-          'hover:shadow-lg hover:shadow-theme-primary-start/5 hover:-translate-y-0.5',
-          'border-border/60 hover:border-theme-primary-start/40',
+          "relative bg-card border rounded-xl transition-all duration-300 overflow-hidden",
+          "hover:shadow-lg hover:shadow-theme-primary-start/5 hover:-translate-y-0.5",
+          "border-border/60 hover:border-theme-primary-start/40",
           isDeliveryOverdue &&
-            'border-destructive/40 hover:border-destructive/70',
+            "border-destructive/40 hover:border-destructive/70",
           isPickupOverdue &&
             !isDeliveryOverdue &&
-            'border-amber-400/40 hover:border-amber-500/70',
+            "border-amber-400/40 hover:border-amber-500/70",
         )}
       >
         {/* VẠCH MÀU VIỀN TRÁI (LEFT BORDER STRIPE) */}
         {/* Nằm đè lên trên cùng (z-20), bám sát lề trái, lấy màu tương ứng từ trạng thái */}
         <div
           className={cn(
-            'absolute left-0 top-0 bottom-0 w-1.5 z-20 transition-colors',
+            "absolute left-0 top-0 bottom-0 w-1.5 z-20 transition-colors",
             isDeliveryOverdue
-              ? 'bg-destructive animate-pulse'
+              ? "bg-destructive animate-pulse"
               : isPickupOverdue
-                ? 'bg-amber-500 animate-pulse'
+                ? "bg-amber-500 animate-pulse"
                 : cfg.dot, // Lấy class bg-* từ cấu hình trạng thái
           )}
         />
@@ -802,7 +802,7 @@ function OrderCard({
           <div className="flex items-center gap-3 min-w-0">
             <div
               className={cn(
-                'p-1.5 rounded-lg border bg-background shadow-sm shrink-0', // Thêm shrink-0 cho icon
+                "p-1.5 rounded-lg border bg-background shadow-sm shrink-0", // Thêm shrink-0 cho icon
                 cfg.border,
                 cfg.color,
               )}
@@ -826,13 +826,13 @@ function OrderCard({
           {/* Thêm shrink-0 và whitespace-nowrap để bảo vệ khối Label */}
           <div
             className={cn(
-              'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase shrink-0 whitespace-nowrap',
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase shrink-0 whitespace-nowrap",
               cfg.color,
               cfg.bg,
-              cfg.border || 'border border-transparent',
+              cfg.border || "border border-transparent",
             )}
           >
-            <span className={cn('size-1.5 rounded-full shrink-0', cfg.dot)} />
+            <span className={cn("size-1.5 rounded-full shrink-0", cfg.dot)} />
             {cfg.label}
           </div>
         </div>
@@ -848,7 +848,7 @@ function OrderCard({
                   <User className="size-3" /> Khách hàng
                 </p>
                 <p className="text-[13px] sm:text-sm font-semibold text-foreground truncate">
-                  {order.userAddress?.recipientName ?? order.hubName ?? '—'}
+                  {order.userAddress?.recipientName ?? order.hubName ?? "—"}
                 </p>
               </div>
               <div className="space-y-1 min-w-0">
@@ -866,7 +866,7 @@ function OrderCard({
                 <MapPin className="size-3" /> Giao đến
               </p>
               <p className="text-[12px] sm:text-[13px] text-foreground font-medium leading-snug line-clamp-2">
-                {deliveryAddress || 'Nhận tại cửa hàng'}
+                {deliveryAddress || "Nhận tại cửa hàng"}
               </p>
             </div>
           </div>

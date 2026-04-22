@@ -8,8 +8,8 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
-} from '@tanstack/react-query';
-import { reviewKeys } from './review.keys';
+} from "@tanstack/react-query";
+import { reviewKeys } from "./review.keys";
 import {
   getReviewsByProduct,
   getReviews,
@@ -18,8 +18,8 @@ import {
   createReview,
   deleteReview,
   markHelpful,
-} from './review.service';
-import type { CreateReviewInput } from '@/api/reviews';
+} from "./review.service";
+import type { CreateReviewInput } from "@/api/reviews";
 
 // ─── Query ──────────────────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ export function useMyReviewForProductQuery(
   userId: string | null,
 ) {
   return useQuery({
-    queryKey: ['reviews', 'my', productId, userId] as const,
+    queryKey: ["reviews", "my", productId, userId] as const,
     queryFn: () => getMyReviewForProduct(productId, userId!),
     enabled: !!productId && !!userId,
     staleTime: 60_000,
@@ -122,7 +122,7 @@ export function useCreateReview(options?: {
       });
       void qc.invalidateQueries({ queryKey: reviewKeys.list() });
       void qc.invalidateQueries({
-        queryKey: ['reviews', 'my', variables.productId],
+        queryKey: ["reviews", "my", variables.productId],
       });
       options?.onSuccess?.();
     },

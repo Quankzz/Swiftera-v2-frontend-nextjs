@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Header } from './Header';
-import { Footer } from './Footer';
-import { MainLayout } from '@/layouts/MainLayout';
-import { MapPinned, Phone } from 'lucide-react';
-import { useCartSync } from '@/hooks/useCartSync';
+import Link from "next/link";
+import { Header } from "./Header";
+import { Footer } from "./Footer";
+import { MainLayout } from "@/layouts/MainLayout";
+import { MapPinned, Phone } from "lucide-react";
+import { useCartSync } from "@/hooks/useCartSync";
 
 type LayoutProps = {
   children: React.ReactNode;

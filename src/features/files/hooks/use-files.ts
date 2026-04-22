@@ -11,7 +11,7 @@
  * Error từ apiService/AppError đi xuyên suốt.
  */
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query";
 import {
   uploadSingleFile,
   uploadMultipleFiles,
@@ -19,14 +19,14 @@ import {
   deleteMultipleFiles,
   moveSingleFile,
   moveMultipleFiles,
-} from '../api/file.service';
+} from "../api/file.service";
 import type {
   UploadSingleResponse,
   UploadMultipleResponse,
   DeleteMultipleFilesInput,
   MoveSingleFileInput,
   MoveMultipleFilesInput,
-} from '../types';
+} from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Upload

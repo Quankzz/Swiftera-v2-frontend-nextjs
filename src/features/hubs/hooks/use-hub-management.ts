@@ -11,8 +11,8 @@ import {
   useMutation,
   useQueryClient,
   keepPreviousData,
-} from '@tanstack/react-query';
-import { hubKeys } from '../api/hub.keys';
+} from "@tanstack/react-query";
+import { hubKeys } from "../api/hub.keys";
 import {
   getHubsList,
   getHubById,
@@ -24,13 +24,13 @@ import {
   getHubInventoryItems,
   assignProductsToHub,
   unassignProductsFromHub,
-} from '../api/hub.service';
+} from "../api/hub.service";
 import type {
   HubListParams,
   CreateHubInput,
   UpdateHubInput,
   AssignProductsToHubInput,
-} from '../types';
+} from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -57,7 +57,7 @@ export function useHubsQuery(params?: HubListParams) {
  */
 export function useHubQuery(hubId?: string) {
   return useQuery({
-    queryKey: hubKeys.detail(hubId ?? ''),
+    queryKey: hubKeys.detail(hubId ?? ""),
     queryFn: () => getHubById(hubId!),
     enabled: !!hubId,
     staleTime: 30_000,
@@ -130,7 +130,7 @@ export function useDeleteHubMutation() {
  */
 export function useHubStaffQuery(hubId?: string) {
   return useQuery({
-    queryKey: hubKeys.staff(hubId ?? ''),
+    queryKey: hubKeys.staff(hubId ?? ""),
     queryFn: () => getHubStaff(hubId!, false),
     enabled: !!hubId,
     staleTime: 2 * 60 * 1000,
@@ -152,7 +152,10 @@ export function useHubProductsQuery(
   params?: { page?: number; size?: number; filter?: string; sort?: string },
 ) {
   return useQuery({
-    queryKey: hubKeys.products(hubId ?? '', params as Record<string, unknown> | undefined),
+    queryKey: hubKeys.products(
+      hubId ?? "",
+      params as Record<string, unknown> | undefined,
+    ),
     queryFn: () => getHubProducts(hubId!, params),
     enabled: !!hubId,
     staleTime: 30_000,
@@ -171,7 +174,10 @@ export function useHubInventoryItemsQuery(
   params?: { page?: number; size?: number; filter?: string; sort?: string },
 ) {
   return useQuery({
-    queryKey: hubKeys.inventory(hubId ?? '', params as Record<string, unknown> | undefined),
+    queryKey: hubKeys.inventory(
+      hubId ?? "",
+      params as Record<string, unknown> | undefined,
+    ),
     queryFn: () => getHubInventoryItems(hubId!, params),
     enabled: !!hubId,
     staleTime: 30_000,

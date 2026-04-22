@@ -10,8 +10,8 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 2: USERS)
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
 
 import type {
   UserSecureResponse,
@@ -24,7 +24,7 @@ import type {
   UserListParams,
   UpdateUserInput,
   RemoveUserRolesInput,
-} from '../types';
+} from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -38,7 +38,7 @@ const authOpts = { requireToken: true as const };
  */
 export async function getMyProfile(): Promise<UserSecureResponse> {
   const res = await httpService.get<ApiResponse<UserSecureResponse>>(
-    '/auth/account',
+    "/auth/account",
     authOpts,
   );
   return res.data.data!;
@@ -52,7 +52,7 @@ export async function updateProfile(
   payload: UpdateProfileInput,
 ): Promise<UserSecureResponse> {
   const res = await httpService.patch<ApiResponse<UserSecureResponse>>(
-    '/users/update-profile',
+    "/users/update-profile",
     payload,
     authOpts,
   );
@@ -67,7 +67,7 @@ export async function updatePassword(
   payload: UpdatePasswordInput,
 ): Promise<UserSecureResponse> {
   const res = await httpService.put<ApiResponse<UserSecureResponse>>(
-    '/users/update-password',
+    "/users/update-password",
     payload,
     authOpts,
   );
@@ -81,7 +81,7 @@ export async function updatePassword(
 export async function requestChangeEmail(
   payload: RequestChangeEmailInput,
 ): Promise<null> {
-  await httpService.put('/users/update-email', payload, authOpts);
+  await httpService.put("/users/update-email", payload, authOpts);
   return null;
 }
 
@@ -93,7 +93,7 @@ export async function verifyChangeEmail(
   payload: VerifyChangeEmailInput,
 ): Promise<UserSecureResponse> {
   const res = await httpService.post<ApiResponse<UserSecureResponse>>(
-    '/users/verify-change-email',
+    "/users/verify-change-email",
     payload,
     authOpts,
   );
@@ -124,7 +124,7 @@ export async function getUsers(
   params?: UserListParams,
 ): Promise<PaginatedUsersResponse> {
   const res = await httpService.get<ApiResponse<PaginatedUsersResponse>>(
-    '/users',
+    "/users",
     { ...authOpts, params },
   );
   return res.data.data!;
@@ -182,7 +182,7 @@ export async function removeUserRoles(
  */
 export async function requestStaffUpgrade(): Promise<UserSecureResponse> {
   const res = await httpService.post<ApiResponse<UserSecureResponse>>(
-    '/users/staff-requests',
+    "/users/staff-requests",
     {},
     authOpts,
   );

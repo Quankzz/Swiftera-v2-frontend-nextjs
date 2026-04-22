@@ -1,14 +1,14 @@
-import axios from 'axios';
+import axios from "axios";
 
 export type AppErrorCode =
-  | 'NETWORK_ERROR'
-  | 'TIMEOUT'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'NOT_FOUND'
-  | 'VALIDATION_ERROR'
-  | 'SERVER_ERROR'
-  | 'UNKNOWN';
+  | "NETWORK_ERROR"
+  | "TIMEOUT"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "NOT_FOUND"
+  | "VALIDATION_ERROR"
+  | "SERVER_ERROR"
+  | "UNKNOWN";
 
 export interface ApiErrorDetail {
   code?: number;
@@ -29,7 +29,7 @@ export class AppError extends Error {
     details: ApiErrorDetail[] = [],
   ) {
     super(message);
-    this.name = 'AppError';
+    this.name = "AppError";
     this.errorCode = errorCode;
     this.status = status;
     this.details = details;
@@ -46,49 +46,59 @@ export interface ParsedFormError {
   formMessage: string | null;
 }
 
-const DEFAULT_UNKNOWN_MESSAGE = 'An unexpected error occurred.';
+const DEFAULT_UNKNOWN_MESSAGE = "An unexpected error occurred.";
 const DEFAULT_NETWORK_MESSAGE =
-  'Cannot connect to server. Please check your network.';
-const DEFAULT_TIMEOUT_MESSAGE = 'Request timed out.';
-const DEFAULT_ABORT_MESSAGE = 'Request was canceled.';
+  "Cannot connect to server. Please check your network.";
+const DEFAULT_TIMEOUT_MESSAGE = "Request timed out.";
+const DEFAULT_ABORT_MESSAGE = "Request was canceled.";
 
 function statusToCode(status: number): AppErrorCode {
   switch (status) {
     case 401:
-      return 'UNAUTHORIZED';
+      return "UNAUTHORIZED";
     case 403:
-      return 'FORBIDDEN';
+      return "FORBIDDEN";
     case 404:
-      return 'NOT_FOUND';
+      return "NOT_FOUND";
     case 422:
-      return 'VALIDATION_ERROR';
+      return "VALIDATION_ERROR";
     default:
-      if (status >= 500) return 'SERVER_ERROR';
-      return 'UNKNOWN';
+      if (status >= 500) return "SERVER_ERROR";
+      return "UNKNOWN";
   }
 }
 
 function toErrorDetail(raw: unknown): ApiErrorDetail | null {
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== "object") {
     return null;
   }
 
   const source = raw as Record<string, unknown>;
 
   // Handle ApplicationException format: { code: number, message: string }
-  if (typeof source.code === 'number' && typeof source.message === 'string' && source.message.trim()) {
+  if (
+    typeof source.code === "number" &&
+    typeof source.message === "string" &&
+    source.message.trim()
+  ) {
     return {
       code: source.code,
       message: source.message.trim(),
-      field: typeof source.field === 'string' && source.field.trim() ? source.field.trim() : undefined,
-      resource: typeof source.resource === 'string' && source.resource.trim() ? source.resource.trim() : undefined,
+      field:
+        typeof source.field === "string" && source.field.trim()
+          ? source.field.trim()
+          : undefined,
+      resource:
+        typeof source.resource === "string" && source.resource.trim()
+          ? source.resource.trim()
+          : undefined,
     };
   }
 
   // Handle plain { message: "..." } format
-  if (typeof source.message === 'string' && source.message.trim()) {
+  if (typeof source.message === "string" && source.message.trim()) {
     return {
-      code: typeof source.code === 'number' ? source.code : undefined,
+      code: typeof source.code === "number" ? source.code : undefined,
       message: source.message.trim(),
     };
   }
@@ -97,7 +107,7 @@ function toErrorDetail(raw: unknown): ApiErrorDetail | null {
 }
 
 function getErrorDetails(payload: unknown): ApiErrorDetail[] {
-  if (!payload || typeof payload !== 'object') {
+  if (!payload || typeof payload !== "object") {
     return [];
   }
 
@@ -112,7 +122,7 @@ function getErrorDetails(payload: unknown): ApiErrorDetail[] {
 }
 
 function getPayloadMessage(payload: unknown): string | null {
-  if (!payload || typeof payload !== 'object') {
+  if (!payload || typeof payload !== "object") {
     return null;
   }
 
@@ -124,20 +134,20 @@ function getPayloadMessage(payload: unknown): string | null {
   // Handle ApiResponse format from backend: { success: false, errors: [{code, message}] }
   if (Array.isArray(body.errors)) {
     for (const item of body.errors) {
-      if (!item || typeof item !== 'object') {
+      if (!item || typeof item !== "object") {
         continue;
       }
       // Support both { message: "..." } and { message: "..." } from ApplicationException
       const itemObj = item as Record<string, unknown>;
       const message = itemObj.message;
-      if (typeof message === 'string' && message.trim()) {
+      if (typeof message === "string" && message.trim()) {
         return message.trim();
       }
     }
   }
 
   // Handle direct { message: "..." } format (non-standard responses)
-  if (typeof body.message === 'string' && body.message.trim()) {
+  if (typeof body.message === "string" && body.message.trim()) {
     return body.message.trim();
   }
 
@@ -151,8 +161,9 @@ export function parseResponseError(
 ): AppError {
   const details = getErrorDetails(payload);
   const payloadMessage = getPayloadMessage(payload);
-  const fallbackStatusMessage = `HTTP ${status}: ${statusText || 'Request failed'}`;
-  const message = details[0]?.message ?? payloadMessage ?? fallbackStatusMessage;
+  const fallbackStatusMessage = `HTTP ${status}: ${statusText || "Request failed"}`;
+  const message =
+    details[0]?.message ?? payloadMessage ?? fallbackStatusMessage;
 
   return new AppError(statusToCode(status), message, status, details);
 }
@@ -167,36 +178,36 @@ export function toAppError(
 
   if (axios.isAxiosError(error)) {
     if (!error.response) {
-      if (error.code === 'ECONNABORTED') {
-        return new AppError('TIMEOUT', DEFAULT_TIMEOUT_MESSAGE);
+      if (error.code === "ECONNABORTED") {
+        return new AppError("TIMEOUT", DEFAULT_TIMEOUT_MESSAGE);
       }
-      if (error.code === 'ERR_CANCELED') {
-        return new AppError('TIMEOUT', DEFAULT_ABORT_MESSAGE);
+      if (error.code === "ERR_CANCELED") {
+        return new AppError("TIMEOUT", DEFAULT_ABORT_MESSAGE);
       }
-      return new AppError('NETWORK_ERROR', DEFAULT_NETWORK_MESSAGE);
+      return new AppError("NETWORK_ERROR", DEFAULT_NETWORK_MESSAGE);
     }
 
     return parseResponseError(
       error.response.status,
-      error.response.statusText ?? '',
+      error.response.statusText ?? "",
       error.response.data,
     );
   }
 
-  if (error instanceof TypeError && error.message === 'Failed to fetch') {
-    return new AppError('NETWORK_ERROR', DEFAULT_NETWORK_MESSAGE);
+  if (error instanceof TypeError && error.message === "Failed to fetch") {
+    return new AppError("NETWORK_ERROR", DEFAULT_NETWORK_MESSAGE);
   }
 
-  if (error instanceof DOMException && error.name === 'AbortError') {
-    return new AppError('TIMEOUT', DEFAULT_ABORT_MESSAGE);
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return new AppError("TIMEOUT", DEFAULT_ABORT_MESSAGE);
   }
 
-  if (error && typeof error === 'object') {
+  if (error && typeof error === "object") {
     const source = error as Record<string, unknown>;
     const details = getErrorDetails(source);
     const messageFromPayload = getPayloadMessage(source);
     const messageFromError =
-      typeof source.message === 'string' && source.message.trim()
+      typeof source.message === "string" && source.message.trim()
         ? source.message.trim()
         : null;
 
@@ -206,19 +217,19 @@ export function toAppError(
       messageFromError ??
       fallbackMessage;
 
-    const status = typeof source.status === 'number' ? source.status : 0;
-    return new AppError('UNKNOWN', message, status, details);
+    const status = typeof source.status === "number" ? source.status : 0;
+    return new AppError("UNKNOWN", message, status, details);
   }
 
   if (error instanceof Error && error.message.trim()) {
-    return new AppError('UNKNOWN', error.message.trim());
+    return new AppError("UNKNOWN", error.message.trim());
   }
 
-  if (typeof error === 'string' && error.trim()) {
-    return new AppError('UNKNOWN', error.trim());
+  if (typeof error === "string" && error.trim()) {
+    return new AppError("UNKNOWN", error.trim());
   }
 
-  return new AppError('UNKNOWN', fallbackMessage || DEFAULT_UNKNOWN_MESSAGE);
+  return new AppError("UNKNOWN", fallbackMessage || DEFAULT_UNKNOWN_MESSAGE);
 }
 
 export function parseErrorForForm(

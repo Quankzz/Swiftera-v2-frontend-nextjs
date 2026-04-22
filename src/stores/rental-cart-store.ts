@@ -1,8 +1,11 @@
-'use client';
+"use client";
 
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { computeVoucherDiscount, type RentalVoucher } from '@/lib/rental-voucher';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  computeVoucherDiscount,
+  type RentalVoucher,
+} from "@/lib/rental-voucher";
 
 export type RentalCartLine = {
   lineId: string;
@@ -20,11 +23,18 @@ export type RentalCartLine = {
   voucher: RentalVoucher | null;
 };
 
-export type RentalCartLineInput = Omit<RentalCartLine, 'lineId'> & { lineId?: string };
+export type RentalCartLineInput = Omit<RentalCartLine, "lineId"> & {
+  lineId?: string;
+};
 
-function lineMergeKey(line: Pick<RentalCartLine, 'productId' | 'variantId' | 'durationId' | 'voucher'>) {
-  const vid = line.voucher?.id ?? '';
-  return `${line.productId}|${line.variantId ?? ''}|${line.durationId}|${vid}`;
+function lineMergeKey(
+  line: Pick<
+    RentalCartLine,
+    "productId" | "variantId" | "durationId" | "voucher"
+  >,
+) {
+  const vid = line.voucher?.id ?? "";
+  return `${line.productId}|${line.variantId ?? ""}|${line.durationId}|${vid}`;
 }
 
 function rentalSubtotal(line: RentalCartLine) {
@@ -79,9 +89,11 @@ export const useRentalCartStore = create<RentalCartState>()(
       lines: [],
 
       addLine: (input) => {
-        const lineId = input.lineId ?? (typeof crypto !== 'undefined' && crypto.randomUUID
-          ? crypto.randomUUID()
-          : `line-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
+        const lineId =
+          input.lineId ??
+          (typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `line-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
 
         const newLine: RentalCartLine = stripInvalidVoucher({
           lineId,
@@ -127,7 +139,9 @@ export const useRentalCartStore = create<RentalCartState>()(
         const q = Math.max(1, Math.floor(quantity) || 1);
         set((state) => ({
           lines: state.lines.map((l) =>
-            l.lineId === lineId ? stripInvalidVoucher({ ...l, quantity: q }) : l
+            l.lineId === lineId
+              ? stripInvalidVoucher({ ...l, quantity: q })
+              : l,
           ),
         }));
       },
@@ -135,22 +149,23 @@ export const useRentalCartStore = create<RentalCartState>()(
       updateLineVoucher: (lineId, voucher) =>
         set((state) => ({
           lines: state.lines.map((l) =>
-            l.lineId === lineId ? stripInvalidVoucher({ ...l, voucher }) : l
+            l.lineId === lineId ? stripInvalidVoucher({ ...l, voucher }) : l,
           ),
         })),
 
       clearCart: () => set({ lines: [] }),
 
-      getTotalQuantity: () => get().lines.reduce((acc, l) => acc + l.quantity, 0),
+      getTotalQuantity: () =>
+        get().lines.reduce((acc, l) => acc + l.quantity, 0),
 
       getTotals: () => computeCartTotals(get().lines),
     }),
     {
-      name: 'swiftera-rental-cart',
+      name: "swiftera-rental-cart",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ lines: state.lines }),
-    }
-  )
+    },
+  ),
 );
 
 /** Tổng tiền thuê của một dòng (trước voucher) */
@@ -182,5 +197,7 @@ export function computeCartTotals(lines: RentalCartLine[]) {
 
 /** Hook tiện dụng: số lượng trong giỏ (reactive) */
 export function useRentalCartQuantity() {
-  return useRentalCartStore((s) => s.lines.reduce((acc, l) => acc + l.quantity, 0));
+  return useRentalCartStore((s) =>
+    s.lines.reduce((acc, l) => acc + l.quantity, 0),
+  );
 }

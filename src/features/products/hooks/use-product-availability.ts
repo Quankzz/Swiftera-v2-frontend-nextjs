@@ -7,13 +7,13 @@
  * KHÔNG CACHE - luôn fetch fresh để đảm bảo stock chính xác nhất có thể.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { productKeys } from '../api/product.keys';
-import { getProductAvailability } from '../api/product.service';
+import { useQuery } from "@tanstack/react-query";
+import { productKeys } from "../api/product.keys";
+import { getProductAvailability } from "../api/product.service";
 import type {
   ProductAvailabilityParams,
   ProductAvailabilityResponse,
-} from '../types';
+} from "../types";
 
 export function useProductAvailabilityQuery(
   productId: string | undefined,

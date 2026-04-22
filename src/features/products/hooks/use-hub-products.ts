@@ -13,9 +13,9 @@
  * Fallback: nếu /products lỗi, vẫn hiển thị tên từ inventory response.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { getProductsByHub } from '../api/product.service';
-import type { ProductResponse } from '../types';
+import { useQuery } from "@tanstack/react-query";
+import { getProductsByHub } from "../api/product.service";
+import type { ProductResponse } from "../types";
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ export interface HubAvailableProductsResult {
 // ─── Query key factory ────────────────────────────────────────────────────────
 
 export const hubProductKeys = {
-  all: ['hub-available-products'] as const,
+  all: ["hub-available-products"] as const,
   byHub: (hubId: string) => [...hubProductKeys.all, hubId] as const,
 };
 
@@ -46,8 +46,8 @@ async function fetchHubAvailableProducts(
   const res = await getProductsByHub(hubId, {
     page: 1,
     size: 50,
-    sort: 'createdAt,desc',
-    filter: 'isActive:true',
+    sort: "createdAt,desc",
+    filter: "isActive:true",
     includeDescendants: false,
   });
 
@@ -75,7 +75,7 @@ export function useHubAvailableProducts(
   enabled = true,
 ) {
   return useQuery<HubAvailableProductsResult>({
-    queryKey: hubProductKeys.byHub(hubId ?? '__none__'),
+    queryKey: hubProductKeys.byHub(hubId ?? "__none__"),
     queryFn: () => fetchHubAvailableProducts(hubId!),
     enabled: !!hubId && enabled,
     staleTime: 60 * 1000,

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   createContext,
@@ -7,20 +7,20 @@ import {
   useState,
   useCallback,
   type ReactNode,
-} from 'react';
+} from "react";
 import type {
   AuthResponse,
   GetMeResponse,
   LoginCredentials,
   RegisterCredentials,
   User as AuthUser,
-} from '@/types/auth';
-import type { UserSecuredResponse } from '@/types/api.types';
-import { authApi } from '@/api/authApi';
-import { normalizeError } from '@/api/apiService';
-import { setLogoutCallback } from '@/api/http';
-import { storageService } from '@/services/storage';
-import { useAuthStore } from '@/stores/auth-store';
+} from "@/types/auth";
+import type { UserSecuredResponse } from "@/types/api.types";
+import { authApi } from "@/api/authApi";
+import { normalizeError } from "@/api/apiService";
+import { setLogoutCallback } from "@/api/http";
+import { storageService } from "@/services/storage";
+import { useAuthStore } from "@/stores/auth-store";
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -45,7 +45,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 function normalizeUserPayload(payload: unknown): AuthUser | null {
-  if (!payload || typeof payload !== 'object') {
+  if (!payload || typeof payload !== "object") {
     return null;
   }
 
@@ -53,10 +53,10 @@ function normalizeUserPayload(payload: unknown): AuthUser | null {
   const id = raw.id ?? raw.userId;
 
   if (
-    typeof id === 'string' &&
-    typeof raw.email === 'string' &&
-    typeof raw.firstName === 'string' &&
-    typeof raw.lastName === 'string'
+    typeof id === "string" &&
+    typeof raw.email === "string" &&
+    typeof raw.firstName === "string" &&
+    typeof raw.lastName === "string"
   ) {
     return {
       id,
@@ -64,19 +64,19 @@ function normalizeUserPayload(payload: unknown): AuthUser | null {
       firstName: raw.firstName,
       lastName: raw.lastName,
       createdAt:
-        typeof raw.createdAt === 'string'
+        typeof raw.createdAt === "string"
           ? raw.createdAt
           : new Date().toISOString(),
       updatedAt:
-        typeof raw.updatedAt === 'string'
+        typeof raw.updatedAt === "string"
           ? raw.updatedAt
           : new Date().toISOString(),
-      createdBy: typeof raw.createdBy === 'string' ? raw.createdBy : 'system',
-      updatedBy: typeof raw.updatedBy === 'string' ? raw.updatedBy : undefined,
+      createdBy: typeof raw.createdBy === "string" ? raw.createdBy : "system",
+      updatedBy: typeof raw.updatedBy === "string" ? raw.updatedBy : undefined,
       rolesSecured: Array.isArray(raw.rolesSecured)
-        ? (raw.rolesSecured as AuthUser['rolesSecured'])
+        ? (raw.rolesSecured as AuthUser["rolesSecured"])
         : [],
-      avatar: typeof raw.avatar === 'string' ? raw.avatar : undefined,
+      avatar: typeof raw.avatar === "string" ? raw.avatar : undefined,
     };
   }
 
@@ -146,12 +146,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (isMounted) {
           const normalizedError = normalizeError(
             error,
-            'Không thể tải thông tin người dùng',
+            "Không thể tải thông tin người dùng",
           );
 
           if (
-            normalizedError.errorCode !== 'NETWORK_ERROR' &&
-            normalizedError.errorCode !== 'TIMEOUT'
+            normalizedError.errorCode !== "NETWORK_ERROR" &&
+            normalizedError.errorCode !== "TIMEOUT"
           ) {
             clearSession();
           }
@@ -177,14 +177,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = response?.data;
 
       if (!result?.success) {
-        throw new Error(result?.message || 'Đăng nhập thất bại');
+        throw new Error(result?.message || "Đăng nhập thất bại");
       }
 
       const accessToken = result.data?.accessToken;
       const currentUser = normalizeUserPayload(result.data?.userSecured);
 
       if (!accessToken || !currentUser) {
-        throw new Error('Không nhận được thông tin người dùng');
+        throw new Error("Không nhận được thông tin người dùng");
       }
 
       storageService.setAccessToken(accessToken);
@@ -200,7 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return result;
     } catch (error) {
-      throw normalizeError(error, 'Đăng nhập thất bại');
+      throw normalizeError(error, "Đăng nhập thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -213,12 +213,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = response.data as AuthResponse;
 
       if (!result?.success) {
-        throw new Error(result?.message || 'Đăng ký thất bại');
+        throw new Error(result?.message || "Đăng ký thất bại");
       }
 
       return result;
     } catch (error) {
-      throw normalizeError(error, 'Đăng ký thất bại');
+      throw normalizeError(error, "Đăng ký thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -232,13 +232,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!result?.success) {
         throw new Error(
-          result?.message || 'Không thể gửi yêu cầu đặt lại mật khẩu',
+          result?.message || "Không thể gửi yêu cầu đặt lại mật khẩu",
         );
       }
 
       return result;
     } catch (error) {
-      throw normalizeError(error, 'Không thể gửi yêu cầu đặt lại mật khẩu');
+      throw normalizeError(error, "Không thể gửi yêu cầu đặt lại mật khẩu");
     } finally {
       setIsLoading(false);
     }
@@ -256,12 +256,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const result = response.data as AuthResponse;
 
         if (!result?.success) {
-          throw new Error(result?.message || 'Không thể đặt lại mật khẩu');
+          throw new Error(result?.message || "Không thể đặt lại mật khẩu");
         }
 
         return result;
       } catch (error) {
-        throw normalizeError(error, 'Không thể đặt lại mật khẩu');
+        throw normalizeError(error, "Không thể đặt lại mật khẩu");
       } finally {
         setIsLoading(false);
       }
@@ -277,12 +277,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const result = response.data as AuthResponse;
 
         if (!result?.success) {
-          throw new Error(result?.message || 'Không thể xác thực email');
+          throw new Error(result?.message || "Không thể xác thực email");
         }
 
         return result;
       } catch (error) {
-        throw normalizeError(error, 'Không thể xác thực email');
+        throw normalizeError(error, "Không thể xác thực email");
       } finally {
         setIsLoading(false);
       }
@@ -297,12 +297,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = response.data as AuthResponse;
 
       if (!result?.success) {
-        throw new Error(result?.message || 'Gửi lại email thất bại');
+        throw new Error(result?.message || "Gửi lại email thất bại");
       }
 
       return result;
     } catch (error) {
-      throw normalizeError(error, 'Gửi lại email thất bại');
+      throw normalizeError(error, "Gửi lại email thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -341,7 +341,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

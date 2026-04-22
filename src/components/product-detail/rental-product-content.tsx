@@ -1,11 +1,9 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { sanitizeRichHtml } from '@/lib/sanitize-rich-html';
-import { cn } from '@/lib/utils';
-
-/* ---------- Mô tả (mở rộng) ---------- */
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { sanitizeRichHtml } from "@/lib/sanitize-rich-html";
+import { cn } from "@/lib/utils";
 
 interface RentalProductDescriptionProps {
   text: string;
@@ -22,34 +20,32 @@ export function RentalProductDescription({
   const safeHtml = useMemo(() => sanitizeRichHtml(text), [text]);
 
   return (
-    <div className={cn('relative font-sans', className)}>
+    <div className={cn("relative font-sans", className)}>
       <div
         className={cn(
-          'rich-content prose prose-sm prose-neutral max-w-none text-foreground transition-all duration-300 sm:prose-base dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground',
-          !isExpanded && 'overflow-hidden',
+          "rich-content prose prose-sm prose-neutral max-w-none text-foreground transition-all duration-300 sm:prose-base dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-muted-foreground prose-strong:text-foreground",
+          !isExpanded && "overflow-hidden",
         )}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
         style={{
           maxHeight: !isExpanded ? `${maxHeight}px` : undefined,
           WebkitMaskImage: !isExpanded
-            ? 'linear-gradient(to bottom, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0) 100%)'
-            : 'none',
+            ? "linear-gradient(to bottom, rgba(0, 0, 0, 1) 60%, rgba(0, 0, 0, 0) 100%)"
+            : "none",
         }}
       />
-      <div className='flex justify-center mt-4'>
+      <div className="flex justify-center mt-4">
         <Button
-          variant='ghost'
-          className='flex items-center justify-center font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
+          variant="ghost"
+          className="flex items-center justify-center font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+          {isExpanded ? "Thu gọn" : "Xem thêm"}
         </Button>
       </div>
     </div>
   );
 }
-
-/* ---------- Thông số ---------- */
 
 export interface RentalSpecificationRow {
   label: string;
@@ -61,37 +57,37 @@ interface RentalSpecificationsProps {
 }
 
 const defaultSpecifications: RentalSpecificationRow[] = [
-  { label: 'Thương hiệu', value: 'Sony' },
-  { label: 'Model', value: 'PlayStation 5 Slim' },
-  { label: 'Tình trạng', value: 'Mới 99% - Đầy đủ phụ kiện' },
-  { label: 'Bảo hành', value: 'Hỗ trợ đổi máy trong 24h nếu lỗi' },
+  { label: "Thương hiệu", value: "Sony" },
+  { label: "Model", value: "PlayStation 5 Slim" },
+  { label: "Tình trạng", value: "Mới 99% - Đầy đủ phụ kiện" },
+  { label: "Bảo hành", value: "Hỗ trợ đổi máy trong 24h nếu lỗi" },
   {
-    label: 'Phụ kiện kèm theo',
-    value: '1 Tay cầm, Dây HDMI, Dây nguồn, Hộp đựng',
+    label: "Phụ kiện kèm theo",
+    value: "1 Tay cầm, Dây HDMI, Dây nguồn, Hộp đựng",
   },
-  { label: 'Tiền cọc', value: '2,000,000₫ (hoàn trả khi trả máy)' },
-  { label: 'Khu vực cho thuê', value: 'TP.HCM, Hà Nội' },
-  { label: 'Giao hàng', value: 'Giao tận nơi hoặc nhận tại cửa hàng' },
+  { label: "Tiền cọc", value: "2,000,000₫ (hoàn trả khi trả máy)" },
+  { label: "Khu vực cho thuê", value: "TP.HCM, Hà Nội" },
+  { label: "Giao hàng", value: "Giao tận nơi hoặc nhận tại cửa hàng" },
 ];
 
 export function RentalSpecifications({
   specifications = defaultSpecifications,
 }: RentalSpecificationsProps) {
   return (
-    <div className='rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5'>
-      <h2 className='mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg'>
+    <div className="rounded-xl border border-border/60 bg-card p-4 font-sans ambient-glow sm:p-5">
+      <h2 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">
         Thông tin chi tiết
       </h2>
-      <div className='divide-y divide-border'>
+      <div className="divide-y divide-border">
         {specifications.map((spec, index) => (
           <div
             key={index}
-            className='grid grid-cols-1 gap-1 py-3 sm:grid-cols-3 sm:gap-4 sm:py-3.5'
+            className="grid grid-cols-1 gap-1 py-3 sm:grid-cols-3 sm:gap-4 sm:py-3.5"
           >
-            <dt className='text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal'>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal">
               {spec.label}
             </dt>
-            <dd className='text-sm font-medium leading-snug text-foreground sm:col-span-2'>
+            <dd className="text-sm font-medium leading-snug text-foreground sm:col-span-2">
               {spec.value}
             </dd>
           </div>

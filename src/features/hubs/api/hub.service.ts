@@ -6,8 +6,8 @@
  * Service chỉ nhận payload đúng format API, không chứa UI logic.
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse, PaginationResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import type { ApiResponse, PaginationResponse } from "@/types/api.types";
 import type {
   HubResponse,
   HubStaffResponse,
@@ -16,9 +16,9 @@ import type {
   CreateHubInput,
   UpdateHubInput,
   HubListParams,
-} from '../types';
-import type { ProductResponse } from '@/features/products/types';
-import type { InventoryItemResponse } from '@/features/products/types';
+} from "../types";
+import type { ProductResponse } from "@/features/products/types";
+import type { InventoryItemResponse } from "@/features/products/types";
 
 const authOpts = { requireToken: true as const };
 
@@ -38,7 +38,7 @@ export async function getHubsList(
   params?: HubListParams,
 ): Promise<PaginatedHubsResponse> {
   const res = await httpService.get<ApiResponse<PaginatedHubsResponse>>(
-    '/hubs',
+    "/hubs",
     { params },
   );
   return res.data.data!;
@@ -66,7 +66,7 @@ export async function getHubById(hubId: string): Promise<HubResponse> {
  */
 export async function createHub(payload: CreateHubInput): Promise<HubResponse> {
   const res = await httpService.post<ApiResponse<HubResponse>>(
-    '/hubs',
+    "/hubs",
     payload,
     authOpts,
   );
@@ -130,10 +130,9 @@ export async function getHubProducts(
   hubId: string,
   params?: { page?: number; size?: number; filter?: string; sort?: string },
 ): Promise<PaginationResponse<ProductResponse>> {
-  const res = await httpService.get<ApiResponse<PaginationResponse<ProductResponse>>>(
-    `/hubs/${hubId}/products`,
-    { ...authOpts, params },
-  );
+  const res = await httpService.get<
+    ApiResponse<PaginationResponse<ProductResponse>>
+  >(`/hubs/${hubId}/products`, { ...authOpts, params });
   return res.data.data!;
 }
 
@@ -146,10 +145,9 @@ export async function getHubInventoryItems(
   hubId: string,
   params?: { page?: number; size?: number; filter?: string; sort?: string },
 ): Promise<PaginationResponse<InventoryItemResponse>> {
-  const res = await httpService.get<ApiResponse<PaginationResponse<InventoryItemResponse>>>(
-    `/hubs/${hubId}/inventory-items`,
-    { ...authOpts, params },
-  );
+  const res = await httpService.get<
+    ApiResponse<PaginationResponse<InventoryItemResponse>>
+  >(`/hubs/${hubId}/inventory-items`, { ...authOpts, params });
   return res.data.data!;
 }
 

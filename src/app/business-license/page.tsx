@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { Layout } from '@/components/Layout';
+import Link from "next/link";
+import { Layout } from "@/components/Layout";
 import {
   Building2,
   MapPin,
@@ -7,7 +7,7 @@ import {
   Send,
   Mail,
   ArrowRight,
-} from 'lucide-react';
+} from "lucide-react";
 
 function InfoRow({
   label,
@@ -23,7 +23,7 @@ function InfoRow({
       <span className="text-sm text-muted-foreground">{label}</span>
       <span
         className={`text-right text-sm font-semibold ${
-          pending ? 'text-muted-foreground italic' : 'text-foreground'
+          pending ? "text-muted-foreground italic" : "text-foreground"
         }`}
       >
         {value}
@@ -37,7 +37,6 @@ export default function BusinessLicensePage() {
     <Layout stickyHeader>
       <main className="bg-background pb-16 pt-10">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
-
           {/* Hero Header */}
           <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10">
             {/* Ambient glow */}
@@ -52,16 +51,15 @@ export default function BusinessLicensePage() {
                 Giấy phép kinh doanh Swiftera
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Thông tin pháp lý cơ bản của Swiftera, nền tảng cho thuê thiết bị công
-                nghệ. Dữ liệu bên dưới đang trong quá trình cập nhật định kỳ theo quy
-                định pháp luật hiện hành.
+                Thông tin pháp lý cơ bản của Swiftera, nền tảng cho thuê thiết
+                bị công nghệ. Dữ liệu bên dưới đang trong quá trình cập nhật
+                định kỳ theo quy định pháp luật hiện hành.
               </p>
             </div>
           </section>
 
           {/* License Info Grid */}
           <section className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-
             {/* Business Info Card */}
             <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm dark:bg-card/80">
               <div className="mb-5 flex items-center gap-3">
@@ -69,16 +67,26 @@ export default function BusinessLicensePage() {
                   <Building2 className="size-6 text-blue-500" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-foreground">Thông tin doanh nghiệp</h2>
-                  <p className="text-xs text-muted-foreground">Đăng ký kinh doanh hợp lệ</p>
+                  <h2 className="text-lg font-bold text-foreground">
+                    Thông tin doanh nghiệp
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Đăng ký kinh doanh hợp lệ
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <InfoRow label="Tên doanh nghiệp" value="Công ty TNHH Swiftera" />
+                <InfoRow
+                  label="Tên doanh nghiệp"
+                  value="Công ty TNHH Swiftera"
+                />
                 <InfoRow label="Tên giao dịch" value="Swiftera" />
                 <InfoRow label="Mã số thuế" value="0xxxxxxxxx" pending />
-                <InfoRow label="Lĩnh vực" value="Nền tảng cho thuê thiết bị công nghệ" />
+                <InfoRow
+                  label="Lĩnh vực"
+                  value="Nền tảng cho thuê thiết bị công nghệ"
+                />
                 <InfoRow label="Ngày cấp phép" value="Đang cập nhật" pending />
               </div>
             </div>
@@ -90,8 +98,12 @@ export default function BusinessLicensePage() {
                   <FileText className="size-6 text-blue-500" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-foreground">Đại diện pháp lý</h2>
-                  <p className="text-xs text-muted-foreground">Theo hồ sơ đăng ký doanh nghiệp</p>
+                  <h2 className="text-lg font-bold text-foreground">
+                    Đại diện pháp lý
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Theo hồ sơ đăng ký doanh nghiệp
+                  </p>
                 </div>
               </div>
 
@@ -99,10 +111,12 @@ export default function BusinessLicensePage() {
                 <InfoRow label="Người đại diện" value="Đang cập nhật" pending />
                 <InfoRow label="Chức vụ" value="Đang cập nhật" pending />
                 <InfoRow label="Số CCCD" value="Đang cập nhật" pending />
-                <InfoRow label="Địa chỉ trụ sở" value="Thành phố Hồ Chí Minh, Việt Nam" />
+                <InfoRow
+                  label="Địa chỉ trụ sở"
+                  value="Thành phố Hồ Chí Minh, Việt Nam"
+                />
               </div>
             </div>
-
           </section>
 
           {/* Address Section */}
@@ -111,11 +125,13 @@ export default function BusinessLicensePage() {
               <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10">
                 <MapPin className="size-5 text-blue-500" />
               </div>
-              <h2 className="text-base font-bold text-foreground">Địa chỉ trụ sở</h2>
+              <h2 className="text-base font-bold text-foreground">
+                Địa chỉ trụ sở
+              </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              Thành phố Hồ Chí Minh, Việt Nam. Thông tin chi tiết sẽ được cập nhật sau khi
-              hoàn tất thủ tục pháp lý.
+              Thành phố Hồ Chí Minh, Việt Nam. Thông tin chi tiết sẽ được cập
+              nhật sau khi hoàn tất thủ tục pháp lý.
             </p>
           </section>
 
@@ -125,11 +141,14 @@ export default function BusinessLicensePage() {
               <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500/10">
                 <Send className="size-5 text-blue-500" />
               </div>
-              <h2 className="text-base font-bold text-foreground">Yêu cầu chứng từ từ đối tác</h2>
+              <h2 className="text-base font-bold text-foreground">
+                Yêu cầu chứng từ từ đối tác
+              </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              Đối tác có thể gửi yêu cầu qua email kinh doanh để được hỗ trợ bộ chứng từ
-              phù hợp với phạm vi hợp tác và quy định pháp luật hiện hành.
+              Đối tác có thể gửi yêu cầu qua email kinh doanh để được hỗ trợ bộ
+              chứng từ phù hợp với phạm vi hợp tác và quy định pháp luật hiện
+              hành.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a
@@ -148,10 +167,11 @@ export default function BusinessLicensePage() {
           {/* Disclaimer */}
           <section className="mt-6 rounded-2xl border border-border/60 bg-muted/20 p-6">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Thông tin trên là bản tóm tắt để tham chiếu nhanh. Khi cần hồ sơ đầy đủ
-              phục vụ ký kết hợp đồng hoặc đối soát pháp lý, vui lòng liên hệ bộ phận
-              kinh doanh qua email sales@swiftera.vn. Swiftera cam kết tuân thủ các quy định
-              pháp luật hiện hành về kinh doanh và bảo vệ quyền lợi khách hàng.
+              Thông tin trên là bản tóm tắt để tham chiếu nhanh. Khi cần hồ sơ
+              đầy đủ phục vụ ký kết hợp đồng hoặc đối soát pháp lý, vui lòng
+              liên hệ bộ phận kinh doanh qua email sales@swiftera.vn. Swiftera
+              cam kết tuân thủ các quy định pháp luật hiện hành về kinh doanh và
+              bảo vệ quyền lợi khách hàng.
             </p>
           </section>
 
@@ -190,7 +210,6 @@ export default function BusinessLicensePage() {
               </Link>
             </div>
           </section>
-
         </div>
       </main>
     </Layout>

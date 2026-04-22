@@ -1,8 +1,8 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { AppSidebar } from '@/components/dashboard-staff/app-sidebar';
-import { SiteHeader } from '@/components/dashboard-staff/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { AppSidebar } from "@/components/dashboard-staff/app-sidebar";
+import { SiteHeader } from "@/components/dashboard-staff/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function DashboardStaffLayout({
   children,
@@ -14,7 +14,7 @@ export default function DashboardStaffLayout({
       <AppSidebar />
       <SidebarInset>
         <SiteHeader />
-        <main className='flex flex-1 flex-col'>{children}</main>
+        <main className="flex flex-1 flex-col">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

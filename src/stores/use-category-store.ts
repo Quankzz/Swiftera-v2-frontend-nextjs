@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { categories as initialData } from '@/data/categories';
-import type { Category, CategoryTree } from '@/types/catalog';
+import { create } from "zustand";
+import { categories as initialData } from "@/data/categories";
+import type { Category, CategoryTree } from "@/types/catalog";
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
@@ -35,12 +35,12 @@ export function buildTree(flat: Category[]): CategoryTree[] {
 export function generateSlug(name: string): string {
   return name
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9\s-]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9\s-]/g, "")
     .trim()
-    .replace(/\s+/g, '-');
+    .replace(/\s+/g, "-");
 }
 
 function generateId(): string {

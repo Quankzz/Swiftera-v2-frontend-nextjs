@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Warehouse,
   Truck,
@@ -10,21 +10,21 @@ import {
   Loader2,
   Info,
   Navigation2,
-} from 'lucide-react';
-import axios from 'axios';
-import '@goongmaps/goong-js/dist/goong-js.css';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import axios from "axios";
+import "@goongmaps/goong-js/dist/goong-js.css";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type {
   RentalOrderResponse,
   RentalOrderLineResponse,
-} from '@/types/api.types';
-import { apiKey } from '@/configs/goongmapKeys';
-import { WorkflowBanner } from '../WorkflowBanner';
-import { MiniMapPanel } from '../MiniMapPanel';
-import { CustomerInfo, OrderMetaCard, OrderItemsList } from '../OrderInfo';
-import { CameraCapture } from '../CameraCapture';
-import { DeliveryMiniMap } from '../DeliveryMiniMap';
+} from "@/types/api.types";
+import { apiKey } from "@/configs/goongmapKeys";
+import { WorkflowBanner } from "../WorkflowBanner";
+import { MiniMapPanel } from "../MiniMapPanel";
+import { CustomerInfo, OrderMetaCard, OrderItemsList } from "../OrderInfo";
+import { CameraCapture } from "../CameraCapture";
+import { DeliveryMiniMap } from "../DeliveryMiniMap";
 
 function ItemPickupCard({
   line,
@@ -41,19 +41,19 @@ function ItemPickupCard({
   return (
     <div
       className={cn(
-        'rounded-xl border p-3 transition-all',
+        "rounded-xl border p-3 transition-all",
         hasPhoto
-          ? 'border-emerald-300/50 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-800/30'
-          : 'border-border bg-card',
+          ? "border-emerald-300/50 bg-emerald-50/50 dark:bg-emerald-950/10 dark:border-emerald-800/30"
+          : "border-border bg-card",
       )}
     >
       <div className="flex items-center gap-3 mb-3">
         <div
           className={cn(
-            'size-10 shrink-0 rounded-xl flex items-center justify-center transition-colors shadow-sm',
+            "size-10 shrink-0 rounded-xl flex items-center justify-center transition-colors shadow-sm",
             hasPhoto
-              ? 'bg-emerald-500 text-white'
-              : 'bg-muted border border-border',
+              ? "bg-emerald-500 text-white"
+              : "bg-muted border border-border",
           )}
         >
           {hasPhoto ? (
@@ -67,7 +67,7 @@ function ItemPickupCard({
             {line.productNameSnapshot}
           </p>
           <p className="text-[10px] text-muted-foreground font-mono mt-0.5 bg-muted px-1.5 py-0.5 rounded inline-block">
-            {line.inventorySerialNumber || '—'}
+            {line.inventorySerialNumber || "—"}
           </p>
         </div>
         {hasPhoto && (
@@ -136,7 +136,7 @@ export function RepairingWorkflow({
     order.hubCity,
   ]
     .filter(Boolean)
-    .join(', ');
+    .join(", ");
 
   // Geocode hub address if coordinates not available
   const [geocodedHubLat, setGeocodedHubLat] = useState<number | undefined>(
@@ -194,7 +194,7 @@ export function RepairingWorkflow({
               destLat={effectiveHubLat ?? undefined}
               destLng={effectiveHubLng ?? undefined}
               destAddress={hubAddressFull || undefined}
-              destLabel={order.hubName ?? 'Hub'}
+              destLabel={order.hubName ?? "Hub"}
               destPinColor="green"
               staffLat={staffLat}
               staffLng={staffLng}
@@ -223,10 +223,10 @@ export function RepairingWorkflow({
               </span>
               <span
                 className={cn(
-                  'ml-auto text-[12px] font-black tabular-nums',
+                  "ml-auto text-[12px] font-black tabular-nums",
                   allPhotographed
-                    ? 'text-emerald-600'
-                    : 'text-muted-foreground',
+                    ? "text-emerald-600"
+                    : "text-muted-foreground",
                 )}
               >
                 {itemsDone}/{total}
@@ -236,8 +236,8 @@ export function RepairingWorkflow({
               <div className="h-2.5 rounded-full bg-muted overflow-hidden">
                 <div
                   className={cn(
-                    'h-full rounded-full transition-all duration-500',
-                    allPhotographed ? 'bg-emerald-500' : 'bg-blue-600',
+                    "h-full rounded-full transition-all duration-500",
+                    allPhotographed ? "bg-emerald-500" : "bg-blue-600",
                   )}
                   style={{
                     width: `${total > 0 ? (itemsDone / total) * 100 : 0}%`,
@@ -298,7 +298,7 @@ export function RepairingWorkflow({
             staffLng={staffLng}
             staffLocAt={staffLocAt}
             destPinColor="green"
-            destLabel={order.hubName ?? 'Hub'}
+            destLabel={order.hubName ?? "Hub"}
           />
         </div>
       </div>
@@ -314,10 +314,10 @@ export function RepairingWorkflow({
               </span>
             ) : (
               <>
-                Còn{' '}
+                Còn{" "}
                 <span className="font-semibold text-blue-600 dark:text-blue-400">
                   {total - itemsDone}
-                </span>{' '}
+                </span>{" "}
                 thiết bị chưa được chụp ảnh.
               </>
             )}
@@ -326,10 +326,10 @@ export function RepairingWorkflow({
             onClick={onStartDelivery}
             disabled={!allPhotographed || loading}
             className={cn(
-              'h-10 rounded-lg px-5 text-[13px] font-medium w-full sm:w-auto',
+              "h-10 rounded-lg px-5 text-[13px] font-medium w-full sm:w-auto",
               allPhotographed
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-muted text-muted-foreground cursor-not-allowed',
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-muted text-muted-foreground cursor-not-allowed",
             )}
           >
             {loading ? (

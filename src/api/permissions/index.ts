@@ -4,59 +4,59 @@ import {
   Permission,
   PermissionListParams,
   UpdatePermissionInput,
-} from '@/types/dashboard';
-import { fetchApi } from '../apiService';
+} from "@/types/dashboard";
+import { fetchApi } from "../apiService";
 
-type DataMode = 'mock' | 'api';
-const DATA_MODE = (process.env.NEXT_PUBLIC_DATA_MODE as DataMode) || 'mock';
-const USE_MOCK = DATA_MODE === 'mock';
+type DataMode = "mock" | "api";
+const DATA_MODE = (process.env.NEXT_PUBLIC_DATA_MODE as DataMode) || "mock";
+const USE_MOCK = DATA_MODE === "mock";
 
 let mockPermissions: Permission[] = [
   {
-    permissionId: 'p1',
-    name: 'Xem người dùng',
-    apiPath: '/api/v1/users',
-    method: 'GET',
-    module: 'Users',
+    permissionId: "p1",
+    name: "Xem người dùng",
+    apiPath: "/api/v1/users",
+    method: "GET",
+    module: "Users",
   },
   {
-    permissionId: 'p2',
-    name: 'Tạo người dùng',
-    apiPath: '/api/v1/users',
-    method: 'POST',
-    module: 'Users',
+    permissionId: "p2",
+    name: "Tạo người dùng",
+    apiPath: "/api/v1/users",
+    method: "POST",
+    module: "Users",
   },
   {
-    permissionId: 'p3',
-    name: 'Sửa người dùng',
-    apiPath: '/api/v1/users/:id',
-    method: 'PATCH',
-    module: 'Users',
+    permissionId: "p3",
+    name: "Sửa người dùng",
+    apiPath: "/api/v1/users/:id",
+    method: "PATCH",
+    module: "Users",
   },
   {
-    permissionId: 'p4',
-    name: 'Xem vai trò',
-    apiPath: '/api/v1/roles',
-    method: 'GET',
-    module: 'Roles',
+    permissionId: "p4",
+    name: "Xem vai trò",
+    apiPath: "/api/v1/roles",
+    method: "GET",
+    module: "Roles",
   },
   {
-    permissionId: 'p5',
-    name: 'Phân quyền',
-    apiPath: '/api/v1/roles/assign',
-    method: 'POST',
-    module: 'Roles',
+    permissionId: "p5",
+    name: "Phân quyền",
+    apiPath: "/api/v1/roles/assign",
+    method: "POST",
+    module: "Roles",
   },
   {
-    permissionId: 'p6',
-    name: 'Xuất báo cáo',
-    apiPath: '/api/v1/reports',
-    method: 'GET',
-    module: 'Reports',
+    permissionId: "p6",
+    name: "Xuất báo cáo",
+    apiPath: "/api/v1/reports",
+    method: "GET",
+    module: "Reports",
   },
 ];
 
-const mockModules: string[] = ['Users', 'Roles', 'Products', 'Reports'];
+const mockModules: string[] = ["Users", "Roles", "Products", "Reports"];
 
 const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -116,7 +116,7 @@ const mockPermissionsRepository: PermissionsRepository = {
   async get(permissionId) {
     await delay();
     const found = mockPermissions.find((p) => p.permissionId === permissionId);
-    if (!found) throw new Error('Không tìm thấy quyền');
+    if (!found) throw new Error("Không tìm thấy quyền");
     return found;
   },
 
@@ -141,7 +141,7 @@ const mockPermissionsRepository: PermissionsRepository = {
     const existing = mockPermissions.find(
       (p) => p.permissionId === permissionId,
     );
-    if (!existing) throw new Error('Không tìm thấy quyền');
+    if (!existing) throw new Error("Không tìm thấy quyền");
 
     const updated: Permission = {
       ...existing,
@@ -213,7 +213,7 @@ const mockPermissionsRepository: PermissionsRepository = {
     if (idx !== -1) mockModules.splice(idx, 1);
     // Move orphaned permissions to 'Chưa phân loại'
     mockPermissions = mockPermissions.map((p) =>
-      p.module === name ? { ...p, module: 'Chưa phân loại' } : p,
+      p.module === name ? { ...p, module: "Chưa phân loại" } : p,
     );
     return { success: true };
   },
@@ -225,11 +225,11 @@ const apiPermissionsRepository: PermissionsRepository = {
     const limit = params.limit ?? 100;
     const search = params.search
       ? `&search=${encodeURIComponent(params.search)}`
-      : '';
+      : "";
     const moduleFilter = params.module
       ? `&module=${encodeURIComponent(params.module)}`
-      : '';
-    const methodFilter = params.method ? `&method=${params.method}` : '';
+      : "";
+    const methodFilter = params.method ? `&method=${params.method}` : "";
 
     return fetchApi<PaginatedResponse<Permission>>(
       `/permissions?page=${page}&limit=${limit}${search}${moduleFilter}${methodFilter}`,
@@ -242,27 +242,27 @@ const apiPermissionsRepository: PermissionsRepository = {
 
   async create(payload) {
     return fetchApi<Permission>(`/permissions`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(payload),
     });
   },
 
   async update(permissionId, payload) {
     return fetchApi<Permission>(`/permissions/${permissionId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(payload),
     });
   },
 
   async remove(permissionId) {
     return fetchApi<{ success: boolean }>(`/permissions/${permissionId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   },
 
   async updateModule(permissionId, module) {
     return fetchApi<boolean>(`/permissions/${permissionId}/module`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify({ module }),
     });
   },
@@ -273,7 +273,7 @@ const apiPermissionsRepository: PermissionsRepository = {
 
   async createModule(name) {
     return fetchApi<string>(`/permissions/modules`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify({ name }),
     });
   },
@@ -282,7 +282,7 @@ const apiPermissionsRepository: PermissionsRepository = {
     return fetchApi<string>(
       `/permissions/modules/${encodeURIComponent(oldName)}`,
       {
-        method: 'PUT',
+        method: "PUT",
         body: JSON.stringify({ name: newName }),
       },
     );
@@ -291,7 +291,7 @@ const apiPermissionsRepository: PermissionsRepository = {
   async deleteModule(name) {
     return fetchApi<{ success: boolean }>(
       `/permissions/modules/${encodeURIComponent(name)}`,
-      { method: 'DELETE' },
+      { method: "DELETE" },
     );
   },
 };

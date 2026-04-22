@@ -5,13 +5,13 @@
  * Không chứa UI logic - chỉ trả về raw data.
  */
 
-import { httpService } from '@/api/http';
+import { httpService } from "@/api/http";
 import type {
   PaymentTransactionSingleResponse,
   PaymentTransactionListResponse,
   PaymentInitiateResponse,
   PaymentTransactionResponse,
-} from '@/api/payment';
+} from "@/api/payment";
 
 const authOpts = { requireToken: true as const };
 
@@ -56,7 +56,7 @@ export async function getPaymentsList(params?: {
   sort?: string;
 }): Promise<NormalizedPaginatedTransactions> {
   const res = await httpService.get<PaymentTransactionListResponse>(
-    '/payments',
+    "/payments",
     { ...authOpts, params },
   );
 
@@ -108,9 +108,9 @@ export async function getPaymentsByRentalOrder(
 export async function initiatePayment(
   input: string | InitiatePaymentInput,
 ): Promise<string> {
-  const rentalOrderId = typeof input === 'string' ? input : input.rentalOrderId;
+  const rentalOrderId = typeof input === "string" ? input : input.rentalOrderId;
   const additionalRentalDays =
-    typeof input === 'string' ? undefined : input.additionalRentalDays;
+    typeof input === "string" ? undefined : input.additionalRentalDays;
 
   const res = await httpService.post<PaymentInitiateResponse>(
     `/payments/${rentalOrderId}/initiate`,
@@ -118,7 +118,7 @@ export async function initiatePayment(
     {
       ...authOpts,
       params:
-        typeof additionalRentalDays === 'number'
+        typeof additionalRentalDays === "number"
           ? { additionalRentalDays }
           : undefined,
     },
@@ -130,7 +130,7 @@ export async function initiatePaymentBatch(
   orderIds: string[],
 ): Promise<string> {
   const res = await httpService.post<PaymentInitiateResponse>(
-    '/payments/initiate-batch',
+    "/payments/initiate-batch",
     { orderIds },
     authOpts,
   );

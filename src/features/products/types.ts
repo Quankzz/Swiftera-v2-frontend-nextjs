@@ -226,14 +226,14 @@ export interface ProductListParams {
 // Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md
 
 export type InventoryItemStatus =
-  | 'AVAILABLE'
-  | 'RESERVED'
-  | 'RENTED'
-  | 'MAINTENANCE'
-  | 'DAMAGED'
-  | 'RETIRED';
+  | "AVAILABLE"
+  | "RESERVED"
+  | "RENTED"
+  | "MAINTENANCE"
+  | "DAMAGED"
+  | "RETIRED";
 
-export type InventoryItemConditionGrade = 'NEW' | 'GOOD' | 'FAIR' | 'POOR';
+export type InventoryItemConditionGrade = "NEW" | "GOOD" | "FAIR" | "POOR";
 
 /** Response shape from API-057 / API-058 / API-059 / API-060 */
 export interface InventoryItemResponse {

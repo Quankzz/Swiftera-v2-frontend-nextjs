@@ -1,6 +1,10 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from "lucide-react"
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MoreHorizontalIcon,
+} from "lucide-react";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -10,20 +14,23 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
     />
-  )
+  );
 }
 
-function PaginationContent({ className, ...props }: React.ComponentProps<"ul">) {
+function PaginationContent({
+  className,
+  ...props
+}: React.ComponentProps<"ul">) {
   return (
     <ul
       className={cn("flex flex-row items-center gap-1", className)}
       {...props}
     />
-  )
+  );
 }
 
 function PaginationItem({ className, ...props }: React.ComponentProps<"li">) {
-  return <li className={cn("", className)} {...props} />
+  return <li className={cn("", className)} {...props} />;
 }
 
 function PaginationLink({
@@ -37,14 +44,15 @@ function PaginationLink({
       aria-current={isActive ? "page" : undefined}
       className={cn(
         "inline-flex h-9 min-w-9 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isActive && "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
-        className
+        isActive &&
+          "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
+        className,
       )}
       {...props}
     >
       {children}
     </button>
-  )
+  );
 }
 
 function PaginationPrevious({
@@ -56,14 +64,14 @@ function PaginationPrevious({
       aria-label="Go to previous page"
       className={cn(
         "inline-flex h-9 items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-        className
+        className,
       )}
       {...props}
     >
       <ChevronLeftIcon className="h-4 w-4" />
       <span>Trước</span>
     </button>
-  )
+  );
 }
 
 function PaginationNext({
@@ -75,14 +83,14 @@ function PaginationNext({
       aria-label="Go to next page"
       className={cn(
         "inline-flex h-9 items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-        className
+        className,
       )}
       {...props}
     >
       <span>Sau</span>
       <ChevronRightIcon className="h-4 w-4" />
     </button>
-  )
+  );
 }
 
 function PaginationEllipsis({
@@ -97,7 +105,7 @@ function PaginationEllipsis({
     >
       <MoreHorizontalIcon className="h-4 w-4" />
     </span>
-  )
+  );
 }
 
 export {
@@ -108,4 +116,4 @@ export {
   PaginationPrevious,
   PaginationNext,
   PaginationEllipsis,
-}
+};

@@ -1,10 +1,10 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import type {
   Hub,
   HubWithDistance,
   UserLocation,
   RouteInfo,
-} from '@/types/map.types';
+} from "@/types/map.types";
 
 interface MapState {
   isMapReady: boolean;
@@ -35,15 +35,15 @@ interface MapState {
   setStartAddress: (address: string) => void;
   endAddress: string;
   setEndAddress: (address: string) => void;
-  currentLocationUsage: 'start' | 'end' | null;
-  setCurrentLocationUsage: (usage: 'start' | 'end' | null) => void;
+  currentLocationUsage: "start" | "end" | null;
+  setCurrentLocationUsage: (usage: "start" | "end" | null) => void;
   swapAddresses: () => void;
 
   // Sidebar UI
   isSidebarOpen: boolean;
   setIsSidebarOpen: (open: boolean) => void;
-  activeTab: 'search' | 'direction';
-  setActiveTab: (tab: 'search' | 'direction') => void;
+  activeTab: "search" | "direction";
+  setActiveTab: (tab: "search" | "direction") => void;
 
   // Route options
   maxRoutes: 1 | 2 | 3;
@@ -91,19 +91,19 @@ export const useMapStore = create<MapState>((set, get) => ({
   openHubModal: (hub) => set({ selectedHub: hub, isHubModalOpen: true }),
   closeHubModal: () => set({ isHubModalOpen: false, selectedHub: null }),
 
-  startAddress: '',
+  startAddress: "",
   setStartAddress: (address) => set({ startAddress: address }),
-  endAddress: '',
+  endAddress: "",
   setEndAddress: (address) => set({ endAddress: address }),
   currentLocationUsage: null,
   setCurrentLocationUsage: (usage) => set({ currentLocationUsage: usage }),
   swapAddresses: () => {
     const { startAddress, endAddress, currentLocationUsage } = get();
     const swappedUsage =
-      currentLocationUsage === 'start'
-        ? 'end'
-        : currentLocationUsage === 'end'
-          ? 'start'
+      currentLocationUsage === "start"
+        ? "end"
+        : currentLocationUsage === "end"
+          ? "start"
           : null;
     set({
       startAddress: endAddress,
@@ -114,7 +114,7 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   isSidebarOpen: true,
   setIsSidebarOpen: (open) => set({ isSidebarOpen: open }),
-  activeTab: 'direction',
+  activeTab: "direction",
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   maxRoutes: 2,
@@ -129,13 +129,13 @@ export const useMapStore = create<MapState>((set, get) => ({
   isRouteInfoVisible: false,
   setIsRouteInfoVisible: (visible) => set({ isRouteInfoVisible: visible }),
 
-  searchQuery: '',
+  searchQuery: "",
   setSearchQuery: (q) => set({ searchQuery: q }),
 
   clearDirections: () =>
     set({
-      startAddress: '',
-      endAddress: '',
+      startAddress: "",
+      endAddress: "",
       currentLocationUsage: null,
       routeInfoList: [],
       selectedRouteIndex: 0,

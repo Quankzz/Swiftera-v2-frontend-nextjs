@@ -5,10 +5,10 @@
  * Lấy chi tiết 1 sản phẩm theo productId.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { productKeys } from '../api/product.keys';
-import { getProductById } from '../api/product.service';
-import type { ProductResponse } from '../types';
+import { useQuery } from "@tanstack/react-query";
+import { productKeys } from "../api/product.keys";
+import { getProductById } from "../api/product.service";
+import type { ProductResponse } from "../types";
 
 export function useProductDetailQuery(productId: string) {
   return useQuery<ProductResponse, Error>({

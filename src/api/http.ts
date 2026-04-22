@@ -2,23 +2,23 @@ import type {
   AxiosError,
   AxiosResponse,
   InternalAxiosRequestConfig,
-} from 'axios';
-import axios from 'axios';
+} from "axios";
+import axios from "axios";
 
-import { authApi } from './authApi';
-import { storageService } from '../services/storage';
-import { toAppError } from '@/lib/error-handler';
+import { authApi } from "./authApi";
+import { storageService } from "../services/storage";
+import { toAppError } from "@/lib/error-handler";
 
-declare module 'axios' {
+declare module "axios" {
   export interface AxiosRequestConfig {
     requireToken?: boolean;
     _retry?: boolean;
   }
 }
 
-export const API_URL = 'https://swiftera.azurewebsites.net/api/v1';
+export const API_URL = "https://swiftera.azurewebsites.net/api/v1";
 
-export const TOKEN_REFRESHED_EVENT = 'swiftera:auth:token-refreshed';
+export const TOKEN_REFRESHED_EVENT = "swiftera:auth:token-refreshed";
 
 /** Khớp envelope refresh token (tránh import vòng authApi ↔ http) */
 type RefreshTokenResponse = AxiosResponse<{
@@ -43,9 +43,9 @@ export const setLogoutCallback = (callback: (() => void) | undefined): void => {
  * WebSocket client sẽ listen event này để reconnect với token mới
  */
 const dispatchTokenRefreshedEvent = (accessToken: string): void => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
-  console.log('🔔 Dispatching token refreshed event...');
+  console.log("🔔 Dispatching token refreshed event...");
 
   const event = new CustomEvent(TOKEN_REFRESHED_EVENT, {
     detail: { accessToken },
@@ -110,23 +110,23 @@ class Http {
                 .then((response: RefreshTokenResponse) => {
                   const newAccessToken = response?.data?.data?.accessToken;
                   if (newAccessToken) {
-                    console.log('✅ Token refresh successful');
+                    console.log("✅ Token refresh successful");
                     storageService.setAccessToken(newAccessToken);
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('accessToken', newAccessToken);
+                    if (typeof window !== "undefined") {
+                      localStorage.setItem("accessToken", newAccessToken);
                     }
                     dispatchTokenRefreshedEvent(newAccessToken);
                     return newAccessToken;
                   }
                   return Promise.reject(
-                    new Error('Cannot get access token from refresh API'),
+                    new Error("Cannot get access token from refresh API"),
                   );
                 })
                 .catch((refreshError: unknown) => {
                   // Normalize the refresh error to an AppError
                   const normalizedRefreshError = toAppError(
                     refreshError,
-                    'Token refresh failed',
+                    "Token refresh failed",
                   );
 
                   // Check if this is an expected auth-related failure.
@@ -136,27 +136,27 @@ class Http {
                   const status = normalizedRefreshError.status;
                   const isExpectedAuthFailure =
                     (status >= 400 && status < 500) ||
-                    normalizedRefreshError.errorCode === 'UNAUTHORIZED' ||
-                    normalizedRefreshError.errorCode === 'FORBIDDEN' ||
-                    normalizedRefreshError.errorCode === 'NOT_FOUND' ||
-                    normalizedRefreshError.errorCode === 'VALIDATION_ERROR' ||
-                    normalizedRefreshError.message.includes('Không tìm thấy') ||
-                    normalizedRefreshError.message.includes('hết hạn') ||
-                    normalizedRefreshError.message.includes('Revoked') ||
-                    normalizedRefreshError.message.includes('revoked');
+                    normalizedRefreshError.errorCode === "UNAUTHORIZED" ||
+                    normalizedRefreshError.errorCode === "FORBIDDEN" ||
+                    normalizedRefreshError.errorCode === "NOT_FOUND" ||
+                    normalizedRefreshError.errorCode === "VALIDATION_ERROR" ||
+                    normalizedRefreshError.message.includes("Không tìm thấy") ||
+                    normalizedRefreshError.message.includes("hết hạn") ||
+                    normalizedRefreshError.message.includes("Revoked") ||
+                    normalizedRefreshError.message.includes("revoked");
 
                   // Log unexpected failures at error level; expected auth failures
                   // are silent (the user will be redirected to login anyway).
                   if (!isExpectedAuthFailure) {
                     console.error(
-                      '❌ Token refresh failed:',
+                      "❌ Token refresh failed:",
                       normalizedRefreshError.errorCode,
                       normalizedRefreshError.message,
                     );
                   } else {
                     // Token expired/revoked — clear session and redirect to login.
                     console.warn(
-                      '⚠️ Token refresh failed (expected auth failure):',
+                      "⚠️ Token refresh failed (expected auth failure):",
                       normalizedRefreshError.errorCode,
                       normalizedRefreshError.message,
                     );
@@ -181,7 +181,7 @@ class Http {
             const tokenRefresh = refreshTokenPromise;
             if (!tokenRefresh) {
               return Promise.reject(
-                toAppError(error.response?.data ?? error, 'Request failed'),
+                toAppError(error.response?.data ?? error, "Request failed"),
               );
             }
 
@@ -195,7 +195,7 @@ class Http {
         }
 
         return Promise.reject(
-          toAppError(error.response?.data ?? error, 'Request failed'),
+          toAppError(error.response?.data ?? error, "Request failed"),
         );
       },
     );

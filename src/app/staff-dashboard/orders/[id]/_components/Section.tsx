@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function Section({
   title,
@@ -32,15 +32,15 @@ export function Section({
         </div>
         <ChevronDown
           className={cn(
-            'size-4 text-muted-foreground transition-transform duration-200',
-            open && 'rotate-180',
+            "size-4 text-muted-foreground transition-transform duration-200",
+            open && "rotate-180",
           )}
         />
       </button>
       <div
         className={cn(
-          'grid transition-all duration-200 ease-in-out',
-          open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
+          "grid transition-all duration-200 ease-in-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         )}
       >
         <div className="overflow-hidden">

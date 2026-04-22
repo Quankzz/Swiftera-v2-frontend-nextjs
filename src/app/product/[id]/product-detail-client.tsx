@@ -1,32 +1,33 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import {
   RentalProductGallery,
   RentalProductSummary,
   RentalCheckoutCard,
   type RentalDuration,
-} from '@/components/product-detail/rental-product-hero';
+} from "@/components/product-detail/rental-product-hero";
 import {
   RentalDeliverySection,
   RentalProcessSection,
-} from '@/components/product-detail/rental-product-sidebar';
-import { RentalSpecifications,
+} from "@/components/product-detail/rental-product-sidebar";
+import {
+  RentalSpecifications,
   RentalProductDescription,
-} from '@/components/product-detail/rental-product-content';
+} from "@/components/product-detail/rental-product-content";
 import {
   RentalReviewsSection,
   RentalRelatedProducts,
-} from '@/components/product-detail/rental-product-relations';
-import { useProductDetailQuery } from '@/features/products/hooks/use-product-detail';
-import { useProductAvailabilityQuery } from '@/features/products/hooks/use-product-availability';
-import { useProductReviewsQuery } from '@/hooks/api/use-reviews';
-import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
-import { useAuthStore } from '@/stores/auth-store';
-import { Skeleton } from '@/components/ui/skeleton';
-import type { ProductColorOption } from '@/components/product-detail/rental-product-hero';
+} from "@/components/product-detail/rental-product-relations";
+import { useProductDetailQuery } from "@/features/products/hooks/use-product-detail";
+import { useProductAvailabilityQuery } from "@/features/products/hooks/use-product-availability";
+import { useProductReviewsQuery } from "@/hooks/api/use-reviews";
+import { useMyOrdersQuery } from "@/hooks/api/use-rental-orders";
+import { useAuthStore } from "@/stores/auth-store";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { ProductColorOption } from "@/components/product-detail/rental-product-hero";
 
 function buildDurations(
   dailyPrice: number,
@@ -34,13 +35,13 @@ function buildDurations(
   minRentalDays: number,
 ): RentalDuration[] {
   const packs = [
-    { days: 1, label: '1 ngày' },
-    { days: 2, label: '2 ngày' },
-    { days: 3, label: '3 ngày' },
-    { days: 5, label: '5 ngày' },
-    { days: 7, label: '7 ngày' },
-    { days: 14, label: '14 ngày' },
-    { days: 30, label: '30 ngày' },
+    { days: 1, label: "1 ngày" },
+    { days: 2, label: "2 ngày" },
+    { days: 3, label: "3 ngày" },
+    { days: 5, label: "5 ngày" },
+    { days: 7, label: "7 ngày" },
+    { days: 14, label: "14 ngày" },
+    { days: 30, label: "30 ngày" },
   ];
   return packs
     .filter((p) => p.days >= minRentalDays)
@@ -57,9 +58,9 @@ function buildDurations(
     });
 }
 
-const formatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
+const formatter = new Intl.NumberFormat("vi-VN", {
+  style: "currency",
+  currency: "VND",
   maximumFractionDigits: 0,
 });
 
@@ -67,8 +68,8 @@ function getDefaultDeliveryDate(): string {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const year = tomorrow.getFullYear();
-  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
-  const day = String(tomorrow.getDate()).padStart(2, '0');
+  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const day = String(tomorrow.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -84,7 +85,7 @@ export default function ProductDetailClient({
   const currentUserId = useAuthStore((s) => s.user?.userId ?? null);
 
   const [currentImage, setCurrentImage] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState<string>('');
+  const [selectedDuration, setSelectedDuration] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
   const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(
@@ -122,7 +123,9 @@ export default function ProductDetailClient({
   const availabilityParams = useMemo(
     () => ({
       deliveryDate: selectedDeliveryDate,
-      rentalDurationDays: selectedDuration ? parseInt(selectedDuration, 10) : undefined,
+      rentalDurationDays: selectedDuration
+        ? parseInt(selectedDuration, 10)
+        : undefined,
       productColorId: selectedColorId ?? undefined,
       quantity,
     }),
@@ -137,7 +140,7 @@ export default function ProductDetailClient({
   const completedOrderId =
     ordersData?.items?.find(
       (o) =>
-        o.status === 'COMPLETED' &&
+        o.status === "COMPLETED" &&
         o.rentalOrderLines.some((l) => l.productId === productId),
     )?.rentalOrderId ?? null;
 
@@ -165,7 +168,7 @@ export default function ProductDetailClient({
     : null;
 
   const effectiveDurationId =
-    selectedDuration !== '' ? selectedDuration : defaultDurationId;
+    selectedDuration !== "" ? selectedDuration : defaultDurationId;
 
   const currentDuration = (() => {
     const found = durations.find((d) => d.id === effectiveDurationId);
@@ -226,7 +229,9 @@ export default function ProductDetailClient({
       }));
     }
     return product.colors.map((c) => {
-      const live = availability.colors.find((a) => a.productColorId === c.productColorId);
+      const live = availability.colors.find(
+        (a) => a.productColorId === c.productColorId,
+      );
       return {
         productColorId: c.productColorId,
         name: c.name,
@@ -249,7 +254,7 @@ export default function ProductDetailClient({
 
   const availabilityMessage = useMemo(() => {
     if (!availabilityReady) {
-      return 'Đang kiểm tra tình trạng còn hàng theo thời gian thuê bạn đã chọn...';
+      return "Đang kiểm tra tình trạng còn hàng theo thời gian thuê bạn đã chọn...";
     }
 
     if (availability?.unavailableReason) {
@@ -257,46 +262,55 @@ export default function ProductDetailClient({
     }
 
     if (selectedColorId && availability?.colors) {
-      const live = availability.colors.find(c => c.productColorId === selectedColorId);
+      const live = availability.colors.find(
+        (c) => c.productColorId === selectedColorId,
+      );
       if (live) {
         return `Màu đã chọn còn ${live.availableQuantity} serial khả dụng cho ngày ${selectedDeliveryDate}.`;
       }
     }
 
     return `Khả dụng tối đa ${realtimeAvailableStock} serial cho ngày ${selectedDeliveryDate}.`;
-  }, [availability, availabilityReady, realtimeAvailableStock, selectedColorId, selectedDeliveryDate]);
+  }, [
+    availability,
+    availabilityReady,
+    realtimeAvailableStock,
+    selectedColorId,
+    selectedDeliveryDate,
+  ]);
 
-  const availabilityTone = availabilityReady && availability?.isAvailable
-    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-    : 'border-amber-200 bg-amber-50 text-amber-800';
+  const availabilityTone =
+    availabilityReady && availability?.isAvailable
+      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+      : "border-amber-200 bg-amber-50 text-amber-800";
 
   const specifications = useMemo(() => {
     if (!product) return [];
     return [
-      { label: 'Thương hiệu', value: product.brand ?? '-' },
-      { label: 'Danh mục', value: product.categoryName ?? '-' },
+      { label: "Thương hiệu", value: product.brand ?? "-" },
+      { label: "Danh mục", value: product.categoryName ?? "-" },
       {
-        label: 'Màu sắc',
+        label: "Màu sắc",
         value:
           colors && colors.length > 0
-            ? colors.map((c) => c.name).join(', ')
-            : '-',
+            ? colors.map((c) => c.name).join(", ")
+            : "-",
       },
       {
-        label: 'Số ngày thuê tối thiểu',
+        label: "Số ngày thuê tối thiểu",
         value: `${product.minRentalDays} ngày`,
       },
       {
-        label: 'Tiền cọc',
+        label: "Tiền cọc",
         value: product.depositAmount
           ? `${formatter.format(product.depositAmount)} (hoàn trả khi trả thiết bị)`
-          : '-',
+          : "-",
       },
       {
-        label: 'Đánh giá',
+        label: "Đánh giá",
         value: product.averageRating
           ? `${product.averageRating} / 5`
-          : 'Chưa có đánh giá',
+          : "Chưa có đánh giá",
       },
     ];
   }, [product, colors]);
@@ -308,16 +322,16 @@ export default function ProductDetailClient({
 
   if (isLoading) {
     return (
-      <div className='min-h-screen bg-white font-sans dark:bg-surface-base'>
-        <div className='mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8'>
-          <Skeleton className='mb-6 h-4 w-64' />
-          <div className='grid grid-cols-12 gap-4 sm:gap-6'>
-            <div className='col-span-12 lg:col-span-5'>
-              <Skeleton className='aspect-square w-full rounded-xl' />
+      <div className="min-h-screen bg-white font-sans dark:bg-surface-base">
+        <div className="mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8">
+          <Skeleton className="mb-6 h-4 w-64" />
+          <div className="grid grid-cols-12 gap-4 sm:gap-6">
+            <div className="col-span-12 lg:col-span-5">
+              <Skeleton className="aspect-square w-full rounded-xl" />
             </div>
-            <div className='col-span-12 lg:col-span-7'>
-              <Skeleton className='h-80 w-full rounded-xl' />
-              <Skeleton className='mt-4 h-40 w-full rounded-xl' />
+            <div className="col-span-12 lg:col-span-7">
+              <Skeleton className="h-80 w-full rounded-xl" />
+              <Skeleton className="mt-4 h-40 w-full rounded-xl" />
             </div>
           </div>
         </div>
@@ -327,13 +341,13 @@ export default function ProductDetailClient({
 
   if (isError || !product) {
     return (
-      <div className='flex min-h-screen flex-col items-center justify-center gap-4 bg-white font-sans dark:bg-surface-base'>
-        <p className='text-lg font-semibold text-text-sub'>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white font-sans dark:bg-surface-base">
+        <p className="text-lg font-semibold text-text-sub">
           Không tìm thấy sản phẩm.
         </p>
         <Link
-          href='/'
-          className='text-sm font-medium text-blue-600 hover:underline dark:text-blue-400'
+          href="/"
+          className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
         >
           Quay về trang chủ
         </Link>
@@ -342,44 +356,44 @@ export default function ProductDetailClient({
   }
 
   return (
-    <div className='min-h-screen bg-white font-sans dark:bg-surface-base'>
-      <div className='mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8'>
+    <div className="min-h-screen bg-white font-sans dark:bg-surface-base">
+      <div className="mx-auto max-w-7xl px-3 pb-8 pt-8 sm:px-4 sm:pb-10 sm:pt-8 md:px-6 md:pt-8">
         {/* Breadcrumb */}
-        <nav className='mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm'>
-          <ol className='flex flex-wrap items-center gap-x-1.5 gap-y-1'>
+        <nav className="mb-4 text-xs text-muted-foreground sm:mb-6 sm:text-sm">
+          <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <li>
               <Link
-                href='/'
-                className='flex items-center gap-1 font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
+                href="/"
+                className="flex items-center gap-1 font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400"
               >
                 Trang chủ
               </Link>
             </li>
-            <li className='text-border'>
-              <ChevronRight className='size-3' />
+            <li className="text-border">
+              <ChevronRight className="size-3" />
             </li>
             <li>
               <Link
-                href='/catalog'
-                className='font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400'
+                href="/catalog"
+                className="font-medium text-blue-600 transition-colors hover:underline dark:text-blue-400"
               >
-                {product.categoryName || 'Sản phẩm'}
+                {product.categoryName || "Sản phẩm"}
               </Link>
             </li>
-            <li className='text-border'>
-              <ChevronRight className='size-3' />
+            <li className="text-border">
+              <ChevronRight className="size-3" />
             </li>
-            <li className='min-w-0 max-w-full flex-[1_1_100%] font-semibold text-foreground sm:max-w-xs sm:flex-[unset] sm:truncate'>
+            <li className="min-w-0 max-w-full flex-[1_1_100%] font-semibold text-foreground sm:max-w-xs sm:flex-[unset] sm:truncate">
               {product.name}
             </li>
           </ol>
         </nav>
 
         {/* Hero: Gallery + Summary + Checkout */}
-        <div className='grid grid-cols-12 gap-4 sm:gap-6'>
+        <div className="grid grid-cols-12 gap-4 sm:gap-6">
           {/* Gallery */}
-          <div className='col-span-12 lg:col-span-5'>
-            <div className='rounded-xl border border-border/60 bg-card p-3 ambient-glow sm:p-4 lg:sticky lg:top-24'>
+          <div className="col-span-12 lg:col-span-5">
+            <div className="rounded-xl border border-border/60 bg-card p-3 ambient-glow sm:p-4 lg:sticky lg:top-24">
               <RentalProductGallery
                 images={imageUrls}
                 videoUrl={videoUrl}
@@ -390,15 +404,15 @@ export default function ProductDetailClient({
           </div>
 
           {/* Summary + Checkout */}
-          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-7'>
+          <div className="col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-7">
             {/* Product Summary */}
-            <div className='rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5'>
+            <div className="rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5">
               <RentalProductSummary
                 productData={{
                   name: product.name,
                   sku: product.productId.slice(0, 8).toUpperCase(),
-                  brand: product.brand ?? '-',
-                  productType: product.categoryName ?? '-',
+                  brand: product.brand ?? "-",
+                  productType: product.categoryName ?? "-",
                   discount,
                   rating: product.averageRating ?? 0,
                   reviews: reviewsCount,
@@ -408,7 +422,7 @@ export default function ProductDetailClient({
                 minRentalDays={product.minRentalDays ?? 1}
                 selectedColorId={selectedColorId}
                 onColorChange={setSelectedColorId}
-                selectedVariant='default'
+                selectedVariant="default"
                 onVariantChange={() => {}}
                 selectedDuration={effectiveDurationId}
                 onDurationChange={setSelectedDuration}
@@ -419,12 +433,14 @@ export default function ProductDetailClient({
 
             {/* Short description badge */}
             {shortDesc && (
-              <div className='rounded-xl border border-border/60 bg-muted/30 p-3 text-sm text-muted-foreground'>
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-3 text-sm text-muted-foreground">
                 {shortDesc}
               </div>
             )}
 
-            <div className={`rounded-xl border p-3 text-sm ${availabilityTone}`}>
+            <div
+              className={`rounded-xl border p-3 text-sm ${availabilityTone}`}
+            >
               {availabilityMessage}
             </div>
 
@@ -432,7 +448,7 @@ export default function ProductDetailClient({
             <RentalCheckoutCard
               rentalPrice={currentPrice}
               deposit={product.depositAmount ?? 0}
-              selectedDuration={currentDuration?.label ?? '1 ngày'}
+              selectedDuration={currentDuration?.label ?? "1 ngày"}
               durationId={effectiveDurationId}
               quantity={safeQuantity}
               setQuantity={handleQuantityChange}
@@ -447,7 +463,7 @@ export default function ProductDetailClient({
               cartProduct={{
                 productId: product.productId,
                 name: product.name,
-                image: imageUrls[0] ?? '',
+                image: imageUrls[0] ?? "",
                 sku: product.productId.slice(0, 8).toUpperCase(),
                 productColorId: selectedColorId,
                 colorName: selectedColor?.name ?? null,
@@ -457,11 +473,11 @@ export default function ProductDetailClient({
         </div>
 
         {/* Content: Description + Specifications + Sidebar */}
-        <div className='mt-4 grid grid-cols-12 gap-4 sm:mt-6 sm:gap-6'>
-          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-8'>
+        <div className="mt-4 grid grid-cols-12 gap-4 sm:mt-6 sm:gap-6">
+          <div className="col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-8">
             {product.description && (
-              <div className='rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5'>
-                <h2 className='mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg'>
+              <div className="rounded-xl border border-border/60 bg-card p-4 ambient-glow sm:p-5">
+                <h2 className="mb-3 text-base font-bold tracking-tight text-foreground sm:mb-4 sm:text-lg">
                   Mô tả sản phẩm
                 </h2>
                 <RentalProductDescription
@@ -474,14 +490,14 @@ export default function ProductDetailClient({
             <RentalSpecifications specifications={specifications} />
           </div>
 
-          <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4'>
+          <div className="col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4">
             <RentalDeliverySection />
             <RentalProcessSection />
           </div>
         </div>
 
         {/* Reviews */}
-        <div className='mt-4 sm:mt-6'>
+        <div className="mt-4 sm:mt-6">
           <RentalReviewsSection
             productId={product.productId}
             rating={product.averageRating ?? 0}
@@ -491,7 +507,7 @@ export default function ProductDetailClient({
         </div>
 
         {/* Related Products */}
-        <div className='mt-4 sm:mt-6'>
+        <div className="mt-4 sm:mt-6">
           <RentalRelatedProducts
             currentProductId={product.productId}
             currentCategoryId={product.categoryId}

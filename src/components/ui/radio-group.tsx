@@ -1,14 +1,16 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface RadioGroupContextValue {
-  value: string
-  onValueChange: (value: string) => void
+  value: string;
+  onValueChange: (value: string) => void;
 }
 
-const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(null)
+const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(
+  null,
+);
 
 function RadioGroup({
   className,
@@ -17,19 +19,21 @@ function RadioGroup({
   children,
   ...props
 }: React.ComponentProps<"div"> & {
-  value?: string
-  onValueChange?: (value: string) => void
+  value?: string;
+  onValueChange?: (value: string) => void;
 }) {
-  const [internalValue, setInternalValue] = React.useState(value)
+  const [internalValue, setInternalValue] = React.useState(value);
 
-  const currentValue = value ?? internalValue
+  const currentValue = value ?? internalValue;
   const handleChange = (v: string) => {
-    setInternalValue(v)
-    onValueChange?.(v)
-  }
+    setInternalValue(v);
+    onValueChange?.(v);
+  };
 
   return (
-    <RadioGroupContext.Provider value={{ value: currentValue, onValueChange: handleChange }}>
+    <RadioGroupContext.Provider
+      value={{ value: currentValue, onValueChange: handleChange }}
+    >
       <div
         data-slot="radio-group"
         role="radiogroup"
@@ -39,7 +43,7 @@ function RadioGroup({
         {children}
       </div>
     </RadioGroupContext.Provider>
-  )
+  );
 }
 
 function RadioGroupItem({
@@ -48,10 +52,10 @@ function RadioGroupItem({
   id,
   ...props
 }: React.ComponentProps<"button"> & { value: string }) {
-  const ctx = React.useContext(RadioGroupContext)
-  if (!ctx) throw new Error("RadioGroupItem must be used within <RadioGroup>")
+  const ctx = React.useContext(RadioGroupContext);
+  if (!ctx) throw new Error("RadioGroupItem must be used within <RadioGroup>");
 
-  const isChecked = ctx.value === value
+  const isChecked = ctx.value === value;
 
   return (
     <button
@@ -63,7 +67,7 @@ function RadioGroupItem({
       onClick={() => ctx.onValueChange(value)}
       className={cn(
         "aspect-square h-4 w-4 rounded-full border border-primary text-primary ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        className
+        className,
       )}
       {...props}
     >
@@ -73,7 +77,7 @@ function RadioGroupItem({
         </span>
       )}
     </button>
-  )
+  );
 }
 
-export { RadioGroup, RadioGroupItem }
+export { RadioGroup, RadioGroupItem };

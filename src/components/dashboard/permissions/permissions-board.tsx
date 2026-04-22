@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CSS } from '@dnd-kit/utilities';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { CSS } from "@dnd-kit/utilities";
 import {
   DndContext,
   DragEndEvent,
@@ -13,31 +13,31 @@ import {
   useDroppable,
   useSensor,
   useSensors,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+} from "@dnd-kit/sortable";
 import {
   IconChevronDown,
   IconChevronRight,
   IconDots,
   IconGripVertical,
   IconPlus,
-} from '@tabler/icons-react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+} from "@tabler/icons-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import type {
   PermissionResponse,
   PaginatedPermissionsResponse,
-} from '@/features/roles/types';
-import { permissionKeys } from '@/features/roles/api/role.keys';
+} from "@/features/roles/types";
+import { permissionKeys } from "@/features/roles/api/role.keys";
 import {
   useModulesQuery,
   usePermissionsListQuery,
   useUpdatePermissionMutation,
-} from '@/features/roles/hooks/use-roles';
+} from "@/features/roles/hooks/use-roles";
 
 type PermissionTreeProps = {
   onAddPermission?: (module?: string) => void;
@@ -49,11 +49,11 @@ type PermissionTreeProps = {
 };
 
 const methodStyles: Record<string, string> = {
-  GET: 'bg-green-100 text-green-700',
-  POST: 'bg-orange-100 text-orange-700',
-  PUT: 'bg-blue-100 text-blue-700',
-  PATCH: 'bg-violet-100 text-violet-700',
-  DELETE: 'bg-red-100 text-red-700',
+  GET: "bg-green-100 text-green-700",
+  POST: "bg-orange-100 text-orange-700",
+  PUT: "bg-blue-100 text-blue-700",
+  PATCH: "bg-violet-100 text-violet-700",
+  DELETE: "bg-red-100 text-red-700",
 };
 
 function PermissionRow({
@@ -88,50 +88,50 @@ function PermissionRow({
       style={style}
       className={`flex items-center justify-between rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 ${
         isDraggingContext
-          ? 'bg-gray-50 dark:bg-white/5'
-          : 'hover:border-theme-primary-start'
+          ? "bg-gray-50 dark:bg-white/5"
+          : "hover:border-theme-primary-start"
       }`}
     >
-      <div className='flex items-center gap-3'>
+      <div className="flex items-center gap-3">
         <button
-          className='cursor-grab touch-none p-1 shrink-0 hover:bg-gray-100 dark:hover:bg-white/8 rounded text-text-sub'
+          className="cursor-grab touch-none p-1 shrink-0 hover:bg-gray-100 dark:hover:bg-white/8 rounded text-text-sub"
           {...attributes}
           {...listeners}
         >
           <IconGripVertical size={14} />
         </button>
-        <div className='space-y-1'>
-          <div className='font-medium text-text-main text-sm'>
+        <div className="space-y-1">
+          <div className="font-medium text-text-main text-sm">
             {permission.name}
           </div>
-          <div className='flex items-center gap-2 text-xs text-text-sub'>
+          <div className="flex items-center gap-2 text-xs text-text-sub">
             <span
               className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
                 methodStyles[permission.httpMethod] ||
-                'bg-gray-100 text-text-main'
+                "bg-gray-100 text-text-main"
               }`}
             >
               {permission.httpMethod}
             </span>
-            <span className='truncate max-w-60' title={permission.apiPath}>
+            <span className="truncate max-w-60" title={permission.apiPath}>
               {permission.apiPath}
             </span>
           </div>
         </div>
       </div>
-      <div className='flex items-center gap-1'>
+      <div className="flex items-center gap-1">
         <Button
-          variant='ghost'
-          size='icon'
-          className='h-7 w-7 text-text-sub hover:text-theme-primary-start'
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-text-sub hover:text-theme-primary-start"
           onClick={() => onEdit?.(permission)}
         >
           <Pencil size={14} />
         </Button>
         <Button
-          variant='ghost'
-          size='icon'
-          className='h-7 w-7 text-theme-primary-start hover:bg-red-50'
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-theme-primary-start hover:bg-red-50"
           onClick={() => onDelete?.(permission)}
         >
           <Trash2 size={14} />
@@ -173,29 +173,29 @@ function ModuleNode({
         setMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
   return (
-    <div className='rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/3'>
+    <div className="rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/3">
       <div
-        className='flex items-center justify-between px-3 py-2 cursor-pointer'
+        className="flex items-center justify-between px-3 py-2 cursor-pointer"
         onClick={onToggleCollapse}
       >
         {/* Left: chevron + moduleName + badge + "..." menu */}
-        <div className='flex items-center gap-2 min-w-0'>
+        <div className="flex items-center gap-2 min-w-0">
           {isCollapsed ? (
-            <IconChevronRight size={16} className='text-text-sub shrink-0' />
+            <IconChevronRight size={16} className="text-text-sub shrink-0" />
           ) : (
-            <IconChevronDown size={16} className='text-text-sub shrink-0' />
+            <IconChevronDown size={16} className="text-text-sub shrink-0" />
           )}
-          <span className='font-semibold text-text-main truncate'>
+          <span className="font-semibold text-text-main truncate">
             {moduleName}
           </span>
           <Badge
-            variant='secondary'
-            className='bg-gray-200 text-text-sub hover:bg-gray-200 shrink-0'
+            variant="secondary"
+            className="bg-gray-200 text-text-sub hover:bg-gray-200 shrink-0"
           >
             {permissions.length} quyền
           </Badge>
@@ -203,39 +203,39 @@ function ModuleNode({
           {/* "..." kebab menu */}
           <div
             ref={menuRef}
-            className='relative shrink-0'
+            className="relative shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
             <Button
-              variant='ghost'
-              size='icon'
-              className='h-6 w-6 text-theme-primary-start bg-blue-50 hover:text-text-start/90 hover:bg-theme-primary-start/10 transition-opacity'
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-theme-primary-start bg-blue-50 hover:text-text-start/90 hover:bg-theme-primary-start/10 transition-opacity"
               onClick={() => setMenuOpen((v) => !v)}
             >
               <IconDots size={14} />
             </Button>
 
             {menuOpen && (
-              <div className='absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/30 overflow-hidden animate-in fade-in slide-in-from-top-1'>
+              <div className="absolute left-0 top-full mt-1 z-50 w-36 rounded-xl border border-gray-100 dark:border-white/8 bg-white dark:bg-surface-card shadow-xl dark:shadow-black/30 overflow-hidden animate-in fade-in slide-in-from-top-1">
                 <button
-                  className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors'
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-text-main hover:bg-gray-50 dark:hover:bg-white/8 transition-colors"
                   onClick={() => {
                     setMenuOpen(false);
                     onEditModule?.(moduleName);
                   }}
                 >
-                  <Pencil size={13} className='text-text-sub' />
+                  <Pencil size={13} className="text-text-sub" />
                   Đổi tên
                 </button>
-                <div className='h-px bg-gray-100 dark:bg-white/8 mx-2' />
+                <div className="h-px bg-gray-100 dark:bg-white/8 mx-2" />
                 <button
-                  className='flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 transition-colors'
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-theme-primary-start hover:bg-red-50 transition-colors"
                   onClick={() => {
                     setMenuOpen(false);
                     onDeleteModule?.(moduleName);
                   }}
                 >
-                  <Trash2 size={13} className='text-theme-primary-start' />
+                  <Trash2 size={13} className="text-theme-primary-start" />
                   Xóa module
                 </button>
               </div>
@@ -245,15 +245,15 @@ function ModuleNode({
 
         {/* Right: "Thêm quyền" button */}
         <Button
-          variant='ghost'
-          size='sm'
-          className='text-theme-primary-start bg-blue-50 hover:text-theme-primary-end hover:bg-blue-100 h-7 px-2 rounded-sm shrink-0'
+          variant="ghost"
+          size="sm"
+          className="text-theme-primary-start bg-blue-50 hover:text-theme-primary-end hover:bg-blue-100 h-7 px-2 rounded-sm shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             onAddPermission?.();
           }}
         >
-          <IconPlus size={14} className='mr-1' /> Thêm quyền
+          <IconPlus size={14} className="mr-1" /> Thêm quyền
         </Button>
       </div>
 
@@ -261,10 +261,10 @@ function ModuleNode({
         <div
           ref={setNodeRef}
           className={`p-2 border-t border-gray-200 dark:border-white/8 bg-white dark:bg-surface-base rounded-b-lg ${
-            isOver ? 'bg-theme-primary-start/10 border-dashed' : ''
+            isOver ? "bg-theme-primary-start/10 border-dashed" : ""
           }`}
         >
-          <div className='space-y-2'>
+          <div className="space-y-2">
             <SortableContext
               items={permissions.map((p) => p.permissionId)}
               strategy={verticalListSortingStrategy}
@@ -280,7 +280,7 @@ function ModuleNode({
             </SortableContext>
 
             {permissions.length === 0 && (
-              <div className='py-6 text-center text-sm text-text-sub border-2 border-dashed border-gray-200 dark:border-white/10 rounded-md'>
+              <div className="py-6 text-center text-sm text-text-sub border-2 border-dashed border-gray-200 dark:border-white/10 rounded-md">
                 Kéo thả quyền vào đây hoặc thêm quyền mới
               </div>
             )}
@@ -313,7 +313,7 @@ export function PermissionsBoard({
   const modules = useMemo(() => {
     const set = new Set<string>();
     ((modulesData as string[] | undefined) ?? []).forEach((m) => set.add(m));
-    permissions.forEach((p) => set.add(p.module || 'Chưa phân loại'));
+    permissions.forEach((p) => set.add(p.module || "Chưa phân loại"));
     return Array.from(set);
   }, [modulesData, permissions]);
 
@@ -355,7 +355,7 @@ export function PermissionsBoard({
         (p) => p.permissionId === overId,
       );
       if (targetPermission) {
-        targetModule = targetPermission.module || 'Chưa phân loại';
+        targetModule = targetPermission.module || "Chưa phân loại";
       }
     }
 
@@ -383,10 +383,10 @@ export function PermissionsBoard({
           permissionId: draggedPermission.permissionId,
           payload: { module: targetModule },
         });
-        queryClient.invalidateQueries({ queryKey: ['permissions'] });
+        queryClient.invalidateQueries({ queryKey: ["permissions"] });
       } catch (error) {
         queryClient.setQueryData(queryKey, previous);
-        console.error('Failed to update module:', error);
+        console.error("Failed to update module:", error);
       }
     }
   };
@@ -397,8 +397,8 @@ export function PermissionsBoard({
 
   if (isLoading) {
     return (
-      <div className='flex justify-center items-center py-10'>
-        <span className='text-text-sub animate-pulse'>
+      <div className="flex justify-center items-center py-10">
+        <span className="text-text-sub animate-pulse">
           Đang tải cấu hình quyền...
         </span>
       </div>
@@ -406,15 +406,15 @@ export function PermissionsBoard({
   }
 
   return (
-    <div className='space-y-4'>
-      <div className='flex justify-end'>
+    <div className="space-y-4">
+      <div className="flex justify-end">
         <Button
-          variant='outline'
-          size='lg'
-          className='text-text-main hover:opacity-90 transition-opacity rounded-sm'
+          variant="outline"
+          size="lg"
+          className="text-text-main hover:opacity-90 transition-opacity rounded-sm"
           onClick={onAddModule}
         >
-          <IconPlus size={14} className='mr-1' /> Thêm Module
+          <IconPlus size={14} className="mr-1" /> Thêm Module
         </Button>
       </div>
 
@@ -423,13 +423,13 @@ export function PermissionsBoard({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className='space-y-3'>
+        <div className="space-y-3">
           {modules.map((mod) => (
             <ModuleNode
               key={mod}
               moduleName={mod}
               permissions={permissions.filter(
-                (p) => (p.module || 'Chưa phân loại') === mod,
+                (p) => (p.module || "Chưa phân loại") === mod,
               )}
               isCollapsed={!!collapsedModules[mod]}
               onToggleCollapse={() => toggleCollapse(mod)}
@@ -442,7 +442,7 @@ export function PermissionsBoard({
           ))}
 
           {!modules.length && (
-            <div className='py-10 text-center text-text-sub bg-gray-50 dark:bg-white/3 rounded-md border border-dashed border-gray-300 dark:border-white/15'>
+            <div className="py-10 text-center text-text-sub bg-gray-50 dark:bg-white/3 rounded-md border border-dashed border-gray-300 dark:border-white/15">
               Chưa có cấu hình quyền nào trong hệ thống
             </div>
           )}
@@ -450,7 +450,7 @@ export function PermissionsBoard({
 
         <DragOverlay>
           {activePermission ? (
-            <div className='opacity-90 shadow-xl pointer-events-none w-full max-w-125'>
+            <div className="opacity-90 shadow-xl pointer-events-none w-full max-w-125">
               <PermissionRow permission={activePermission} isDraggingContext />
             </div>
           ) : null}

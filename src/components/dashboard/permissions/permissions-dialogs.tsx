@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { startTransition, useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   useCreatePermissionMutation,
   useCreateModuleMutation,
@@ -20,14 +20,14 @@ import {
   usePermissionDetailQuery,
   useUpdatePermissionMutation,
   usePermissionsListQuery,
-} from '@/features/roles/hooks/use-roles';
+} from "@/features/roles/hooks/use-roles";
 import type {
   CreatePermissionInput,
   PermissionResponse,
   UpdatePermissionInput,
-} from '@/features/roles/types';
+} from "@/features/roles/types";
 
-const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
 interface PermissionFormDialogProps {
   open: boolean;
@@ -49,10 +49,10 @@ export function PermissionFormDialog({
   const { data: moduleOptions } = useModulesQuery();
 
   const [formState, setFormState] = useState(() => ({
-    name: initialPermission?.name || '',
-    apiPath: initialPermission?.apiPath || '',
-    httpMethod: initialPermission?.httpMethod || 'GET',
-    module: initialPermission?.module || presetModule || '',
+    name: initialPermission?.name || "",
+    apiPath: initialPermission?.apiPath || "",
+    httpMethod: initialPermission?.httpMethod || "GET",
+    module: initialPermission?.module || presetModule || "",
   }));
 
   useEffect(() => {
@@ -60,10 +60,10 @@ export function PermissionFormDialog({
     if (!isEdit) {
       startTransition(() =>
         setFormState({
-          name: '',
-          apiPath: '',
-          httpMethod: 'GET',
-          module: presetModule || '',
+          name: "",
+          apiPath: "",
+          httpMethod: "GET",
+          module: presetModule || "",
         }),
       );
       return;
@@ -97,7 +97,7 @@ export function PermissionFormDialog({
         name: formState.name.trim(),
         apiPath: formState.apiPath.trim(),
         httpMethod: formState.httpMethod,
-        module: formState.module.trim() || 'Chưa phân loại',
+        module: formState.module.trim() || "Chưa phân loại",
       };
       await updateMutation.mutateAsync({
         permissionId: initialPermission.permissionId,
@@ -108,7 +108,7 @@ export function PermissionFormDialog({
         name: formState.name.trim(),
         apiPath: formState.apiPath.trim(),
         httpMethod: formState.httpMethod,
-        module: formState.module.trim() || 'Chưa phân loại',
+        module: formState.module.trim() || "Chưa phân loại",
       };
       await createMutation.mutateAsync(payload);
     }
@@ -119,29 +119,29 @@ export function PermissionFormDialog({
 
   return (
     <Dialog
-      key={initialPermission?.permissionId ?? 'new-permission'}
+      key={initialPermission?.permissionId ?? "new-permission"}
       open={open}
       onOpenChange={(val) => !val && onClose()}
     >
-      <DialogContent className='max-w-lg'>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className='text-text-main'>
-            {isEdit ? 'Chỉnh sửa quyền' : 'Thêm quyền mới'}
+          <DialogTitle className="text-text-main">
+            {isEdit ? "Chỉnh sửa quyền" : "Thêm quyền mới"}
           </DialogTitle>
           <DialogDescription>
             Quản lý quyền truy cập API. Các trường có dấu * là bắt buộc.
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-4 py-2'>
+        <div className="space-y-4 py-2">
           {isEdit && isFetching && (
-            <div className='text-sm text-text-sub'>
+            <div className="text-sm text-text-sub">
               Đang tải chi tiết quyền...
             </div>
           )}
 
-          <div className='space-y-2'>
-            <label className='block text-text-main text-sm font-medium mb-1'>
+          <div className="space-y-2">
+            <label className="block text-text-main text-sm font-medium mb-1">
               Tên quyền *
             </label>
             <Input
@@ -149,17 +149,17 @@ export function PermissionFormDialog({
               onChange={(e) =>
                 setFormState((s) => ({ ...s, name: e.target.value }))
               }
-              placeholder='VD: Xem danh sách người dùng'
+              placeholder="VD: Xem danh sách người dùng"
             />
           </div>
 
-          <div className='grid grid-cols-3 gap-3'>
-            <div className='space-y-2'>
-              <label className='block text-text-main text-sm font-medium mb-1'>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <label className="block text-text-main text-sm font-medium mb-1">
                 Phương thức
               </label>
               <select
-                className='w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main'
+                className="w-full rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main"
                 value={formState.httpMethod}
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, httpMethod: e.target.value }))
@@ -173,8 +173,8 @@ export function PermissionFormDialog({
               </select>
             </div>
 
-            <div className='col-span-2 space-y-2'>
-              <label className='block text-text-main text-sm font-medium mb-1'>
+            <div className="col-span-2 space-y-2">
+              <label className="block text-text-main text-sm font-medium mb-1">
                 API Path *
               </label>
               <Input
@@ -182,24 +182,24 @@ export function PermissionFormDialog({
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, apiPath: e.target.value }))
                 }
-                placeholder='/api/v1/users'
+                placeholder="/api/v1/users"
               />
             </div>
           </div>
 
-          <div className='space-y-2'>
-            <label className='block text-text-main text-sm font-medium mb-1'>
+          <div className="space-y-2">
+            <label className="block text-text-main text-sm font-medium mb-1">
               Module
             </label>
-            <div className='flex gap-2'>
+            <div className="flex gap-2">
               <select
-                className='w-1/2 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main'
+                className="w-1/2 rounded-md border border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card px-3 py-2 text-sm text-text-main"
                 value={formState.module}
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, module: e.target.value }))
                 }
               >
-                <option value=''>-- Chọn module --</option>
+                <option value="">-- Chọn module --</option>
                 {(moduleOptions || []).map((m) => (
                   <option key={m} value={m}>
                     {m}
@@ -211,8 +211,8 @@ export function PermissionFormDialog({
                 onChange={(e) =>
                   setFormState((s) => ({ ...s, module: e.target.value }))
                 }
-                placeholder='Hoặc nhập module mới'
-                className='w-1/2'
+                placeholder="Hoặc nhập module mới"
+                className="w-1/2"
               />
             </div>
           </div>
@@ -220,19 +220,19 @@ export function PermissionFormDialog({
 
         <DialogFooter>
           <Button
-            variant='ghost'
+            variant="ghost"
             onClick={onClose}
-            className='text-text-sub'
+            className="text-text-sub"
             disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
             onClick={handleSubmit}
-            className='bg-theme-primary-start hover:opacity-90'
+            className="bg-theme-primary-start hover:opacity-90"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Đang lưu...' : isEdit ? 'Lưu thay đổi' : 'Tạo mới'}
+            {isSubmitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo mới"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -263,12 +263,12 @@ export function PermissionDeleteDialog({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className='max-w-md'>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className='text-text-main'>Xóa quyền</DialogTitle>
+          <DialogTitle className="text-text-main">Xóa quyền</DialogTitle>
           <DialogDescription>
-            Bạn có chắc chắn muốn xóa quyền{' '}
-            <span className='font-semibold text-text-main'>
+            Bạn có chắc chắn muốn xóa quyền{" "}
+            <span className="font-semibold text-text-main">
               {permission?.name}
             </span>
             ? Hành động này không thể hoàn tác.
@@ -277,20 +277,20 @@ export function PermissionDeleteDialog({
 
         <DialogFooter>
           <Button
-            variant='ghost'
+            variant="ghost"
             onClick={onClose}
-            className='text-text-sub'
+            className="text-text-sub"
             disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
-            variant='destructive'
+            variant="destructive"
             onClick={handleDelete}
             disabled={isSubmitting}
-            className='bg-theme-primary-start hover:bg-theme-primary-end text-white'
+            className="bg-theme-primary-start hover:bg-theme-primary-end text-white"
           >
-            {isSubmitting ? 'Đang xóa...' : 'Xóa'}
+            {isSubmitting ? "Đang xóa..." : "Xóa"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -316,10 +316,10 @@ export function ModuleFormDialog({
   const createModuleMutation = useCreateModuleMutation();
   const deleteModuleMutation = useDeleteModuleMutation();
 
-  const [moduleName, setModuleName] = useState('');
+  const [moduleName, setModuleName] = useState("");
 
   useEffect(() => {
-    if (open) startTransition(() => setModuleName(initialModuleName || ''));
+    if (open) startTransition(() => setModuleName(initialModuleName || ""));
   }, [open, initialModuleName]);
 
   const handleSubmit = async () => {
@@ -344,7 +344,7 @@ export function ModuleFormDialog({
       });
     }
     onClose();
-    setModuleName('');
+    setModuleName("");
   };
 
   const isSubmitting =
@@ -352,48 +352,48 @@ export function ModuleFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className='max-w-md'>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className='text-text-main'>
-            {isEdit ? 'Sửa tên module' : 'Thêm Module'}
+          <DialogTitle className="text-text-main">
+            {isEdit ? "Sửa tên module" : "Thêm Module"}
           </DialogTitle>
           <DialogDescription>
             {isEdit
-              ? 'Đổi tên module. Các quyền bên trong sẽ được cập nhật theo.'
-              : 'Tạo module để nhóm các quyền liên quan.'}
+              ? "Đổi tên module. Các quyền bên trong sẽ được cập nhật theo."
+              : "Tạo module để nhóm các quyền liên quan."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className='space-y-2'>
-          <label className='block text-text-main text-sm font-medium mb-1'>
+        <div className="space-y-2">
+          <label className="block text-text-main text-sm font-medium mb-1">
             Tên module
           </label>
           <Input
             value={moduleName}
             onChange={(e) => setModuleName(e.target.value)}
-            placeholder='VD: Products'
+            placeholder="VD: Products"
           />
         </div>
 
         <DialogFooter>
           <Button
-            variant='ghost'
+            variant="ghost"
             onClick={onClose}
-            className='text-text-sub'
+            className="text-text-sub"
             disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
             onClick={handleSubmit}
-            className='bg-theme-primary-start hover:opacity-90'
+            className="bg-theme-primary-start hover:opacity-90"
             disabled={isSubmitting}
           >
             {isSubmitting
-              ? 'Đang lưu...'
+              ? "Đang lưu..."
               : isEdit
-                ? 'Lưu thay đổi'
-                : 'Tạo module'}
+                ? "Lưu thay đổi"
+                : "Tạo module"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -424,33 +424,33 @@ export function ModuleDeleteDialog({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className='max-w-md'>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className='text-text-main'>Xóa module</DialogTitle>
+          <DialogTitle className="text-text-main">Xóa module</DialogTitle>
           <DialogDescription>
-            Bạn có chắc chắn muốn xóa module{' '}
-            <span className='font-semibold text-text-main'>{moduleName}</span>?{' '}
-            Các quyền bên trong sẽ được chuyển về{' '}
-            <span className='font-semibold'>Chưa phân loại</span>.
+            Bạn có chắc chắn muốn xóa module{" "}
+            <span className="font-semibold text-text-main">{moduleName}</span>?{" "}
+            Các quyền bên trong sẽ được chuyển về{" "}
+            <span className="font-semibold">Chưa phân loại</span>.
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter>
           <Button
-            variant='ghost'
+            variant="ghost"
             onClick={onClose}
-            className='text-text-sub'
+            className="text-text-sub"
             disabled={isSubmitting}
           >
             Hủy
           </Button>
           <Button
-            variant='destructive'
+            variant="destructive"
             onClick={handleDelete}
             disabled={isSubmitting}
-            className='bg-theme-primary-start hover:bg-theme-primary-end text-white'
+            className="bg-theme-primary-start hover:bg-theme-primary-end text-white"
           >
-            {isSubmitting ? 'Đang xóa...' : 'Xóa module'}
+            {isSubmitting ? "Đang xóa..." : "Xóa module"}
           </Button>
         </DialogFooter>
       </DialogContent>

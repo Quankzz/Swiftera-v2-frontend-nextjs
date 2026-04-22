@@ -16,7 +16,11 @@ export function useFetch<T>() {
   const [isLoading, setIsLoading] = useState(false);
 
   const execute = useCallback(
-    async (url: string, options?: RequestInit, fetchOptions?: UseFetchOptions<T>) => {
+    async (
+      url: string,
+      options?: RequestInit,
+      fetchOptions?: UseFetchOptions<T>,
+    ) => {
       setIsLoading(true);
       setError(null);
 
@@ -36,7 +40,7 @@ export function useFetch<T>() {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
 
   return { data, error, isLoading, execute };

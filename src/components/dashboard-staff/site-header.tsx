@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
-import { Bell, Sun, Moon } from 'lucide-react';
+import { usePathname } from "next/navigation";
+import { Bell, Sun, Moon } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,24 +9,27 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { useSidebar } from '@/components/ui/sidebar';
-import { useTheme } from '@/context/theme-context';
-import { PanelLeftIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useStaffOrderCounts, selectUrgentTotal } from '@/stores/staff-order-counts-store';
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useTheme } from "@/context/theme-context";
+import { PanelLeftIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  useStaffOrderCounts,
+  selectUrgentTotal,
+} from "@/stores/staff-order-counts-store";
 
 const PAGE_TITLES: Record<
   string,
   { label: string; parent?: string; parentUrl?: string }
 > = {
-  '/staff-dashboard': { label: 'Tổng quan' },
-  '/staff-dashboard/orders': {
-    label: 'Đơn hàng',
-    parent: 'Tổng quan',
-    parentUrl: '/staff-dashboard',
+  "/staff-dashboard": { label: "Tổng quan" },
+  "/staff-dashboard/orders": {
+    label: "Đơn hàng",
+    parent: "Tổng quan",
+    parentUrl: "/staff-dashboard",
   },
 };
 
@@ -60,7 +63,7 @@ function ThemeToggle() {
       onClick={toggleTheme}
       aria-label="Toggle theme"
     >
-      {resolvedTheme === 'dark' ? (
+      {resolvedTheme === "dark" ? (
         <Sun className="size-4" />
       ) : (
         <Moon className="size-4" />
@@ -80,10 +83,10 @@ export function SiteHeader() {
   const pageInfo = orderDetailMatch
     ? {
         label: `Đơn #${orderDetailMatch[1].toUpperCase().slice(0, 10)}`,
-        parent: 'Đơn hàng',
-        parentUrl: '/staff-dashboard/orders',
+        parent: "Đơn hàng",
+        parentUrl: "/staff-dashboard/orders",
       }
-    : (PAGE_TITLES[pathname] ?? { label: 'Tổng quan' });
+    : (PAGE_TITLES[pathname] ?? { label: "Tổng quan" });
 
   return (
     <header className="sticky top-0 z-50 flex w-full h-16 shrink-0 items-center justify-between border-b border-border/40 bg-background/70 px-2 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.2)] transition-all">
@@ -107,7 +110,7 @@ export function SiteHeader() {
             {pageInfo.parent && (
               <>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href={pageInfo.parentUrl ?? '/dashboard'}>
+                  <BreadcrumbLink href={pageInfo.parentUrl ?? "/dashboard"}>
                     {pageInfo.parent}
                   </BreadcrumbLink>
                 </BreadcrumbItem>

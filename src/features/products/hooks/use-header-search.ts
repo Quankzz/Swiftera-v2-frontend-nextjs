@@ -9,10 +9,10 @@
  *   0 results (distinct from the initial / idle state).
  */
 
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getProducts } from '../api/product.service';
-import type { PaginatedProductsResponse, ProductResponse } from '../types';
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getProducts } from "../api/product.service";
+import type { PaginatedProductsResponse, ProductResponse } from "../types";
 
 const DEBOUNCE_MS = 350;
 const PREVIEW_SIZE = 5;
@@ -44,12 +44,12 @@ function buildSearchFilter(query: string): string {
 }
 
 const searchKeys = {
-  preview: (q: string) => ['header-search', 'preview', q] as const,
+  preview: (q: string) => ["header-search", "preview", q] as const,
 };
 
 export function useHeaderSearch() {
-  const [inputValue, setInputValue] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [inputValue, setInputValue] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
   // Debounce: update debouncedQuery only after user stops typing
   useEffect(() => {
@@ -75,7 +75,7 @@ export function useHeaderSearch() {
       getProducts({
         page: 1,
         size: PREVIEW_SIZE,
-        sort: 'createdAt,desc',
+        sort: "createdAt,desc",
         filter: buildSearchFilter(debouncedQuery),
       }),
     enabled: isQueryActive,

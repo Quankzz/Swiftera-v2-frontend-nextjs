@@ -3,19 +3,19 @@
  * Source of truth: 09_API_POSTMAN_STYLE_CHO_FRONTEND.md (Module 16: CONTACT TICKETS)
  */
 
-import type { PaginationResponse } from '@/types/api.types';
+import type { PaginationResponse } from "@/types/api.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status enum
 // ─────────────────────────────────────────────────────────────────────────────
 
 // API chỉ có đúng 3 trạng thái (Module 16, API-100)
-export type ContactTicketStatus = 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+export type ContactTicketStatus = "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 
 export const TICKET_STATUS_LABELS: Record<ContactTicketStatus, string> = {
-  IN_PROGRESS: 'Đang xử lý',
-  RESOLVED: 'Đã giải quyết',
-  CLOSED: 'Đã đóng',
+  IN_PROGRESS: "Đang xử lý",
+  RESOLVED: "Đã giải quyết",
+  CLOSED: "Đã đóng",
 };
 
 export const TICKET_STATUS_STYLES: Record<
@@ -24,17 +24,18 @@ export const TICKET_STATUS_STYLES: Record<
 > = {
   IN_PROGRESS: {
     badge:
-      'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-800',
-    dot: 'bg-blue-500',
+      "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-800",
+    dot: "bg-blue-500",
   },
   RESOLVED: {
     badge:
-      'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/40 dark:text-green-200 dark:border-green-800',
-    dot: 'bg-green-500',
+      "bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/40 dark:text-green-200 dark:border-green-800",
+    dot: "bg-green-500",
   },
   CLOSED: {
-    badge: 'bg-gray-100 text-gray-500 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700',
-    dot: 'bg-gray-400',
+    badge:
+      "bg-gray-100 text-gray-500 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
+    dot: "bg-gray-400",
   },
 };
 

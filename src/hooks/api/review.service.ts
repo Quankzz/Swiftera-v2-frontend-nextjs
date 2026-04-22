@@ -3,15 +3,15 @@
  * Module 15: REVIEWS (API-095 → API-099)
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 import type {
   CreateReviewInput,
   ReviewSingleResponse,
   ReviewVoidResponse,
   ReviewListResponse,
   ProductReviewResponse,
-} from '@/api/reviews';
+} from "@/api/reviews";
 
 const authOpts = { requireToken: true as const };
 
@@ -43,10 +43,10 @@ export async function getReviewsByProduct(
   // API /reviews/product/{productId} chỉ hỗ trợ page/size.
   // Rating filter cần xử lý ở phía FE để tránh sai lệch dữ liệu.
   const queryParams: Record<string, string | number> = {};
-  if (typeof params?.page === 'number') {
+  if (typeof params?.page === "number") {
     queryParams.page = params.page;
   }
-  if (typeof params?.size === 'number') {
+  if (typeof params?.size === "number") {
     queryParams.size = params.size;
   }
   const res = await httpService.get<ReviewListResponse>(
@@ -62,7 +62,7 @@ export async function getReviews(params?: {
   sort?: string;
   filter?: string;
 }): Promise<NormalizedPaginatedReviews> {
-  const res = await httpService.get<ReviewListResponse>('/reviews', {
+  const res = await httpService.get<ReviewListResponse>("/reviews", {
     ...authOpts,
     params,
   });
@@ -98,7 +98,7 @@ export async function createReview(
   input: CreateReviewInput,
 ): Promise<ProductReviewResponse> {
   const res = await httpService.post<ReviewSingleResponse>(
-    '/reviews',
+    "/reviews",
     input,
     authOpts,
   );

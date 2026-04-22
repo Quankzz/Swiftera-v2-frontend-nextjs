@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   ArrowRight,
@@ -22,62 +22,62 @@ import {
   MapPin,
   Box,
   ShieldAlert,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   PieChart,
   Pie,
   Cell,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
-} from 'recharts';
-import { cn } from '@/lib/utils';
-import { fmtDate } from '@/lib/formatters';
-import { useAuthStore } from '@/stores/auth-store';
-import { getStaffDashboard } from '@/api/dashboards/staffDashboard';
+} from "recharts";
+import { cn } from "@/lib/utils";
+import { fmtDate } from "@/lib/formatters";
+import { useAuthStore } from "@/stores/auth-store";
+import { getStaffDashboard } from "@/api/dashboards/staffDashboard";
 import type {
   StaffDashboardData,
   OverdueOrderItem,
-} from '@/api/dashboards/staffDashboard';
+} from "@/api/dashboards/staffDashboard";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getGreeting = () => {
   const h = new Date().getHours();
-  if (h < 12) return 'Chào buổi sáng';
-  if (h < 18) return 'Chào buổi chiều';
-  return 'Chào buổi tối';
+  if (h < 12) return "Chào buổi sáng";
+  if (h < 18) return "Chào buổi chiều";
+  return "Chào buổi tối";
 };
 
 // ─── Inventory colour config ──────────────────────────────────────────────────
 const INVENTORY_CFG = [
   {
-    key: 'available' as const,
-    label: 'Sẵn sàng',
-    fill: '#059669',
+    key: "available" as const,
+    label: "Sẵn sàng",
+    fill: "#059669",
     icon: Package,
   },
-  { key: 'rented' as const, label: 'Đang thuê', fill: '#0284c7', icon: Truck },
+  { key: "rented" as const, label: "Đang thuê", fill: "#0284c7", icon: Truck },
   {
-    key: 'reserved' as const,
-    label: 'Đặt trước',
-    fill: '#d97706',
+    key: "reserved" as const,
+    label: "Đặt trước",
+    fill: "#d97706",
     icon: Clock,
   },
   {
-    key: 'maintenance' as const,
-    label: 'Bảo trì',
-    fill: '#ea580c',
+    key: "maintenance" as const,
+    label: "Bảo trì",
+    fill: "#ea580c",
     icon: Wrench,
   },
   {
-    key: 'damaged' as const,
-    label: 'Hỏng hóc',
-    fill: '#ef4444',
+    key: "damaged" as const,
+    label: "Hỏng hóc",
+    fill: "#ef4444",
     icon: ShieldAlert,
   },
   {
-    key: 'retired' as const,
-    label: 'Ngừng dùng',
-    fill: '#6b7280',
+    key: "retired" as const,
+    label: "Ngừng dùng",
+    fill: "#6b7280",
     icon: Archive,
   },
 ] as const;
@@ -86,14 +86,14 @@ const INVENTORY_CFG = [
 function OverdueBadge({ days }: { days: number }) {
   const cls =
     days >= 6
-      ? 'bg-destructive/15 text-destructive border-destructive/30'
+      ? "bg-destructive/15 text-destructive border-destructive/30"
       : days >= 3
-        ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-400/30'
-        : 'bg-amber-400/15 text-amber-700 dark:text-amber-400 border-amber-400/30';
+        ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-400/30"
+        : "bg-amber-400/15 text-amber-700 dark:text-amber-400 border-amber-400/30";
   return (
     <span
       className={cn(
-        'text-[10px] font-black px-1.5 py-0.5 rounded-lg border whitespace-nowrap',
+        "text-[10px] font-black px-1.5 py-0.5 rounded-lg border whitespace-nowrap",
         cls,
       )}
     >
@@ -113,7 +113,7 @@ function DonutTooltip({ active, payload }: any) {
         {name}
       </p>
       <p className="text-sm font-black text-foreground tabular-nums">
-        {value}{' '}
+        {value}{" "}
         <span className="font-medium text-muted-foreground">thiết bị</span>
       </p>
     </div>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
         if (!cancelled) setData(d);
       })
       .catch(() => {
-        if (!cancelled) setError('Không thể tải dữ liệu. Vui lòng thử lại.');
+        if (!cancelled) setError("Không thể tải dữ liệu. Vui lòng thử lại.");
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -147,8 +147,8 @@ export default function DashboardPage() {
   }, [user?.userId, user?.hubId, retryKey]);
 
   const staffName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
-    : 'Nhân viên';
+    ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+    : "Nhân viên";
   const staffAvatarUrl =
     user?.avatarUrl ??
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
@@ -168,11 +168,11 @@ export default function DashboardPage() {
 
   const ticketDonut = tickets
     ? [
-        { name: 'Đang mở', value: tickets.openAssignedToMe, fill: '#ef4444' },
+        { name: "Đang mở", value: tickets.openAssignedToMe, fill: "#ef4444" },
         {
-          name: 'Đang xử lý',
+          name: "Đang xử lý",
           value: tickets.inProgressAssignedToMe,
-          fill: '#0284c7',
+          fill: "#0284c7",
         },
       ].filter((d) => d.value > 0)
     : [];
@@ -236,19 +236,19 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap items-center gap-1.5 mt-2">
                   <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                     <Building2 className="size-3 shrink-0" />
-                    {hub?.hubName ?? 'Hub'}
+                    {hub?.hubName ?? "Hub"}
                   </span>
                   <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     <MapPin className="size-3 shrink-0" />
-                    {hub?.hubCode ?? '-'}
+                    {hub?.hubCode ?? "-"}
                   </span>
                   <span className="inline-flex items-center gap-1.5 bg-muted rounded-lg px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     <CalendarDays className="size-3 shrink-0" />
-                    {new Date().toLocaleDateString('vi-VN', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
+                    {new Date().toLocaleDateString("vi-VN", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
                     })}
                   </span>
                 </div>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
                         data={
                           inventoryDonut.length > 0
                             ? inventoryDonut
-                            : [{ name: 'Trống', value: 1, fill: '#e5e7eb' }]
+                            : [{ name: "Trống", value: 1, fill: "#e5e7eb" }]
                         }
                         dataKey="value"
                         innerRadius={52}
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                       >
                         {(inventoryDonut.length > 0
                           ? inventoryDonut
-                          : [{ fill: '#e5e7eb' }]
+                          : [{ fill: "#e5e7eb" }]
                         ).map((entry, i) => (
                           <Cell key={i} fill={entry.fill} />
                         ))}
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                         data={
                           ticketDonut.length > 0
                             ? ticketDonut
-                            : [{ name: 'Trống', value: 1, fill: '#e5e7eb' }]
+                            : [{ name: "Trống", value: 1, fill: "#e5e7eb" }]
                         }
                         dataKey="value"
                         innerRadius={28}
@@ -462,7 +462,7 @@ export default function DashboardPage() {
                       >
                         {(ticketDonut.length > 0
                           ? ticketDonut
-                          : [{ fill: '#e5e7eb' }]
+                          : [{ fill: "#e5e7eb" }]
                         ).map((entry, i) => (
                           <Cell key={i} fill={entry.fill} />
                         ))}
@@ -606,7 +606,7 @@ function TaskCard({
       />
       <div
         className={cn(
-          'size-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ml-1',
+          "size-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110 ml-1",
           iconBg,
         )}
       >
@@ -646,7 +646,7 @@ function TicketStat({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 min-w-0">
-        <span className={cn('size-2 rounded-full shrink-0', dot)} />
+        <span className={cn("size-2 rounded-full shrink-0", dot)} />
         <span className="text-xs font-medium text-muted-foreground truncate">
           {label}
         </span>
@@ -664,16 +664,16 @@ function TicketStat({
 // ─── Overdue Row ──────────────────────────────────────────────────────────────
 function OverdueRow({ item }: { item: OverdueOrderItem }) {
   const statusLabel =
-    item.status === 'IN_USE'
-      ? 'Đang dùng'
-      : item.status === 'PENDING_PICKUP'
-        ? 'Chờ thu hồi'
+    item.status === "IN_USE"
+      ? "Đang dùng"
+      : item.status === "PENDING_PICKUP"
+        ? "Chờ thu hồi"
         : item.status;
 
   const statusCls =
-    item.status === 'PENDING_PICKUP'
-      ? 'text-destructive bg-destructive/10 border-destructive/25'
-      : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40';
+    item.status === "PENDING_PICKUP"
+      ? "text-destructive bg-destructive/10 border-destructive/25"
+      : "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/40";
 
   return (
     <Link
@@ -721,7 +721,7 @@ function OverdueRow({ item }: { item: OverdueOrderItem }) {
       <div className="hidden sm:block">
         <span
           className={cn(
-            'text-[10px] font-bold px-1.5 py-0.5 rounded-lg border whitespace-nowrap',
+            "text-[10px] font-bold px-1.5 py-0.5 rounded-lg border whitespace-nowrap",
             statusCls,
           )}
         >

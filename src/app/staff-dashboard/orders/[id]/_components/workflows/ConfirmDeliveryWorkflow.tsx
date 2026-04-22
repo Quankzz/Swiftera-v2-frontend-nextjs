@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { ClipboardCheck, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { RentalOrderResponse } from '@/types/api.types';
-import { WorkflowBanner } from '../WorkflowBanner';
+import React from "react";
+import { ClipboardCheck, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { RentalOrderResponse } from "@/types/api.types";
+import { WorkflowBanner } from "../WorkflowBanner";
 import {
   CustomerInfo,
   RentalSummary,
   OrderItemsList,
   OrderMetaCard,
-} from '../OrderInfo';
+} from "../OrderInfo";
 
 interface ConfirmDeliveryWorkflowProps {
   order: RentalOrderResponse;
@@ -61,9 +61,13 @@ export function ConfirmDeliveryWorkflow({
             className="h-10 rounded-lg px-5 text-[13px] font-medium bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
           >
             {loading ? (
-              <><Loader2 className="size-4 animate-spin" /> Đang xử lý…</>
+              <>
+                <Loader2 className="size-4 animate-spin" /> Đang xử lý…
+              </>
             ) : (
-              <><ClipboardCheck className="size-4" /> Xác nhận tiếp nhận</>
+              <>
+                <ClipboardCheck className="size-4" /> Xác nhận tiếp nhận
+              </>
             )}
           </Button>
         </div>

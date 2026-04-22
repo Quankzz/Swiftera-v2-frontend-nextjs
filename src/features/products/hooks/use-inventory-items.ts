@@ -10,31 +10,31 @@
  *   Module 9: INVENTORY ITEMS (API-056 → API-060)
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createInventoryItem,
   deleteInventoryItem,
   getInventoryItemById,
   getInventoryItems,
   updateInventoryItem,
-} from '../api/product.service';
+} from "../api/product.service";
 import type {
   CreateInventoryItemInput,
   InventoryItemListParams,
   InventoryItemResponse,
   PaginatedInventoryItemsResponse,
   UpdateInventoryItemInput,
-} from '../types';
+} from "../types";
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 export const inventoryKeys = {
-  all: ['inventory-items'] as const,
-  lists: () => [...inventoryKeys.all, 'list'] as const,
+  all: ["inventory-items"] as const,
+  lists: () => [...inventoryKeys.all, "list"] as const,
   list: (params?: InventoryItemListParams) =>
     [...inventoryKeys.lists(), params] as const,
   byProduct: (productId: string) =>
     [...inventoryKeys.lists(), { filter: `productId:'${productId}'` }] as const,
-  details: () => [...inventoryKeys.all, 'detail'] as const,
+  details: () => [...inventoryKeys.all, "detail"] as const,
   detail: (id: string) => [...inventoryKeys.details(), id] as const,
 };
 
@@ -48,7 +48,7 @@ export const inventoryKeys = {
  */
 export function useInventoryItemsQuery(
   productId: string | undefined,
-  params?: Omit<InventoryItemListParams, 'filter'>,
+  params?: Omit<InventoryItemListParams, "filter">,
 ) {
   const filter = productId ? `productId:'${productId}'` : undefined;
   const fullParams: InventoryItemListParams = {
@@ -60,7 +60,7 @@ export function useInventoryItemsQuery(
 
   return useQuery<PaginatedInventoryItemsResponse>({
     enabled: !!productId,
-    queryKey: inventoryKeys.byProduct(productId ?? ''),
+    queryKey: inventoryKeys.byProduct(productId ?? ""),
     queryFn: () => getInventoryItems(fullParams),
     staleTime: 30 * 1000,
   });

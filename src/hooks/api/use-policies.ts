@@ -3,8 +3,8 @@
  * Module 17: POLICIES (API-105 → API-111)
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { httpService } from '@/api/http';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { httpService } from "@/api/http";
 import type {
   PolicyDocumentResponse,
   UserConsentResponse,
@@ -14,20 +14,20 @@ import type {
   MyConsentsResponse,
   PolicyListResponse,
   ConsentSingleResponse,
-} from '@/api/policies';
+} from "@/api/policies";
 
 const authOpts = { requireToken: true as const };
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
 export const policyKeys = {
-  all: ['policies'] as const,
-  lists: () => [...policyKeys.all, 'list'] as const,
+  all: ["policies"] as const,
+  lists: () => [...policyKeys.all, "list"] as const,
   list: (params?: PolicyListParams) => [...policyKeys.lists(), params] as const,
   detail: (policyId: string) =>
-    [...policyKeys.all, 'detail', policyId] as const,
-  latestByCode: (code: string) => [...policyKeys.all, 'latest', code] as const,
-  myConsents: () => [...policyKeys.all, 'my-consents'] as const,
+    [...policyKeys.all, "detail", policyId] as const,
+  latestByCode: (code: string) => [...policyKeys.all, "latest", code] as const,
+  myConsents: () => [...policyKeys.all, "my-consents"] as const,
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -78,7 +78,7 @@ export function usePoliciesQuery(params?: PolicyListParams) {
   return useQuery({
     queryKey: policyKeys.list(params),
     queryFn: async (): Promise<PolicyDocumentResponse[]> => {
-      const res = await httpService.get<PolicyListResponse>('/policies', {
+      const res = await httpService.get<PolicyListResponse>("/policies", {
         params: {
           page: params?.page ?? 1,
           size: params?.size ?? 20,
@@ -103,7 +103,7 @@ export function useMyConsentsQuery(enabled = true) {
     queryKey: policyKeys.myConsents(),
     queryFn: async (): Promise<UserConsentResponse[]> => {
       const res = await httpService.get<MyConsentsResponse>(
-        '/policies/my-consents',
+        "/policies/my-consents",
         authOpts,
       );
       return res.data.data;

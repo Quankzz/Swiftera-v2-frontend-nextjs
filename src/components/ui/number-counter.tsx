@@ -41,13 +41,13 @@ const formatNumber = (
   value: number,
   decimals: number,
   separator: string,
-  decimalSeparator: string
+  decimalSeparator: string,
 ): string => {
   const fixed = value.toFixed(decimals);
   const [intPart, decPart] = fixed.split(".");
   const formattedInt = (intPart || "").replace(
     /\B(?=(\d{3})+(?!\d))/g,
-    separator
+    separator,
   );
   return decPart
     ? `${formattedInt}${decimalSeparator}${decPart}`
@@ -71,7 +71,7 @@ const NumberCounter = React.forwardRef<HTMLSpanElement, NumberCounterProps>(
       once = true,
       formatFn,
     },
-    ref
+    ref,
   ) => {
     const containerRef = React.useRef<HTMLSpanElement>(null);
     const isInView = useInView(containerRef, { once });
@@ -150,7 +150,7 @@ const NumberCounter = React.forwardRef<HTMLSpanElement, NumberCounterProps>(
         {suffix}
       </span>
     );
-  }
+  },
 );
 
 NumberCounter.displayName = "NumberCounter";

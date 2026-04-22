@@ -3,12 +3,12 @@
  * Base: /api/v1
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
-export type ContractAcceptMethod = 'CLICK' | 'SIGNATURE';
+export type ContractAcceptMethod = "CLICK" | "SIGNATURE";
 
 /** API-093 / API-094 response `data` */
 export interface RentalContractResponse {

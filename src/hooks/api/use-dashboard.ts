@@ -1,6 +1,6 @@
-import { useUsersQuery } from './use-users';
-import { useRolesQuery } from './use-roles';
-import { usePermissionsQuery } from './use-permissions';
+import { useUsersQuery } from "./use-users";
+import { useRolesQuery } from "./use-roles";
+import { usePermissionsQuery } from "./use-permissions";
 
 export const useUsers = (page: number, limit: number) =>
   useUsersQuery({ page, limit });

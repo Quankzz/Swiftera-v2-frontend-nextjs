@@ -1,11 +1,14 @@
-'use client';
+"use client";
 
 /**
  * Nền “chill”: gradient nhẹ + blob mờ chuyển động chậm (CSS only, nhẹ CPU).
  */
 export function ChillBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      aria-hidden
+    >
       {/* Lớp nền wash */}
       <div className="chill-bg-wash absolute inset-0" />
 
@@ -34,19 +37,19 @@ export function ChillBackground() {
       {/* Blob di chuyển chậm */}
       <div
         className="absolute -left-[15%] top-[-20%] h-[min(85vw,520px)] w-[min(85vw,520px)] rounded-full bg-teal-400/25 blur-[100px] dark:bg-teal-500/15 animate-chill-drift"
-        style={{ animationDuration: '26s' }}
+        style={{ animationDuration: "26s" }}
       />
       <div
         className="absolute -right-[10%] top-[25%] h-[min(70vw,440px)] w-[min(70vw,440px)] rounded-full bg-violet-400/20 blur-[110px] dark:bg-indigo-500/18 animate-chill-drift-reverse"
-        style={{ animationDuration: '32s', animationDelay: '-6s' }}
+        style={{ animationDuration: "32s", animationDelay: "-6s" }}
       />
       <div
         className="absolute bottom-[-15%] left-[20%] h-[min(65vw,400px)] w-[min(65vw,400px)] rounded-full bg-cyan-300/22 blur-[95px] dark:bg-cyan-600/12 animate-chill-drift"
-        style={{ animationDuration: '22s', animationDelay: '-12s' }}
+        style={{ animationDuration: "22s", animationDelay: "-12s" }}
       />
       <div
         className="absolute bottom-[10%] right-[5%] h-[min(50vw,320px)] w-[min(50vw,320px)] rounded-full bg-amber-200/30 blur-[80px] dark:bg-teal-900/25 animate-chill-drift-reverse"
-        style={{ animationDuration: '28s', animationDelay: '-3s' }}
+        style={{ animationDuration: "28s", animationDelay: "-3s" }}
       />
 
       {/* Noise siêu nhẹ (grain) */}
@@ -54,7 +57,7 @@ export function ChillBackground() {
         className="absolute inset-0 opacity-[0.35] mix-blend-overlay dark:opacity-[0.2] dark:mix-blend-soft-light"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          backgroundSize: '128px 128px',
+          backgroundSize: "128px 128px",
         }}
       />
     </div>

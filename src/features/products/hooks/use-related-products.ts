@@ -5,10 +5,10 @@
  * - Loại bỏ sản phẩm đang xem ở client
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { productKeys } from '../api/product.keys';
-import { getProducts } from '../api/product.service';
-import type { ProductResponse } from '../types';
+import { useQuery } from "@tanstack/react-query";
+import { productKeys } from "../api/product.keys";
+import { getProducts } from "../api/product.service";
+import type { ProductResponse } from "../types";
 
 const DISPLAY_COUNT = 5;
 /** Lấy dư để sau khi loại trừ productId vẫn đủ slide */
@@ -64,9 +64,9 @@ export function useRelatedProductsQuery(
   categoryId?: string | null,
 ) {
   return useQuery({
-    queryKey: productKeys.related(excludeProductId ?? '', categoryId),
+    queryKey: productKeys.related(excludeProductId ?? "", categoryId),
     queryFn: async () => {
-      const filters = ['isActive:true'];
+      const filters = ["isActive:true"];
       if (categoryId) {
         filters.push(`categoryId:'${categoryId}'`);
       }
@@ -74,8 +74,8 @@ export function useRelatedProductsQuery(
       const data = await getProducts({
         page: 1,
         size: FETCH_SIZE,
-        sort: 'createdAt,desc',
-        filter: filters.join(' and '),
+        sort: "createdAt,desc",
+        filter: filters.join(" and "),
         onlyWithStock: true,
       });
       return toCardModels(data.content ?? [], excludeProductId!);

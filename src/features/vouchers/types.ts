@@ -6,17 +6,17 @@
  * Không đoán field - chỉ dùng field có trong spec.
  */
 
-import type { PaginationResponse } from '@/types/api.types';
+import type { PaginationResponse } from "@/types/api.types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Enums / Union Types
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Loại voucher - ITEM_VOUCHER (giảm trên order/item) | PRODUCT_DISCOUNT (gắn với product cụ thể) */
-export type VoucherType = 'ITEM_VOUCHER' | 'PRODUCT_DISCOUNT';
+export type VoucherType = "ITEM_VOUCHER" | "PRODUCT_DISCOUNT";
 
 /** Loại giảm giá - BE spec: PERCENTAGE | FIXED */
-export type DiscountType = 'PERCENTAGE' | 'FIXED';
+export type DiscountType = "PERCENTAGE" | "FIXED";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Response Types (API-067, API-068, API-069, API-071)

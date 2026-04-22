@@ -1,15 +1,15 @@
-import type { AxiosResponse } from 'axios';
+import type { AxiosResponse } from "axios";
 import type {
   AuthResponse,
   GetMeResponse,
   LoginCredentials,
   RegisterCredentials,
   User as AuthUser,
-} from '@/types/auth';
+} from "@/types/auth";
 
-import { storageService } from '../services/storage';
+import { storageService } from "../services/storage";
 
-import { httpService } from './http';
+import { httpService } from "./http";
 
 export interface RefreshTokenData {
   accessToken: string;
@@ -33,7 +33,7 @@ export const authApi = {
     payload: LoginCredentials,
   ): Promise<AxiosResponse<AuthNestedData> | undefined> {
     return httpService
-      .post<AuthNestedData>('/auth/login', payload, {
+      .post<AuthNestedData>("/auth/login", payload, {
         withCredentials: true,
       })
       .then((response) => {
@@ -44,35 +44,35 @@ export const authApi = {
         }
       })
       .catch((error: unknown) => {
-        console.error('Login error:', error);
+        console.error("Login error:", error);
         throw error;
       });
   },
 
   register(payload: RegisterCredentials) {
-    return httpService.post('/auth/register', payload);
+    return httpService.post("/auth/register", payload);
   },
 
   logout() {
-    return httpService.post('/auth/logout', null, {
+    return httpService.post("/auth/logout", null, {
       requireToken: true,
     });
   },
 
   verifyEmail(payload: { email: string; code: string }) {
-    return httpService.post('/auth/verify-active-account', payload);
+    return httpService.post("/auth/verify-active-account", payload);
   },
 
   verifyActiveAccount(payload: { token: string }) {
-    return httpService.post('/auth/verify-active-account', payload);
+    return httpService.post("/auth/verify-active-account", payload);
   },
 
   resendEmail(payload: { email: string }) {
-    return httpService.post('/auth/resend-verify', payload);
+    return httpService.post("/auth/resend-verify", payload);
   },
 
   forgotPassword(payload: { email: string }) {
-    return httpService.post('/auth/forgot-password', payload);
+    return httpService.post("/auth/forgot-password", payload);
   },
 
   resetPassword(payload: {
@@ -80,17 +80,17 @@ export const authApi = {
     newPassword: string;
     confirmPassword: string;
   }) {
-    return httpService.post('/auth/reset-password', payload);
+    return httpService.post("/auth/reset-password", payload);
   },
 
   getAccount() {
-    return httpService.get<GetMeResponse>('/auth/account', {
+    return httpService.get<GetMeResponse>("/auth/account", {
       requireToken: true,
     });
   },
 
   refreshToken() {
-    return httpService.get<RefreshTokenEnvelope>('/auth/refresh', {
+    return httpService.get<RefreshTokenEnvelope>("/auth/refresh", {
       withCredentials: true,
     });
   },

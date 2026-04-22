@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { Layout } from '@/components/Layout';
+import Link from "next/link";
+import { Layout } from "@/components/Layout";
 import {
   Phone,
   Mail,
@@ -9,14 +9,13 @@ import {
   LayoutDashboard,
   FileText,
   Clock,
-} from 'lucide-react';
+} from "lucide-react";
 
 export default function ContactSalesPage() {
   return (
     <Layout stickyHeader>
       <main className="bg-background pb-16 pt-10">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
-
           {/* Hero Header */}
           <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-card px-6 py-8 shadow-sm sm:px-8 sm:py-10">
             {/* Ambient glow */}
@@ -32,9 +31,9 @@ export default function ContactSalesPage() {
                 Kết nối đội ngũ tư vấn thuê thiết bị chuyên nghiệp
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Bạn cần thuê số lượng lớn cho doanh nghiệp, sự kiện hoặc lớp học?
-                Đội ngũ tư vấn của Swiftera sẽ hỗ trợ gói thuê tối ưu theo ngân sách,
-                thời gian và yêu cầu vận hành.
+                Bạn cần thuê số lượng lớn cho doanh nghiệp, sự kiện hoặc lớp
+                học? Đội ngũ tư vấn của Swiftera sẽ hỗ trợ gói thuê tối ưu theo
+                ngân sách, thời gian và yêu cầu vận hành.
               </p>
             </div>
           </section>
@@ -55,7 +54,9 @@ export default function ContactSalesPage() {
                 <p className="mt-1 text-lg font-bold text-foreground group-hover:text-blue-500">
                   1900 1234
                 </p>
-                <p className="text-xs text-muted-foreground">08:00 – 21:00 mỗi ngày</p>
+                <p className="text-xs text-muted-foreground">
+                  08:00 – 21:00 mỗi ngày
+                </p>
               </div>
             </a>
 
@@ -73,7 +74,9 @@ export default function ContactSalesPage() {
                 <p className="mt-1 text-base font-bold text-foreground group-hover:text-blue-500">
                   sales@swiftera.vn
                 </p>
-                <p className="text-xs text-muted-foreground">Phản hồi trong 30 phút</p>
+                <p className="text-xs text-muted-foreground">
+                  Phản hồi trong 30 phút
+                </p>
               </div>
             </a>
 
@@ -91,7 +94,9 @@ export default function ContactSalesPage() {
                 <p className="mt-1 text-base font-bold text-foreground group-hover:text-blue-500">
                   Gửi yêu cầu online
                 </p>
-                <p className="text-xs text-muted-foreground">Phản hồi trong giờ hành chính</p>
+                <p className="text-xs text-muted-foreground">
+                  Phản hồi trong giờ hành chính
+                </p>
               </div>
             </Link>
           </section>
@@ -106,17 +111,21 @@ export default function ContactSalesPage() {
                 Khi nào nên liên hệ?
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Nếu bạn cần thuê số lượng lớn, yêu cầu cấu hình riêng hoặc cần báo giá
-                theo hợp đồng, hãy liên hệ trực tiếp để nhận phương án chi tiết.
+                Nếu bạn cần thuê số lượng lớn, yêu cầu cấu hình riêng hoặc cần
+                báo giá theo hợp đồng, hãy liên hệ trực tiếp để nhận phương án
+                chi tiết.
               </p>
               <ul className="mt-4 space-y-2">
                 {[
-                  'Thuê theo dự án ngắn hạn hoặc dài hạn',
-                  'Thuê theo lô cho công ty, trường học, trung tâm đào tạo',
-                  'Yêu cầu cấu hình phần mềm hoặc thiết lập sẵn trước khi giao',
-                  'Cần xuất hóa đơn GTGT cho doanh nghiệp',
+                  "Thuê theo dự án ngắn hạn hoặc dài hạn",
+                  "Thuê theo lô cho công ty, trường học, trung tâm đào tạo",
+                  "Yêu cầu cấu hình phần mềm hoặc thiết lập sẵn trước khi giao",
+                  "Cần xuất hóa đơn GTGT cho doanh nghiệp",
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                  <li
+                    key={item}
+                    className="flex items-start gap-2.5 text-sm text-muted-foreground"
+                  >
                     <CheckCircle className="mt-0.5 size-4 shrink-0 text-blue-500" />
                     {item}
                   </li>
@@ -132,17 +141,20 @@ export default function ContactSalesPage() {
                 Thông tin cần chuẩn bị
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Càng có nhiều thông tin ban đầu, đội ngũ càng tư vấn nhanh và chính
-                xác hơn. Bạn có thể gửi trước các thông tin bên dưới.
+                Càng có nhiều thông tin ban đầu, đội ngũ càng tư vấn nhanh và
+                chính xác hơn. Bạn có thể gửi trước các thông tin bên dưới.
               </p>
               <ul className="mt-4 space-y-2">
                 {[
-                  'Loại thiết bị và số lượng mong muốn',
-                  'Thời gian cần nhận thiết bị và thời hạn thuê',
-                  'Địa điểm giao nhận, người liên hệ phụ trách',
-                  'Yêu cầu đặc biệt về cấu hình hoặc phụ kiện kèm theo',
+                  "Loại thiết bị và số lượng mong muốn",
+                  "Thời gian cần nhận thiết bị và thời hạn thuê",
+                  "Địa điểm giao nhận, người liên hệ phụ trách",
+                  "Yêu cầu đặc biệt về cấu hình hoặc phụ kiện kèm theo",
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                  <li
+                    key={item}
+                    className="flex items-start gap-2.5 text-sm text-muted-foreground"
+                  >
                     <CheckCircle className="mt-0.5 size-4 shrink-0 text-blue-500" />
                     {item}
                   </li>
@@ -218,7 +230,6 @@ export default function ContactSalesPage() {
               </Link>
             </div>
           </section>
-
         </div>
       </main>
     </Layout>

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { httpService } from '@/api/http';
-import { useAuth } from '@/hooks/useAuth';
-import { buildLoginHref, getCurrentPathWithSearch } from '@/lib/auth-redirect';
-import type { ApiResponse } from '@/types/api.types';
+import { httpService } from "@/api/http";
+import { useAuth } from "@/hooks/useAuth";
+import { buildLoginHref, getCurrentPathWithSearch } from "@/lib/auth-redirect";
+import type { ApiResponse } from "@/types/api.types";
 
 type ToggleFavoriteOptions = {
   fallbackPath?: string;
@@ -30,9 +30,9 @@ const authOpts = { requireToken: true as const };
 const EMPTY_FAVORITE_IDS: string[] = [];
 
 const wishlistKeys = {
-  all: ['wishlist'] as const,
+  all: ["wishlist"] as const,
   mine: (userId: string | null) =>
-    [...wishlistKeys.all, 'mine', userId ?? 'anonymous'] as const,
+    [...wishlistKeys.all, "mine", userId ?? "anonymous"] as const,
 };
 
 function upsertWishlistItem(
@@ -58,7 +58,7 @@ export function useFavoriteProducts() {
     queryKey: wishlistQueryKey,
     queryFn: async (): Promise<WishlistItemResponse[]> => {
       const res = await httpService.get<ApiResponse<WishlistItemResponse[]>>(
-        '/wishlist',
+        "/wishlist",
         authOpts,
       );
       return res.data.data ?? [];
@@ -78,14 +78,15 @@ export function useFavoriteProducts() {
 
       const item = res.data.data;
       if (!item) {
-        throw new Error('Không thể thêm sản phẩm vào danh sách yêu thích.');
+        throw new Error("Không thể thêm sản phẩm vào danh sách yêu thích.");
       }
 
       return item;
     },
     onSuccess: (item) => {
-      queryClient.setQueryData<WishlistItemResponse[]>(wishlistQueryKey, (prev) =>
-        upsertWishlistItem(prev, item),
+      queryClient.setQueryData<WishlistItemResponse[]>(
+        wishlistQueryKey,
+        (prev) => upsertWishlistItem(prev, item),
       );
     },
   });
@@ -98,15 +99,16 @@ export function useFavoriteProducts() {
       );
     },
     onSuccess: (_data, productId) => {
-      queryClient.setQueryData<WishlistItemResponse[]>(wishlistQueryKey, (prev) =>
-        (prev ?? []).filter((item) => item.productId !== productId),
+      queryClient.setQueryData<WishlistItemResponse[]>(
+        wishlistQueryKey,
+        (prev) => (prev ?? []).filter((item) => item.productId !== productId),
       );
     },
   });
 
   const clearFavoriteMutation = useMutation({
     mutationFn: async (): Promise<void> => {
-      await httpService.delete<ApiResponse<null>>('/wishlist', authOpts);
+      await httpService.delete<ApiResponse<null>>("/wishlist", authOpts);
     },
     onSuccess: () => {
       queryClient.setQueryData<WishlistItemResponse[]>(wishlistQueryKey, []);
@@ -127,7 +129,7 @@ export function useFavoriteProducts() {
   );
 
   const ensureAuthenticated = useCallback(
-    (fallbackPath = '/catalog') => {
+    (fallbackPath = "/catalog") => {
       if (isAuthenticated && userId) return true;
 
       if (!isLoading) {
@@ -173,7 +175,7 @@ export function useFavoriteProducts() {
 
   const removeFavorite = useCallback(
     async (productId: string) => {
-      if (!userId || !ensureAuthenticated('/favorites')) {
+      if (!userId || !ensureAuthenticated("/favorites")) {
         return false;
       }
       await removeFavoriteMutation.mutateAsync(productId);
@@ -183,7 +185,7 @@ export function useFavoriteProducts() {
   );
 
   const clearFavorites = useCallback(async () => {
-    if (!userId || !ensureAuthenticated('/favorites')) {
+    if (!userId || !ensureAuthenticated("/favorites")) {
       return false;
     }
     await clearFavoriteMutation.mutateAsync();

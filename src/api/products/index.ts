@@ -7,8 +7,8 @@
  * Sử dụng httpService (axios) giống cấu trúc userProfileApi.ts
  */
 
-import type { AxiosResponse } from 'axios';
-import { httpService } from '@/api/http';
+import type { AxiosResponse } from "axios";
+import { httpService } from "@/api/http";
 
 const authOpts = { requireToken: true as const };
 
@@ -110,7 +110,7 @@ export const productsApi = {
   create(
     data: CreateProductInput,
   ): Promise<AxiosResponse<ProductSingleResponse>> {
-    return httpService.post<ProductSingleResponse>('/products', data, authOpts);
+    return httpService.post<ProductSingleResponse>("/products", data, authOpts);
   },
 
   /**
@@ -139,13 +139,13 @@ export const productsApi = {
   }): Promise<AxiosResponse<ProductListResponse>> {
     const page = params?.page ?? 0;
     const size = params?.size ?? 12;
-    const sort = params?.sort ?? 'createdAt,desc';
+    const sort = params?.sort ?? "createdAt,desc";
     const searchParams: Record<string, string> = {
       page: String(page),
       size: String(size),
       sort,
     };
-    if (params?.filter) searchParams['filter'] = params.filter;
+    if (params?.filter) searchParams["filter"] = params.filter;
     return httpService.get<ProductListResponse>(`/products`, {
       ...authOpts,
       params: searchParams,

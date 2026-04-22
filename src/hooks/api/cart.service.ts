@@ -4,13 +4,13 @@
  * Dùng httpService (axios) giống các service khác trong hooks/api/
  */
 
-import { httpService } from '@/api/http';
+import { httpService } from "@/api/http";
 import type {
   AddCartLineInput,
   CartSingleResponse,
   CartVoidResponse,
   CartResponse,
-} from '@/api/cart';
+} from "@/api/cart";
 
 const authOpts = { requireToken: true as const };
 
@@ -22,17 +22,15 @@ const authOpts = { requireToken: true as const };
  * available stock chính xác hơn bằng cách loại trừ các inventory item có
  * booking conflict trùng ngày, khớp với logic của RentalOrderService.
  */
-export async function getCart(
-  deliveryDate?: string,
-): Promise<CartResponse> {
+export async function getCart(deliveryDate?: string): Promise<CartResponse> {
   const params: Record<string, string> = {};
   if (deliveryDate) {
-    params['deliveryDate'] = deliveryDate;
+    params["deliveryDate"] = deliveryDate;
   }
-  const res = await httpService.get<CartSingleResponse>(
-    '/cart',
-    { ...authOpts, params },
-  );
+  const res = await httpService.get<CartSingleResponse>("/cart", {
+    ...authOpts,
+    params,
+  });
   return res.data.data;
 }
 
@@ -49,7 +47,7 @@ export async function addCartLine(
   input: AddCartLineInput,
 ): Promise<CartResponse> {
   const res = await httpService.post<CartSingleResponse>(
-    '/cart/lines',
+    "/cart/lines",
     input,
     authOpts,
   );
@@ -85,5 +83,5 @@ export async function removeCartLine(cartLineId: string): Promise<void> {
  * API-065: Xóa toàn bộ giỏ [AUTH]
  */
 export async function clearCart(): Promise<void> {
-  await httpService.delete<CartVoidResponse>('/cart', authOpts);
+  await httpService.delete<CartVoidResponse>("/cart", authOpts);
 }

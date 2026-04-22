@@ -6,9 +6,9 @@
  *   API-113: GET /api/v1/dashboards/admin
  */
 
-import { httpService } from '@/api/http';
-import type { ApiResponse } from '@/types/api.types';
-import type { AdminDashboardData, AdminDashboardParams } from '../types';
+import { httpService } from "@/api/http";
+import type { ApiResponse } from "@/types/api.types";
+import type { AdminDashboardData, AdminDashboardParams } from "../types";
 
 const authOpts = { requireToken: true as const };
 
@@ -20,7 +20,7 @@ export async function getAdminDashboard(
   params: AdminDashboardParams = {},
 ): Promise<AdminDashboardData> {
   const res = await httpService.get<ApiResponse<AdminDashboardData>>(
-    '/dashboards/admin',
+    "/dashboards/admin",
     { ...authOpts, params: { hubId: params.hubId } },
   );
   return res.data.data!;

@@ -12,22 +12,22 @@
  *   Module 8: PRODUCTS (API-051 → API-055)
  */
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { productKeys } from '../api/product.keys';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { productKeys } from "../api/product.keys";
 import {
   createProduct,
   deleteProduct,
   getProductById,
   getProducts,
   updateProduct,
-} from '../api/product.service';
+} from "../api/product.service";
 import type {
   CreateProductInput,
   PaginatedProductsResponse,
   ProductListParams,
   ProductResponse,
   UpdateProductInput,
-} from '../types';
+} from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Products

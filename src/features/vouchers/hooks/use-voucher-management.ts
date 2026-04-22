@@ -11,20 +11,20 @@ import {
   useMutation,
   useQueryClient,
   keepPreviousData,
-} from '@tanstack/react-query';
-import { voucherKeys } from '../api/voucher.keys';
+} from "@tanstack/react-query";
+import { voucherKeys } from "../api/voucher.keys";
 import {
   getVouchersList,
   getVoucherById,
   createVoucher,
   updateVoucher,
   deleteVoucher,
-} from '../api/voucher.service';
+} from "../api/voucher.service";
 import type {
   VoucherListParams,
   CreateVoucherInput,
   UpdateVoucherInput,
-} from '../types';
+} from "../types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
@@ -50,7 +50,7 @@ export function useVouchersQuery(params?: VoucherListParams) {
  */
 export function useVoucherQuery(voucherId?: string) {
   return useQuery({
-    queryKey: voucherKeys.detail(voucherId ?? ''),
+    queryKey: voucherKeys.detail(voucherId ?? ""),
     queryFn: () => getVoucherById(voucherId!),
     enabled: !!voucherId,
     staleTime: 30_000,

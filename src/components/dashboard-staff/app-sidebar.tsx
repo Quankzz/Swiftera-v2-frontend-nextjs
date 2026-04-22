@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { usePathname, useSearchParams } from 'next/navigation';
+import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -17,7 +17,7 @@ import {
   RotateCcw,
   XCircle,
   CheckCircle2,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -33,56 +33,56 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarSeparator,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { NavUser } from '@/components/dashboard-staff/nav-user';
-import { useAuthStore } from '@/stores/auth-store';
-import { logout as logoutApi } from '@/api/auth';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/collapsible";
+import { NavUser } from "@/components/dashboard-staff/nav-user";
+import { useAuthStore } from "@/stores/auth-store";
+import { logout as logoutApi } from "@/api/auth";
+import { cn } from "@/lib/utils";
 import {
   useStaffOrderCounts,
   selectCount,
   selectUrgentTotal,
   selectTotalOrders,
   type OrderStatus,
-} from '@/stores/staff-order-counts-store';
-import { getStaffOrders } from '@/api/staff-orders';
+} from "@/stores/staff-order-counts-store";
+import { getStaffOrders } from "@/api/staff-orders";
 
 // ── Giao hàng: PAID → PREPARING → DELIVERING → DELIVERED ─────────────────────
 const DELIVERY_WORKFLOW_TABS = [
   {
-    title: 'Chờ xác nhận',
-    url: '/staff-dashboard/orders?status=PAID',
-    status: 'PAID',
-    dotClass: 'bg-amber-400',
+    title: "Chờ xác nhận",
+    url: "/staff-dashboard/orders?status=PAID",
+    status: "PAID",
+    dotClass: "bg-amber-400",
     urgency: true,
     icon: Clock,
   },
   {
-    title: 'Đang chuẩn bị',
-    url: '/staff-dashboard/orders?status=PREPARING',
-    status: 'PREPARING',
-    dotClass: 'bg-blue-400 animate-pulse',
+    title: "Đang chuẩn bị",
+    url: "/staff-dashboard/orders?status=PREPARING",
+    status: "PREPARING",
+    dotClass: "bg-blue-400 animate-pulse",
     urgency: false,
     icon: Package,
   },
   {
-    title: 'Đang giao',
-    url: '/staff-dashboard/orders?status=DELIVERING',
-    status: 'DELIVERING',
-    dotClass: 'bg-info animate-pulse',
+    title: "Đang giao",
+    url: "/staff-dashboard/orders?status=DELIVERING",
+    status: "DELIVERING",
+    dotClass: "bg-info animate-pulse",
     urgency: false,
     icon: Truck,
   },
   {
-    title: 'Đã giao',
-    url: '/staff-dashboard/orders?status=DELIVERED',
-    status: 'DELIVERED',
-    dotClass: 'bg-teal-500',
+    title: "Đã giao",
+    url: "/staff-dashboard/orders?status=DELIVERED",
+    status: "DELIVERED",
+    dotClass: "bg-teal-500",
     urgency: false,
     icon: CheckCircle2,
   },
@@ -91,26 +91,26 @@ const DELIVERY_WORKFLOW_TABS = [
 // ── Thu hồi: PENDING_PICKUP → PICKING_UP → PICKED_UP → COMPLETED ──────────────
 const PICKUP_WORKFLOW_TABS = [
   {
-    title: 'Chờ thu hồi',
-    url: '/staff-dashboard/orders?status=PENDING_PICKUP',
-    status: 'PENDING_PICKUP',
-    dotClass: 'bg-orange-400 animate-pulse',
+    title: "Chờ thu hồi",
+    url: "/staff-dashboard/orders?status=PENDING_PICKUP",
+    status: "PENDING_PICKUP",
+    dotClass: "bg-orange-400 animate-pulse",
     urgency: true,
     icon: Clock,
   },
   {
-    title: 'Đang thu hồi',
-    url: '/staff-dashboard/orders?status=PICKING_UP',
-    status: 'PICKING_UP',
-    dotClass: 'bg-purple-400 animate-pulse',
+    title: "Đang thu hồi",
+    url: "/staff-dashboard/orders?status=PICKING_UP",
+    status: "PICKING_UP",
+    dotClass: "bg-purple-400 animate-pulse",
     urgency: false,
     icon: RotateCcw,
   },
   {
-    title: 'Đã thu hồi',
-    url: '/staff-dashboard/orders?status=PICKED_UP',
-    status: 'PICKED_UP',
-    dotClass: 'bg-indigo-500',
+    title: "Đã thu hồi",
+    url: "/staff-dashboard/orders?status=PICKED_UP",
+    status: "PICKED_UP",
+    dotClass: "bg-indigo-500",
     urgency: false,
     icon: Package,
   },
@@ -118,37 +118,37 @@ const PICKUP_WORKFLOW_TABS = [
 
 const CANCELLED_WORKFLOW_TABS = [
   {
-    title: 'Đã hủy',
-    url: '/staff-dashboard/orders?status=CANCELLED',
-    status: 'CANCELLED',
-    dotClass: 'bg-muted-foreground/40',
+    title: "Đã hủy",
+    url: "/staff-dashboard/orders?status=CANCELLED",
+    status: "CANCELLED",
+    dotClass: "bg-muted-foreground/40",
     urgency: false,
     icon: XCircle,
   },
 ];
 
 const SECONDARY_ITEMS = [
-  { title: 'Hỗ trợ', url: '#', icon: LifeBuoy },
-  { title: 'Cài đặt', url: '#', icon: Settings },
+  { title: "Hỗ trợ", url: "#", icon: LifeBuoy },
+  { title: "Cài đặt", url: "#", icon: Settings },
 ];
 
-const DEFAULT_ORDERS_URL = '/staff-dashboard/orders';
+const DEFAULT_ORDERS_URL = "/staff-dashboard/orders";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentStatus = searchParams.get('status');
+  const currentStatus = searchParams.get("status");
   const { user } = useAuthStore();
   const { counts, setCounts } = useStaffOrderCounts();
   const staffName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ')
-    : '';
-  const staffEmail = user?.email ?? '';
+    ? [user.firstName, user.lastName].filter(Boolean).join(" ")
+    : "";
+  const staffEmail = user?.email ?? "";
   const staffAvatar =
     user?.avatarUrl ??
     `https://ui-avatars.com/api/?name=${encodeURIComponent(staffName)}&background=fe1451&color=fff`;
-  const hubDisplayName = user?.hubId ?? '';
+  const hubDisplayName = user?.hubId ?? "";
 
   // ── Always fetch counts on mount ──────────────────────────────────────────
   React.useEffect(() => {
@@ -174,10 +174,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [user?.userId]);
 
   // ── Active state ──────────────────────────────────────────────────────────
-  const isDashboardActive = pathname === '/staff-dashboard';
+  const isDashboardActive = pathname === "/staff-dashboard";
   const isOrdersActive =
-    pathname === '/staff-dashboard/orders' ||
-    pathname.startsWith('/staff-dashboard/orders/');
+    pathname === "/staff-dashboard/orders" ||
+    pathname.startsWith("/staff-dashboard/orders/");
 
   const [ordersOpen, setOrdersOpen] = React.useState(isOrdersActive);
   React.useEffect(() => {
@@ -194,7 +194,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     } catch {
     } finally {
       useAuthStore.getState().clearAuth();
-      router.replace('/auth/login');
+      router.replace("/auth/login");
     }
   }, [router]);
 
@@ -212,10 +212,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
               <div className="grid flex-1 text-left leading-tight">
                 <span className="truncate text-sm font-bold text-sidebar-foreground tracking-tight">
-                  {staffName || 'Nhân viên'}
+                  {staffName || "Nhân viên"}
                 </span>
                 <span className="truncate text-[11px] text-sidebar-foreground/55 font-medium">
-                  {hubDisplayName || 'Hub chưa cập nhật'}
+                  {hubDisplayName || "Hub chưa cập nhật"}
                 </span>
               </div>
             </SidebarMenuButton>
@@ -236,9 +236,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={isDashboardActive}
                   tooltip="Tổng quan"
                   className={cn(
-                    'gap-3 transition-colors',
+                    "gap-3 transition-colors",
                     isDashboardActive &&
-                      'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                      "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
                   )}
                 >
                   <LayoutDashboard className="size-4" />
@@ -258,9 +258,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={isOrdersActive}
                   tooltip="Đơn hàng"
                   className={cn(
-                    'gap-3 transition-colors pr-9',
+                    "gap-3 transition-colors pr-9",
                     isOrdersActive &&
-                      'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                      "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
                   )}
                 >
                   <ShoppingBag className="size-4" />
@@ -268,10 +268,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   {totalOrders > 0 && (
                     <span
                       className={cn(
-                        'ml-auto flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums',
+                        "ml-auto flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
                         urgentTotal > 0
-                          ? 'bg-destructive text-white'
-                          : 'bg-sidebar-accent text-sidebar-foreground/70',
+                          ? "bg-destructive text-white"
+                          : "bg-sidebar-accent text-sidebar-foreground/70",
                       )}
                     >
                       {urgentTotal > 0 ? urgentTotal : totalOrders}
@@ -308,14 +308,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             render={<Link href={tab.url} />}
                             isActive={isTabActive}
                             className={cn(
-                              'py-2.5 transition-colors pr-2',
+                              "py-2.5 transition-colors pr-2",
                               isTabActive &&
-                                'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                                "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
                             )}
                           >
                             <span
                               className={cn(
-                                'size-1.5 shrink-0 rounded-full',
+                                "size-1.5 shrink-0 rounded-full",
                                 tab.dotClass,
                               )}
                             />
@@ -326,12 +326,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             {count > 0 && (
                               <span
                                 className={cn(
-                                  'ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                  "ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0",
                                   tab.urgency
-                                    ? 'bg-destructive text-white'
+                                    ? "bg-destructive text-white"
                                     : isTabActive
-                                      ? 'bg-background text-foreground shadow-sm'
-                                      : 'bg-sidebar-accent text-sidebar-foreground/70',
+                                      ? "bg-background text-foreground shadow-sm"
+                                      : "bg-sidebar-accent text-sidebar-foreground/70",
                                 )}
                               >
                                 {count}
@@ -360,14 +360,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             render={<Link href={tab.url} />}
                             isActive={isTabActive}
                             className={cn(
-                              'py-2.5 transition-colors pr-2',
+                              "py-2.5 transition-colors pr-2",
                               isTabActive &&
-                                'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                                "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
                             )}
                           >
                             <span
                               className={cn(
-                                'size-1.5 shrink-0 rounded-full',
+                                "size-1.5 shrink-0 rounded-full",
                                 tab.dotClass,
                               )}
                             />
@@ -377,12 +377,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             {count > 0 && (
                               <span
                                 className={cn(
-                                  'ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                  "ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0",
                                   tab.urgency
-                                    ? 'bg-destructive text-white'
+                                    ? "bg-destructive text-white"
                                     : isTabActive
-                                      ? 'bg-background text-foreground shadow-sm'
-                                      : 'bg-sidebar-accent text-sidebar-foreground/70',
+                                      ? "bg-background text-foreground shadow-sm"
+                                      : "bg-sidebar-accent text-sidebar-foreground/70",
                                 )}
                               >
                                 {count}
@@ -411,14 +411,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             render={<Link href={tab.url} />}
                             isActive={isTabActive}
                             className={cn(
-                              'py-2.5 transition-colors pr-2',
+                              "py-2.5 transition-colors pr-2",
                               isTabActive &&
-                                'bg-sidebar-accent text-sidebar-accent-foreground font-semibold',
+                                "bg-sidebar-accent text-sidebar-accent-foreground font-semibold",
                             )}
                           >
                             <span
                               className={cn(
-                                'size-1.5 shrink-0 rounded-full',
+                                "size-1.5 shrink-0 rounded-full",
                                 tab.dotClass,
                               )}
                             />
@@ -428,10 +428,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             {count > 0 && (
                               <span
                                 className={cn(
-                                  'ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0',
+                                  "ml-auto min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold tabular-nums shrink-0",
                                   isTabActive
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'bg-sidebar-accent text-sidebar-foreground/70',
+                                    ? "bg-background text-foreground shadow-sm"
+                                    : "bg-sidebar-accent text-sidebar-foreground/70",
                                 )}
                               >
                                 {count}
@@ -472,10 +472,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter className="pt-0 pb-3 shrink-0">
         <NavUser
           user={{
-            name: staffName || 'Nhân viên',
+            name: staffName || "Nhân viên",
             email: staffEmail,
             avatar: staffAvatar,
-            role: 'STAFF',
+            role: "STAFF",
           }}
           onLogout={handleLogout}
         />

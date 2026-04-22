@@ -1,7 +1,7 @@
-'use client';
-import dynamic from 'next/dynamic';
+"use client";
+import dynamic from "next/dynamic";
 
-const MapView = dynamic(() => import('@/components/map/MapView'), {
+const MapView = dynamic(() => import("@/components/map/MapView"), {
   ssr: false,
   loading: () => (
     <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 flex shrink-0 items-center justify-center">
