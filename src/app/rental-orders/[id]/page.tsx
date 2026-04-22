@@ -77,13 +77,8 @@ const fmt = new Intl.NumberFormat('vi-VN', {
 });
 
 const EXTENDABLE_STATUSES: RentalOrderStatus[] = [
-  'PENDING_PAYMENT',
-  'PAID',
-  'PREPARING',
-  'DELIVERING',
   'DELIVERED',
   'IN_USE',
-  'PENDING_PICKUP',
 ];
 
 const OVERDUE_SUGGESTION_STATUSES: RentalOrderStatus[] = [
@@ -790,13 +785,10 @@ export default function RentalOrderDetailPage() {
                       </div>
                       <div>
                         <p className='text-sm font-bold text-cyan-800 dark:text-cyan-300'>
-                          Yêu cầu hủy đơn đã được gửi
+                          Đơn hàng đã được hủy
                         </p>
                         <p className='mt-0.5 text-xs text-cyan-700/80 dark:text-cyan-400/80'>
-                          Bộ phận hỗ trợ đang xử lý và sẽ hoàn tiền cho bạn trong thời gian sớm nhất.
-                          {order.cancellationReason && (
-                            <span className='mt-1 block'>Lý do: {order.cancellationReason}</span>
-                          )}
+                          Bộ phận hỗ trợ đang tiến hành thủ tục hoàn tiền cho bạn trong thời gian sớm nhất.
                         </p>
                       </div>
                     </div>
@@ -1059,7 +1051,7 @@ export default function RentalOrderDetailPage() {
                             ) : (
                               <Ban className='size-4' />
                             )}
-                            {order.status === 'PAID' ? 'Yêu cầu hủy đơn' : 'Hủy đơn'}
+                            Hủy đơn
                           </Button>
                         ))}
                       </div>
@@ -1118,11 +1110,11 @@ export default function RentalOrderDetailPage() {
                 <DialogHeader>
                   <DialogTitle className='flex items-center gap-2'>
                     <Ban className='size-5 text-cyan-600' />
-                    Yêu cầu hủy đơn thuê
+                    Hủy đơn thuê
                   </DialogTitle>
                   <DialogDescription>
                     Bạn đã thanh toán đơn hàng này. Vui lòng nhập lý do hủy đơn.
-                    Bộ phận hỗ trợ sẽ xác nhận và hoàn tiền cho bạn sau khi đơn được duyệt hủy.
+                    Bộ phận hỗ trợ sẽ tiến hành hoàn tiền cho bạn trong thời gian sớm nhất.
                   </DialogDescription>
                 </DialogHeader>
                 <div className='space-y-3'>
@@ -1139,7 +1131,7 @@ export default function RentalOrderDetailPage() {
                     />
                   </div>
                   <div className='rounded-lg border border-amber-200/80 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200'>
-                    Tiền cọc sẽ được hoàn lại cho bạn sau khi đơn hàng được duyệt hủy.
+                    Tiền cọc và tiền thuê sẽ được hoàn lại cho bạn trong thời gian sớm nhất.
                   </div>
                 </div>
                 <DialogFooter>
@@ -1163,7 +1155,7 @@ export default function RentalOrderDetailPage() {
                     ) : (
                       <Ban className='size-4' />
                     )}
-                    {requestCancellation.isPending ? 'Đang gửi…' : 'Gửi yêu cầu hủy đơn'}
+                    {requestCancellation.isPending ? 'Đang hủy…' : 'Xác nhận hủy đơn'}
                   </Button>
                 </DialogFooter>
               </DialogContent>

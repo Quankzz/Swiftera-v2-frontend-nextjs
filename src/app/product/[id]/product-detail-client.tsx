@@ -210,7 +210,7 @@ export default function ProductDetailClient({
 
   const availabilityReady = !!availability;
   const realtimeAvailableStock = availability?.availableStock ?? 0;
-  const maxQuantity = availability?.maxRentableQuantity ?? 0;
+  const maxQuantity = availability?.availableStock ?? 0;
 
   // Colors enriched with real-time availability from the availability endpoint
   const colorsWithLiveStock: ProductColorOption[] = useMemo(() => {
@@ -249,15 +249,18 @@ export default function ProductDetailClient({
 
   const availabilityMessage = useMemo(() => {
     if (!availabilityReady) {
-      return 'Đang kiểm tra availability theo ngày giao, thời hạn thuê và màu đã chọn.';
+      return 'Đang kiểm tra tình trạng còn hàng theo thời gian thuê bạn đã chọn...';
     }
 
     if (availability?.unavailableReason) {
       return availability.unavailableReason;
     }
 
-    if (selectedColorId && availability?.selectedColorAvailableQuantity != null) {
-      return `Màu đã chọn còn ${availability.selectedColorAvailableQuantity} serial khả dụng cho ngày ${selectedDeliveryDate}.`;
+    if (selectedColorId && availability?.colors) {
+      const live = availability.colors.find(c => c.productColorId === selectedColorId);
+      if (live) {
+        return `Màu đã chọn còn ${live.availableQuantity} serial khả dụng cho ngày ${selectedDeliveryDate}.`;
+      }
     }
 
     return `Khả dụng tối đa ${realtimeAvailableStock} serial cho ngày ${selectedDeliveryDate}.`;
@@ -434,12 +437,12 @@ export default function ProductDetailClient({
               quantity={safeQuantity}
               setQuantity={handleQuantityChange}
               maxQuantity={maxQuantity}
-              disabled={!availabilityReady || !availability?.isAvailable}
-              disabledReason={
-                !availabilityReady
-                  ? 'Đang kiểm tra availability thực tế'
-                  : availabilityMessage
-              }
+              // disabled={!availabilityReady || !availability?.isAvailable}
+              // disabledReason={
+              //   !availabilityReady
+              //     ? 'Đang kiểm tra tình trạng còn hàng...'
+              //     : availabilityMessage
+              // }
               requireColorSelection={requireColorSelection}
               cartProduct={{
                 productId: product.productId,
@@ -472,10 +475,7 @@ export default function ProductDetailClient({
           </div>
 
           <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4'>
-            <RentalDeliverySection
-              deliveryDate={selectedDeliveryDate}
-              onDeliveryDateChange={setSelectedDeliveryDate}
-            />
+            <RentalDeliverySection />
             <RentalProcessSection />
           </div>
         </div>
