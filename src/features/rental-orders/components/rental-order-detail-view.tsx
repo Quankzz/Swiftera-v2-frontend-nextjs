@@ -36,6 +36,7 @@ import {
   useRentalOrderQuery,
   useRentalOrderContractQuery,
   useUpdateOrderStatusMutation,
+  useCompleteOrderMutation,
 } from '../hooks/use-rental-order-management';
 import { useAssignStaffMutation } from '../hooks/use-rental-order-assignment';
 import { StaffPickerDialog } from './staff-picker-dialog';
@@ -539,6 +540,7 @@ const ADMIN_TRANSITIONS: Partial<
 function UpdateStatusSection({ order }: { order: RentalOrderResponse }) {
   const transitions = ADMIN_TRANSITIONS[order.status] ?? [];
   const updateMutation = useUpdateOrderStatusMutation();
+  const completeMutation = useCompleteOrderMutation();
 
   const [selected, setSelected] = useState<StatusTransitionOption | null>(null);
   const [issueNote, setIssueNote] = useState('');
@@ -557,15 +559,27 @@ function UpdateStatusSection({ order }: { order: RentalOrderResponse }) {
       return;
     }
     try {
-      await updateMutation.mutateAsync({
-        rentalOrderId: order.rentalOrderId,
-        payload: {
-          status: selected.to,
-          ...(selected.requiresIssueNote && issueNote.trim()
-            ? { issueNote: issueNote.trim() }
-            : {}),
-        },
-      });
+      // PICKED_UP → COMPLETED must use the confirm-completion endpoint
+      // which handles penalty settlement and deposit refund creation
+      if (order.status === 'PICKED_UP' && selected.to === 'COMPLETED') {
+        await completeMutation.mutateAsync({
+          rentalOrderId: order.rentalOrderId,
+          input: {
+            damagePenaltyAmount: order.damagePenaltyAmount ?? 0,
+            overduePenaltyAmount: order.overduePenaltyAmount ?? 0,
+          },
+        });
+      } else {
+        await updateMutation.mutateAsync({
+          rentalOrderId: order.rentalOrderId,
+          payload: {
+            status: selected.to,
+            ...(selected.requiresIssueNote && issueNote.trim()
+              ? { issueNote: issueNote.trim() }
+              : {}),
+          },
+        });
+      }
       setConfirming(false);
       setSelected(null);
       setIssueNote('');
@@ -718,7 +732,7 @@ function UpdateStatusSection({ order }: { order: RentalOrderResponse }) {
               type='button'
               onClick={handleConfirm}
               disabled={
-                updateMutation.isPending ||
+                (updateMutation.isPending || completeMutation.isPending) ||
                 (selected?.requiresIssueNote ? !issueNote.trim() : false)
               }
               className={cn(
@@ -730,7 +744,7 @@ function UpdateStatusSection({ order }: { order: RentalOrderResponse }) {
                     : 'bg-theme-primary-start hover:brightness-110',
               )}
             >
-              {updateMutation.isPending ? (
+              {(updateMutation.isPending || completeMutation.isPending) ? (
                 <Loader2 className='w-3.5 h-3.5 animate-spin' />
               ) : selected?.isCancellation ? (
                 <XCircle className='w-3.5 h-3.5' />
@@ -742,7 +756,7 @@ function UpdateStatusSection({ order }: { order: RentalOrderResponse }) {
             <button
               type='button'
               onClick={handleCancel}
-              disabled={updateMutation.isPending}
+              disabled={updateMutation.isPending || completeMutation.isPending}
               className='px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-white/10 text-text-sub hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-40'
             >
               Huỷ

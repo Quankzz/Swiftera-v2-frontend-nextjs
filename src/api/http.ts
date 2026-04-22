@@ -123,26 +123,51 @@ class Http {
                   );
                 })
                 .catch((refreshError: unknown) => {
+                  // Normalize the refresh error to an AppError
                   const normalizedRefreshError = toAppError(
                     refreshError,
                     'Token refresh failed',
                   );
+
+                  // Check if this is an expected auth-related failure.
+                  // For refresh failures, 401/403/404 are EXPECTED (e.g., token
+                  // expired, revoked, or user deleted). Other codes indicate a
+                  // system problem and should surface the real message.
+                  const status = normalizedRefreshError.status;
                   const isExpectedAuthFailure =
+                    (status >= 400 && status < 500) ||
                     normalizedRefreshError.errorCode === 'UNAUTHORIZED' ||
                     normalizedRefreshError.errorCode === 'FORBIDDEN' ||
                     normalizedRefreshError.errorCode === 'NOT_FOUND' ||
-                    normalizedRefreshError.message.includes('Không tìm thấy');
+                    normalizedRefreshError.errorCode === 'VALIDATION_ERROR' ||
+                    normalizedRefreshError.message.includes('Không tìm thấy') ||
+                    normalizedRefreshError.message.includes('hết hạn') ||
+                    normalizedRefreshError.message.includes('Revoked') ||
+                    normalizedRefreshError.message.includes('revoked');
 
+                  // Log unexpected failures at error level; expected auth failures
+                  // are silent (the user will be redirected to login anyway).
                   if (!isExpectedAuthFailure) {
                     console.error(
                       '❌ Token refresh failed:',
+                      normalizedRefreshError.errorCode,
+                      normalizedRefreshError.message,
+                    );
+                  } else {
+                    // Token expired/revoked — clear session and redirect to login.
+                    console.warn(
+                      '⚠️ Token refresh failed (expected auth failure):',
+                      normalizedRefreshError.errorCode,
                       normalizedRefreshError.message,
                     );
                   }
+
+                  // Always clear tokens on refresh failure.
                   storageService.removeAccessToken();
                   if (logoutCallback) {
                     logoutCallback();
                   }
+
                   return Promise.reject(normalizedRefreshError);
                 });
 

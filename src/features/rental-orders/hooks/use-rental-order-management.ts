@@ -15,7 +15,7 @@ import {
   getRentalOrderById,
   updateRentalOrderStatus,
   cancelRentalOrder,
-  completeRentalOrder,
+  confirmCompletion,
   reportIssueRecall,
   getContractByOrder,
 } from '../api/rental-order.service';
@@ -27,6 +27,7 @@ import type {
   UpdateOrderStatusInput,
   ReportIssueInput,
   RentalContractResponse,
+  ConfirmCompletionInput,
 } from '../types';
 
 /**
@@ -98,16 +99,23 @@ export function useCancelOrderMutation() {
 }
 
 /**
- * Hoàn tất đơn thuê - PICKED_UP → COMPLETED (API-079)
+ * Hoàn tất đơn thuê - PICKED_UP → COMPLETED (POST /confirm-completion)
+ * Uses the proper confirm-completion endpoint which handles penalty settlement
+ * and deposit refund creation, not the generic status-change endpoint.
  */
 export function useCompleteOrderMutation() {
   const qc = useQueryClient();
-  return useMutation<RentalOrderResponse, Error, string>({
-    mutationFn: completeRentalOrder,
-    onSuccess: (_, rentalOrderId) => {
+  return useMutation<
+    RentalOrderResponse,
+    Error,
+    { rentalOrderId: string; input: ConfirmCompletionInput }
+  >({
+    mutationFn: ({ rentalOrderId, input }) =>
+      confirmCompletion(rentalOrderId, input),
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: rentalOrderKeys.lists() });
       qc.invalidateQueries({
-        queryKey: rentalOrderKeys.detail(rentalOrderId),
+        queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
       toast.success('Đơn thuê đã hoàn tất');
     },

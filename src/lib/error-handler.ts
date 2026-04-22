@@ -74,22 +74,26 @@ function toErrorDetail(raw: unknown): ApiErrorDetail | null {
   }
 
   const source = raw as Record<string, unknown>;
-  if (typeof source.message !== 'string' || !source.message.trim()) {
-    return null;
+
+  // Handle ApplicationException format: { code: number, message: string }
+  if (typeof source.code === 'number' && typeof source.message === 'string' && source.message.trim()) {
+    return {
+      code: source.code,
+      message: source.message.trim(),
+      field: typeof source.field === 'string' && source.field.trim() ? source.field.trim() : undefined,
+      resource: typeof source.resource === 'string' && source.resource.trim() ? source.resource.trim() : undefined,
+    };
   }
 
-  return {
-    code: typeof source.code === 'number' ? source.code : undefined,
-    message: source.message.trim(),
-    field:
-      typeof source.field === 'string' && source.field.trim()
-        ? source.field.trim()
-        : undefined,
-    resource:
-      typeof source.resource === 'string' && source.resource.trim()
-        ? source.resource.trim()
-        : undefined,
-  };
+  // Handle plain { message: "..." } format
+  if (typeof source.message === 'string' && source.message.trim()) {
+    return {
+      code: typeof source.code === 'number' ? source.code : undefined,
+      message: source.message.trim(),
+    };
+  }
+
+  return null;
 }
 
 function getErrorDetails(payload: unknown): ApiErrorDetail[] {
@@ -117,22 +121,24 @@ function getPayloadMessage(payload: unknown): string | null {
     errors?: unknown;
   };
 
+  // Handle ApiResponse format from backend: { success: false, errors: [{code, message}] }
+  if (Array.isArray(body.errors)) {
+    for (const item of body.errors) {
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
+      // Support both { message: "..." } and { message: "..." } from ApplicationException
+      const itemObj = item as Record<string, unknown>;
+      const message = itemObj.message;
+      if (typeof message === 'string' && message.trim()) {
+        return message.trim();
+      }
+    }
+  }
+
+  // Handle direct { message: "..." } format (non-standard responses)
   if (typeof body.message === 'string' && body.message.trim()) {
     return body.message.trim();
-  }
-
-  if (!Array.isArray(body.errors)) {
-    return null;
-  }
-
-  for (const item of body.errors) {
-    if (!item || typeof item !== 'object') {
-      continue;
-    }
-    const message = (item as { message?: unknown }).message;
-    if (typeof message === 'string' && message.trim()) {
-      return message.trim();
-    }
   }
 
   return null;

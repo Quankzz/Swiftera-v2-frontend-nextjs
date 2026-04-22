@@ -358,6 +358,27 @@ export interface AssignStaffToHubInput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Admin: Cancellation & Completion
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Input for admin confirming cancellation with refund */
+export interface CancelOrderInput {
+  reason?: string;
+}
+
+/**
+ * Input for admin confirming rental order completion (PICKED_UP → COMPLETED).
+ * Sends penalty amounts and triggers deposit refund.
+ */
+export interface ConfirmCompletionInput {
+  damagePenaltyAmount?: number;
+  overduePenaltyAmount?: number;
+  penaltyTotal?: number; // deprecated, use damagePenaltyAmount + overduePenaltyAmount
+  note?: string;
+  refundMethod?: 'VNPAY' | 'BANK_TRANSFER' | 'CASH';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Staff types (dùng trong assign-staff-dialog - lấy từ GET /users)
 // ─────────────────────────────────────────────────────────────────────────────
 

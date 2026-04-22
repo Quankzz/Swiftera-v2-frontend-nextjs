@@ -19,7 +19,6 @@ import {
   confirmCancellationRefund,
   adminCancelFromPaid,
   adminEarlyPickupFromInUse,
-  type CancelOrderInput,
 } from '../api/rental-order.service';
 import { httpService } from '@/api/http';
 import type { ApiResponse, PaginationResponse } from '@/types/api.types';
@@ -32,6 +31,7 @@ import type {
   AssignStaffInput,
   AssignStaffToHubInput,
   HubOption,
+  CancelOrderInput,
 } from '../types';
 import type { HubStaffResponse } from '@/features/hubs/types';
 

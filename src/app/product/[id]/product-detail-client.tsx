@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import {
@@ -13,8 +13,7 @@ import {
   RentalDeliverySection,
   RentalProcessSection,
 } from '@/components/product-detail/rental-product-sidebar';
-import {
-  RentalSpecifications,
+import { RentalSpecifications,
   RentalProductDescription,
 } from '@/components/product-detail/rental-product-content';
 import {
@@ -22,10 +21,12 @@ import {
   RentalRelatedProducts,
 } from '@/components/product-detail/rental-product-relations';
 import { useProductDetailQuery } from '@/features/products/hooks/use-product-detail';
+import { useProductAvailabilityQuery } from '@/features/products/hooks/use-product-availability';
 import { useProductReviewsQuery } from '@/hooks/api/use-reviews';
 import { useMyOrdersQuery } from '@/hooks/api/use-rental-orders';
 import { useAuthStore } from '@/stores/auth-store';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { ProductColorOption } from '@/components/product-detail/rental-product-hero';
 
 function buildDurations(
   dailyPrice: number,
@@ -62,6 +63,15 @@ const formatter = new Intl.NumberFormat('vi-VN', {
   maximumFractionDigits: 0,
 });
 
+function getDefaultDeliveryDate(): string {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const day = String(tomorrow.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 interface ProductDetailClientProps {
   productId: string;
   initialReviewsMeta?: { totalItems: number } | null;
@@ -72,6 +82,15 @@ export default function ProductDetailClient({
   initialReviewsMeta,
 }: ProductDetailClientProps) {
   const currentUserId = useAuthStore((s) => s.user?.userId ?? null);
+
+  const [currentImage, setCurrentImage] = useState(0);
+  const [selectedDuration, setSelectedDuration] = useState<string>('');
+  const [quantity, setQuantity] = useState(1);
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
+  const [selectedDeliveryDate, setSelectedDeliveryDate] = useState(
+    getDefaultDeliveryDate,
+  );
+  const [durationInitialized, setDurationInitialized] = useState(false);
 
   const {
     data: product,
@@ -89,6 +108,32 @@ export default function ProductDetailClient({
     size: 1,
   });
 
+  const defaultDurationId = String(product?.minRentalDays ?? 1);
+
+  useEffect(() => {
+    if (product && !durationInitialized) {
+      setDurationInitialized(true);
+      setSelectedDuration(defaultDurationId);
+    }
+  }, [product, durationInitialized, defaultDurationId]);
+
+  // ── Availability query: fetch real-time stock based on user's selected context ──
+  // Refetch whenever the user changes duration/color — always fresh, never cached.
+  const availabilityParams = useMemo(
+    () => ({
+      deliveryDate: selectedDeliveryDate,
+      rentalDurationDays: selectedDuration ? parseInt(selectedDuration, 10) : undefined,
+      productColorId: selectedColorId ?? undefined,
+      quantity,
+    }),
+    [selectedColorId, quantity, selectedDeliveryDate, selectedDuration],
+  );
+
+  const { data: availability } = useProductAvailabilityQuery(
+    productId,
+    availabilityParams,
+  );
+
   const completedOrderId =
     ordersData?.items?.find(
       (o) =>
@@ -98,20 +143,6 @@ export default function ProductDetailClient({
 
   const reviewsCount =
     reviewsMeta?.totalItems ?? initialReviewsMeta?.totalItems ?? 0;
-
-  const [currentImage, setCurrentImage] = useState(0);
-  const [selectedDuration, setSelectedDuration] = useState<string>('');
-  const [quantity, setQuantity] = useState(1);
-  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
-
-  const defaultDurationId = String(product?.minRentalDays ?? 1);
-
-  // Khởi tạo selectedDuration khi product load xong (chỉ lần đầu)
-  const [durationInitialized, setDurationInitialized] = useState(false);
-  if (product && !durationInitialized) {
-    setDurationInitialized(true);
-    setSelectedDuration(defaultDurationId);
-  }
 
   const durations = product?.dailyPrice
     ? buildDurations(
@@ -177,16 +208,64 @@ export default function ProductDetailClient({
 
   const requireColorSelection = colors.length > 1 && !selectedColorId;
 
-  const maxQuantity =
-    selectedColorId && selectedColor
-      ? (selectedColor.availableQuantity ?? 99)
-      : (product?.availableStock ?? 99);
+  const availabilityReady = !!availability;
+  const realtimeAvailableStock = availability?.availableStock ?? 0;
+  const maxQuantity = availability?.maxRentableQuantity ?? 0;
 
-  const safeQuantity = Math.min(quantity, maxQuantity);
+  // Colors enriched with real-time availability from the availability endpoint
+  const colorsWithLiveStock: ProductColorOption[] = useMemo(() => {
+    if (!product?.colors?.length) return [];
+    if (!availability?.colors) {
+      // Fall back to product detail colors if availability hasn't loaded yet
+      return product.colors.map((c) => ({
+        productColorId: c.productColorId,
+        name: c.name,
+        code: c.code,
+        quantity: c.quantity,
+        availableQuantity: c.availableQuantity,
+      }));
+    }
+    return product.colors.map((c) => {
+      const live = availability.colors.find((a) => a.productColorId === c.productColorId);
+      return {
+        productColorId: c.productColorId,
+        name: c.name,
+        code: c.code,
+        quantity: live?.totalQuantity ?? c.quantity,
+        availableQuantity: live?.availableQuantity ?? c.availableQuantity,
+      };
+    });
+  }, [product?.colors, availability]);
+
+  const safeQuantity = maxQuantity > 0 ? Math.min(quantity, maxQuantity) : 1;
 
   function handleQuantityChange(nextQty: number) {
+    if (maxQuantity <= 0) {
+      setQuantity(1);
+      return;
+    }
     setQuantity(Math.max(1, Math.min(maxQuantity, nextQty)));
   }
+
+  const availabilityMessage = useMemo(() => {
+    if (!availabilityReady) {
+      return 'Đang kiểm tra availability theo ngày giao, thời hạn thuê và màu đã chọn.';
+    }
+
+    if (availability?.unavailableReason) {
+      return availability.unavailableReason;
+    }
+
+    if (selectedColorId && availability?.selectedColorAvailableQuantity != null) {
+      return `Màu đã chọn còn ${availability.selectedColorAvailableQuantity} serial khả dụng cho ngày ${selectedDeliveryDate}.`;
+    }
+
+    return `Khả dụng tối đa ${realtimeAvailableStock} serial cho ngày ${selectedDeliveryDate}.`;
+  }, [availability, availabilityReady, realtimeAvailableStock, selectedColorId, selectedDeliveryDate]);
+
+  const availabilityTone = availabilityReady && availability?.isAvailable
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+    : 'border-amber-200 bg-amber-50 text-amber-800';
 
   const specifications = useMemo(() => {
     if (!product) return [];
@@ -320,7 +399,7 @@ export default function ProductDetailClient({
                   discount,
                   rating: product.averageRating ?? 0,
                   reviews: reviewsCount,
-                  colors,
+                  colors: colorsWithLiveStock,
                   durations,
                 }}
                 minRentalDays={product.minRentalDays ?? 1}
@@ -342,6 +421,10 @@ export default function ProductDetailClient({
               </div>
             )}
 
+            <div className={`rounded-xl border p-3 text-sm ${availabilityTone}`}>
+              {availabilityMessage}
+            </div>
+
             {/* Checkout Card */}
             <RentalCheckoutCard
               rentalPrice={currentPrice}
@@ -351,6 +434,12 @@ export default function ProductDetailClient({
               quantity={safeQuantity}
               setQuantity={handleQuantityChange}
               maxQuantity={maxQuantity}
+              disabled={!availabilityReady || !availability?.isAvailable}
+              disabledReason={
+                !availabilityReady
+                  ? 'Đang kiểm tra availability thực tế'
+                  : availabilityMessage
+              }
               requireColorSelection={requireColorSelection}
               cartProduct={{
                 productId: product.productId,
@@ -383,7 +472,10 @@ export default function ProductDetailClient({
           </div>
 
           <div className='col-span-12 flex flex-col gap-4 sm:gap-5 lg:col-span-4'>
-            <RentalDeliverySection />
+            <RentalDeliverySection
+              deliveryDate={selectedDeliveryDate}
+              onDeliveryDateChange={setSelectedDeliveryDate}
+            />
             <RentalProcessSection />
           </div>
         </div>

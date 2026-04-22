@@ -17,6 +17,8 @@ import type {
   InventoryItemResponse,
   PaginatedInventoryItemsResponse,
   PaginatedProductsResponse,
+  ProductAvailabilityParams,
+  ProductAvailabilityResponse,
   ProductListParams,
   ProductResponse,
   UpdateInventoryItemInput,
@@ -96,6 +98,23 @@ export async function getProductById(
 ): Promise<ProductResponse> {
   const res = await httpService.get<ApiResponse<ProductResponse>>(
     `/products/${productId}`,
+  );
+  return res.data.data!;
+}
+
+/**
+ * API-055-B: GET /api/v1/products/{productId}/availability
+ * Kiểm tra tình trạng khả dụng của sản phẩm theo ngày giao & thời hạn thuê cụ thể.
+ * Dùng khi user chọn ngày giao / số ngày thuê / màu sắc trên product detail.
+ * Params là all optional nhưng FE nên truyền deliveryDate + rentalDurationDays khi có.
+ */
+export async function getProductAvailability(
+  productId: string,
+  params?: ProductAvailabilityParams,
+): Promise<ProductAvailabilityResponse> {
+  const res = await httpService.get<ApiResponse<ProductAvailabilityResponse>>(
+    `/products/${productId}/availability`,
+    { params },
   );
   return res.data.data!;
 }

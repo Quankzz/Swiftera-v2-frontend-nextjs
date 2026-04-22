@@ -142,6 +142,34 @@ export interface ProductResponse {
 
 export type PaginatedProductsResponse = PaginatedResponse<ProductResponse>;
 
+// ── Product availability context-aware response (API-055-B) ──────────────────
+// API-055-B: GET /api/v1/products/{productId}/availability
+// Dùng khi user chọn ngày giao / thời hạn thuê / màu sắc trên product detail.
+
+export interface ProductAvailabilityParams {
+  deliveryDate?: string; // ISO date YYYY-MM-DD
+  rentalDurationDays?: number;
+  productColorId?: string;
+  quantity?: number;
+}
+
+export interface ProductAvailabilityColor {
+  productColorId: string;
+  name: string;
+  code: string;
+  totalQuantity: number;
+  availableQuantity: number;
+}
+
+export interface ProductAvailabilityResponse {
+  availableStock: number;
+  depositAmount: number | null;
+  estimatedRentalCost: number | null;
+  isAvailable: boolean;
+  unavailableReason: string | null;
+  colors: ProductAvailabilityColor[];
+}
+
 // ── Create product input (API-051 POST /api/v1/products) ────────────────────
 
 export interface CreateProductInput {

@@ -28,6 +28,8 @@ import type {
   ReportIssueInput,
   AssignStaffToHubInput,
   RentalContractResponse,
+  ConfirmCompletionInput,
+  CancelOrderInput,
 } from '../types';
 import type { HubStaffResponse } from '@/features/hubs/types';
 
@@ -330,14 +332,6 @@ export async function getContractByOrder(
 // 8. Admin Cancellation / Support Actions
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface CancelOrderInput {
-  reason?: string;
-}
-
-/**
- * Admin confirms cancellation with refund for PAID orders
- * POST /rental-orders/{rentalOrderId}/confirm-cancellation-refund [ADMIN]
- */
 export async function confirmCancellationRefund(
   rentalOrderId: string,
   input: CancelOrderInput,
@@ -376,6 +370,23 @@ export async function adminEarlyPickupFromInUse(
   const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
     `/rental-orders/${rentalOrderId}/admin-early-pickup`,
     undefined,
+    authOpts,
+  );
+  return res.data.data!;
+}
+
+/**
+ * Admin confirms rental order completion (PICKED_UP → COMPLETED).
+ * Sets penalty amounts, calculates deposit refund, creates refund transaction.
+ * POST /rental-orders/{rentalOrderId}/confirm-completion [ADMIN]
+ */
+export async function confirmCompletion(
+  rentalOrderId: string,
+  input: ConfirmCompletionInput,
+): Promise<RentalOrderResponse> {
+  const res = await httpService.post<ApiResponse<RentalOrderResponse>>(
+    `/rental-orders/${rentalOrderId}/confirm-completion`,
+    input,
     authOpts,
   );
   return res.data.data!;

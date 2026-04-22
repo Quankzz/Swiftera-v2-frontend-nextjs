@@ -6,6 +6,7 @@ import { DataTable } from '@/components/dashboard/ui/data-table';
 import {
   useRentalOrdersQuery,
   useUpdateOrderStatusMutation,
+  useCompleteOrderMutation,
 } from '@/features/rental-orders/hooks/use-rental-order-management';
 import {
   STATUS_LABELS,
@@ -236,6 +237,7 @@ function UpdateStatusDialog({
   const [selected, setSelected] = useState<StatusTransitionOption | null>(null);
   const [issueNote, setIssueNote] = useState('');
   const updateMutation = useUpdateOrderStatusMutation();
+  const completeMutation = useCompleteOrderMutation();
 
   const transitions = order ? (ADMIN_TRANSITIONS[order.status] ?? []) : [];
 
@@ -252,15 +254,26 @@ function UpdateStatusDialog({
       return;
     }
     try {
-      await updateMutation.mutateAsync({
-        rentalOrderId: order.rentalOrderId,
-        payload: {
-          status: selected.to,
-          ...(selected.requiresIssueNote && issueNote.trim()
-            ? { issueNote: issueNote.trim() }
-            : {}),
-        },
-      });
+      // PICKED_UP → COMPLETED must use confirm-completion endpoint
+      if (order.status === 'PICKED_UP' && selected.to === 'COMPLETED') {
+        await completeMutation.mutateAsync({
+          rentalOrderId: order.rentalOrderId,
+          input: {
+            damagePenaltyAmount: order.damagePenaltyAmount ?? 0,
+            overduePenaltyAmount: order.overduePenaltyAmount ?? 0,
+          },
+        });
+      } else {
+        await updateMutation.mutateAsync({
+          rentalOrderId: order.rentalOrderId,
+          payload: {
+            status: selected.to,
+            ...(selected.requiresIssueNote && issueNote.trim()
+              ? { issueNote: issueNote.trim() }
+              : {}),
+          },
+        });
+      }
       handleClose();
     } catch {
       // handled in mutation onError
