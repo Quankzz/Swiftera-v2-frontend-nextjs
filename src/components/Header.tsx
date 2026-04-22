@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { createPortal } from "react-dom";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
-import { useTheme } from "@/context/theme-context";
-import { useCartQuery } from "@/hooks/api/use-cart";
-import { useCartAnimationStore } from "@/stores/cart-animation-store";
-import logo from "../../public/logo.png";
-import { useHeaderSearch } from "@/features/products/hooks/use-header-search";
-import { useCategoryTreeQuery } from "@/features/categories/hooks/use-category-tree";
-import { HeaderSearchDropdown } from "@/components/header/HeaderSearchDropdown";
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { createPortal } from 'react-dom';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/context/theme-context';
+import { useCartQuery } from '@/hooks/api/use-cart';
+import { useCartAnimationStore } from '@/stores/cart-animation-store';
+import logo from '../../public/logo.png';
+import { useHeaderSearch } from '@/features/products/hooks/use-header-search';
+import { useCategoryTreeQuery } from '@/features/categories/hooks/use-category-tree';
+import { HeaderSearchDropdown } from '@/components/header/HeaderSearchDropdown';
 import {
   ChevronRight,
   LayoutDashboard,
@@ -32,7 +32,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Heart,
-} from "lucide-react";
+} from 'lucide-react';
 
 /*  Cart fly overlay – rendered inside Header so store is shared       */
 
@@ -72,9 +72,9 @@ function CartFlyOverlayInner() {
                 top: startY,
                 width: item.fromRect.width,
                 height: item.fromRect.height,
-                "--dx": `${dx}px`,
-                "--dy": `${dy}px`,
-                "--dur": `${duration}ms`,
+                '--dx': `${dx}px`,
+                '--dy': `${dy}px`,
+                '--dur': `${duration}ms`,
               } as React.CSSProperties
             }
             onAnimationEnd={() => removeFlyingItem(item.id)}
@@ -193,34 +193,32 @@ export function Header({
   );
 
   const avatarUrl = useMemo(() => {
-    if (!user) return "";
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      user.firstName || "",
-    )}+${encodeURIComponent(user.lastName || "")}&background=random`;
+    if (!user) return '';
+    return user.avatar ?? '';
   }, [user]);
 
   const userDisplayName = useMemo(() => {
-    if (!user) return "Khách hàng";
+    if (!user) return 'Khách hàng';
     return (
-      `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Khách hàng"
+      `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Khách hàng'
     );
   }, [user]);
 
   const isAdminUser = useMemo(
-    () => user?.rolesSecured?.some((role) => role.name === "ADMIN") ?? false,
+    () => user?.rolesSecured?.some((role) => role.name === 'ADMIN') ?? false,
     [user],
   );
 
   const isStaffUser = useMemo(
-    () => user?.rolesSecured?.some((role) => role.name === "STAFF") ?? false,
+    () => user?.rolesSecured?.some((role) => role.name === 'STAFF') ?? false,
     [user],
   );
 
   const userInitials = useMemo(() => {
-    if (!user) return "KH";
+    if (!user) return 'KH';
     const initials =
-      `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.trim();
-    return initials || "KH";
+      `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim();
+    return initials || 'KH';
   }, [user]);
 
   // Track cart icon rect for fly animation
@@ -231,17 +229,17 @@ export function Header({
       }
     }
     updateRect();
-    window.addEventListener("scroll", updateRect, { passive: true });
-    window.addEventListener("resize", updateRect);
+    window.addEventListener('scroll', updateRect, { passive: true });
+    window.addEventListener('resize', updateRect);
     return () => {
-      window.removeEventListener("scroll", updateRect);
-      window.removeEventListener("resize", updateRect);
+      window.removeEventListener('scroll', updateRect);
+      window.removeEventListener('resize', updateRect);
     };
   }, [setCartRect]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         setIsSearchOpen(false);
         setIsUserMenuOpen(false);
       }
@@ -254,11 +252,11 @@ export function Header({
         setIsUserMenuOpen(false);
       }
     };
-    window.addEventListener("keydown", onKeyDown);
-    document.addEventListener("mousedown", onClickOutside);
+    window.addEventListener('keydown', onKeyDown);
+    document.addEventListener('mousedown', onClickOutside);
     return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("mousedown", onClickOutside);
+      window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', onClickOutside);
     };
   }, []);
 
@@ -274,7 +272,7 @@ export function Header({
   const handleLogout = useCallback(async () => {
     setIsUserMenuOpen(false);
     await logout();
-    router.push("/");
+    router.push('/');
     router.refresh();
   }, [logout, router]);
 
@@ -284,20 +282,20 @@ export function Header({
 
       <header
         className={cn(
-          "relative top-0 w-full bg-white dark:bg-surface-base",
-          stickyHeader && "sticky",
+          'relative top-0 w-full bg-white dark:bg-surface-base',
+          stickyHeader && 'sticky',
           isSearchOpen
-            ? "z-50 border-transparent"
-            : "z-40 border-b border-border/20 dark:border-white/5 backdrop-blur shadow-sm dark:shadow-black/30",
+            ? 'z-50 border-transparent'
+            : 'z-40 border-b border-border/20 dark:border-white/5 backdrop-blur shadow-sm dark:shadow-black/30',
         )}
         style={{
-          transform: isFlying ? "translateY(-100%)" : "translateY(0)",
+          transform: isFlying ? 'translateY(-100%)' : 'translateY(0)',
           boxShadow: isFlying
-            ? "0 8px 32px -4px rgba(14,165,233,0.25)"
-            : "0 1px 3px rgba(0,0,0,0.1)",
+            ? '0 8px 32px -4px rgba(14,165,233,0.25)'
+            : '0 1px 3px rgba(0,0,0,0.1)',
           transition: isFlying
-            ? "transform 380ms cubic-bezier(0.4,0,0.2,1) 80ms, box-shadow 380ms 80ms"
-            : "transform 500ms cubic-bezier(0.4,0,0.2,1) 700ms, box-shadow 500ms 700ms",
+            ? 'transform 380ms cubic-bezier(0.4,0,0.2,1) 80ms, box-shadow 380ms 80ms'
+            : 'transform 500ms cubic-bezier(0.4,0,0.2,1) 700ms, box-shadow 500ms 700ms',
         }}
       >
         {showSearchAndCategories && isSearchOpen && (
@@ -355,10 +353,10 @@ export function Header({
                         value={search.inputValue}
                         onChange={(e) => search.setInputValue(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" && search.inputValue.trim()) {
+                          if (e.key === 'Enter' && search.inputValue.trim()) {
                             setIsSearchOpen(false);
                             const q = search.inputValue.trim();
-                            search.setInputValue("");
+                            search.setInputValue('');
                             router.push(`/catalog?q=${encodeURIComponent(q)}`);
                           }
                         }}
@@ -369,7 +367,7 @@ export function Header({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          search.setInputValue("");
+                          search.setInputValue('');
                           setIsSearchOpen(false);
                         }}
                         className="flex size-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
@@ -403,14 +401,14 @@ export function Header({
                       isEmpty={search.isEmpty}
                       onViewAll={() => {
                         setIsSearchOpen(false);
-                        search.setInputValue("");
+                        search.setInputValue('');
                         router.push(
                           `/catalog?q=${encodeURIComponent(search.debouncedQuery)}`,
                         );
                       }}
                       onCategoryClick={(categoryId) => {
                         setIsSearchOpen(false);
-                        search.setInputValue("");
+                        search.setInputValue('');
                         router.push(`/catalog?categoryId=${categoryId}`);
                       }}
                     />
@@ -422,8 +420,8 @@ export function Header({
             {/* Right actions */}
             <div
               className={cn(
-                "relative ml-auto flex items-center gap-2 lg:gap-3",
-                isSearchOpen ? "z-30" : "z-50",
+                'relative ml-auto flex items-center gap-2 lg:gap-3',
+                isSearchOpen ? 'z-30' : 'z-50',
               )}
             >
               <Button
@@ -437,7 +435,7 @@ export function Header({
                 {/* Render placeholder trên server; sau mount mới show icon đúng */}
                 {!mounted ? (
                   <span className="size-5" aria-hidden />
-                ) : resolvedTheme === "dark" ? (
+                ) : resolvedTheme === 'dark' ? (
                   <Sun className="size-5 text-text-main" />
                 ) : (
                   <Moon className="size-5 text-text-main" />
@@ -464,28 +462,28 @@ export function Header({
                   ref={cartBtnRef}
                   variant="ghost"
                   size="icon"
-                  aria-label={`Giỏ hàng${cartCount > 0 ? `, ${cartCount} sản phẩm` : ""}`}
+                  aria-label={`Giỏ hàng${cartCount > 0 ? `, ${cartCount} sản phẩm` : ''}`}
                   className={cn(
-                    "relative dark:hover:bg-white/10 transition-all duration-300",
-                    isFlying && "animate-cartBounce",
+                    'relative dark:hover:bg-white/10 transition-all duration-300',
+                    isFlying && 'animate-cartBounce',
                   )}
                 >
                   <ShoppingCart
                     className={cn(
-                      "size-5 text-text-main transition-colors",
-                      isFlying && "text-blue-500",
+                      'size-5 text-text-main transition-colors',
+                      isFlying && 'text-blue-500',
                     )}
                   />
                   {cartCount > 0 && (
                     <span
                       className={cn(
-                        "absolute -top-1 -right-1 h-4.5 min-w-4.5 rounded-full text-[10px] font-bold flex items-center justify-center transition-all duration-300",
+                        'absolute -top-1 -right-1 h-4.5 min-w-4.5 rounded-full text-[10px] font-bold flex items-center justify-center transition-all duration-300',
                         isFlying
-                          ? "bg-green-500 text-white scale-125"
-                          : "bg-blue-500 text-white",
+                          ? 'bg-green-500 text-white scale-125'
+                          : 'bg-blue-500 text-white',
                       )}
                     >
-                      {cartCount > 99 ? "99+" : cartCount}
+                      {cartCount > 99 ? '99+' : cartCount}
                     </span>
                   )}
                 </Button>
@@ -499,8 +497,8 @@ export function Header({
                   aria-label="Tài khoản"
                   onClick={() => setIsUserMenuOpen((v) => !v)}
                   className={cn(
-                    "dark:hover:bg-white/10",
-                    isUserMenuOpen ? "bg-gray-100 dark:bg-white/10" : "",
+                    'dark:hover:bg-white/10',
+                    isUserMenuOpen ? 'bg-gray-100 dark:bg-white/10' : '',
                   )}
                 >
                   {isAuthenticated && avatarUrl ? (
@@ -568,7 +566,7 @@ export function Header({
                             {userDisplayName}
                           </p>
                           <p className="text-xs text-text-sub truncate">
-                            {user?.email || "guest@swiftera.com"}
+                            {user?.email || 'guest@swiftera.com'}
                           </p>
                         </div>
 
@@ -678,10 +676,10 @@ export function Header({
                         setHoveredCategoryId(category.categoryId);
                       }}
                       className={cn(
-                        `flex items-center gap-2 rounded-full ${category.sortOrder === 1 ? "pr-3" : "px-3"} py-2 transition-colors shrink-0`,
+                        `flex items-center gap-2 rounded-full ${category.sortOrder === 1 ? 'pr-3' : 'px-3'} py-2 transition-colors shrink-0`,
                         hoveredCategoryId === category.categoryId
-                          ? "text-theme-primary-start"
-                          : "hover:text-theme-primary-start",
+                          ? 'text-theme-primary-start'
+                          : 'hover:text-theme-primary-start',
                       )}
                     >
                       {category.name}
