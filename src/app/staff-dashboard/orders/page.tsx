@@ -68,10 +68,10 @@ const QUICK_FILTERS: {
   label: string;
   icon: typeof AlertTriangle;
 }[] = [
-  { id: 'overdue-pickup', label: 'Quá hạn thu hồi', icon: RotateCcw },
-  { id: 'overdue-delivery', label: 'Trễ giao', icon: AlertTriangle },
-  { id: 'today', label: 'Giao hôm nay', icon: CalendarClock },
-];
+    { id: 'overdue-pickup', label: 'Quá hạn thu hồi', icon: RotateCcw },
+    { id: 'overdue-delivery', label: 'Trễ giao', icon: AlertTriangle },
+    { id: 'today', label: 'Giao hôm nay', icon: CalendarClock },
+  ];
 
 export default function OrdersPage() {
   return (
@@ -141,7 +141,7 @@ function OrdersPageInner() {
   }, [staffId, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Filter: active statuses from URL ──────────────────────────
-  // Default to EMPTY array when no status param — empty means "no status filter = show all".
+  // Default to EMPTY array when no status param - empty means "no status filter = show all".
   // The status filter is only applied when activeStatuses.length > 0.
   const activeStatuses = useMemo<OrderStatus[]>(() => {
     const s = searchParams.get('status');
@@ -184,7 +184,7 @@ function OrdersPageInner() {
     router.replace(`/staff-dashboard/orders`, { scroll: false });
   }, [router]);
 
-  // ─── Sort (always uses 'priority' sort, descending — implicit default) ────
+  // ─── Sort (always uses 'priority' sort, descending - implicit default) ────
   // ─── Pagination ───────────────────────────────────────────────
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -399,7 +399,7 @@ function OrdersPageInner() {
                     'gap-2 h-12 rounded-xl border-border/60 shadow-sm transition-all justify-start sm:w-48 shrink-0',
                     'hover:bg-accent text-[14px] font-medium',
                     hasStatusFilter &&
-                      'border-theme-primary-start/40 bg-theme-primary-start/5',
+                    'border-theme-primary-start/40 bg-theme-primary-start/5',
                   )}
                 >
                   <Filter className="w-4 h-4" />
@@ -512,11 +512,11 @@ function OrdersPageInner() {
                     className={cn(
                       'size-3.5',
                       isActive &&
-                        (f.id === 'overdue-pickup'
-                          ? 'text-amber-500'
-                          : f.id === 'overdue-delivery'
-                            ? 'text-destructive'
-                            : 'text-info'),
+                      (f.id === 'overdue-pickup'
+                        ? 'text-amber-500'
+                        : f.id === 'overdue-delivery'
+                          ? 'text-destructive'
+                          : 'text-info'),
                     )}
                   />
                   {f.label}
@@ -690,7 +690,7 @@ function OrdersPageInner() {
                         }
                         className={cn(
                           currentPage === totalPages &&
-                            'pointer-events-none opacity-50',
+                          'pointer-events-none opacity-50',
                         )}
                       />
                     </PaginationItem>
@@ -723,12 +723,12 @@ function OrderCard({
 
   const deliveryAddress = order.userAddress
     ? [
-        order.userAddress.addressLine,
-        order.userAddress.district,
-        order.userAddress.city,
-      ]
-        .filter(Boolean)
-        .join(', ')
+      order.userAddress.addressLine,
+      order.userAddress.district,
+      order.userAddress.city,
+    ]
+      .filter(Boolean)
+      .join(', ')
     : (order.hubAddressLine ?? '');
 
   return (
@@ -738,10 +738,10 @@ function OrderCard({
         'hover:shadow-lg hover:shadow-theme-primary-start/5 hover:-translate-y-0.5',
         'hover:border-theme-primary-start/40',
         isDeliveryOverdue &&
-          'border-destructive/40 hover:border-destructive/70',
+        'border-destructive/40 hover:border-destructive/70',
         isPickupOverdue &&
-          !isDeliveryOverdue &&
-          'border-amber-400/40 hover:border-amber-500/70',
+        !isDeliveryOverdue &&
+        'border-amber-400/40 hover:border-amber-500/70',
       )}
     >
       <Link
@@ -844,7 +844,7 @@ function OrderCard({
                   <User className="size-3" /> Khách hàng
                 </p>
                 <p className="text-[13px] sm:text-sm font-semibold text-foreground truncate">
-                  {order.userAddress?.recipientName ?? order.hubName ?? '—'}
+                  {order.userAddress?.recipientName ?? order.hubName ?? '-'}
                 </p>
               </div>
               <div className="space-y-1 min-w-0">
@@ -977,8 +977,8 @@ function OrderCard({
                 <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
                   {fmt(
                     (order.totalPayableAmount ?? order.rentalFeeAmount) +
-                      order.depositHoldAmount +
-                      (order.penaltyChargeAmount ?? 0),
+                    order.depositHoldAmount +
+                    (order.penaltyChargeAmount ?? 0),
                   )}
                 </span>
               </div>

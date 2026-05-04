@@ -154,7 +154,7 @@ class Http {
                       normalizedRefreshError.message,
                     );
                   } else {
-                    // Token expired/revoked — clear session and redirect to login.
+                    // Token expired/revoked - clear session and redirect to login.
                     console.warn(
                       "⚠️ Token refresh failed (expected auth failure):",
                       normalizedRefreshError.errorCode,

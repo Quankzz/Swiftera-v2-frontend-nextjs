@@ -84,13 +84,13 @@ async function fetchOrdersByStaffId(
   const [deliveryRes, pickupRes] = await Promise.all([
     deliveryStatuses.length > 0
       ? apiGet<PaginationResponse<RentalOrderResponse>>(
-          makeUrl('deliveryStaff.userId', deliveryStatuses),
-        ).catch(() => null)
+        makeUrl('deliveryStaff.userId', deliveryStatuses),
+      ).catch(() => null)
       : Promise.resolve(null),
     pickupStatuses.length > 0
       ? apiGet<PaginationResponse<RentalOrderResponse>>(
-          makeUrl('pickupStaff.userId', pickupStatuses),
-        ).catch(() => null)
+        makeUrl('pickupStaff.userId', pickupStatuses),
+      ).catch(() => null)
       : Promise.resolve(null),
   ]);
 
@@ -137,7 +137,7 @@ export async function updateOrderStatus(
   return res ?? null;
 }
 
-/** PATCH /rental-orders/{id}/record-delivery — transitions DELIVERING → DELIVERED */
+/** PATCH /rental-orders/{id}/record-delivery - transitions DELIVERING → DELIVERED */
 export async function recordDelivery(
   orderId: string,
   data: RecordDeliveryRequest = {},
@@ -149,7 +149,7 @@ export async function recordDelivery(
   return res ?? null;
 }
 
-/** PATCH /rental-orders/{id}/record-pickup — transitions PICKING_UP → PICKED_UP */
+/** PATCH /rental-orders/{id}/record-pickup - transitions PICKING_UP → PICKED_UP */
 export async function recordPickup(
   orderId: string,
   data: RecordPickupRequest = {},

@@ -73,7 +73,7 @@ function ItemPickupCard({
             {line.productNameSnapshot}
           </p>
           <p className="text-[10px] text-muted-foreground font-mono mt-0.5 bg-muted px-1.5 py-0.5 rounded inline-block">
-            {line.inventorySerialNumber || '—'}
+            {line.inventorySerialNumber || '-'}
           </p>
         </div>
         {hasPhoto && (
@@ -267,7 +267,7 @@ export function RepairingWorkflow({
               ) : (
                 <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1.5">
                   <CheckCircle2 className="size-3.5 shrink-0" />
-                  Hoàn tất kiểm kho — sẵn sàng xuất hàng.
+                  Hoàn tất kiểm kho - sẵn sàng xuất hàng.
                 </p>
               )}
             </div>

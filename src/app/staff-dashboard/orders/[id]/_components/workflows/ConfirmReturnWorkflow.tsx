@@ -35,7 +35,7 @@ export function ConfirmReturnWorkflow({
         icon={isOverdue ? AlertTriangle : RotateCcw}
         title={
           isOverdue
-            ? 'Thu hồi khẩn cấp — Đơn quá hạn'
+            ? 'Thu hồi khẩn cấp - Đơn quá hạn'
             : 'Xác nhận thu hồi đơn hàng'
         }
         desc={

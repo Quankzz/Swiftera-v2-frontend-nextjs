@@ -585,24 +585,24 @@ export function PolicyCreateDialog({
                         label: 'Mã code',
                         value: (
                           <span className="font-mono bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-sm">
-                            {code || '—'}
+                            {code || '-'}
                           </span>
                         ),
                       },
                       { label: 'Phiên bản', value: `v${policyVersion || '1'}` },
-                      { label: 'Tiêu đề', value: title || '—' },
+                      { label: 'Tiêu đề', value: title || '-' },
                       {
                         label: 'Ngày hiệu lực',
                         value: effectiveFrom
                           ? new Date(effectiveFrom).toLocaleDateString(
-                              'vi-VN',
-                              {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                              },
-                            )
-                          : '—',
+                            'vi-VN',
+                            {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            },
+                          )
+                          : '-',
                       },
                       {
                         label: 'File PDF',
@@ -623,7 +623,7 @@ export function PolicyCreateDialog({
                         className={cn(
                           'flex items-center justify-between px-6 py-4',
                           idx !== 4 &&
-                            'border-b border-slate-100 dark:border-slate-700',
+                          'border-b border-slate-100 dark:border-slate-700',
                         )}
                       >
                         <span className="text-sm text-slate-500 dark:text-slate-400">

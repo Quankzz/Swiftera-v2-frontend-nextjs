@@ -174,7 +174,7 @@ export interface RentalOrderResponse {
   rentalOrderId: string;
   userId: string | null;
 
-  // Hub assignment — BE returns hub as nested HubResponse object + flat hubName
+  // Hub assignment - BE returns hub as nested HubResponse object + flat hubName
   hub: {
     hubId: string;
     code: string;
@@ -188,10 +188,10 @@ export interface RentalOrderResponse {
     phone: string | null;
     isActive: boolean;
   } | null;
-  /** Convenience flat field — same as hub.name, sent by BE mapper */
+  /** Convenience flat field - same as hub.name, sent by BE mapper */
   hubName: string | null;
 
-  // Kept for backward-compat (all undefined at runtime — read from hub.* instead)
+  // Kept for backward-compat (all undefined at runtime - read from hub.* instead)
   hubId?: string | null;
   hubCode?: string | null;
   hubAddressLine?: string | null;

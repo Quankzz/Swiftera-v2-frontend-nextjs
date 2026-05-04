@@ -187,7 +187,7 @@ const ADMIN_TRANSITIONS: Partial<
       to: "PENDING_PICKUP",
       label: "Thu hồi sớm do sự cố",
       requiresIssueNote: true,
-      description: "Chỉ ADMIN — bắt buộc nhập ghi chú sự cố",
+      description: "Chỉ ADMIN - bắt buộc nhập ghi chú sự cố",
     },
   ],
   IN_USE: [
@@ -470,10 +470,10 @@ export function RentalOrdersTable({ onAssign }: OrdersTableProps) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // Dialog state — update status
+  // Dialog state - update status
   const [updateStatusOrder, setUpdateStatusOrder] =
     useState<RentalOrderResponse | null>(null);
-  // Dialog state — view detail
+  // Dialog state - view detail
   const [detailOrder, setDetailOrder] = useState<RentalOrderResponse | null>(
     null,
   );

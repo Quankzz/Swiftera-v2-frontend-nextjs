@@ -80,7 +80,7 @@ export function PolicyPdfPreview({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const flipBookRef = useRef<any>(null);
 
-  // Measure container — ref is ALWAYS mounted so this fires correctly
+  // Measure container - ref is ALWAYS mounted so this fires correctly
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;

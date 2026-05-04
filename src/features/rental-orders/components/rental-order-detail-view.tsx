@@ -502,7 +502,7 @@ const ADMIN_TRANSITIONS: Partial<
       label: "Thu hồi sớm do sự cố",
       requiresIssueNote: true,
       description:
-        "Chỉ ADMIN — bắt buộc nhập ghi chú sự cố. Backend tự lưu issueReportedAt + issueReportNote.",
+        "Chỉ ADMIN - bắt buộc nhập ghi chú sự cố. Backend tự lưu issueReportedAt + issueReportNote.",
     },
   ],
   IN_USE: [

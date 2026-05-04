@@ -84,7 +84,7 @@ function ItemReturnCard({
             {line.productNameSnapshot}
           </p>
           <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-            {line.inventorySerialNumber || '—'}
+            {line.inventorySerialNumber || '-'}
           </p>
           <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 mt-1">
             Cọc: {fmt(depositSnapshot)}
@@ -321,12 +321,12 @@ export function ReturningWorkflow({
   // Build full customer address
   const customerAddressFull = order.userAddress
     ? [
-        order.userAddress.addressLine,
-        order.userAddress.district,
-        order.userAddress.city,
-      ]
-        .filter(Boolean)
-        .join(', ')
+      order.userAddress.addressLine,
+      order.userAddress.district,
+      order.userAddress.city,
+    ]
+      .filter(Boolean)
+      .join(', ')
     : null;
 
   // Geocode customer address if coordinates not available
@@ -352,7 +352,7 @@ export function ReturningWorkflow({
           setGeocodedCustomerLng(loc.lng);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       cancelled = true;
     };
@@ -444,7 +444,7 @@ export function ReturningWorkflow({
               {allPhotographed && (
                 <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1.5">
                   <CheckCircle2 className="size-3.5 shrink-0" />
-                  Hoàn tất kiểm tra — sẵn sàng xác nhận thu hồi.
+                  Hoàn tất kiểm tra - sẵn sàng xác nhận thu hồi.
                 </p>
               )}
             </div>
@@ -483,7 +483,7 @@ export function ReturningWorkflow({
           </div>
 
           {/* ── PHẦN PHÍ PHẠT ────────────────────────────────── */}
-          {/* 1. Phí phạt quá hạn — CHỈ hiện khi API overdue=true */}
+          {/* 1. Phí phạt quá hạn - CHỈ hiện khi API overdue=true */}
           {isOverdue && (
             <div className="rounded-2xl border border-amber-300/50 bg-amber-50/40 dark:bg-amber-950/10 dark:border-amber-800/30 overflow-hidden shadow-sm">
               <div className="px-4 py-3 border-b border-amber-200/40 dark:border-amber-800/30 flex items-center gap-2 bg-amber-100/40">
@@ -519,7 +519,7 @@ export function ReturningWorkflow({
                       <p className="text-[15px] font-black text-amber-600 dark:text-amber-400">
                         {fmt(
                           overdueSuggestion?.provisionalOverduePenaltyAmount ??
-                            0,
+                          0,
                         )}
                       </p>
                     </div>
@@ -639,7 +639,7 @@ export function ReturningWorkflow({
             </div>
           )}
 
-          {/* 2. Tóm tắt tài chính — CHỉ hiện khi có phí */}
+          {/* 2. Tóm tắt tài chính - CHỉ hiện khi có phí */}
           {(totalDamagePenalty > 0 || overduePenalty !== 0) && (
             <FinancialSettlement
               order={order}
@@ -674,13 +674,13 @@ export function ReturningWorkflow({
               totalDamagePenalty + overduePenalty > 0 ? (
                 <span className="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1.5">
                   <ShieldAlert className="size-3.5" />
-                  Hoàn tất — Phí phạt:{' '}
+                  Hoàn tất - Phí phạt:{' '}
                   <strong>{fmt(totalDamagePenalty + overduePenalty)}</strong>
                 </span>
               ) : (
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
                   <CheckCircle2 className="size-3.5" />
-                  Hoàn tất kiểm tra — Không có hư hỏng.
+                  Hoàn tất kiểm tra - Không có hư hỏng.
                 </span>
               )
             ) : (

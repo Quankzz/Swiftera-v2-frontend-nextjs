@@ -119,7 +119,7 @@ export default function ProductDetailClient({
   }, [product, durationInitialized, defaultDurationId]);
 
   // ── Availability query: fetch real-time stock based on user's selected context ──
-  // Refetch whenever the user changes duration/color — always fresh, never cached.
+  // Refetch whenever the user changes duration/color - always fresh, never cached.
   const availabilityParams = useMemo(
     () => ({
       deliveryDate: selectedDeliveryDate,
@@ -149,22 +149,22 @@ export default function ProductDetailClient({
 
   const durations = product?.dailyPrice
     ? buildDurations(
-        product.dailyPrice,
-        product.oldDailyPrice as unknown as number | undefined,
-        product.minRentalDays ?? 1,
-      )
+      product.dailyPrice,
+      product.oldDailyPrice as unknown as number | undefined,
+      product.minRentalDays ?? 1,
+    )
     : [];
 
   const imageUrls = product?.images?.length
     ? [...product.images]
-        .sort((a, b) => b.sortOrder - a.sortOrder)
-        .map((img) => img.imageUrl)
+      .sort((a, b) => b.sortOrder - a.sortOrder)
+      .map((img) => img.imageUrl)
     : [];
 
   const videoUrl = product?.images?.length
     ? ([...product.images]
-        .sort((a, b) => b.sortOrder - a.sortOrder)
-        .find((img) => img.videoUrl)?.videoUrl ?? null)
+      .sort((a, b) => b.sortOrder - a.sortOrder)
+      .find((img) => img.videoUrl)?.videoUrl ?? null)
     : null;
 
   const effectiveDurationId =
@@ -423,7 +423,7 @@ export default function ProductDetailClient({
                 selectedColorId={selectedColorId}
                 onColorChange={setSelectedColorId}
                 selectedVariant="default"
-                onVariantChange={() => {}}
+                onVariantChange={() => { }}
                 selectedDuration={effectiveDurationId}
                 onDurationChange={setSelectedDuration}
                 currentPrice={currentPrice}

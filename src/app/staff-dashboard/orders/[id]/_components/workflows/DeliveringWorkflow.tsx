@@ -83,7 +83,7 @@ function ItemDeliveryCard({
             {line.productNameSnapshot}
           </p>
           <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-            {line.inventorySerialNumber || '—'}
+            {line.inventorySerialNumber || '-'}
           </p>
         </div>
         {hasPhoto && (
@@ -139,12 +139,12 @@ export function DeliveringWorkflow({
   // Build full customer address
   const customerAddressFull = order.userAddress
     ? [
-        order.userAddress.addressLine,
-        order.userAddress.district,
-        order.userAddress.city,
-      ]
-        .filter(Boolean)
-        .join(', ')
+      order.userAddress.addressLine,
+      order.userAddress.district,
+      order.userAddress.city,
+    ]
+      .filter(Boolean)
+      .join(', ')
     : null;
 
   // Geocode customer address if coordinates not available
@@ -170,7 +170,7 @@ export function DeliveringWorkflow({
           setGeocodedCustomerLng(loc.lng);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       cancelled = true;
     };

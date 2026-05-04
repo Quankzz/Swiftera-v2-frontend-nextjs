@@ -78,7 +78,7 @@ function InfoRow({
             highlight && highlightColors[highlight],
           )}
         >
-          {value || '—'}
+          {value || '-'}
         </p>
       </div>
       {onClick && (
@@ -233,10 +233,10 @@ export function RentalDateTimeline({ order, mode }: RentalDateTimelineProps) {
   const rentalDays =
     order.actualRentalStartAt && order.expectedRentalEndDate
       ? Math.ceil(
-          (new Date(order.expectedRentalEndDate).getTime() -
-            new Date(order.actualRentalStartAt).getTime()) /
-            86400000,
-        )
+        (new Date(order.expectedRentalEndDate).getTime() -
+          new Date(order.actualRentalStartAt).getTime()) /
+        86400000,
+      )
       : (order.rentalOrderLines[0]?.rentalDurationDays ?? null);
 
   return (
@@ -280,7 +280,7 @@ export function RentalDateTimeline({ order, mode }: RentalDateTimelineProps) {
             subColor="text-amber-500"
           />
 
-          {/* Slot 4: Ngày trả/thu hồi thực tế — chỉ hiện khi đang ở phase thu hồi */}
+          {/* Slot 4: Ngày trả/thu hồi thực tế - chỉ hiện khi đang ở phase thu hồi */}
           {showAllSlots && (
             <TimelineRow
               dotColor={returnedDateColor}
@@ -325,13 +325,13 @@ export function OrderMetaCard({ order }: OrderMetaCardProps) {
   // Staff info
   const deliveryStaffName = order.deliveryStaff
     ? [order.deliveryStaff.firstName, order.deliveryStaff.lastName]
-        .filter(Boolean)
-        .join(' ') || order.deliveryStaff.email
+      .filter(Boolean)
+      .join(' ') || order.deliveryStaff.email
     : null;
   const pickupStaffName = order.pickupStaff
     ? [order.pickupStaff.firstName, order.pickupStaff.lastName]
-        .filter(Boolean)
-        .join(' ') || order.pickupStaff.email
+      .filter(Boolean)
+      .join(' ') || order.pickupStaff.email
     : null;
 
   return (
@@ -463,17 +463,17 @@ export function CustomerInfo({ order, mode }: CustomerInfoProps) {
   const isPickup = mode === 'pickup';
   const address = order.userAddress
     ? [
-        order.userAddress.addressLine,
-        order.userAddress.ward,
-        order.userAddress.district,
-        order.userAddress.city,
-      ]
-        .filter(Boolean)
-        .join(', ')
+      order.userAddress.addressLine,
+      order.userAddress.ward,
+      order.userAddress.district,
+      order.userAddress.city,
+    ]
+      .filter(Boolean)
+      .join(', ')
     : (order.hubAddressLine ?? '');
 
   const recipientName =
-    order.userAddress?.recipientName ?? order.hubName ?? '—';
+    order.userAddress?.recipientName ?? order.hubName ?? '-';
   const phone = order.userAddress?.phoneNumber;
 
   return (
@@ -492,14 +492,14 @@ export function CustomerInfo({ order, mode }: CustomerInfoProps) {
         <InfoRow
           icon={Phone}
           label="Điện thoại"
-          value={fmtPhone(phone) ?? '—'}
+          value={fmtPhone(phone) ?? '-'}
           mono
           highlight={phone ? 'blue' : undefined}
         />
         <InfoRow
           icon={MapPin}
           label={isPickup ? 'Địa chỉ thu hồi' : 'Địa chỉ giao hàng'}
-          value={address || '—'}
+          value={address || '-'}
         />
       </div>
     </SectionCard>
@@ -541,8 +541,8 @@ export function RentalSummary({ order, showPickupDate }: RentalSummaryProps) {
             <p className="text-[13px] sm:text-[14px] font-black text-blue-600 dark:text-blue-400">
               {fmtDate(
                 order.actualDeliveryAt ??
-                  order.expectedDeliveryDate ??
-                  order.placedAt,
+                order.expectedDeliveryDate ??
+                order.placedAt,
               )}
             </p>
           </div>
@@ -554,8 +554,8 @@ export function RentalSummary({ order, showPickupDate }: RentalSummaryProps) {
               {fmtDate(
                 isPickupMode
                   ? (order.actualRentalEndAt ??
-                      order.pickedUpAt ??
-                      order.expectedRentalEndDate)
+                    order.pickedUpAt ??
+                    order.expectedRentalEndDate)
                   : order.expectedRentalEndDate,
               )}
             </p>
@@ -769,7 +769,7 @@ export function OrderItemsList({
                 {/* Serial */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[10px] sm:text-[11px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    {line.inventorySerialNumber || '—'}
+                    {line.inventorySerialNumber || '-'}
                   </span>
                   {line.colorNameSnapshot && (
                     <span className="text-[10px] sm:text-[11px] text-muted-foreground flex items-center gap-1">
@@ -973,7 +973,7 @@ export function FinancialSettlement({
           </div>
         </div>
 
-        {/* Penalty breakdown — chỉ hiện khi có penalty */}
+        {/* Penalty breakdown - chỉ hiện khi có penalty */}
         {hasPenalty && (
           <div className="space-y-1.5">
             {/* Phí hư hỏng sản phẩm */}
