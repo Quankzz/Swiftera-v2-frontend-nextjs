@@ -16,7 +16,7 @@ declare module "axios" {
   }
 }
 
-export const API_URL = "https://swiftera.azurewebsites.net/api/v1";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://swiftera.azurewebsites.net/api/v1";
 
 export const TOKEN_REFRESHED_EVENT = "swiftera:auth:token-refreshed";
 

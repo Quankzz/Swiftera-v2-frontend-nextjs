@@ -30,7 +30,7 @@ function toBESort(sort: SortOption): string {
 // Build SpringFilter filter string
 function toFilter(search: string, categoryId: string): string | undefined {
   const parts: string[] = [];
-  if (search.trim()) parts.push(`name~~'*${search.trim()}*'`);
+  if (search.trim()) parts.push(`name~'*${search.trim()}*'`);
   if (categoryId) parts.push(`categoryId:'${categoryId}'`);
   return parts.length > 0 ? parts.join(" and ") : undefined;
 }
@@ -71,6 +71,7 @@ export function ProductsGrid({
     size: PAGE_SIZE,
     sort: toBESort(sort),
     filter: toFilter(debouncedSearch, categoryFilter),
+    includeDescendants: !!categoryFilter,
   });
 
   const products = useMemo(() => data?.content ?? [], [data?.content]);
@@ -221,11 +222,10 @@ export function ProductsGrid({
               key={p}
               type="button"
               onClick={() => setPage(p)}
-              className={`flex size-8 items-center justify-center rounded-lg border text-sm font-medium transition ${
-                p === page
+              className={`flex size-8 items-center justify-center rounded-lg border text-sm font-medium transition ${p === page
                   ? "border-theme-primary-start bg-theme-primary-start text-white"
                   : "border-gray-200 dark:border-white/8 bg-white dark:bg-surface-card text-text-main hover:bg-gray-50 dark:hover:bg-white/8"
-              }`}
+                }`}
             >
               {p}
             </button>
