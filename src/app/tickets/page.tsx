@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -18,6 +18,13 @@ import {
   Calendar,
   MessageSquareReply,
 } from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faSpinner,
+  faCheckCircle,
+  faTimesCircle,
+  faList,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/Layout";
 import {
@@ -35,6 +42,15 @@ import { fmtBackendDatetime, fmtBackendDate } from "@/lib/formatters";
 
 function StatusBadge({ status }: { status: ContactTicketStatus }) {
   const s = TICKET_STATUS_STYLES[status];
+  const iconMap: Record<
+    ContactTicketStatus,
+    { icon: any; colorClass: string }
+  > = {
+    IN_PROGRESS: { icon: faSpinner, colorClass: 'text-amber-500' },
+    RESOLVED: { icon: faCheckCircle, colorClass: 'text-green-500' },
+    CLOSED: { icon: faTimesCircle, colorClass: 'text-gray-800' },
+  };
+  const iconInfo = iconMap[status];
   return (
     <span
       className={cn(
@@ -42,18 +58,31 @@ function StatusBadge({ status }: { status: ContactTicketStatus }) {
         s.badge,
       )}
     >
-      <span className={cn("w-1.5 h-1.5 rounded-full", s.dot)} />
+      <FontAwesomeIcon
+        icon={iconInfo.icon}
+        className={cn('size-3.5 mr-1', iconInfo.colorClass)}
+      />
+      {/* hide the small dot for CLOSED status */}
+      {status !== 'CLOSED' && (
+        <span className={cn('w-1.5 h-1.5 rounded-full', s.dot)} />
+      )}
       {TICKET_STATUS_LABELS[status]}
     </span>
   );
 }
 
-const STATUS_TABS: { label: string; value: ContactTicketStatus | "ALL" }[] = [
-  { label: "Tất cả", value: "ALL" },
-  { label: "Đang xử lý", value: "IN_PROGRESS" },
-  { label: "Đã giải quyết", value: "RESOLVED" },
-  { label: "Đã đóng", value: "CLOSED" },
-];
+  const STATUS_TABS: {
+    label: string;
+    value: ContactTicketStatus | "ALL";
+    icon?: any;
+    color?: string;
+    activeClass?: string;
+  }[] = [
+    { label: "Tất cả", value: "ALL", icon: faList, color: 'text-gray-600', activeClass: 'bg-blue-600 text-white shadow-sm' },
+    { label: "Đang xử lý", value: "IN_PROGRESS", icon: faSpinner, color: 'text-amber-600', activeClass: 'bg-amber-600 text-white shadow-sm' },
+    { label: "Đã giải quyết", value: "RESOLVED", icon: faCheckCircle, color: 'text-green-500', activeClass: 'bg-green-600 text-white shadow-sm' },
+    { label: "Đã đóng", value: "CLOSED", icon: faTimesCircle, color: 'text-gray-700', activeClass: 'bg-gray-800 text-white shadow-sm' },
+  ];
 
 function TicketDetailView({
   ticket,
@@ -288,9 +317,26 @@ export default function MyTicketsPage() {
     size: 10,
     ...(statusFilter !== "ALL" ? { status: statusFilter } : {}),
   };
-  const { data, isLoading } = useMyTickets(params);
+  const ticketsQuery = useMyTickets(params);
+  const { data, isLoading, refetch } = ticketsQuery;
+
+  // Ensure we trigger a refetch when the status or page changes (user interaction).
+  const _firstMount = useRef(true);
+  useEffect(() => {
+    if (_firstMount.current) {
+      _firstMount.current = false;
+      return;
+    }
+    // refetch for the current params (the hook uses params in its query key)
+    void refetch();
+  }, [statusFilter, page, refetch]);
 
   const tickets = data?.content ?? [];
+  // additionally filter client-side to make tabs immediately reflect selection
+  const filteredTickets =
+    statusFilter === 'ALL'
+      ? tickets
+      : tickets.filter((t) => t.status === statusFilter);
   const totalPages = data?.meta?.totalPages ?? 0;
   const totalElements = data?.meta?.totalElements ?? 0;
 
@@ -341,13 +387,17 @@ export default function MyTicketsPage() {
                     setPage(0);
                   }}
                   className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                    statusFilter === tab.value
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                    "px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-all",
+                    statusFilter === tab.value ? tab.activeClass : "bg-muted text-muted-foreground hover:bg-muted/80",
                   )}
                 >
-                  {tab.label}
+                  {tab.icon && (
+                    <FontAwesomeIcon
+                      icon={tab.icon}
+                      className={cn('size-4', statusFilter === tab.value ? 'text-white' : tab.color)}
+                    />
+                  )}
+                  <span>{tab.label}</span>
                 </button>
               ))}
             </div>
@@ -378,9 +428,28 @@ export default function MyTicketsPage() {
                   Gửi yêu cầu mới
                 </Button>
               </div>
+            ) : filteredTickets.length === 0 ? (
+              <div className="text-center py-12 space-y-3">
+                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto">
+                  <MessageSquare size={24} className="text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground">
+                  Không có yêu cầu nào
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {`Không có yêu cầu nào ở trạng thái "${STATUS_TABS.find((t) => t.value === statusFilter)?.label}"`}
+                </p>
+                <Button
+                  size="sm"
+                  className="mt-2 bg-blue-600 text-white hover:bg-blue-700"
+                  render={<Link href="/feedback" />}
+                >
+                  Gửi yêu cầu mới
+                </Button>
+              </div>
             ) : (
               <div className="space-y-3">
-                {tickets.map((ticket) => (
+                {filteredTickets.map((ticket) => (
                   <TicketCard
                     key={ticket.contactTicketId}
                     ticket={ticket}
