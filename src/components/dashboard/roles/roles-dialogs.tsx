@@ -18,6 +18,7 @@ import {
   useRoleDetailQuery,
   useUpdateRoleMutation,
 } from "@/features/roles/hooks/use-roles";
+import { useIsDirty } from "@/hooks/use-is-dirty";
 import type {
   CreateRoleInput,
   UpdateRoleInput,
@@ -58,6 +59,9 @@ export function RoleFormDialog({
       startTransition(() => setFormState(buildState(roleDetail)));
     }
   }, [open, isEdit, roleDetail, initialRole?.roleId]);
+
+  const initialRoleState = buildState(roleDetail ?? initialRole ?? null);
+  const isDirty = useIsDirty(initialRoleState, formState);
 
   const createMutation = useCreateRoleMutation();
   const updateMutation = useUpdateRoleMutation();
@@ -178,7 +182,7 @@ export function RoleFormDialog({
           <Button
             onClick={handleSubmit}
             className="bg-theme-primary-start hover:opacity-90"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isDirty || !formState.name.trim()}
           >
             {isSubmitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo mới"}
           </Button>

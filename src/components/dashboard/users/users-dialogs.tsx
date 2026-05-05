@@ -230,6 +230,42 @@ export function UserFormDialog({
   const isSubmitting =
     updateMutation.isPending || removeRolesMutation.isPending;
 
+  // Compute whether anything actually changed compared to server data
+  let hasChanges = false;
+  if (!isEdit) {
+    hasChanges = !!(
+      formState.firstName.trim() || formState.email.trim() || formState.lastName.trim()
+    );
+  } else if (userDetail) {
+    const trimmed = {
+      firstName: formState.firstName.trim(),
+      lastName: formState.lastName.trim(),
+      email: formState.email.trim(),
+      phoneNumber: formState.phoneNumber ? formState.phoneNumber.trim() : "",
+      nickname: formState.nickname ? formState.nickname.trim() : "",
+      isVerified: formState.isVerified,
+    };
+
+    const fieldChanged =
+      trimmed.firstName !== (userDetail.firstName ?? "") ||
+      trimmed.lastName !== (userDetail.lastName ?? "") ||
+      trimmed.email !== (userDetail.email ?? "") ||
+      trimmed.phoneNumber !== (userDetail.phoneNumber ?? "") ||
+      trimmed.nickname !== (userDetail.nickname ?? "") ||
+      trimmed.isVerified !== (userDetail.isVerified ?? false);
+
+    const prevRoleSet = new Set(userDetail.rolesSecured?.map((r) => r.roleId) ?? []);
+    const nextRoleSet = new Set(selectedRoleIds);
+    const addedRoleIds = selectedRoleIds.filter((id) => !prevRoleSet.has(id));
+    const removedRoleIds = [...prevRoleSet].filter((id) => !nextRoleSet.has(id));
+
+    const hasRoleChanges = addedRoleIds.length > 0 || removedRoleIds.length > 0;
+
+    const hasAvatarChange = !!avatarFile;
+
+    hasChanges = fieldChanged || hasRoleChanges || hasAvatarChange;
+  }
+
   const avatarInitial = formState.firstName
     ? formState.firstName.charAt(0).toUpperCase()
     : "?";
@@ -612,9 +648,7 @@ export function UserFormDialog({
             onClick={handleSubmit}
             className="bg-theme-primary-start hover:opacity-90 min-w-28"
             disabled={
-              isSubmitting ||
-              !formState.firstName.trim() ||
-              !formState.email.trim()
+              isSubmitting || !hasChanges || !formState.firstName.trim() || !formState.email.trim()
             }
           >
             {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}

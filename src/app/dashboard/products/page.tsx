@@ -13,6 +13,8 @@ import {
 } from "@/features/products/hooks/use-product-management";
 import { cn } from "@/lib/utils";
 import type { ProductResponse } from "@/features/products/types";
+import { toast } from "sonner";
+import { normalizeError } from "@/api/apiService";
 
 function StatCard({
   label,
@@ -58,11 +60,26 @@ export default function ProductsPage() {
 
   const handleDeleteMany = (ids: string[]) => {
     // Sequential deletes
-    ids.forEach((id) => deleteProductMutation.mutate(id));
+    ids.forEach((id) =>
+      deleteProductMutation.mutate(id, {
+        onError: (err) => {
+          const appErr = normalizeError(err);
+          toast.error(appErr.message);
+        },
+      }),
+    );
   };
 
   const handleConfirmDelete = (product: ProductResponse) => {
-    deleteProductMutation.mutate(product.productId);
+    deleteProductMutation.mutate(product.productId, {
+      onSuccess: () => {
+        toast.success("Xóa sản phẩm thành công");
+      },
+      onError: (err) => {
+        const appErr = normalizeError(err);
+        toast.error(appErr.message);
+      },
+    });
   };
 
   return (

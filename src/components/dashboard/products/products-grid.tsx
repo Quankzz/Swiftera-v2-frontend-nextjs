@@ -48,12 +48,27 @@ export function ProductsGrid({
   onDelete,
   onDeleteMany,
 }: ProductsGridProps) {
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [sort, setSort] = useState<SortOption>("newest");
+  // Persist filters to sessionStorage so navigating away and back preserves them
+  const STORAGE_KEY = "swiftera:dashboard:products:filters:v1";
+
+  const loadSaved = () => {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+
+  const saved = typeof window !== "undefined" ? loadSaved() : null;
+
+  const [search, setSearch] = useState(() => saved?.search ?? "");
+  const [debouncedSearch, setDebouncedSearch] = useState(() => saved?.search ?? "");
+  const [categoryFilter, setCategoryFilter] = useState(() => saved?.categoryFilter ?? "");
+  const [sort, setSort] = useState<SortOption>(() => (saved?.sort as SortOption) ?? "newest");
   // BE uses 1-based page index
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => (saved?.page ? Number(saved.page) : 1));
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Debounce: chờ 400ms sau khi user ngừng gõ mới gọi API
@@ -94,6 +109,18 @@ export function ProductsGrid({
     setSort(v);
     setPage(1);
   }, []);
+
+  // Persist filters whenever they change
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ search, categoryFilter, sort, page }),
+      );
+    } catch {
+      // ignore
+    }
+  }, [search, categoryFilter, sort, page]);
 
   // ── Selection helpers ──
   const toggleSelect = useCallback((id: string) => {

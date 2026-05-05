@@ -13,6 +13,7 @@ import {
   useUpdateVoucherMutation,
   useVoucherQuery,
 } from "@/features/vouchers/hooks/use-voucher-management";
+import { useIsDirty } from "@/hooks/use-is-dirty";
 import { normalizeError } from "@/api/apiService";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,6 +123,9 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
   const updateMutation = useUpdateVoucherMutation();
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const initialForm = initForm(freshVoucher ?? target);
+  const isDirty = useIsDirty(initialForm, form);
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -427,7 +431,7 @@ export function VoucherFormDialog({ target, onClose }: VoucherFormDialogProps) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isPending}
+            disabled={isPending || !isDirty || (!isEdit && !form.code.trim())}
             className="inline-flex items-center gap-2 rounded-md bg-theme-primary-start px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
           >
             {isPending && <Loader2 size={15} className="animate-spin" />}

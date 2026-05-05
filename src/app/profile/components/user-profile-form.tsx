@@ -21,6 +21,7 @@ import {
 import { storageApi } from "@/api/storageApi";
 import { extractBlobPathFromUrl, isAzureBlobUrl } from "@/lib/blob-utils";
 import { getApiErrorMessage, getApiSuccessMessage } from "../utils";
+import { useIsDirty } from "@/hooks/use-is-dirty";
 
 type CropArea = { width: number; height: number; x: number; y: number };
 type CountryOption = { code: string; name: string };
@@ -142,6 +143,26 @@ export function UserProfileForm({
     setNationality(profile.nationality ?? "");
     setFinalAvatarUrl(profile.avatarUrl ?? null);
   }, [profile]);
+
+  const initialProfileState = {
+    firstName: profile.firstName ?? "",
+    lastName: profile.lastName ?? "",
+    nickname: profile.nickname ?? "",
+    biography: profile.biography ?? "",
+    city: profile.city ?? "",
+    nationality: profile.nationality ?? "",
+    avatarUrl: profile.avatarUrl ?? null,
+  };
+  const currentProfileState = {
+    firstName,
+    lastName,
+    nickname,
+    biography,
+    city,
+    nationality,
+    avatarUrl: avatarBlob?.preview ?? finalAvatarUrl ?? null,
+  };
+  const isDirty = useIsDirty(initialProfileState, currentProfileState);
 
   useEffect(() => {
     setAvatarBroken(false);
@@ -751,7 +772,7 @@ export function UserProfileForm({
           <Button
             type="submit"
             disabled={
-              saving || uploadingAvatar || !firstName.trim() || !lastName.trim()
+              saving || uploadingAvatar || !isDirty || !firstName.trim() || !lastName.trim()
             }
             className="bg-theme-primary-start hover:opacity-90 gap-2 text-white"
           >

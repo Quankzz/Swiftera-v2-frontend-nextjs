@@ -18,6 +18,7 @@ import {
   useUpdateHubMutation,
   useHubQuery,
 } from "@/features/hubs/hooks/use-hub-management";
+import { useIsDirty } from "@/hooks/use-is-dirty";
 import { normalizeError } from "@/api/apiService";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,6 +100,9 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
       });
     }
   }, [freshHub]);
+
+  const initialForm = initForm(freshHub ?? target);
+  const isDirty = useIsDirty(initialForm, form);
 
   const createMutation = useCreateHubMutation();
   const updateMutation = useUpdateHubMutation();
@@ -423,7 +427,11 @@ export function HubFormDialog({ target, onClose }: HubFormDialogProps) {
           <button
             type="submit"
             form="hub-form"
-            disabled={isPending}
+            disabled={
+              isPending ||
+              !isDirty ||
+              (isEdit ? !form.name.trim() : !form.code.trim() || !form.name.trim())
+            }
             className="inline-flex items-center gap-2 rounded-lg bg-theme-primary-start px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isPending && <Loader2 size={14} className="animate-spin" />}
