@@ -8,9 +8,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
   RefreshCw,
-  XCircle,
   User,
   Mail,
   Phone,
@@ -54,7 +52,7 @@ function StatusBadge({ status }: { status: ContactTicketStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm",
         s.badge,
       )}
     >
@@ -270,35 +268,57 @@ function TicketCard({
 }) {
   const s = TICKET_STATUS_STYLES[ticket.status];
 
+  const shortId = ticket.contactTicketId
+    ? `#${ticket.contactTicketId.slice(0, 8).toUpperCase()}`
+    : "";
+
   return (
     <button
       onClick={onClick}
       className="w-full text-left p-5 rounded-xl border border-border/60 bg-card hover:border-blue-300/80 hover:bg-blue-50/20 dark:hover:bg-white/3 transition-all cursor-pointer"
     >
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <h3 className="text-base font-semibold text-foreground line-clamp-1 flex-1">
-          {ticket.subject}
-        </h3>
-        <StatusBadge status={ticket.status} />
+      <div className="flex items-center justify-between gap-4 mb-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-lg font-semibold text-foreground line-clamp-1 truncate">
+            {ticket.subject}
+          </h3>
+          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+            {ticket.rentalOrderId && (
+              <span className="inline-flex items-center gap-2 font-mono text-xs bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800 rounded px-2 py-0.5">
+                <span className="text-xs text-amber-700 font-medium">Đơn thuê liên quan:</span>
+                <span className="font-mono text-xs font-semibold text-amber-800">#{ticket.rentalOrderId.slice(0, 8).toUpperCase()}</span>
+              </span>
+            )}
+            <span>{fmtBackendDate(ticket.createdAt)}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <StatusBadge status={ticket.status} />
+          <span className="font-mono text-xs text-gray-600 bg-gray-50 border border-gray-100 dark:bg-transparent dark:border-white/6 rounded px-2 py-0.5">
+            {shortId}
+          </span>
+        </div>
       </div>
 
-      <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-        {ticket.message
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim()}
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-sm text-gray-700 dark:text-gray-200 mb-0 leading-snug line-clamp-2 max-h-12 overflow-hidden flex-1 whitespace-normal break-words">
+          {ticket.message
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()}
+        </p>
 
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
-          {fmtBackendDate(ticket.createdAt)}
-        </span>
-        {ticket.sellerReply && (
-          <span className="inline-flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 font-medium">
-            <CheckCircle2 size={13} />
-            Đã phản hồi
-          </span>
-        )}
+        <div className="flex-shrink-0">
+          {ticket.sellerReply ? (
+            <span className="inline-flex items-center gap-1.5 text-sm text-purple-600 dark:text-purple-400 font-medium">
+              <FontAwesomeIcon icon={faCheckCircle} className="text-purple-600" />
+              Đã phản hồi
+            </span>
+          ) : (
+            <span className="text-sm text-muted-foreground">Chưa phản hồi</span>
+          )}
+        </div>
       </div>
     </button>
   );
