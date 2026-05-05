@@ -28,9 +28,10 @@ import {
   ChevronLeft,
   AlertCircle,
   Eye,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { storageApi } from '@/api/storageApi';
@@ -638,7 +639,7 @@ export function PolicyCreateDialog({
                 </div>
 
                 <div className="flex items-start gap-3 rounded-2xl border border-amber-200/60 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/10 p-5">
-                  <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <FontAwesomeIcon icon={faInfoCircle} className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
                     Sau khi tạo, chính sách sẽ có trạng thái{' '}
                     <strong className="font-semibold">Hoạt động</strong>. Bạn có

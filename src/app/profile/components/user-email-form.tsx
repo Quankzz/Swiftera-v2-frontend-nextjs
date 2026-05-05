@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Inbox, Mail, Sparkles } from "lucide-react";
+import { Inbox, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { userApi } from "@/api/userProfileApi";
 import { getApiErrorMessage, getApiSuccessMessage } from "../utils";
