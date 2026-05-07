@@ -88,6 +88,14 @@ function InfoRow({
   );
 }
 
+function resolveQrImageSrc(raw?: string | null) {
+  if (!raw) return null;
+  if (raw.startsWith('data:')) return raw;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.length > 100) return `data:image/png;base64,${raw}`;
+  return null;
+}
+
 function SectionCard({
   children,
   className,
@@ -333,6 +341,7 @@ export function OrderMetaCard({ order }: OrderMetaCardProps) {
       .filter(Boolean)
       .join(' ') || order.pickupStaff.email
     : null;
+  const qrImageSrc = resolveQrImageSrc(order.qrCode);
 
   return (
     <SectionCard className="overflow-hidden shadow-sm">
@@ -410,9 +419,30 @@ export function OrderMetaCard({ order }: OrderMetaCardProps) {
         )}
 
         {/* QR Code */}
-        {order.qrCode && (
-          <InfoRow icon={QrCode} label="Mã QR" value={order.qrCode} mono />
-        )}
+        {/* {order.qrCode && (
+          <div className="flex items-start gap-3 py-2.5 px-3 rounded-xl hover:bg-muted/40 transition-colors">
+            <div className="size-8 sm:size-9 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0">
+              <QrCode className="size-4 text-muted-foreground" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5 leading-none">
+                Mã QR
+              </p>
+              {qrImageSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={qrImageSrc}
+                  alt="QR Code"
+                  className="mt-2 w-32 h-32 rounded-xl border border-border bg-white p-2 object-contain"
+                />
+              ) : (
+                <p className="text-[12px] sm:text-[13px] font-semibold text-foreground leading-snug font-mono break-all">
+                  {order.qrCode}
+                </p>
+              )}
+            </div>
+          </div>
+        )} */}
 
         {/* Voucher */}
         {order.voucherCodeSnapshot && (
@@ -633,7 +663,7 @@ export function RentalSummary({ order, showPickupDate }: RentalSummaryProps) {
               Tổng cộng
             </span>
             <span className="text-[15px] sm:text-[16px] font-black text-emerald-600 dark:text-emerald-400">
-              {fmt(totalPayable + deposit)}
+              {fmt(totalPayable + penalty)}
             </span>
           </div>
         </div>
