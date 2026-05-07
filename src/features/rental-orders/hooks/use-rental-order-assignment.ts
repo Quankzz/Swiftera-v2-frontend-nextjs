@@ -138,6 +138,9 @@ export function useAssignStaffMutation() {
       qc.invalidateQueries({
         queryKey: rentalOrderKeys.detail(variables.rentalOrderId),
       });
+      qc.invalidateQueries({
+        queryKey: rentalOrderKeys.staffDetail(variables.rentalOrderId),
+      });
       toast.success("Gán nhân viên thành công");
     },
     onError: (error) => {
