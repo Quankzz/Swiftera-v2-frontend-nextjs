@@ -13,6 +13,7 @@ import { rentalOrderKeys } from "../api/rental-order.keys";
 import {
   getRentalOrders,
   getRentalOrderById,
+  getRentalOrderStaffDetail,
   updateRentalOrderStatus,
   cancelRentalOrder,
   confirmCompletion,
@@ -22,6 +23,7 @@ import {
 import { toast } from "sonner";
 import type {
   RentalOrderResponse,
+  RentalOrderStaffDetail,
   PaginatedRentalOrdersResponse,
   RentalOrderListParams,
   UpdateOrderStatusInput,
@@ -52,6 +54,22 @@ export function useRentalOrderQuery(rentalOrderId: string | undefined) {
       ? rentalOrderKeys.detail(rentalOrderId)
       : rentalOrderKeys.details(),
     queryFn: () => getRentalOrderById(rentalOrderId as string),
+    staleTime: 30 * 1000,
+  });
+}
+
+/**
+ * Lấy thông tin nhân viên giao/thu hồi của đơn thuê (API-082)
+ */
+export function useRentalOrderStaffDetailQuery(
+  rentalOrderId: string | undefined,
+) {
+  return useQuery<RentalOrderStaffDetail>({
+    enabled: !!rentalOrderId,
+    queryKey: rentalOrderId
+      ? rentalOrderKeys.staffDetail(rentalOrderId)
+      : rentalOrderKeys.staffDetails(),
+    queryFn: () => getRentalOrderStaffDetail(rentalOrderId as string),
     staleTime: 30 * 1000,
   });
 }

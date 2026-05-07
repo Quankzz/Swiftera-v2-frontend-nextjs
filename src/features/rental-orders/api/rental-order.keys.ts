@@ -15,4 +15,7 @@ export const rentalOrderKeys = {
   contracts: () => [...rentalOrderKeys.all, "contract"] as const,
   contract: (rentalOrderId: string) =>
     [...rentalOrderKeys.contracts(), rentalOrderId] as const,
+  staffDetails: () => [...rentalOrderKeys.all, "staff-detail"] as const,
+  staffDetail: (rentalOrderId: string) =>
+    [...rentalOrderKeys.staffDetails(), rentalOrderId] as const,
 } as const;

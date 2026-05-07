@@ -23,9 +23,6 @@ import {
   FileText,
   ExternalLink,
   Hash,
-  ChevronRight,
-  BadgeCheck,
-  Truck,
   ArrowRightCircle,
   XCircle,
   Info,
@@ -34,12 +31,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   useRentalOrderQuery,
+  useRentalOrderStaffDetailQuery,
   useRentalOrderContractQuery,
   useUpdateOrderStatusMutation,
   useCompleteOrderMutation,
 } from "../hooks/use-rental-order-management";
-import { useAssignStaffMutation } from "../hooks/use-rental-order-assignment";
-import { StaffPickerDialog } from "./staff-picker-dialog";
 import { PolicyPdfPreview } from "@/features/policies/components/policy-pdf-preview";
 import {
   Dialog,
@@ -226,53 +222,35 @@ function StatusBadge({ status }: { status: RentalOrderStatus }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Staff Assignment Section (interactive - inline on detail page)
+// Staff Info Section (read-only)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const PICKUP_ONLY_STATUSES = new Set([
-  "PREPARING",
-  "DELIVERING",
-  "DELIVERED",
-  "IN_USE",
-] as const);
-
-function StaffSlotButton({
-  role,
+function StaffInfoCard({
+  label,
   staff,
-  onClick,
+  accentText,
+  accentBg,
 }: {
-  role: "delivery" | "pickup";
+  label: string;
   staff: HubStaffResponse | null;
-  onClick: () => void;
+  accentText: string;
+  accentBg: string;
 }) {
-  const isDelivery = role === "delivery";
-  const label = isDelivery ? "Nhân viên giao hàng" : "Nhân viên thu hồi";
-  const accent = isDelivery
-    ? "text-theme-primary-start"
-    : "text-emerald-600 dark:text-emerald-400";
-  const accentBg = isDelivery
-    ? "bg-theme-primary-start/5 dark:bg-theme-primary-start/10 border-theme-primary-start/20 dark:border-theme-primary-end/40"
-    : "bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-700/50";
-  const emptyBg =
-    "bg-gray-50 dark:bg-white/4 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20";
-
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={cn(
-        "w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-all text-left",
-        staff ? accentBg : emptyBg,
+        "rounded-xl border px-4 py-3",
+        staff
+          ? accentBg
+          : "bg-gray-50 dark:bg-white/4 border-gray-200 dark:border-white/10",
       )}
     >
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3">
         <div
           className={cn(
             "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
             staff
-              ? isDelivery
-                ? "bg-theme-primary-start text-white"
-                : "bg-emerald-500 text-white"
+              ? "bg-theme-primary-start text-white"
               : "bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-gray-400",
           )}
         >
@@ -290,148 +268,66 @@ function StaffSlotButton({
         <div className="min-w-0">
           <p className="text-[11px] text-text-sub">{label}</p>
           {staff ? (
-            <p className={cn("text-sm font-semibold truncate", accent)}>
+            <p className={cn("text-sm font-semibold truncate", accentText)}>
               {staff.firstName} {staff.lastName}
             </p>
           ) : (
-            <p className="text-sm text-text-sub italic">
-              Chưa chọn - bấm để chọn
-            </p>
+            <p className="text-sm text-text-sub italic">Chưa gán</p>
           )}
         </div>
       </div>
-      <ChevronRight className="w-4 h-4 text-text-sub shrink-0" />
-    </button>
+      {staff && (
+        <div className="mt-2 space-y-1 text-xs text-text-sub">
+          {staff.phoneNumber && <p>SĐT: {staff.phoneNumber}</p>}
+          {staff.email && <p>Email: {staff.email}</p>}
+        </div>
+      )}
+    </div>
   );
 }
 
-function StaffAssignmentSection({ order }: { order: RentalOrderResponse }) {
-  const [deliveryStaff, setDeliveryStaff] = useState<HubStaffResponse | null>(
-    order.deliveryStaff ?? null,
-  );
-  const [pickupStaff, setPickupStaff] = useState<HubStaffResponse | null>(
-    order.pickupStaff ?? null,
-  );
-  const [pickerOpen, setPickerOpen] = useState<"delivery" | "pickup" | null>(
-    null,
-  );
-
-  const assignMutation = useAssignStaffMutation();
-
-  const canAssignDelivery = order.status === "PAID";
-  const canAssignPickup =
-    order.status === "PAID" || PICKUP_ONLY_STATUSES.has(order.status as never);
-  const canAssign = canAssignDelivery || canAssignPickup;
-
-  const canSubmit =
-    (canAssignDelivery && !!deliveryStaff) ||
-    (canAssignPickup && !!pickupStaff);
-
-  const handleConfirm = async () => {
-    if (!canSubmit) {
-      toast.warning("Vui lòng chọn ít nhất một nhân viên.");
-      return;
-    }
-    try {
-      await assignMutation.mutateAsync({
-        rentalOrderId: order.rentalOrderId,
-        payload: {
-          deliveryStaffId: canAssignDelivery
-            ? (deliveryStaff?.userId ?? undefined)
-            : undefined,
-          pickupStaffId: canAssignPickup
-            ? (pickupStaff?.userId ?? undefined)
-            : undefined,
-        },
-      });
-      toast.success("Gán nhân viên thành công!");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Gán nhân viên thất bại.",
-      );
-    }
-  };
+function StaffInfoSection({
+  deliveryStaff,
+  pickupStaff,
+  isLoading,
+  isError,
+}: {
+  deliveryStaff: HubStaffResponse | null;
+  pickupStaff: HubStaffResponse | null;
+  isLoading: boolean;
+  isError: boolean;
+}) {
+  const hasData = !!deliveryStaff || !!pickupStaff;
 
   return (
-    <>
-      <SectionCard title="Phân công nhân viên" icon={Truck}>
-        {!canAssign ? (
-          <div className="flex items-center gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/15 px-4 py-3">
-            <CircleDot className="w-4 h-4 text-amber-500 shrink-0" />
-            <p className="text-sm text-amber-700 dark:text-amber-400">
-              Đơn ở trạng thái{" "}
-              <span className="font-semibold">
-                {STATUS_LABELS[order.status]}
-              </span>{" "}
-              - không thể phân công nhân viên.
+    <SectionCard title="Nhân viên giao/thu hồi" icon={User2}>
+      {isLoading && !hasData ? (
+        <div className="flex items-center gap-2 text-sm text-text-sub">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Đang tải thông tin nhân viên...
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <StaffInfoCard
+            label="Nhân viên giao hàng"
+            staff={deliveryStaff}
+            accentText="text-theme-primary-start"
+            accentBg="bg-theme-primary-start/5 dark:bg-theme-primary-start/10 border-theme-primary-start/20 dark:border-theme-primary-end/40"
+          />
+          <StaffInfoCard
+            label="Nhân viên thu hồi"
+            staff={pickupStaff}
+            accentText="text-emerald-600 dark:text-emerald-400"
+            accentBg="bg-emerald-50 dark:bg-emerald-900/15 border-emerald-200 dark:border-emerald-700/50"
+          />
+          {isError && !hasData && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Không thể tải thông tin nhân viên từ hệ thống.
             </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {canAssignDelivery && (
-              <StaffSlotButton
-                role="delivery"
-                staff={deliveryStaff}
-                onClick={() => setPickerOpen("delivery")}
-              />
-            )}
-            {canAssignPickup && (
-              <StaffSlotButton
-                role="pickup"
-                staff={pickupStaff}
-                onClick={() => setPickerOpen("pickup")}
-              />
-            )}
-
-            {/* Summary + confirm */}
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/8">
-              <div className="flex items-center gap-2 text-xs text-text-sub flex-wrap">
-                {canAssignDelivery && deliveryStaff && (
-                  <span className="flex items-center gap-1 text-theme-primary-start">
-                    <BadgeCheck className="w-3.5 h-3.5" />
-                    Giao: {deliveryStaff.firstName} {deliveryStaff.lastName}
-                  </span>
-                )}
-                {canAssignPickup && pickupStaff && (
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                    <BadgeCheck className="w-3.5 h-3.5" />
-                    Thu hồi: {pickupStaff.firstName} {pickupStaff.lastName}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={assignMutation.isPending || !canSubmit}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-theme-primary-start hover:brightness-110 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {assignMutation.isPending ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Truck className="w-3.5 h-3.5" />
-                )}
-                Xác nhận gán
-              </button>
-            </div>
-          </div>
-        )}
-      </SectionCard>
-
-      {/* Staff picker dialog */}
-      {pickerOpen && canAssign && (
-        <StaffPickerDialog
-          role={pickerOpen}
-          hubId={order.hubId ?? ""}
-          isOpen={!!pickerOpen}
-          onClose={() => setPickerOpen(null)}
-          onSelected={(staff) => {
-            if (pickerOpen === "delivery") setDeliveryStaff(staff);
-            else setPickupStaff(staff);
-            setPickerOpen(null);
-          }}
-        />
+          )}
+        </div>
       )}
-    </>
+    </SectionCard>
   );
 }
 
@@ -789,6 +685,12 @@ export function RentalOrderDetailView({
     isError,
   } = useRentalOrderQuery(rentalOrderId);
 
+  const {
+    data: staffDetail,
+    isLoading: staffLoading,
+    isError: staffError,
+  } = useRentalOrderStaffDetailQuery(rentalOrderId);
+
   const { data: contract, isLoading: contractLoading } =
     useRentalOrderContractQuery(rentalOrderId);
 
@@ -822,6 +724,9 @@ export function RentalOrderDetailView({
   }
 
   const addr = order.userAddress;
+  const deliveryStaff =
+    staffDetail?.deliveryStaff ?? order.deliveryStaff ?? null;
+  const pickupStaff = staffDetail?.pickupStaff ?? order.pickupStaff ?? null;
 
   return (
     <div
@@ -1095,8 +1000,13 @@ export function RentalOrderDetailView({
             )}
           </SectionCard>
 
-          {/* Staff assignment (interactive) */}
-          <StaffAssignmentSection order={order} />
+          {/* Staff info (read-only) */}
+          <StaffInfoSection
+            deliveryStaff={deliveryStaff}
+            pickupStaff={pickupStaff}
+            isLoading={staffLoading}
+            isError={staffError}
+          />
 
           {/* Status update actions (ADMIN) */}
           <UpdateStatusSection order={order} />
