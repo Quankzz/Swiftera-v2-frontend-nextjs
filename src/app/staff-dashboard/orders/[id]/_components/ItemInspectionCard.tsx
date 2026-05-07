@@ -64,7 +64,7 @@ export function ItemInspectionCard({
             />
           ) : (
             <div className="size-full flex items-center justify-center">
-              <span className="text-muted-foreground text-xs">—</span>
+              <span className="text-muted-foreground text-xs">-</span>
             </div>
           )}
         </div>
@@ -73,7 +73,7 @@ export function ItemInspectionCard({
             {item.productNameSnapshot}
           </p>
           <p className="text-xs text-muted-foreground font-mono mt-0.5">
-            {item.inventorySerialNumber || "—"}
+            {item.inventorySerialNumber || "-"}
           </p>
           <p className="text-xs font-semibold text-theme-primary-start mt-1">
             Cọc: {fmt(item.depositAmountSnapshot)}
@@ -97,7 +97,7 @@ export function ItemInspectionCard({
             : "Chi tiết hư hỏng, thiếu phụ kiện - căn cứ tính phạt."
         }
         value={note}
-        onChange={() => {}}
+        onChange={() => { }}
         readOnly
         className="text-sm min-h-16 resize-none"
       />

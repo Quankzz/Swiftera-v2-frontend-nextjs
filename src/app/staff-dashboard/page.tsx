@@ -10,7 +10,6 @@ import {
   PhoneCall,
   CalendarDays,
   Building2,
-  Loader2,
   Package,
   Wrench,
   Archive,
@@ -23,6 +22,7 @@ import {
   Box,
   ShieldAlert,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import {
   PieChart,
   Pie,
@@ -182,7 +182,7 @@ export default function DashboardPage() {
       {/* ── Loading ── */}
       {isLoading && (
         <div className="flex items-center justify-center min-h-[40vh] gap-3 text-muted-foreground">
-          <Loader2 className="size-6 animate-spin" />
+          <Spinner className="size-6" />
           <span className="text-sm font-medium">Đang tải dữ liệu…</span>
         </div>
       )}

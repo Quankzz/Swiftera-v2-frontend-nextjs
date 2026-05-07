@@ -193,7 +193,7 @@ export interface RentalOrderLineResponse {
 }
 
 /**
- * Full rental order — response shape for API-074, API-075, API-076 and
+ * Full rental order - response shape for API-074, API-075, API-076 and
  * all write endpoints (API-079/084/085/086).
  * Fields with `overdue` / penalty semantics align with API-086A merged into this response.
  */
@@ -276,7 +276,7 @@ export interface SetPenaltyRequest {
 }
 
 /**
- * API-086A response — overdue penalty suggestion.
+ * API-086A response - overdue penalty suggestion.
  * API-086 fields (overdue, overdueDays, dailyOverdueRateAmount, provisionalOverduePenaltyAmount,
  * finalOverduePenaltyAmount, suggestedTotalPenaltyAmount, suggestedDepositRefundAmount) are
  * also merged directly into RentalOrderResponse, so this type is only needed for the dedicated
@@ -297,7 +297,7 @@ export interface OverduePenaltySuggestionResponse {
   suggestedDepositRefundAmount: number | null;
 }
 
-/** API-082 response — staff + hub detail embedded in a rental order. */
+/** API-082 response - staff + hub detail embedded in a rental order. */
 export interface RentalOrderStaffDetailResponse {
   rentalOrderId: string;
   status: RentalOrderApiStatus;

@@ -3,7 +3,9 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useQueries } from "@tanstack/react-query";
-import { ArrowRight, Heart, HeartOff, Sparkles } from "lucide-react";
+import { ArrowRight, Heart, HeartOff } from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 import { toast } from "sonner";
 
 import { Layout } from "@/components/Layout";
@@ -127,7 +129,7 @@ export default function FavoritesPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:border-blue-800/60 dark:bg-blue-950/30 dark:text-blue-300">
-                  <Sparkles className="size-3.5" />
+                  <FontAwesomeIcon icon={faStar} className="size-3.5" />
                   Bộ sưu tập cá nhân
                 </p>
                 <h1 className="mt-3 text-3xl font-black tracking-tight text-foreground">

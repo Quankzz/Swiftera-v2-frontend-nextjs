@@ -19,6 +19,7 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import type { HubResponse } from "@/features/hubs/types";
 import type {
@@ -736,8 +737,7 @@ export function HubViewDialog({ hub, onClose }: HubViewDialogProps) {
                   <div className="mt-2 space-y-2">
                     {productPickerQuery.isLoading && (
                       <div className="flex items-center gap-2 text-xs text-text-sub py-2">
-                        <Loader2 size={14} className="animate-spin" />
-                        Đang tải sản phẩm...
+                        <Spinner size={14} />
                       </div>
                     )}
 
@@ -850,10 +850,7 @@ export function HubViewDialog({ hub, onClose }: HubViewDialogProps) {
 
                 {productsQuery.isLoading ? (
                   <div className="flex items-center justify-center py-10 gap-2 text-text-sub">
-                    <Loader2 size={18} className="animate-spin" />
-                    <span className="text-sm">
-                      Đang tải sản phẩm trong hub...
-                    </span>
+                    <Spinner size={18} className="text-theme-primary-start" />
                   </div>
                 ) : productsQuery.isError ? (
                   <div className="flex items-center justify-center py-10 text-sm text-red-500">

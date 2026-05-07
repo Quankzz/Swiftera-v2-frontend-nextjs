@@ -21,6 +21,7 @@ import {
   useUpdatePermissionMutation,
   usePermissionsListQuery,
 } from "@/features/roles/hooks/use-roles";
+import { useIsDirty } from "@/hooks/use-is-dirty";
 import type {
   CreatePermissionInput,
   PermissionResponse,
@@ -85,6 +86,16 @@ export function PermissionFormDialog({
     initialPermission?.permissionId,
     presetModule,
   ]);
+
+  const initialPermissionState = permissionDetail
+    ? {
+        name: permissionDetail.name,
+        apiPath: permissionDetail.apiPath,
+        httpMethod: permissionDetail.httpMethod,
+        module: permissionDetail.module,
+      }
+    : { name: initialPermission?.name || "", apiPath: initialPermission?.apiPath || "", httpMethod: initialPermission?.httpMethod || "GET", module: initialPermission?.module || presetModule || "" };
+  const isDirty = useIsDirty(initialPermissionState, formState);
 
   const createMutation = useCreatePermissionMutation();
   const updateMutation = useUpdatePermissionMutation();
@@ -230,7 +241,7 @@ export function PermissionFormDialog({
           <Button
             onClick={handleSubmit}
             className="bg-theme-primary-start hover:opacity-90"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isDirty || !formState.name.trim() || !formState.apiPath.trim()}
           >
             {isSubmitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo mới"}
           </Button>
@@ -322,6 +333,8 @@ export function ModuleFormDialog({
     if (open) startTransition(() => setModuleName(initialModuleName || ""));
   }, [open, initialModuleName]);
 
+  const isModuleDirty = moduleName.trim() !== (initialModuleName ?? "");
+
   const handleSubmit = async () => {
     if (!moduleName.trim()) return;
 
@@ -387,7 +400,7 @@ export function ModuleFormDialog({
           <Button
             onClick={handleSubmit}
             className="bg-theme-primary-start hover:opacity-90"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isModuleDirty || !moduleName.trim()}
           >
             {isSubmitting
               ? "Đang lưu..."

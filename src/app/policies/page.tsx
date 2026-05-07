@@ -7,9 +7,10 @@ import {
   CircleHelp,
   ExternalLink,
   FileText,
-  Sparkles,
   ShieldCheck,
 } from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons';
 
 import { Layout } from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
@@ -239,9 +240,9 @@ export default function PoliciesPage() {
         }}
       >
         <DialogContent className="max-h-[92dvh] overflow-y-auto p-5 sm:max-w-5xl">
-          <DialogHeader>
+            <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg font-bold">
-              <Sparkles className="size-5 text-blue-500" />
+              <FontAwesomeIcon icon={faFilePdf} className="size-5 text-blue-500" />
               {previewPolicy?.title ?? "Xem chính sách"}
             </DialogTitle>
             <DialogDescription>
