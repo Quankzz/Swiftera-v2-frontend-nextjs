@@ -663,7 +663,7 @@ export function RentalSummary({ order, showPickupDate }: RentalSummaryProps) {
               Tổng cộng
             </span>
             <span className="text-[15px] sm:text-[16px] font-black text-emerald-600 dark:text-emerald-400">
-              {fmt(totalPayable + deposit)}
+              {fmt(totalPayable + penalty)}
             </span>
           </div>
         </div>

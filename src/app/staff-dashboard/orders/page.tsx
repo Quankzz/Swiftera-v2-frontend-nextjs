@@ -935,14 +935,14 @@ function OrderCard({
               )}
 
               {/* Phí thuê (sau voucher) */}
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <span className="text-[11px] text-muted-foreground">
                   Phí thuê
                 </span>
                 <span className="text-[13px] font-semibold text-foreground">
                   {fmt(order.totalPayableAmount ?? order.rentalFeeAmount)}
                 </span>
-              </div>
+              </div> */}
 
               {/* Tiền cọc */}
               <div className="flex items-center justify-between">
@@ -976,9 +976,8 @@ function OrderCard({
                 </span>
                 <span className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
                   {fmt(
-                    (order.totalPayableAmount ?? order.rentalFeeAmount) +
-                    order.depositHoldAmount +
-                    (order.penaltyChargeAmount ?? 0),
+                    (order.totalPayableAmount ?? ((order.rentalFeeAmount ?? 0) + (order.depositHoldAmount ?? 0))) +
+                    (order.penaltyChargeAmount ?? 0)
                   )}
                 </span>
               </div>
