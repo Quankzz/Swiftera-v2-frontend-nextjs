@@ -28,6 +28,7 @@ import type {
   ReportIssueInput,
   AssignStaffToHubInput,
   RentalContractResponse,
+  RentalOrderStaffDetail,
   ConfirmCompletionInput,
   CancelOrderInput,
 } from "../types";
@@ -302,8 +303,8 @@ export async function assignStaffToHub(
  */
 export async function getRentalOrderStaffDetail(
   rentalOrderId: string,
-): Promise<RentalOrderResponse> {
-  const res = await httpService.get<ApiResponse<RentalOrderResponse>>(
+): Promise<RentalOrderStaffDetail> {
+  const res = await httpService.get<ApiResponse<RentalOrderStaffDetail>>(
     `/rental-orders/${rentalOrderId}/staff-detail`,
     authOpts,
   );

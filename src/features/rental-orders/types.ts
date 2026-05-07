@@ -267,6 +267,19 @@ export interface RentalOrderResponse {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Staff detail (API-082)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RentalOrderStaffDetail {
+  rentalOrderId: string;
+  status: RentalOrderStatus;
+  hubId: string | null;
+  hubName: string | null;
+  deliveryStaff: HubStaffResponse | null;
+  pickupStaff: HubStaffResponse | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Paginated Response
 // ─────────────────────────────────────────────────────────────────────────────
 
