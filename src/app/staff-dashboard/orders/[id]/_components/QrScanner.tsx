@@ -74,7 +74,7 @@ export function QrScanner({
    */
   function extractSwifteraOrderId(raw: string): string | null {
     const upper = raw.trim().toUpperCase();
-    // Pattern 1: Swiftera URL — capture UUID between /rental-orders/ and /qr-access
+    // Pattern 1: Swiftera URL - capture UUID between /rental-orders/ and /qr-access
     const urlMatch = upper.match(
       /\/RENTAL-ORDERS\/([[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})\/QR-ACCESS/i,
     );
@@ -124,7 +124,7 @@ export function QrScanner({
         } else {
           const displayDetected = detectedId ?? raw;
           setError(
-            `QR không khớp — Phát hiện: ${displayDetected} · Cần: ${expectedId ?? expectedCode.toUpperCase()}`,
+            `QR không khớp - Phát hiện: ${displayDetected} · Cần: ${expectedId ?? expectedCode.toUpperCase()}`,
           );
         }
       }
@@ -162,7 +162,7 @@ export function QrScanner({
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(() => {});
+        videoRef.current.play().catch(() => { });
       }
       setScanning(true);
       rafRef.current = requestAnimationFrame(scanFrame);
@@ -183,13 +183,13 @@ export function QrScanner({
     // Build display address from userAddress or fall back to flat fields
     const deliveryAddress = order?.userAddress
       ? [
-          order.userAddress.addressLine,
-          order.userAddress.ward,
-          order.userAddress.district,
-          order.userAddress.city,
-        ]
-          .filter(Boolean)
-          .join(", ")
+        order.userAddress.addressLine,
+        order.userAddress.ward,
+        order.userAddress.district,
+        order.userAddress.city,
+      ]
+        .filter(Boolean)
+        .join(", ")
       : (order?.hubAddressLine ?? "");
 
     return (
@@ -230,7 +230,7 @@ export function QrScanner({
                       Họ tên
                     </p>
                     <p className="text-sm font-bold text-foreground">
-                      {order.userAddress?.recipientName ?? order.hubName ?? "—"}
+                      {order.userAddress?.recipientName ?? order.hubName ?? "-"}
                     </p>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ export function QrScanner({
                       Địa chỉ giao hàng
                     </p>
                     <p className="text-sm font-medium text-foreground">
-                      {deliveryAddress || "—"}
+                      {deliveryAddress || "-"}
                     </p>
                   </div>
                 </div>
@@ -330,7 +330,7 @@ export function QrScanner({
                           <div className="col-span-2 flex items-center gap-1 text-xs text-muted-foreground">
                             <Hash className="size-2.5 shrink-0" />
                             <span className="font-mono truncate">
-                              {line.inventorySerialNumber || "—"}
+                              {line.inventorySerialNumber || "-"}
                             </span>
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">

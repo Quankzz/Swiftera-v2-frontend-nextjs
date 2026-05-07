@@ -3,6 +3,7 @@
 import { use } from "react";
 import { ProductFormPage } from "@/components/dashboard/products/product-form-page";
 import { useProductQuery } from "@/features/products/hooks/use-product-management";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Props {
   params: Promise<{ productId: string }>;
@@ -15,7 +16,7 @@ export default function EditProductPage({ params }: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-32 text-sm text-text-sub">
-        Đang tải sản phẩm...
+        <Spinner size={32} className="text-theme-primary-start" />
       </div>
     );
   }

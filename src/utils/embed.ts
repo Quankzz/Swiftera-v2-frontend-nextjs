@@ -76,3 +76,68 @@ export function buildVideoEmbed(url: string) {
     return null;
   }
 }
+
+/**
+ * Get normalized embed src string (YouTube / Vimeo) from a URL.
+ * Returns null for unsupported URLs (e.g. direct .mp4 will return null).
+ */
+export function getEmbedSrc(url: string): string | null {
+  try {
+    const u = new URL(url);
+
+    const normalizeYouTubeId = (value: string | null) => {
+      if (!value) return null;
+      const cleaned = value.trim().split(/[?&#]/)[0];
+      return /^[A-Za-z0-9_-]{6,20}$/.test(cleaned) ? cleaned : null;
+    };
+
+    const hostname = u.hostname.toLowerCase();
+
+    // YouTube support
+    if (
+      hostname.includes("youtube.com") ||
+      hostname.includes("youtube-nocookie.com")
+    ) {
+      let id: string | null;
+      if (u.pathname.startsWith("/embed/")) {
+        id = normalizeYouTubeId(
+          u.pathname.replace("/embed/", "").split("/")[0] ?? null,
+        );
+      } else if (u.pathname.startsWith("/shorts/")) {
+        id = normalizeYouTubeId(
+          u.pathname.replace("/shorts/", "").split("/")[0] ?? null,
+        );
+      } else if (u.pathname.startsWith("/live/")) {
+        id = normalizeYouTubeId(
+          u.pathname.replace("/live/", "").split("/")[0] ?? null,
+        );
+      } else {
+        id = normalizeYouTubeId(u.searchParams.get("v"));
+      }
+
+      if (!id) return null;
+      return `https://www.youtube.com/embed/${id}`;
+    }
+
+    // YouTube short URL support
+    if (hostname.includes("youtu.be")) {
+      const id = normalizeYouTubeId(
+        u.pathname.split("/").filter(Boolean)[0] ?? null,
+      );
+      if (!id) return null;
+      return `https://www.youtube.com/embed/${id}`;
+    }
+
+    // Vimeo support
+    if (hostname.includes("vimeo.com")) {
+      const id =
+        u.pathname.split("/").filter(Boolean).pop()?.split(/[?&#]/)[0] ?? null;
+      if (!id) return null;
+      return `https://player.vimeo.com/video/${id}`;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}

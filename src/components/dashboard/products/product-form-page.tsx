@@ -44,6 +44,7 @@ import {
 } from "@/features/files/hooks/use-files";
 import { toast } from "sonner";
 import { extractBlobPathFromUrl, isAzureBlobUrl } from "@/lib/blob-utils";
+import { getEmbedSrc } from "@/utils/embed";
 
 // ─── Helper format VND ────────────────────────────────────────────
 function formatVND(val: string) {
@@ -318,6 +319,7 @@ export function ProductFormPage({
     removeDraftInventoryItem,
     errors,
     isValid,
+    isDirty,
   } = useProductForm(initialProduct);
 
   const [submitted, setSubmitted] = useState(false);
@@ -523,6 +525,10 @@ export function ProductFormPage({
 
   const showError = (key: keyof typeof errors) =>
     submitted ? errors[key] : undefined;
+
+  // Video preview handling: normalize embed src for YouTube/Vimeo or detect direct video files
+  const embedSrc = form.videoUrl ? getEmbedSrc(form.videoUrl) : null;
+  const isVideoFile = /\.(mp4|webm|ogg)(\?.*)?$/i.test(form.videoUrl || "");
 
   return (
     <div className="flex h-full gap-6 p-6">
@@ -803,6 +809,34 @@ export function ProductFormPage({
                 Nhập URL video YouTube/Vimeo embed hoặc URL trực tiếp (.mp4).
                 Video sẽ hiển thị trong gallery sản phẩm.
               </p>
+              {form.videoUrl && (
+                <div>
+                  {embedSrc ? (
+                    <div className="mt-2">
+                      <iframe
+                        src={embedSrc}
+                        loading="lazy"
+                        referrerPolicy="strict-origin-when-cross-origin"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        className="rich-media aspect-video rounded-xl my-4 w-full"
+                        title="Video sản phẩm"
+                      />
+                    </div>
+                  ) : isVideoFile ? (
+                    <div className="mt-2">
+                      <video
+                        controls
+                        className="rounded-xl my-4 w-full aspect-video bg-black"
+                      >
+                        <source src={form.videoUrl} />
+                        Trình duyệt của bạn không hỗ trợ thẻ video.
+                      </video>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-text-sub">URL video không hợp lệ hoặc chưa được hỗ trợ.</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </FormSection>
@@ -835,7 +869,7 @@ export function ProductFormPage({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSaving}
+            disabled={!isDirty || isSaving || !isValid}
             className="flex items-center gap-2 rounded-md bg-theme-primary-start px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Save size={16} />

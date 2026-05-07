@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { ProductResponse } from "@/features/products/types";
 import type { Product } from "@/types/catalog";
 import type {
@@ -212,6 +212,31 @@ export function useProductForm(initial?: ProductResponse) {
       : [],
   );
 
+  // Track initial snapshot for dirty-checking. Update when `initial` changes.
+  const initialSnapshotRef = useRef<string>(
+    JSON.stringify({
+      form: initial ? productToForm(initial) : EMPTY_FORM,
+      images: initial ? imagesToDrafts(initial.images) : [],
+      draftInventoryItems: initial?.inventoryItems
+        ? initial.inventoryItems.map(inventoryItemToDraft)
+        : [],
+    }),
+  );
+
+  useEffect(() => {
+    initialSnapshotRef.current = JSON.stringify({
+      form: initial ? productToForm(initial) : EMPTY_FORM,
+      images: initial ? imagesToDrafts(initial.images) : [],
+      draftInventoryItems: initial?.inventoryItems
+        ? initial.inventoryItems.map(inventoryItemToDraft)
+        : [],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
+
+  const currentSnapshot = JSON.stringify({ form, images, draftInventoryItems });
+  const isDirty = currentSnapshot !== initialSnapshotRef.current;
+
   /* ─── Form field handler ─── */
   const setField = useCallback(
     <K extends keyof ProductFormData>(key: K, value: ProductFormData[K]) => {
@@ -345,5 +370,6 @@ export function useProductForm(initial?: ProductResponse) {
     removeDraftInventoryItem,
     errors,
     isValid,
+    isDirty,
   };
 }

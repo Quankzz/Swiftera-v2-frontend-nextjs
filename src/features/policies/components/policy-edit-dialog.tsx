@@ -29,6 +29,7 @@ import { extractBlobPathFromUrl, isAzureBlobUrl } from "@/lib/blob-utils";
 import { useUpdatePolicyMutation } from "../hooks/use-policy-management";
 import { PolicyPdfPreview } from "./policy-pdf-preview";
 import type { PolicyDocumentResponse } from "../types";
+import { useIsDirty } from "@/hooks/use-is-dirty";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,16 @@ export function PolicyEditDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateMutation = useUpdatePolicyMutation();
+
+  const initialPolicyState = {
+    title: policy.title,
+    effectiveFrom: policy.effectiveFrom
+      ? new Date(policy.effectiveFrom).toISOString().slice(0, 10)
+      : "",
+    pdfUrl: policy.pdfUrl,
+  };
+  const currentPolicyState = { title, effectiveFrom, pdfUrl: currentPdfUrl };
+  const isDirty = useIsDirty(initialPolicyState, currentPolicyState);
 
   // Reset when policy changes
   useEffect(() => {
@@ -431,7 +442,7 @@ export function PolicyEditDialog({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isPending || !isDirty || !title.trim() || !effectiveFrom}
             className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {updateMutation.isPending ? (

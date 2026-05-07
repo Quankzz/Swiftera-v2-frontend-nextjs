@@ -76,7 +76,12 @@ function normalizeUserPayload(payload: unknown): AuthUser | null {
       rolesSecured: Array.isArray(raw.rolesSecured)
         ? (raw.rolesSecured as AuthUser["rolesSecured"])
         : [],
-      avatar: typeof raw.avatar === "string" ? raw.avatar : undefined,
+      avatar:
+        typeof raw.avatarUrl === "string"
+          ? raw.avatarUrl
+          : typeof raw.avatar === "string"
+            ? raw.avatar
+            : undefined,
     };
   }
 

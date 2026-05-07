@@ -9,11 +9,11 @@ export const fmt = (v: number): string =>
     v,
   );
 
-/** Format a date string as dd/mm/yyyy. Returns '—' for empty/invalid input. */
+/** Format a date string as dd/mm/yyyy. Returns '-' for empty/invalid input. */
 export const fmtDate = (s: string | null | undefined): string => {
-  if (!s) return "—";
+  if (!s) return "-";
   const d = new Date(s);
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -21,11 +21,11 @@ export const fmtDate = (s: string | null | undefined): string => {
   });
 };
 
-/** Format an ISO datetime string as dd/mm/yyyy hh:mm. Returns '—' for empty/invalid. */
+/** Format an ISO datetime string as dd/mm/yyyy hh:mm. Returns '-' for empty/invalid. */
 export const fmtDatetime = (s: string | null | undefined): string => {
-  if (!s) return "—";
+  if (!s) return "-";
   const d = new Date(s);
-  if (isNaN(d.getTime())) return "—";
+  if (isNaN(d.getTime())) return "-";
   return d.toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -45,9 +45,9 @@ export const fmtDatetime = (s: string | null | undefined): string => {
 export const parseBackendDate = (s: string): Date =>
   new Date(s.replace(/\s*(AM|PM)$/i, ""));
 
-/** Format backend date string (có thể có AM/PM) → dd/mm/yyyy. Returns '—' for empty/invalid. */
+/** Format backend date string (có thể có AM/PM) → dd/mm/yyyy. Returns '-' for empty/invalid. */
 export const fmtBackendDate = (s: string | null | undefined): string => {
-  if (!s) return "—";
+  if (!s) return "-";
   return parseBackendDate(s).toLocaleDateString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -55,9 +55,9 @@ export const fmtBackendDate = (s: string | null | undefined): string => {
   });
 };
 
-/** Format backend date string (có thể có AM/PM) → dd/mm/yyyy hh:mm. Returns '—' for empty/invalid. */
+/** Format backend date string (có thể có AM/PM) → dd/mm/yyyy hh:mm. Returns '-' for empty/invalid. */
 export const fmtBackendDatetime = (s: string | null | undefined): string => {
-  if (!s) return "—";
+  if (!s) return "-";
   return parseBackendDate(s).toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -71,10 +71,10 @@ export const fmtBackendDatetime = (s: string | null | undefined): string => {
  * Format Vietnamese phone number for display.
  * Backend trả về: "+84 ..." hoặc "0..."
  * Hiển thị: "0..." (format thân thiện với người Việt).
- * Returns '—' for empty/null.
+ * Returns '-' for empty/null.
  */
 export const fmtPhone = (phone: string | null | undefined): string => {
-  if (!phone) return "—";
+  if (!phone) return "-";
   const cleaned = phone.replace(/\D/g, "");
   if (cleaned.startsWith("84") && cleaned.length > 2) {
     return `0${cleaned.slice(2)}`;

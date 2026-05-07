@@ -1,16 +1,17 @@
-"use client";
+'use client';
 
-import React from "react";
-import { ClipboardCheck, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { RentalOrderResponse } from "@/types/api.types";
-import { WorkflowBanner } from "../WorkflowBanner";
+import React from 'react';
+import { ClipboardCheck, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { RentalOrderResponse } from '@/types/api.types';
+import { WorkflowBanner } from '../WorkflowBanner';
 import {
   CustomerInfo,
+  RentalDateTimeline,
   RentalSummary,
   OrderItemsList,
   OrderMetaCard,
-} from "../OrderInfo";
+} from '../OrderInfo';
 
 interface ConfirmDeliveryWorkflowProps {
   order: RentalOrderResponse;
@@ -39,6 +40,7 @@ export function ConfirmDeliveryWorkflow({
           <div className="flex flex-col gap-4">
             <OrderMetaCard order={order} />
             <CustomerInfo order={order} mode="delivery" />
+            <RentalDateTimeline order={order} mode="delivery" />
           </div>
 
           {/* Right column */}

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, ArrowRight, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { Layout } from "@/components/Layout";
 
@@ -99,7 +101,7 @@ export function InfoPageShell({
             <div className="relative z-10">
               {eyebrow && (
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-500 dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-400">
-                  <Sparkles className="size-3.5" />
+                  <FontAwesomeIcon icon={faInfoCircle} className="size-3.5" />
                   {eyebrow}
                 </div>
               )}
